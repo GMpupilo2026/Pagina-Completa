@@ -267,6 +267,8 @@ function pintarPregunta() {
       : "Haz clic en la casilla que contestas.";
   } else if (it.tipo === "linea") {
     prepararLinea(it);
+  } else if (it.tipo === "mate") {
+    prepararMate(it);
   }
   prepararComandos(it, numero, total);
 }
@@ -551,9 +553,93 @@ function prepararLinea(it) {
     `La línea tiene ${jugadas.length} jugadas en total. Da las tuyas: no hay pistas y no se puede deshacer.` + empieza;
 }
 
+/* Un mate contra el rey solo (examen de rango Caballo): no se contesta, se
+   juega. Cada jugada va a la Edge Function examen-mate, que la valida,
+   contesta con la defensa del rey y anota el resultado en la base; el reloj
+   de 2 minutos también es de la base (esta página solo lo muestra). Al
+   terminar —mate, tablas o tiempo— la respuesta ya quedó guardada y
+   «Responder» solo pasa a la siguiente. Ver «Los mates del examen de
+   Caballo» en docs/decisiones/puntos-y-premios.md. */
+let relojMate = null;
+async function prepararMate(it) {
+  clearInterval(relojMate);
+  const pista = $("q-pista");
+  let fin = 0;
+  const mostrarReloj = () => {
+    const quedan = Math.max(0, Math.ceil((fin - Date.now()) / 1000));
+    $("q-status").textContent = `⏱ Te quedan ${Math.floor(quedan / 60)}:${String(quedan % 60).padStart(2, "0")} para dar mate.`;
+    return quedan;
+  };
+  const llamar = async (cuerpo) => {
+    const { data, error } = await sb.functions.invoke("examen-mate", { body: Object.assign({ item: it.id }, cuerpo) });
+    if (error) {
+      let msg = "No se pudo hablar con el servidor.";
+      try { const j = await error.context.json(); if (j && j.error) msg = j.error; if (j && j.fen) return j; } catch (e) {}
+      return { error: msg };
+    }
+    return data;
+  };
+  const terminar = (estado) => {
+    clearInterval(relojMate);
+    if (tablero) tablero.bloquear();
+    const texto = estado.resultado === "mate" ? "✅ ¡Mate! Lo diste a tiempo."
+      : estado.resultado === "tablas" ? "❌ Quedó en tablas (ahogado, repetición o te comió una pieza). Esta pregunta vale cero."
+      : "❌ Se acabaron los 2 minutos. Esta pregunta vale cero.";
+    $("q-status").textContent = "";
+    pista.textContent = texto + " Responde para pasar a la siguiente.";
+    respuestaActual = { mate: estado.resultado };
+    $("responder-btn").disabled = false;
+    if (comandos) comandos.decir(texto);
+  };
+
+  pista.textContent = "Preparando la partida…";
+  const estado = await llamar({ accion: "estado" });
+  if (!estado || estado.error) { pista.textContent = (estado && estado.error) || "No se pudo empezar."; respuestaActual = { mate: "error" }; $("responder-btn").disabled = false; return; }
+  if (estado.terminado) { montarTablero(estado.fen, "mirar"); terminar(estado); return; }
+
+  fin = Date.now() + estado.restantes * 1000;
+  mostrarReloj();
+  relojMate = setInterval(async () => {
+    if (mostrarReloj() > 0) return;
+    clearInterval(relojMate);
+    const fuera = await llamar({ accion: "estado" });   // la base la da por perdida
+    terminar(fuera && fuera.terminado ? fuera : { resultado: "tiempo" });
+  }, 500);
+
+  let fenActual = estado.fen;
+  montarTablero(fenActual, "jugada", async function (r) {
+    tablero.bloquear();
+    const nuevo = await llamar({ accion: "jugar", jugada: { from: r.from, to: r.to, promotion: r.promotion || "q" } });
+    if (!nuevo || nuevo.error) {
+      // Una jugada que el servidor no aceptó: se vuelve a la posición que vale.
+      tablero.cargar(fenActual);
+      tablero.desbloquear();
+      pista.textContent = (nuevo && nuevo.error) || "No se pudo jugar.";
+      return;
+    }
+    fenActual = nuevo.fen;
+    tablero.cargar(fenActual);
+    if (comandos) comandos.posicion(new Chess(fenActual));
+    if (nuevo.terminado) { terminar(nuevo); return; }
+    tablero.desbloquear();
+    const dijo = nuevo.rival ? "El rey jugó " + ComandosTablero.jugadaParaMostrar(nuevo.rival.san) + "." : "";
+    pista.textContent = dijo + " Sigue: da mate antes de que se acabe el tiempo.";
+    if (comandos && dijo) comandos.decir(dijo);
+  });
+  pista.textContent = it.visible.enunciado + " Juegas con las blancas; cada jugada tuya la contesta el rey.";
+}
+
 /* ---------------- Responder ---------------- */
 async function responder() {
   if (!respuestaActual) return;
+  // Un mate ya quedó guardado por el servidor: solo se pasa a la siguiente.
+  if (pendientes[indice] && pendientes[indice].tipo === "mate") {
+    clearInterval(relojMate);
+    indice += 1;
+    if (indice >= pendientes.length) { await cerrar("entregado"); return; }
+    pintarPregunta();
+    return;
+  }
   const btn = $("responder-btn");
   btn.disabled = true;
   $("q-status").textContent = "Guardando…";

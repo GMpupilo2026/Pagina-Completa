@@ -84,6 +84,10 @@ const FUNCIONES = {
   // cabecera.
   "desempates-chess-results": [],
   "explorador-maestros": [],
+  // Los mates básicos del examen de rango Caballo: arbitra la partida contra
+  // el rey solo. Su defensa (defensa-mate.js) la arma herramientas/defensa-mate-armar.js
+  // desde js/tipos-reglas.js y herramientas/lib/finales-dtm.js. Ver su cabecera.
+  "examen-mate": ["defensa-mate.js"],
   // La quiniela de la sala de cine. Ver su cabecera.
   "quiniela": [],
   // El correo al supervisor por un diagnóstico de su enlace (verify_jwt en

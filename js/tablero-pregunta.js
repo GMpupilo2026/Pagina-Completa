@@ -204,11 +204,13 @@ window.TableroPregunta = (function () {
 
     function cargar(nuevoFen) { fen = nuevoFen; origen = null; respuesta = null; pintar(); }
     function bloquear() { bloqueado = true; origen = null; pintar(respuesta ? destacadasDe(respuesta) : null); }
+    // El mate del examen de rango: se bloquea mientras contesta el servidor y se vuelve a abrir.
+    function desbloquear() { if (tipo === "mirar") return; bloqueado = false; origen = null; pintar(); }
     function destacadasDe(r) { return r.casilla ? [r.casilla] : [r.from, r.to]; }
 
     pintar();
     return {
-      pintar, aplicar, cargar, bloquear, escribir,
+      pintar, aplicar, cargar, bloquear, desbloquear, escribir,
       teclado: () => teclado,
       tipo: () => tipo,
       fen: () => fen,
