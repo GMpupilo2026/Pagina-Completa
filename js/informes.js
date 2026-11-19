@@ -950,6 +950,26 @@
             const foto = document.getElementById("informe-persona-foto");
             if (window.FotoPerfil) FotoPerfil.poner(foto, persona.id, nombre);
             else foto.dataset.inicial = nombre.trim().charAt(0).toUpperCase();
+            pintarRatingTactico(persona.id);
+        }
+
+        /* Su rating táctico: el mismo número que ve el alumno en Ejercicios por
+           tema (public.rating_tactico, con la RLS de quien mira). Si mientras
+           contesta se cambió de alumno, no se pinta. Ver «El rating táctico» en
+           docs/decisiones/entrenamiento.md. */
+        let ratingPedido = null;
+        async function pintarRatingTactico(alumnoId) {
+            const el = document.getElementById("informe-persona-rating");
+            if (!el || !window.RatingTactico) return;
+            el.hidden = true;
+            ratingPedido = alumnoId;
+            const r = await RatingTactico.leer(sb, alumnoId);
+            if (ratingPedido !== alumnoId) return;
+            if (!r || !r.ejercicios) return;
+            const hoy = RatingTactico.conSigno(r.cambio_hoy);
+            el.textContent = "Rating táctico: " + r.rating + (hoy ? " (" + hoy + " hoy)" : "")
+                + " · " + r.ejercicios + (r.ejercicios === 1 ? " ejercicio" : " ejercicios") + " · su mejor: " + r.mejor;
+            el.hidden = false;
         }
 
         /* «Con este alumno»: lo que un profe hace con UN alumno vivía en cinco
