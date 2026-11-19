@@ -3536,6 +3536,7 @@
       // Las cámaras de Notara del torneo (su código y el id publicado): el
       // adjunto ve sus mesas en vivo (js/pareo/camaras-adjunto.js). En equipos, no.
       camaras: v.camaras && v.camaras.activo && v.publicado && !deEquipos ? v.camaras.codigo : null, torneo: v.publicado ? v.publicado.id : null,
+      camRetraso: (v.camaras && v.camaras.retraso) || 0,
       // Quién es él, quién es el principal, su chat y sus llamadas.
       arbitro: a.nombre || "", principal: v.arbitro || "",
       chat: chatDe(v, codigo).slice(-30).map((x) => ({ hora: x.hora, de: x.de === "principal" ? x.de : QUIEN_CHAT[x.de === codigo], nombre: x.nombre, texto: x.texto })),
@@ -3631,15 +3632,49 @@
   async function pedirCodigoCamaras() {
     const v = t();
     if (!v.publicado) { Avisos.avisar(tx("camarasSinPublicar"), { tipo: "error" }); return; }
+    // El código ya viene puesto: el que tenía el torneo o uno nuevo. Así no
+    // hace falta pasar antes por Notara: se toca «Recibir» y los QR de las
+    // mesas (abajo) ya lo llevan. Quien ya tiene cámaras andando, lo cambia.
+    try { await cargarVivo(); } catch (e) { Avisos.avisar(tx("errorEnVivo", { e: e.message }), { tipo: "error" }); return; }
     const res = await Avisos.formulario({ titulo: tx("camarasTitulo"), texto: tx("camarasTexto"), aceptar: tx("camarasConectar"), cancelar: tx("cancelar"),
-      campos: [{ nombre: "codigo", etiqueta: tx("camarasCodigo"), valor: (v.camaras && v.camaras.codigo) || "", max: 8 }] });
+      campos: [{ nombre: "codigo", etiqueta: tx("camarasCodigo"), valor: (v.camaras && v.camaras.codigo) || window.PartidaEnVivo.nuevoCodigo(), max: 8, ayuda: tx("camarasCodigoAyuda") },
+        { nombre: "retraso", tipo: "select", etiqueta: tx("camarasRetraso"), valor: String((v.camaras && v.camaras.retraso) || 0), ayuda: tx("camarasRetrasoAyuda"),
+          opciones: window.PartidaEnVivo.RETRASOS.map((r) => [String(r), r ? tx("camarasRetrasoMin", { n: r }) : tx("camarasRetrasoNo")]) }] });
     if (!res || t() !== v) return;
     const codigo = String(res.codigo || "").replace(/\s+/g, "").toLowerCase();
     if (!CODIGO_CAMARAS.test(codigo)) { Avisos.avisar(tx("camarasCodigoMalo"), { tipo: "error" }); return; }
     v.camaras = { codigo, activo: true };
+    // El retraso de la transmisión pública va en el QR de cada mesa (0 no se guarda).
+    if (window.PartidaEnVivo.RETRASOS.includes(Number(res.retraso)) && Number(res.retraso)) v.camaras.retraso = Number(res.retraso);
     guardar();
     if (await conectarCamaras()) Avisos.avisar(tx("camarasConectadas"));
-    pintarRondas();
+    if (estado.ficha === "centro") pintarCentro(); else pintarRondas();
+  }
+  // ---------- Un teléfono para cada mesa ----------
+  // El QR de una mesa abre Notara en el celular que va encima, sin cuenta y
+  // ya transmitiendo ESA mesa de ESTE torneo (PartidaEnVivo.enlaceCamara: el
+  // mismo enlace que arma la hoja de QR de la cámara). Sale de aquí para no
+  // tener que ir a Notara, elegir el torneo y copiar el código a mano: en
+  // papel, uno por mesa para todo el torneo (la mesa es la de la sala y no
+  // cambia de una ronda a otra), o en la pantalla, tocando la mesa en el
+  // Centro del evento. En equipos no: cada tablero lleva su cámara y esa
+  // hoja la arma Notara.
+  const enlaceCamaraDe = (v, mesa) => window.PartidaEnVivo.enlaceCamara({ torneo: v.publicado.id, codigo: v.camaras.codigo, mesa, retraso: v.camaras.retraso || 0 });
+  const conQrDeCamaras = (v) => !!(v.publicado && v.camaras && v.camaras.activo && v.rondas.length && !E.esDeEquipos(v));
+  async function imprimirQrCamaras() {
+    const v = t();
+    if (!conQrDeCamaras(v)) return;
+    try { await PareoQr.cargar(); await cargarVivo(); } catch (e) { Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" }); return; }
+    const mesas = [];
+    for (let i = 0; i < V.mesasQueNecesita(v); i++) mesas.push(V.mesaFisica(v, i));
+    $("pi-firmas").replaceChildren(el("div", { class: "pi-rotulos" }, mesas.map((n) => el("div", { class: "pi-rotulo", "data-rotulo-camara": String(n), "data-enlace": enlaceCamaraDe(v, n) },
+      el("p", { class: "pi-rotulo-mesa", texto: tx("mesa") }),
+      el("p", { class: "pi-rotulo-n", texto: String(n) }),
+      el("p", { class: "pi-rotulo-cat", texto: V.nombreTorneo(v) }),
+      el("div", { class: "pi-rotulo-qr" }, PareoQr.svg(enlaceCamaraDe(v, n), tx("camaraQrEtiqueta", { m: n }))),
+      el("p", { class: "pi-rotulo-ayuda", texto: tx("camaraQrAyuda") })))));
+    document.body.classList.add("pi-imprimiendo-firmas");
+    window.print();
   }
   async function conectarCamaras() {
     const v = t();
@@ -4153,7 +4188,11 @@
       el("p", { id: "pi-camaras-poco", class: "text-sm font-semibold text-red-800 dark:text-red-200 mt-1", hidden: true }),
       el("ul", { id: "pi-camaras-salud", class: "text-sm mt-1 space-y-0.5", hidden: true }),
       listaAlertas, estado.camaras && estado.camaras.idTorneo === estado.id ? informeCamaras() : null,
-      estado.camaras && estado.camaras.idTorneo === estado.id ? pintarLichess(v) : null, el("div", { class: "mt-2" }, dejar));
+      estado.camaras && estado.camaras.idTorneo === estado.id ? pintarLichess(v) : null,
+      conQrDeCamaras(v) ? el("p", { class: C.nota + " mt-2", texto: tx("camarasQrTexto") }) : null,
+      el("div", { class: "mt-2 flex flex-wrap gap-2" },
+        conQrDeCamaras(v) ? el("button", { type: "button", id: "pi-camaras-qr", class: C.mini, onclick: imprimirQrCamaras }, el("span", { "aria-hidden": "true", texto: "🖨️ " }), tx("camarasQrBoton")) : null,
+        dejar));
     relojesCamaras();
   }
 
@@ -4482,8 +4521,21 @@
       else if (ultima && ahora - ultima < SIN_NOTICIAS_MS) est = "transmite";
       return { mesa: f, est };
     }) : null;
-    return { r, total: conRival.length, hechas, ilegales, adjuntos, camaras, publicado: v.publicado ? v.publicado.id : null,
+    return { r, total: conRival.length, hechas, ilegales, adjuntos, camaras, qr: camaras && centroQr, publicado: v.publicado ? v.publicado.id : null,
       confirmar: JSON.stringify([R.discrepancias, R.deCamaras, R.confirmadas]) };
+  }
+  // La mesa cuyo QR de cámara se está mostrando en el Centro (o null).
+  let centroQr = null;
+  async function verQrDeMesa(mesa) {
+    if (centroQr === mesa) centroQr = null;
+    else {
+      try { await PareoQr.cargar(); await cargarVivo(); } catch (e) { Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" }); return; }
+      centroQr = mesa;
+    }
+    if (estado.ficha !== "centro") return;
+    pintarCentro();
+    const b = document.querySelector('[data-centro-camara="' + mesa + '"] button');
+    if (b) b.focus();
   }
   function pintarCentro() {
     const cont = $("pi-centro");
@@ -4540,12 +4592,32 @@
     // Las cámaras de Notara.
     const EST = { transmite: ["centroCamTransmite", "text-green-800 dark:text-green-300"], termino: ["centroCamTermino", "text-brand-600 dark:text-brand-300"],
       ayuda: ["centroCamAyuda", "text-red-800 dark:text-red-200"], sinSenal: ["centroCamSinSenal", "text-accent-700 dark:text-accent-300"], bye: ["centroCamBye", "text-brand-600 dark:text-brand-300"] };
+    // Tocar una mesa muestra su QR: el celular que lo lee queda transmitiendo esa mesa.
+    const qrDeCamaras = conQrDeCamaras(v);
+    // (Con if y no con un ternario: verificar-pareo-pagina.js toma las dos palabras de un ternario como claves de textos.)
+    let etiquetaMesaCam = "div";
+    if (qrDeCamaras) etiquetaMesaCam = "button";
+    const urlQr = qrDeCamaras && M.qr && window.PartidaEnVivo && window.qrcode ? enlaceCamaraDe(v, M.qr) : null;
+    const panelQr = urlQr ? el("div", { class: "mt-3 rounded-xl border border-accent-500 p-3 flex flex-wrap items-start gap-3", "data-centro-qr": String(M.qr), "data-enlace": urlQr },
+      el("div", { class: "w-40 bg-white p-2 rounded-lg shrink-0" }, PareoQr.svg(urlQr, tx("camaraQrEtiqueta", { m: M.qr }))),
+      el("div", { class: "flex-1 min-w-[12rem]" },
+        el("h4", { class: "font-semibold", texto: tx("centroQrTitulo", { m: M.qr }) }),
+        el("p", { class: C.nota + " mt-1", texto: tx("centroQrTexto") }),
+        el("div", { class: "flex flex-wrap gap-2 mt-2" },
+          el("button", { type: "button", class: C.mini, onclick: async () => { try { await navigator.clipboard.writeText(urlQr); Avisos.avisar(tx("enlaceCopiado")); } catch (e) { Avisos.avisar(tx("noCopia"), { tipo: "error" }); } } }, tx("copiarEnlace")),
+          el("button", { type: "button", class: C.mini, onclick: () => verQrDeMesa(M.qr) }, tx("cerrar"))))) : null;
     const camaras = tarjeta("pi-centro-camaras", tx("centroCamaras"),
-      M.camaras ? el("ul", { class: "grid grid-cols-3 sm:grid-cols-5 gap-2" }, M.camaras.map((c) => el("li", { class: "rounded-lg border border-brand-100 dark:border-brand-800 p-2 text-center", "data-centro-camara": String(c.mesa), "data-estado": c.est },
-        el("p", { class: "font-bold", texto: tx("mesa") + " " + c.mesa }),
-        el("p", { class: "text-xs font-semibold " + EST[c.est][1], texto: tx(EST[c.est][0]) }))))
+      M.camaras && qrDeCamaras ? el("p", { class: C.nota + " mb-2", texto: tx("centroCamToca") }) : null,
+      M.camaras ? el("ul", { class: "grid grid-cols-3 sm:grid-cols-5 gap-2" }, M.camaras.map((c) => el("li", { "data-centro-camara": String(c.mesa), "data-estado": c.est },
+        el(etiquetaMesaCam, Object.assign({ class: "block w-full rounded-lg border p-2 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 " + (M.qr === c.mesa ? "border-accent-500 ring-2 ring-accent-500" : "border-brand-100 dark:border-brand-800") },
+          qrDeCamaras ? { type: "button", "aria-expanded": String(M.qr === c.mesa), "aria-controls": "pi-centro-qr", onclick: () => verQrDeMesa(c.mesa) } : {}),
+          el("span", { class: "block font-bold", texto: tx("mesa") + " " + c.mesa }),
+          el("span", { class: "block text-xs font-semibold " + EST[c.est][1], texto: tx(EST[c.est][0]) })))))
         : el("p", { class: C.nota, texto: tx(E.esDeEquipos(v) ? "centroCamEquipos" : "centroSinCamaras") }),
-      M.camaras ? null : el("button", { type: "button", class: C.botonSec + " mt-3", onclick: () => { estado.ronda = M.r; irA("rondas", true); } }, tx("centroIrRonda")));
+      el("div", { id: "pi-centro-qr", hidden: !panelQr }, panelQr),
+      M.camaras && qrDeCamaras ? el("button", { type: "button", id: "pi-centro-camaras-qr", class: C.botonSec + " mt-3", onclick: imprimirQrCamaras }, el("span", { "aria-hidden": "true", texto: "🖨️ " }), tx("camarasQrBoton")) : null,
+      M.camaras || E.esDeEquipos(v) ? null : el("button", { type: "button", id: "pi-centro-camaras-poner", class: C.botonSec + " mt-3", onclick: pedirCodigoCamaras }, tx("centroCamPoner")),
+      M.camaras || !E.esDeEquipos(v) ? null : el("button", { type: "button", class: C.botonSec + " mt-3", onclick: () => { estado.ronda = M.r; irA("rondas", true); } }, tx("centroIrRonda")));
 
     // Los enlaces para compartir.
     const copiar = (url) => async () => {
