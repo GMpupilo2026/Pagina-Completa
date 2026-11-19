@@ -5196,8 +5196,9 @@ el sitio, con una sola cuenta.
   pestañas: **Inicio** (la clase en vivo, «Lo que te toca hacer», seguir el
   curso, «Hoy te toca», las favoritas y lo que más usas, «Clase en vivo» y
   «Lo que te pone tu profesor»), **Clases** («Tus clases», el calendario del
-  taller y «Estudiar»), **Entrenar** (Aprender, los tres escalones y las
-  habilidades), **Jugar** («Jugar y competir» y las herramientas) y
+  taller y otra vez la clase en vivo), **Entrenar** (Estudiar, Aprender, los
+  tres escalones y las habilidades), **Jugar** («Jugar y competir», las
+  herramientas y el enlace a preparar a un rival) y
   **Perfil** (los Puntos Ajedrez, los puntos del mes y «Tu cuenta»). Ninguna
   consulta nueva, ningún dato copiado: lo que cambie en el panel le llega
   solo.
@@ -5208,6 +5209,22 @@ el sitio, con una sola cuenta.
   que `renderTiles()` repinta la grilla (un MutationObserver sobre
   `#tile-grid`). **Lo que no está en el mapa no se marca y se ve en todas las
   pestañas**: una sección nueva del panel nunca queda escondida por olvido.
+- **Lo de Entrenar, por separado** (pedido del dueño el 18/11/2026). Debajo
+  de la pestaña Entrenar del menú van sus secciones: Estudiar, Aprender, los
+  tres escalones y Habilidades (el grupo «Mejorar por habilidades»). Elegir una
+  deja a la vista solo ese grupo de tarjetas y lo abre si estaba plegado; la
+  pestaña Entrenar vuelve a mostrarlas todas. «Estudiar» (Cursos y Repasar mis
+  clases) pasó de Clases a Entrenar, junto a las demás. En el celular, donde la
+  barra de abajo no tiene lugar, las mismas secciones van en una fila de
+  botones arriba de la pestaña, con «Todo» primero. La sección elegida es la
+  página (`aria-current="page"`) y su pestaña queda en `"true"`.
+- **Preparar a un rival**, debajo de Jugar: lleva a «Prepárate tú»
+  (`plan-rival.html`), el plan contra el rival de la próxima partida, que
+  antes solo se encontraba desde Competir. Es un enlace, no una sección: va con
+  su flecha ↗.
+- **La sesión, también en Clases.** El estado de la clase en vivo y el grupo
+  «Clase en vivo» viven en dos pestañas (`data-jornada="inicio clases"`):
+  son lo de hoy y son de Clases. Con `#` en la dirección se abre la primera.
 - **Los puntos se mudan a Perfil.** `#puntos-ajedrez` y `#puntos-mes` vivían
   dentro del `<details>` «Tus clases»; se mueven (el mismo nodo, con su id) a
   `#jornada-perfil`. «Tus clases» se abre solo: en esta forma es lo que hay

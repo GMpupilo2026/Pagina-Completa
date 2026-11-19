@@ -87,7 +87,7 @@ async function pruebaProfesoraAnotada(browser) {
 async function pruebaPestanas(browser) {
   console.log("\nCon la fila: cinco pestañas y cada cosa en la suya");
   const { ctx, page, errores } = await abrir(browser, ALUMNO, ANOTADO(ALUMNO.id), { viewport: { width: 1280, height: 900 } });
-  igual("las pestañas", await page.$$eval(".jornada-nav button", (b) => b.map((x) => x.textContent.trim())),
+  igual("las pestañas", await page.$$eval(".jornada-nav button[data-pestana]", (b) => b.map((x) => x.textContent.trim())),
     ["Inicio", "Clases", "Entrenar", "Jugar", "Perfil"]);
   igual("abre en Inicio", await page.$eval(".jornada-nav button[aria-current='page']", (b) => b.textContent.trim()), "Inicio");
 
@@ -145,6 +145,61 @@ async function pruebaCelular(browser) {
   await ctx.close();
 }
 
+// Los grupos de Entrenar que se ven ahora mismo.
+const GRUPOS_VISIBLES_DE = (pestana) => Array.from(document.querySelectorAll("#tile-grid > section"))
+  .filter((s) => (s.dataset.jornada || "").split(" ").includes(pestana) && s.checkVisibility())
+  .map((s) => s.dataset.grupo);
+
+async function pruebaSecciones(browser) {
+  console.log("\nEn la computadora, lo de Entrenar por separado en el menú");
+  const { ctx, page, errores } = await abrir(browser, ALUMNO, ANOTADO(ALUMNO.id), { viewport: { width: 1280, height: 900 } });
+  igual("debajo de Entrenar, sus secciones", await page.$$eval(".jornada-nav li:has(> button[data-pestana='entrenar']) .jornada-sub > li > *", (b) => b.map((x) => x.textContent.trim())),
+    ["Estudiar", "Aprender", "Entrenamiento básico", "Entrenamiento intermedio", "Entrenamiento avanzado", "Habilidades"]);
+  igual("debajo de Jugar, preparar a un rival (enlace a «Prepárate tú»)", await page.$$eval(".jornada-nav li:has(> button[data-pestana='jugar']) .jornada-sub a", (a) => a.map((x) => [x.textContent.trim(), x.getAttribute("href")])),
+    [["Preparar a un rival", "plan-rival.html"]]);
+  cierto("las secciones se ven en el menú", await page.$eval(".jornada-nav .jornada-sub button[data-seccion='Aprender']", (b) => b.checkVisibility()));
+  igual("la fila del celular no se ve en la computadora", await page.$$eval(".jornada-fila", (f) => f.filter((x) => x.checkVisibility()).length), 0);
+
+  await page.click(".jornada-nav .jornada-sub button[data-seccion='Aprender']");
+  igual("al elegir Aprender, de Entrenar solo se ve Aprender", await page.evaluate(GRUPOS_VISIBLES_DE, "entrenar"), ["Aprender"]);
+  igual("Aprender es la página; Entrenar queda marcada como parte", await page.evaluate(() => [
+    document.querySelector(".jornada-nav .jornada-sub button[data-seccion='Aprender']").getAttribute("aria-current"),
+    document.querySelector(".jornada-nav button[data-pestana='entrenar']").getAttribute("aria-current")]), ["page", "true"]);
+  igual("el título dice la sección", await page.$eval("#jornada-titulo", (t) => t.textContent), "Entrenar · Aprender");
+  await page.click(".jornada-nav button[data-pestana='entrenar']");
+  const todos = await page.evaluate(GRUPOS_VISIBLES_DE, "entrenar");
+  igual("la pestaña Entrenar vuelve a mostrar todo, Estudiar incluido", todos.includes("Estudiar") && todos.includes("Aprender") && todos.length >= 5, true);
+
+  console.log("\nLa sesión también en Clases");
+  await page.click(".jornada-nav button[data-pestana='clases']");
+  igual("«Clase en vivo» está en Inicio y en Clases", await page.evaluate(() => {
+    const s = Array.from(document.querySelectorAll("#tile-grid > section")).find((x) => x.dataset.grupo === "Clase en vivo");
+    return s ? [s.dataset.jornada, s.checkVisibility()] : "falta";
+  }), ["inicio clases", true]);
+  igual("el estado de la clase en vivo también es de Clases", await page.$eval("#session-status-card", (s) => s.dataset.jornada), "inicio clases");
+  igual("sin errores", errores, []);
+  await ctx.close();
+
+  console.log("\nEn el celular, las secciones en una fila arriba de la pestaña");
+  const c = await abrir(browser, ALUMNO, ANOTADO(ALUMNO.id), { viewport: { width: 390, height: 844 } });
+  await c.page.click(".jornada-nav button[data-pestana='entrenar']");
+  igual("la fila de Entrenar se ve y trae todo", await c.page.$$eval(".jornada-fila[data-jornada='entrenar']", (f) => f.filter((x) => x.checkVisibility()).map((x) => Array.from(x.children).map((b) => b.textContent.trim()))),
+    [["Todo", "Estudiar", "Aprender", "Entrenamiento básico", "Entrenamiento intermedio", "Entrenamiento avanzado", "Habilidades"]]);
+  igual("el menú de la computadora no se ve en el celular", await c.page.$$eval(".jornada-sub", (s) => s.filter((x) => x.checkVisibility()).length), 0);
+  await c.page.click(".jornada-fila[data-jornada='entrenar'] button[data-seccion='Mejorar por habilidades']");
+  igual("Habilidades queda sola", await c.page.evaluate(GRUPOS_VISIBLES_DE, "entrenar"), ["Mejorar por habilidades"]);
+  igual("y abierta (en el celular los grupos arrancan plegados)", await c.page.evaluate(() => {
+    const s = Array.from(document.querySelectorAll("#tile-grid > section")).find((x) => x.dataset.grupo === "Mejorar por habilidades");
+    const b = s.querySelector("h2 button[aria-expanded]");
+    return b ? b.getAttribute("aria-expanded") : "sin botón";
+  }), "true");
+  await c.page.click(".jornada-nav button[data-pestana='jugar']");
+  igual("en Jugar, la fila trae preparar a un rival", await c.page.$$eval(".jornada-fila[data-jornada='jugar'] a", (a) => a.filter((x) => x.checkVisibility()).map((x) => x.getAttribute("href"))), ["plan-rival.html"]);
+  igual("la página no se ensancha con la fila", await c.page.evaluate(() => document.documentElement.scrollWidth <= 390), true);
+  igual("sin errores", c.errores, []);
+  await c.ctx.close();
+}
+
 async function pruebaHash(browser) {
   console.log("\nclases.html#tus-clases abre la pestaña donde vive");
   const { ctx, page } = await abrir(browser, ALUMNO, ANOTADO(ALUMNO.id), { viewport: { width: 1280, height: 900 } }, "#tus-clases");
@@ -155,7 +210,7 @@ async function pruebaHash(browser) {
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
-    for (const p of [pruebaSinAnotar, pruebaProfesoraAnotada, pruebaPestanas, pruebaCelular, pruebaHash]) await p(browser);
+    for (const p of [pruebaSinAnotar, pruebaProfesoraAnotada, pruebaPestanas, pruebaCelular, pruebaSecciones, pruebaHash]) await p(browser);
   } finally {
     await browser.close();
   }

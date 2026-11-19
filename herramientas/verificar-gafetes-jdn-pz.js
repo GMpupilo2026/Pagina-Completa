@@ -98,6 +98,12 @@ function cliente(datos) {
   window.sb = {
     auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: "u" }, access_token: "t" } } }) },
     from: consulta,
+    // Los ID FIDE de las inscripciones aceptadas (public.pareo_fide_de_aceptados).
+    rpc(fn, a) {
+      window.__pedidos.push({ tabla: "rpc:" + fn, cols: JSON.stringify(a) });
+      if (fn === "pareo_fide_de_aceptados") return Promise.resolve({ data: (D.fide || {})[a.p_publicado] || [], error: null });
+      return Promise.resolve({ data: null, error: { message: "no existe" } });
+    },
   };
 })();`;
 }
@@ -133,7 +139,10 @@ async function aceptar(page, boton) {
 
   console.log("\nEl diseño de la eliminatoria");
   const ctx = await browser.newContext({ serviceWorkers: "block", acceptDownloads: true, viewport: { width: 1400, height: 1000 } });
-  const { page, errores } = await abrir(ctx, { orgs: ORGS, publicados: PUBLICADOS });
+  // El ID FIDE de la inscripción: el nombre escrito distinto (mayúsculas, sin
+  // tildes) igual empareja; Mateo y Ana no tienen.
+  const FIDE = { [U12]: [{ nombre: "ARIAS MORA, SOFIA", fide_id: "6512345" }], [U20]: [{ nombre: "Vargas Solís, Daniel", fide_id: "6599999" }] };
+  const { page, errores } = await abrir(ctx, { orgs: ORGS, publicados: PUBLICADOS, fide: FIDE });
   await page.click("#g-ejemplo-pz");
   await aceptar(page, "Usar ese diseño");
   await page.waitForFunction(() => window.Gafetes._estado().diseno.nombreDiseno === "Eliminatoria JDN PZ 2026");
@@ -183,7 +192,9 @@ async function aceptar(page, boton) {
     return window.GafetesDibujo.gafetes(diseno, datos.filas).map((x) => ({ n: x.nombre, d: x.detalles, f: x.franja, c: x.codigo, color: x.color, qr: x.qr }));
   });
   igual("el nombre en MAYÚSCULAS pasa a Nombre Propio", g[1].n, ["Zúñiga Rojas", "Mateo"]);
-  igual("debajo del nombre, solo el torneo (sin categoría ni Elo)", [g[0].d, g[2].d], [["Juega el torneo U12"], ["Juega el torneo U20"]]);
+  igual("debajo del nombre, el ID FIDE de la inscripción (sin él, la línea no sale) y el torneo; ni categoría ni Elo", [g[0].d, g[2].d, g[3].d],
+    [["ID FIDE: 6512345", "Juega el torneo U12"], ["Juega el torneo U20"], ["ID FIDE: 6599999", "Juega el torneo U20"]]);
+  igual("los ID FIDE se pidieron a la función de los aceptados, por torneo", await page.evaluate(() => window.__pedidos.filter((p) => p.tabla === "rpc:pareo_fide_de_aceptados").length), 2);
   igual("la franja dice el club", g.map((x) => x.f), ["ESCUELA PEDREGOSO", "ADAPZ", "ADAPZ", "ADAPZ"]);
   igual("el horario va centrado en el dorso", await page.evaluate(() => window.Gafetes._estado().diseno.dorso.horarioCentro), true);
   igual("un color por edad (U12, U16, U20)", g.map((x) => x.color), ["#1d64b0", "#1d64b0", "#0e7490", "#1b2a4a"]);
@@ -228,6 +239,13 @@ async function aceptar(page, boton) {
   igual("el QR del dorso se lee y lleva a su ficha", leidos.map((x) => x.qr), [
     "https://ajedrez-integral.com/torneos-pareo#t=" + U12 + "&j=j-aa", "https://ajedrez-integral.com/torneos-pareo#t=" + U20 + "&j=j-u20"]);
   igual("cada uno tiene su propio fondo de dorso", leidos[0].clave !== leidos[1].clave, true);
+  const geo = await page.evaluate(() => {
+    const { diseno, datos } = window.Gafetes._estado();
+    const M = window.GafetesDibujo.medidas(diseno);
+    return { qr: [M.qr.w, M.qr.h].map((v) => Math.round(v * 100) / 100), poses: window.GafetesDibujo.gafetes(diseno, datos.filas).map((g) => g.ilustracionDorso) };
+  });
+  igual("el QR es cuadrado aunque el gafete no sea de 10 × 14", geo.qr[0] === geo.qr[1], true);
+  igual("la profe Karina cambia de pose en cada dorso, por turno", geo.poses, ["ilustracionDorso", "karina2", "karina3", "karina4"]);
 
   console.log("\nLas fotos");
   // Fotos de mentira como las del fotógrafo: fondo blanco y la persona (un
@@ -269,8 +287,77 @@ async function aceptar(page, boton) {
     }));
   });
   igual("cada frente con foto tiene su propio fondo", new Set(claves).size, 4);
+  // Como quedó la carpeta de la PZ: el apellido solo en la versión con la
+  // marca del fotógrafo (se usa la foto limpia, buscada con el nombre
+  // completo), y un archivo con un nombre de más (dos palabras alcanzan).
+  const izq = Buffer.from((await page.evaluate(() => {
+    const c = document.createElement("canvas"); c.width = 300; c.height = 450;
+    const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, 300, 450); x.fillStyle = "#b91c1c"; x.fillRect(10, 250, 120, 200);
+    return c.toDataURL("image/jpeg", 0.95);
+  })).split(",")[1], "base64");
+  await page.setInputFiles("#g-fotos", [archivo("7 DANIEL.jpg"), archivo("7 DANIEL Vargas MEDIOS DIGITALES.jpg"), { name: "8 Ana PEREZ Mora Cespedes.jpg", mimeType: "image/jpeg", buffer: izq }]);
+  await page.waitForFunction(() => /2 de 4 con foto/.test(document.getElementById("g-fotos-estado").textContent));
+  // La 8 tiene a la persona corrida a la izquierda: el recorte la centra.
+  const corrida = await page.evaluate(() => {
+    const f = window.Gafetes._estado().fotos.find((x) => /^8 /.test(x.nombre));
+    const c = f.lienzo, d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+    let suma = 0, n = 0;
+    for (let i = 0; i < d.length; i += 4) if (d[i] > 150 && d[i + 1] < 90) { suma += (i / 4) % c.width; n++; }
+    return n ? Math.abs(suma / n / c.width - 0.5) : 1;
+  });
+  igual("una persona corrida a un lado de la foto queda centrada en el recorte (±10 %)", corrida < 0.1, true);
+  igual("el apellido de la versión con marca sirve para buscar la limpia; dos palabras alcanzan", await emparejadas(),
+    ["Arias Mora, Sofía → sin foto", "ZÚÑIGA ROJAS, MATEO → sin foto", "Mora Céspedes, Ana Lucía → 8 Ana PEREZ Mora Cespedes.jpg", "Vargas Solís, Daniel → 7 DANIEL.jpg"]);
 
-  console.log("\nEl PDF");
+  console.log("\nLa hoja carta para imprimir en casa (frente y dorso)");
+  igual("el diseño de la PZ sale en hoja carta", await page.inputValue("#g-formato"), "carta");
+  await page.click("#g-aprobar");
+  const [hoja] = await Promise.all([page.waitForEvent("download", { timeout: 180000 }), page.click("#g-crear")]);
+  const hp = fs.readFileSync(await hoja.path()).toString("latin1");
+  igual("un solo PDF", hoja.suggestedFilename(), "Gafetes carta - Eliminatoria JDN PZ 2026.pdf");
+  const objs = new Map([...hp.matchAll(/(\d+) 0 obj\n([\s\S]*?)\nendobj\n/g)].map((m) => [Number(m[1]), m[2]]));
+  const pags = [...objs.values()].filter((o) => /\/Type \/Page\b/.test(o));
+  igual("cuatro gafetes: una hoja, dos páginas (frentes y dorsos)", pags.length, 2);
+  igual("la página mide carta (21,59 × 27,94 cm)", [...new Set(pags.map((p) => (p.match(/\/MediaBox \[([^\]]+)\]/) || [])[1]))], ["0 0 612 792"]);
+  const contenido = (p) => {
+    const o = objs.get(Number(p.match(/\/Contents (\d+) 0 R/)[1]));
+    const i = o.indexOf("stream\n"), largo = Number(o.match(/\/Length (\d+)/)[1]);
+    return require("zlib").inflateSync(Buffer.from(o.slice(i + 7, i + 7 + largo), "latin1")).toString("latin1");
+  };
+  // Dónde pone cada cara: x e y (abajo a la izquierda, en mm) de cada «cm … Do».
+  const ubicar = (c) => [...c.matchAll(/q ([\d.]+) 0 0 ([\d.]+) ([\d.-]+) ([\d.-]+) cm \/F\d+ Do Q/g)].map((m) => [m[1], m[2], m[3], m[4]].map((v) => Number(v) * 25.4 / 72));
+  const [cf, cd] = pags.map(contenido);
+  const fr = ubicar(cf), ds = ubicar(cd);
+  igual("cada cara mide 5,5 × 8,5 cm", [...new Set([...fr, ...ds].map((u) => u[0].toFixed(1) + "×" + u[1].toFixed(1)))], ["55.0×85.0"]);
+  // Volteando por el borde largo, el dorso de cada uno cae en el espejo de su
+  // frente (misma fila, columna al revés): x del frente + x del dorso = ancho
+  // de la hoja − ancho del gafete, y la misma altura.
+  igual("cada dorso queda detrás de su frente al voltear por el borde largo", fr.every((f, k) => Math.abs(f[2] + ds[k][2] - (215.9 - 55)) < 0.05 && Math.abs(f[3] - ds[k][3]) < 0.05), true);
+  // Tres columnas centradas: (215,9 − 3 × 55) / 2 = 25,45 mm de margen a cada lado.
+  igual("los primeros tres, en la primera fila de izquierda a derecha", fr.slice(0, 3).every((f, k) => Math.abs(f[2] - (25.45 + 55 * k)) < 0.05), true);
+  igual("las marcas de corte, solo en la página de los frentes", [/ RG 0\.25 w/.test(cf), / RG 0\.25 w/.test(cd)], [true, false]);
+  const lineas = [...cf.matchAll(/([\d.]+) ([\d.]+) m ([\d.]+) ([\d.]+) l S/g)].map((m) => m.slice(1).map((v) => Number(v) * 25.4 / 72));
+  const enGafete = (x, y) => fr.some((f) => x > f[2] + 0.1 && x < f[2] + 54.9 && y > f[3] + 0.1 && y < f[3] + 84.9);
+  igual("ninguna marca pisa un gafete", lineas.some(([x1, y1, x2, y2]) => [0, 0.25, 0.5, 0.75, 1].some((t) => enGafete(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t))), false);
+  // El corrimiento del dorso, por si la impresora no calza exacto.
+  await page.click("#g-aprobar");
+  await aceptar(page, "Cambiar el diseño");
+  await page.fill("#g-dorso-x", "1.5");
+  await page.click("#g-aprobar");
+  const [hoja2] = await Promise.all([page.waitForEvent("download", { timeout: 180000 }), page.click("#g-crear")]);
+  const hp2 = fs.readFileSync(await hoja2.path()).toString("latin1");
+  const objs2 = new Map([...hp2.matchAll(/(\d+) 0 obj\n([\s\S]*?)\nendobj\n/g)].map((m) => [Number(m[1]), m[2]]));
+  const pags2 = [...objs2.values()].filter((o) => /\/Type \/Page\b/.test(o));
+  const cont2 = (p) => { const o = objs2.get(Number(p.match(/\/Contents (\d+) 0 R/)[1])); const i = o.indexOf("stream\n"), largo = Number(o.match(/\/Length (\d+)/)[1]); return require("zlib").inflateSync(Buffer.from(o.slice(i + 7, i + 7 + largo), "latin1")).toString("latin1"); };
+  const ds2 = ubicar(cont2(pags2[1])), fr2 = ubicar(cont2(pags2[0]));
+  igual("«a la derecha 1,5 mm» corre solo los dorsos", [Math.round((ds2[0][2] - ds[0][2]) * 10) / 10, Math.round((fr2[0][2] - fr[0][2]) * 10) / 10], [1.5, 0]);
+
+  console.log("\nEl PDF para la imprenta");
+  await page.click("#g-aprobar");
+  await aceptar(page, "Cambiar el diseño");
+  await page.fill("#g-dorso-x", "0");
+  await page.selectOption("#g-formato", "imprenta");
+  await page.selectOption("#g-separar", "Torneo");
   await page.click("#g-aprobar");
   const [zip] = await Promise.all([page.waitForEvent("download", { timeout: 180000 }), page.click("#g-crear")]);
   const z = fs.readFileSync(await zip.path()).toString("latin1");

@@ -2469,6 +2469,62 @@ de noviembre), así que se quedan en las de GitHub.
 - Si la máquina está apagada, el PR queda «Queued» sin fallar; no se mergea
   hasta que pase. Para salir del apuro, borrar `RUNNER`.
 
+## Los verificadores que fallaban por tiempo, sin relación con el PR
+
+El 17-18/11/2026 cuatro verificadores con navegador fallaron en el CI sin que
+el PR tocara nada suyo, y hubo que repetir tandas (que se pagan). Ninguno se
+arregló subiendo una espera: cada uno dependía de que la máquina fuera
+rápida, y se buscó **cuál era la condición de verdad** y se esperó esa.
+
+- **`verificar-camara-tablero.js`, «Calibrar» apagado 30 s** (mesa por QR).
+  Dos causas. Una de la página: en el modo mesa abre la cámara sola, y si
+  mientras tanto se elegía una foto, la cámara llegaba después, le ganaba a la
+  foto y borraba las esquinas. Ahora cada pedido de cámara lleva su número
+  (`pedidoCamara`): elegir una foto o soltar la cámara lo deja sin vigencia y
+  el flujo que llega tarde se suelta. Lo comprueba una cámara de mentira que
+  abre cuando la prueba dice (`CAMARA_LENTA`), no cuando la máquina puede. La
+  otra, de la prueba: el aviso de cómo le fue a la cámara cambia de alto el
+  recuadro de arriba y corre el lienzo; si llegaba entre medir y tocar, los
+  toques caían fuera. `tocar()` ahora espera el lienzo quieto, anota dónde
+  estaba en el instante de cada `pointerdown` (en la captura de `window`,
+  antes que la página lo atienda) y, si no coincide con lo medido, borra y
+  vuelve a tocar; si no se movió y una esquina no llegó, falla (eso es de la
+  página). La página deja `lienzo.dataset.esquinas` para eso.
+- **`verificar-camara-tablero.js`, «0:30» que salía «0:29».** Quien mira
+  muestra lo que quedaba al mandarse menos lo que pasó desde que llegó,
+  redondeado hacia arriba: con más de un segundo de verdad entre el arranque
+  y la lectura, cambiaba. Mientras se mira, los relojes de las dos páginas
+  quedan **quietos** (solo avanzan lo que la prueba adelanta) y después se
+  sueltan.
+- **`verificar-partidas-simultaneas.js`, «ningún reloj que llegó a tiempo
+  hubo que recortarlo → 2».** «Lenta» era solo la escritura que la base de
+  mentira atrasaba a propósito; en la máquina de 2 núcleos con 50 pestañas, la
+  computadora misma atrasaba el pedido de la pestaña a Node más de un segundo,
+  la base lo cobraba y salía como si la página hubiera dado tiempo de más. La
+  página anota cuándo armó la escritura (`pedido.creado`) y la raya es la de
+  siempre: más de 0,8 s desde ahí hasta la base es lenta, la cause quien la
+  cause.
+- **`verificar-preparacion-rivales.js`, «evaluación» escrita.** Contesta lo
+  que dice la línea del motor en ese momento; si la evaluación de la salida
+  todavía no llegaba, contestaba «Stockfish está evaluando…» y la prueba
+  esperaba otra cosa que nunca venía. Se pregunta con la posición ya
+  evaluada, y la respuesta tiene que ser igual a esa línea.
+- **`verificar-centroamericano-mesas-pagina.js`, «avisar a los árbitros».**
+  El doble le ponía a cada fila de un mismo `insert` su propio `new Date()`;
+  si el ciclo cruzaba un milisegundo, el aviso «a todos» quedaba con dos horas,
+  la página lo agrupaba como dos envíos y la tabla nunca llegaba a 2 filas.
+  Postgres da la misma hora (`now()`, la de la transacción) a toda la
+  sentencia: el doble ahora también. **Un doble que pone la hora fila por fila
+  no se parece a la base.**
+
+Lo que queda para la próxima: **una espera con `.catch(() => {})` que sigue
+de largo esconde la causa** (en `tocar()` la cámara no llegaba en 10 s y se
+tocaba igual); y **un dato que la página calcula «ahora» no se lee contra un
+reloj que corre**: o se congela, o se compara con lo que la misma página
+muestra. Antes de dar por bueno cada arreglo se rompió a propósito lo que
+comprueba (la página sin `pedidoCamara`, los relojes sin congelar con una
+espera de 1,5 s, el doble con horas distintas) y saltó.
+
 ## Las Edge Functions se despliegan solas desde GitHub
 
 Hasta el 10/11/2026 cada Edge Function se desplegaba a mano: a veces desde el

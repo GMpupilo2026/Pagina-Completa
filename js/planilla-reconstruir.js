@@ -37,7 +37,7 @@
   // --------------------------------------------------------------- distancia
   // Las confusiones de la letra a mano (y del lector) cuestan menos que un
   // cambio cualquiera: un «5» por una «s» es casi la misma jugada.
-  const PARECIDAS = ["0O", "0o", "oO", "0D", "1l", "1I", "lI", "1i", "5s", "5S", "2z", "2Z", "6b", "8B", "9g", "gq", "4A", "ce", "ft", "hb", "nh", "7f", "38", "aA", "cC", "tT", "dD", "rR", "bB", "4a", "eC", "5f"];
+  const PARECIDAS = ["0O", "0o", "oO", "0D", "1l", "1I", "lI", "1i", "5s", "5S", "2z", "2Z", "6b", "8B", "9g", "gq", "4A", "ce", "ft", "hb", "nh", "7f", "38", "aA", "cC", "tT", "dD", "rR", "bB", "4a", "eC", "5f", "4u", "4y", "7z", "7t"];
   const CASI = new Set();
   PARECIDAS.forEach((p) => { CASI.add(p[0] + p[1]); CASI.add(p[1] + p[0]); });
   // La misma letra en mayúscula o minúscula casi no cuesta: hay planillas enteras con las piezas en minúscula
@@ -70,6 +70,11 @@
     let t = String(s || "").trim();
     t = t.replace(/^\d{1,2}\s*[.)]+\s*(\.\.)?/, "");
     t = t.replace(/e\.?p\.?$/i, "");
+    // Un «+» antes de un número no es un jaque (ese va al final): es una f de mano, con la raya
+    // cruzada. La segunda planilla de verdad de Pareo (18/11) traía «+4» por 1.f4, y sin la f
+    // empataba con «E4» de la otra hoja: salía 1.e4, y el «e3» de las dos planillas en la jugada 3
+    // se volvía c3.
+    t = t.replace(/\+(?=[1-8])/g, "f");
     t = t.replace(/[\s+#!?:=xX×*·.,'"\-–—]/g, "");
     if (/^[0oOD]{2,3}$/.test(t)) return t.length === 3 ? "OOO" : "OO";
     t = t.replace(/^P(?=[a-h])/, "");
@@ -427,6 +432,13 @@
         const out = [];
         const largo = h.celdas.length;
         for (let i = 0; i < largo; i++) out.push((h.celdas[i] || []).sort((a, b) => a.cx - b.cx).map((w) => w.t).join(""));
+        // El número del final de las Blancas que Vision le pegó a las Negras: «De» | «20-0» era
+        // «De2» | «0-0» (segunda planilla de verdad de Pareo, 18/11). Se devuelve solo si las
+        // dos celdas quedan más parecidas a una jugada.
+        for (let i = 0; i + 1 < out.length; i += 2) {
+          const b = out[i], n = out[i + 1];
+          if (b && /^[1-8]./.test(n) && forma(b + n[0]) > forma(b) && forma(n.slice(1)) > forma(n)) { out[i] = b + n[0]; out[i + 1] = n.slice(1); }
+        }
         return out;
       }).filter((h) => h.some(Boolean)),
     };

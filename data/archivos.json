@@ -19233,7 +19233,7 @@
   ]
  },
  "imagenes": {
-  "total": 1293,
+  "total": 1327,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -27113,6 +27113,217 @@
       "titulo": "Variacion elo",
       "tipo": "otro",
       "kb": 105
+     }
+    ]
+   },
+   {
+    "carpeta": "img/jdn-pz-2026/jugadores",
+    "titulo": "Jugadores",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/acuna-badilla-sussy-belen.jpg",
+      "titulo": "Acuna badilla sussy belen",
+      "tipo": "otro",
+      "kb": 16
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/alpizar-hernandez-ethan-bary.jpg",
+      "titulo": "Alpizar hernandez ethan bary",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/arguedas-matamoros-isaac.jpg",
+      "titulo": "Arguedas matamoros isaac",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/arguedas-rodriguez-amelia.jpg",
+      "titulo": "Arguedas rodriguez amelia",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/badilla-mena-elizabeth.jpg",
+      "titulo": "Badilla mena elizabeth",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/barrantes-granados-aaron.jpg",
+      "titulo": "Barrantes granados aaron",
+      "tipo": "otro",
+      "kb": 16
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/beitia-retana-samuel-josue.jpg",
+      "titulo": "Beitia retana samuel josue",
+      "tipo": "otro",
+      "kb": 17
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/castro-monge-abel-francisco.jpg",
+      "titulo": "Castro monge abel francisco",
+      "tipo": "otro",
+      "kb": 13
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/ceciliano-azofeifa-amy-samantha.jpg",
+      "titulo": "Ceciliano azofeifa amy samantha",
+      "tipo": "otro",
+      "kb": 17
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/chinchilla-solis-javier-alonso.jpg",
+      "titulo": "Chinchilla solis javier alonso",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/chryssopulos-fajardo-alejandro.jpg",
+      "titulo": "Chryssopulos fajardo alejandro",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/cordero-sanchez-santiago.jpg",
+      "titulo": "Cordero sanchez santiago",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/cordova-elizondo-sofia.jpg",
+      "titulo": "Cordova elizondo sofia",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/flores-badilla-joselyn-ariana.jpg",
+      "titulo": "Flores badilla joselyn ariana",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/gonzalez-retana-fabian.jpg",
+      "titulo": "Gonzalez retana fabian",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/jimenez-azofeifa-lia.jpg",
+      "titulo": "Jimenez azofeifa lia",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/martinez-arce-samuel.jpg",
+      "titulo": "Martinez arce samuel",
+      "tipo": "otro",
+      "kb": 13
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/mora-bonilla-carlos-daniel.jpg",
+      "titulo": "Mora bonilla carlos daniel",
+      "tipo": "otro",
+      "kb": 13
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/piedra-villarevia-aaron.jpg",
+      "titulo": "Piedra villarevia aaron",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/quesada-aguero-samuel.jpg",
+      "titulo": "Quesada aguero samuel",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/rodriguez-quesada-keithy.jpg",
+      "titulo": "Rodriguez quesada keithy",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/segura-cespedes-santiago.jpg",
+      "titulo": "Segura cespedes santiago",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/segura-monge-allan-jafeth.jpg",
+      "titulo": "Segura monge allan jafeth",
+      "tipo": "otro",
+      "kb": 13
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/segura-valverde-dylan.jpg",
+      "titulo": "Segura valverde dylan",
+      "tipo": "otro",
+      "kb": 16
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/segura-valverde-matthew.jpg",
+      "titulo": "Segura valverde matthew",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/sequeira-solis-shane-stevens.jpg",
+      "titulo": "Sequeira solis shane stevens",
+      "tipo": "otro",
+      "kb": 16
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/ulcigrai-ramirez-giordano.jpg",
+      "titulo": "Ulcigrai ramirez giordano",
+      "tipo": "otro",
+      "kb": 16
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/ulcigrai-ramirez-giulio.jpg",
+      "titulo": "Ulcigrai ramirez giulio",
+      "tipo": "otro",
+      "kb": 17
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/valverde-alvarado-leonardo.jpg",
+      "titulo": "Valverde alvarado leonardo",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/villalobos-solano-samuel.jpg",
+      "titulo": "Villalobos solano samuel",
+      "tipo": "otro",
+      "kb": 13
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/villegas-badilla-evanz.jpg",
+      "titulo": "Villegas badilla evanz",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/vindas-mendez-brianna-isabella.jpg",
+      "titulo": "Vindas mendez brianna isabella",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/zeledon-rojas-ismael.jpg",
+      "titulo": "Zeledon rojas ismael",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/zuniga-arias-yariela-sofia.jpg",
+      "titulo": "Zuniga arias yariela sofia",
+      "tipo": "otro",
+      "kb": 21
      }
     ]
    },

@@ -522,6 +522,7 @@
 
             renderCursosReport(entreno, true);
             renderTiempo(profile.id, true, "");
+            renderParticipacion(profile.id, true, "");
             renderEvolucion(profile.id, true, "");
             renderAntesYAhora(profile.id, true, "");
             renderDeberes(profile.id, true);
@@ -1049,6 +1050,7 @@
             document.getElementById("premios-report").classList.add("hidden");
             document.getElementById("errores-report").classList.add("hidden");
             document.getElementById("tiempo-report").classList.add("hidden");
+            document.getElementById("participacion-report").classList.add("hidden");
             document.getElementById("evolucion-report").classList.add("hidden");
             document.getElementById("notas-report").classList.add("hidden");
             document.getElementById("le-costo-report").hidden = true;
@@ -1237,6 +1239,7 @@
 
             renderCursosReport(entreno, false, name, studentId, unlocksPorCurso);
             renderTiempo(studentId, false, name);
+            renderParticipacion(studentId, false, name);
             renderEvolucion(studentId, false, name);
             renderAntesYAhora(studentId, false, name);
             renderDiagnosticoProfesor(studentId, name, entreno);
@@ -1785,6 +1788,22 @@
             panel.classList.remove("hidden");
             const cuantas = await TiempoSecciones.montar(sb, "tiempo-body", studentId, { propio });
             if (!cuantas) panel.classList.add("hidden");
+        }
+
+        /* Cuánto habló en la llamada de la clase, mes a mes (js/participacion-llamada.js).
+           Como el tiempo: sin minutos hablados, el bloque no se destapa. */
+        async function renderParticipacion(studentId, propio, nombre) {
+            const panel = document.getElementById("participacion-report");
+            if (!panel || !window.ParticipacionLlamada) return;
+            tituloConEmoji("participacion-title", "🎧", propio ? "Tu participación en la llamada" : "Participación de " + nombre + " en la llamada");
+            document.getElementById("participacion-sub").textContent = propio
+                ? "Cuánto hablaste en la llamada de la clase, mes a mes."
+                : "Cuánto habló en la llamada de la clase, mes a mes. Una clase sin minutos puede haber sido sin llamada.";
+            // Es un extra: si falla, el bloque no se destapa y el resto del informe sigue igual.
+            let meses = 0;
+            try { meses = await ParticipacionLlamada.montar(sb, "participacion-body", studentId, { propio }); }
+            catch (e) { console.warn("La participación en la llamada no se pudo cargar:", e); }
+            panel.classList.toggle("hidden", !meses);
         }
 
         /* "Cómo viene": la curva semanal y, si hizo el diagnóstico más de una

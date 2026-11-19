@@ -6925,7 +6925,10 @@
 
   // La inscripción previa: abrirla o cerrarla (con fecha límite) y leer lo
   // que llegó. Aceptar uno lo agrega a la lista de jugadores como cualquier
-  // otro (agregarJugadores); rechazarlo solo lo marca. Las dos cosas piden
+  // otro (agregarJugadores); rechazarlo solo lo marca. Ya decidida, se puede
+  // cambiar: de rechazada a aceptada entra a la lista, y de aceptada a
+  // rechazada sale de ella si todavía no hay rondas (con rondas, sigue y el
+  // árbitro lo retira, para no tocar emparejamientos ya hechos). Las dos cosas piden
   // un comentario (el motivo, si se rechaza) que queda con la inscripción y,
   // si quien inscribió dejó un correo, le llega en el aviso (pareo-publicar).
   function cajaInscripcion(v) {
@@ -6972,9 +6975,11 @@
       const acepta = estadoNuevo === "aceptada";
       const conCorreo = cuales.filter((x) => esCorreo(x.contacto));
       const uno = cuales.length === 1 ? cuales[0] : null;
-      const texto = uno
+      const estabaAceptada = !acepta && cuales.some((x) => x.estado === "aceptada");
+      const texto = (uno
         ? (conCorreo.length ? tx(acepta ? "inscAvisoCorreo" : "inscAvisoCorreoRechazo", { c: uno.contacto }) : tx("inscAvisoTelefono", { c: uno.contacto }))
-        : tx("inscAvisoVarios", { a: conCorreo.length, b: cuales.length - conCorreo.length });
+        : tx("inscAvisoVarios", { a: conCorreo.length, b: cuales.length - conCorreo.length }))
+        + (estabaAceptada ? " " + tx(v.rondas.length ? "inscCambioConRondas" : "inscCambioSale") : "");
       const r = await Avisos.formulario({
         titulo: uno ? tx(acepta ? "inscAceptarTitulo" : "inscRechazarTitulo", { n: uno.nombre }) : tx("inscAceptarTodasTitulo", { n: cuales.length }),
         texto, cancelar: tx("cancelar"), peligro: !acepta,
@@ -6995,6 +7000,17 @@
       }
       const r = await PareoPublicar.marcar(v.publicado, cuales.map((x) => x.id), estadoNuevo, comentario);
       if (!r.ok) { if (boton) boton.disabled = false; Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" }); return; }
+      // De aceptada a rechazada: sale de la lista si todavía no hay rondas
+      // (uno solo con ese nombre, el último que entró).
+      if (estadoNuevo === "rechazada" && !v.rondas.length) {
+        const quitados = [];
+        for (const x of cuales.filter((y) => y.estado === "aceptada")) {
+          const nom = (x.nombre || "").toUpperCase();
+          const k = v.jugadores.map((j) => (j.nombre || "").toUpperCase()).lastIndexOf(nom);
+          if (k >= 0) { v.jugadores.splice(k, 1); quitados.push(x.nombre); }
+        }
+        if (quitados.length) { guardar(); pintarJugadores(); Avisos.avisar(tx("inscQuitadoDeLista", { n: quitados.join(", ") })); }
+      }
       const avisados = new Set(r.avisados || []);
       const ahora = new Date().toISOString();
       for (const x of cuales) { x.estado = estadoNuevo; x.comentario = comentario; x.avisado = avisados.has(x.id) ? ahora : null; }
@@ -7015,7 +7031,10 @@
       const acciones = x.estado === "pendiente"
         ? [el("button", { type: "button", class: C.mini, "data-aceptar": x.id, "aria-label": tx("inscAceptarA", { n: x.nombre }), onclick: (e) => decidir([x], "aceptada", e.currentTarget) }, tx("inscAceptar")),
            el("button", { type: "button", class: C.miniPeligro, "data-rechazar": x.id, "aria-label": tx("inscRechazarA", { n: x.nombre }), onclick: (e) => decidir([x], "rechazada", e.currentTarget) }, tx("inscRechazar"))]
-        : [el("span", { class: "pi-sello " + (x.estado === "aceptada" ? "pi-sello-listo" : "pi-sello-falta"), texto: (x.estado === "aceptada" ? "✓ " : "✗ ") + tx(x.estado === "aceptada" ? "inscEstadoAceptada" : "inscEstadoRechazada") })];
+        : [el("span", { class: "pi-sello " + (x.estado === "aceptada" ? "pi-sello-listo" : "pi-sello-falta"), texto: (x.estado === "aceptada" ? "✓ " : "✗ ") + tx(x.estado === "aceptada" ? "inscEstadoAceptada" : "inscEstadoRechazada") }),
+           x.estado === "aceptada"
+             ? el("button", { type: "button", class: C.miniPeligro, "data-cambiar": x.id, "aria-label": tx("inscCambiarRechazadaA", { n: x.nombre }), onclick: (e) => decidir([x], "rechazada", e.currentTarget) }, tx("inscCambiarRechazada"))
+             : el("button", { type: "button", class: C.mini, "data-cambiar": x.id, "aria-label": tx("inscCambiarAceptadaA", { n: x.nombre }), onclick: (e) => decidir([x], "aceptada", e.currentTarget) }, tx("inscCambiarAceptada"))];
       return el("li", { class: "pi-dm-tarjeta", "data-insc": x.id },
         el("p", { class: "font-semibold", texto: x.nombre + (yaEsta && x.estado === "pendiente" ? " · " + tx("inscYaEsta") : "") }),
         el("p", { class: "text-xs", texto: [x.institucion, x.categoria, x.sexo === "F" ? "Femenino" : x.sexo === "M" ? "Masculino" : "", x.nacimiento ? "Nació " + x.nacimiento.split("-").reverse().join("/") : "", x.elo ? "Elo " + x.elo : "", x.fide_id ? "FIDE " + x.fide_id : ""].filter(Boolean).join(" · ") }),

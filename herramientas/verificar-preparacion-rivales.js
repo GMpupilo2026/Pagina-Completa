@@ -1026,10 +1026,16 @@ async function pruebaEtapa3(browser) {
   await page.fill("#visor .cc-input", "anterior");
   await page.press("#visor .cc-input", "Enter");
   igual("y escribir «anterior» ahí lo dice, sin moverse", await page.textContent("#visor .cc-msg"), "Ya estás en la posición de salida.");
+  /* «evaluación» contesta lo que dice la línea del motor EN ESE MOMENTO. Si
+   * la de la salida todavía no llegó, contesta «Stockfish está evaluando…» y
+   * no cambia después: con la máquina ocupada pasaba, y la prueba esperaba
+   * 20 s algo que ya no iba a venir (CI, 17/11/2026). Se pregunta con la
+   * posición ya evaluada, y lo que contesta tiene que ser eso mismo. */
+  await page.waitForFunction(() => /^Stockfish: /.test(document.querySelector("#visor .visor-motor").textContent), null, { timeout: 20000 });
   await page.fill("#visor .cc-input", "evaluación");
   await page.press("#visor .cc-input", "Enter");
-  await page.waitForFunction(() => /^Stockfish: /.test(document.querySelector("#visor .cc-msg").textContent), null, { timeout: 20000 });
-  cierto("«evaluación» escrita contesta lo de Stockfish", true);
+  await page.waitForFunction(() => /^Stockfish: /.test(document.querySelector("#visor .cc-msg").textContent), null, { timeout: 5000 });
+  igual("«evaluación» escrita contesta lo de Stockfish", await page.textContent("#visor .cc-msg"), await page.textContent("#visor .visor-motor"));
 
   // Con el teclado en el tablero se va de casilla en casilla, sin salir de él.
   await page.focus("#visor .visor-tablero button[tabindex='0']");

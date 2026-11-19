@@ -13,6 +13,8 @@
  *     ahí al volver a leer las inscripciones (lo guarda la base);
  *   - la tarjeta dice si se le avisó por correo, si dejó un teléfono o si el
  *     correo no salió, y el árbitro recibe el aviso de avisarle él;
+ *   - una ya decidida se puede cambiar: de rechazada a aceptada entra a la
+ *     lista de jugadores, y de aceptada a rechazada (sin rondas) sale de ella;
  *   - el correo (correos.ts) escapa todo lo que escribió cualquiera, el
  *     asunto no lleva saltos de línea y solo se manda si el contacto es un
  *     correo (index.ts, leído como texto: acá no hay Deno ni red).
@@ -207,6 +209,31 @@ async function pruebaNavegador(browser) {
   await page.waitForFunction(() => !document.getElementById("pi-insc-lista").hidden);
   igual("al volver a leerlas, el motivo sigue ahí", await textoDe(page, `[data-insc-comentario="${ID("2")}"]`), "Motivo: Falta el ID FIDE");
   igual("y si se le avisó", await textoDe(page, `[data-insc-aviso="${ID("2")}"]`), "Se le avisó por correo.");
+
+  // Cambiar una decisión ya tomada: de rechazada a aceptada entra a la lista,
+  // y de aceptada a rechazada (sin rondas) sale de ella.
+  ok(!(await page.$(`[data-rechazar="${ID("1")}"]`)) && await page.$(`[data-cambiar="${ID("1")}"]`), "una ya decidida no vuelve a mostrar Aceptar/Rechazar, sino «Cambiar»");
+  igual("la rechazada ofrece cambiar a aceptada", (await textoDe(page, `[data-cambiar="${ID("1")}"]`)).trim(), "Cambiar a aceptada");
+  await tocar(page, `[data-cambiar="${ID("1")}"]`);
+  await page.waitForSelector(dialogo);
+  ok(/Aceptar a PRUEBA TELÉFONO/.test(await textoDe(page, dialogo)), "cambiar a aceptada abre el mismo cuadro de aceptar");
+  await page.fill(dialogo + " textarea", "Ya pagó la mensualidad");
+  await page.click(dialogo + " [data-avisos-aceptar]");
+  await page.waitForFunction((id) => /Cambiar a rechazada/.test((document.querySelector(`[data-cambiar="${id}"]`) || {}).textContent || ""), ID("1"));
+  const m4 = marcados().pop();
+  igual("«marcar» lleva el estado nuevo y el comentario nuevo", [m4.estado, m4.ids, m4.comentario], ["aceptada", [ID("1")], "Ya pagó la mensualidad"]);
+  igual("la tarjeta muestra el comentario nuevo", await textoDe(page, `[data-insc-comentario="${ID("1")}"]`), "Tu comentario: Ya pagó la mensualidad");
+  ok((await P.leerTodos(page))[0].jugadores.some((j) => j.nombre === "PRUEBA TELÉFONO"), "y entra a la lista de jugadores");
+
+  await tocar(page, `[data-cambiar="${ID("3")}"]`);
+  await page.waitForSelector(dialogo);
+  ok(/Estaba aceptada: sale de la lista de jugadores/.test(await textoDe(page, dialogo)), "cambiar a rechazada avisa que sale de la lista");
+  await page.fill(dialogo + " textarea", "Se retiró");
+  await page.click(dialogo + " [data-avisos-aceptar]");
+  await page.waitForFunction((id) => /Cambiar a aceptada/.test((document.querySelector(`[data-cambiar="${id}"]`) || {}).textContent || ""), ID("3"));
+  igual("«marcar» la rechaza con el motivo", [marcados().pop().estado, filas[2].comentario], ["rechazada", "Se retiró"]);
+  igual("y sale de la lista de jugadores (los demás se quedan)", (await P.leerTodos(page))[0].jugadores.map((j) => j.nombre).sort(), ["PRUEBA FALLA", "PRUEBA TELÉFONO"]);
+
   ok(!errores.length, "sin errores en la página", errores.join(" | "));
   await ctx.close();
 }
