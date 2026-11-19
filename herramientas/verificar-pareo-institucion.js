@@ -71,9 +71,46 @@ function pruebaBase() {
   ok(frenoPos >= 0 && buscarPos > frenoPos, "llama al freno ANTES de salir a buscar en ajedrezcostarica.com");
   ok(/if \(freno\) return json\(\{ ok: false, error: freno \}, 429\)/.test(ts), "si el freno contesta, no sigue (429)");
   ok(/Access-Control-Allow-Origin": SITE_URL/.test(ts), "CORS fijo al sitio");
-  ok(/if \(vistos\.size > 1\) return .*estado: "ambiguo"/.test(ts), "más de un homónimo: «ambiguo», no elige cualquiera");
+  ok(/from "\.\/emparejar\.ts"/.test(ts) && /emparejar\(nombreOriginal, filas\)/.test(ts), "decide quién es con emparejar.ts (probado abajo, sin red)");
+  ok(/const completo = nombre\.replace/.test(ts) && /\[completo, \.\.\.busquedasPorNombre/.test(ts),
+    "busca primero con el nombre completo (con «Rodriguez» solo, la página trae los 50 de más Elo y un alumno no sale)");
   ok(/nombres\.length > MAX_JUGADORES/.test(ts), "la lista de nombres se acota");
   ok(/from "\.\/ajedrezcostarica\.ts"/.test(ts), "reusa el lector compartido, no una copia propia");
+
+  console.log("\n=== emparejar.ts: exacto se asigna, parecido se ofrece, nunca se adivina ===");
+  const { spawnSync } = require("child_process");
+  const F = (fideId, nombre, nacional) => ({ fideId, nombre, club: "Cartago", nacional, fideEstandar: null });
+  const lista = [F("1", "Rodriguez Jimenez, Jose Daniel", 2044), F("2", "Rodriguez Arrieta, Jose Allan", 1984),
+    F("3", "Rodriguez Rojas, Jose Raul", 1830), F("4", "Mora Mora, Ana", 1400), F("5", "Mora Solano, Ana", 1300),
+    F("6", "Soto Vega, Luis", 1500), F("7", "Soto Vega, Luis", 1450)];
+  const nombres = ["José Daniel Rodríguez Jiménez", "Rodriguez Jimenez, Jose Daniel", "Jose Daniel Rodriguez", "Jose Rodriguez",
+    "Rodriguez", "Jose Rod", "Ana Mora Mora", "Ana Mora", "Mora Mora", "Luis Soto Vega", "Pedro Picado"];
+  const r = spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "--input-type=module", "-e", `
+    const m = await import(${JSON.stringify(path.join(RAIZ, "supabase/functions/pareo-elo-nacional/emparejar.ts"))});
+    const [nombres, lista] = JSON.parse(process.argv[1]);
+    // La lista dos veces: dos búsquedas del mismo nombre traen a la misma gente.
+    process.stdout.write(JSON.stringify(nombres.map((n) => m.emparejar(n, lista.concat(lista)))));
+  `, JSON.stringify([nombres, lista])], { cwd: RAIZ, encoding: "utf8" });
+  if (r.status !== 0) { ok(false, "se pudo cargar emparejar.ts", r.stderr || r.stdout); }
+  else {
+    const e = Object.fromEntries(JSON.parse(r.stdout).map((x, i) => [nombres[i], x]));
+    const ids = (x) => x.candidatos.map((c) => c.fideId).join(",");
+    ok(e["José Daniel Rodríguez Jiménez"].estado === "encontrado" && e["José Daniel Rodríguez Jiménez"].fila.nacional === 2044,
+      "el nombre completo, con tildes y en otro orden: encontrado", JSON.stringify(e["José Daniel Rodríguez Jiménez"]));
+    ok(e["Rodriguez Jimenez, Jose Daniel"].estado === "encontrado", "tal como lo escribe la lista: encontrado");
+    ok(e["Jose Daniel Rodriguez"].estado === "parecido" && e["Jose Daniel Rodriguez"].fila === null && ids(e["Jose Daniel Rodriguez"]) === "1",
+      "sin el segundo apellido: «parecido», con su candidato, pero SIN asignarlo", JSON.stringify(e["Jose Daniel Rodriguez"]));
+    ok(e["Jose Daniel Rodriguez"].candidatos[0].club === "Cartago", "el candidato trae su club, para saber quién es");
+    ok(e["Jose Rodriguez"].estado === "ambiguo" && e["Jose Rodriguez"].totalCandidatos === 3 && e["Jose Rodriguez"].fila === null,
+      "varios que podrían ser: «ambiguo», con los tres", JSON.stringify(e["Jose Rodriguez"]));
+    ok(e["Rodriguez"].estado === "no_encontrado", "una sola palabra no ofrece a todos los Rodríguez");
+    ok(e["Jose Rod"].estado === "no_encontrado", "la palabra va entera: «Rod» no es «Rodriguez»");
+    ok(e["Ana Mora Mora"].estado === "encontrado" && e["Ana Mora Mora"].fila.fideId === "4", "el exacto gana aunque haya otro parecido");
+    ok(e["Ana Mora"].estado === "ambiguo" && ids(e["Ana Mora"]) === "4,5", "«Ana Mora»: las dos Anas, sin elegir");
+    ok(e["Mora Mora"].estado === "parecido" && ids(e["Mora Mora"]) === "4", "una palabra repetida se pide dos veces");
+    ok(e["Luis Soto Vega"].estado === "ambiguo" && ids(e["Luis Soto Vega"]) === "6,7", "dos homónimos exactos: «ambiguo», no elige cualquiera");
+    ok(e["Pedro Picado"].estado === "no_encontrado" && e["Pedro Picado"].candidatos.length === 0, "quien no está: no encontrado, sin candidatos");
+  }
 
   console.log("\n=== funciones-armar.js sabe traerle su compartido ===");
   const armar = leer("herramientas/funciones-armar.js");
@@ -184,7 +221,9 @@ async function pruebaEloNacional(browser) {
   await page.click('#pi-form-jugador button[type="submit"]');
   await page.fill('#pi-form-jugador [name="nombre"]', "Rojas Mora, Ana");
   await page.click('#pi-form-jugador button[type="submit"]');
-  await page.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "2");
+  await page.fill('#pi-form-jugador [name="nombre"]', "Luis Soto");
+  await page.click('#pi-form-jugador button[type="submit"]');
+  await page.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "3");
 
   let pedido = null;
   let avisarLlego;
@@ -199,22 +238,24 @@ async function pruebaEloNacional(browser) {
       ok: true,
       resultados: [
         { nombre: "Pérez Vargas, Juan", estado: "encontrado", nacional: 1550, fideEstandar: null, fideId: "123" },
-        { nombre: "Rojas Mora, Ana", estado: "ambiguo", nacional: null, fideEstandar: null, fideId: null },
+        { nombre: "Rojas Mora, Ana", estado: "ambiguo", nacional: null, fideEstandar: null, fideId: null, candidatos: [], totalCandidatos: 0 },
+        { nombre: "Luis Soto", estado: "parecido", nacional: null, fideEstandar: null, fideId: null, totalCandidatos: 1,
+          candidatos: [{ fideId: "6512682", nombre: "Soto Vega, Luis Diego", club: "Cartago", nacional: 1720, fideEstandar: null }] },
       ],
     }) });
   });
   await page.click("#pi-elo-nacional");
   await pedidoLlego;
   ok(await vis(page, "#pi-elo-barra-caja"), "mientras busca, se ve la barra de progreso");
-  ok((await texto(page, "#pi-elo-nacional-estado") || "").includes("2"), "el aviso de estado dice cuántos jugadores busca",
+  ok((await texto(page, "#pi-elo-nacional-estado") || "").includes("3"), "el aviso de estado dice cuántos jugadores busca",
     await texto(page, "#pi-elo-nacional-estado"));
   await page.waitForFunction(() => /\d/.test(document.querySelector(".avisos-mensaje")?.textContent || ""));
   ok(!(await vis(page, "#pi-elo-barra-caja")), "al terminar, la barra se vuelve a ocultar");
 
-  ok(!!pedido && Array.isArray(pedido.nombres) && pedido.nombres.length === 2, "manda los dos nombres, nada más", JSON.stringify(pedido));
+  ok(!!pedido && Array.isArray(pedido.nombres) && pedido.nombres.length === 3, "manda los tres nombres, nada más", JSON.stringify(pedido));
   igual("el primero queda con el Elo encontrado, por índice (no por bolsillo de nombre)",
     await page.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => tr.children[6].textContent)),
-    ["1550", ""]);
+    ["1550", "", ""]);
   ok(afuera.filter((u) => u.includes("pareo-elo-nacional")).length === 1, "una sola llamada afuera, y es esta", afuera.join(" | "));
   ok(afuera.filter((u) => !u.includes("pareo-elo-nacional")).length === 0, "y ninguna otra petición salió del sitio", afuera.join(" | "));
   // El ambiguo queda pendiente, con su botón para resolverlo a mano.
@@ -222,6 +263,28 @@ async function pruebaEloNacional(browser) {
   const pendiente = await page.textContent("#pi-elo-pendientes");
   ok(pendiente.includes("Rojas Mora, Ana") && /más de una persona/.test(pendiente), "nombra a quien quedó ambiguo y por qué", pendiente);
   ok(!pendiente.includes("Pérez Vargas, Juan"), "a quien sí se encontró no lo deja en la lista", pendiente);
+  // El parecido: se ofrece su candidato, con club y Elo, pero no se le pone solo.
+  ok(pendiente.includes("Luis Soto") && /muy parecido/.test(pendiente) && pendiente.includes("Soto Vega, Luis Diego")
+    && pendiente.includes("Cartago") && pendiente.includes("1720"), "el parecido muestra su candidato con club y Elo", pendiente);
+  const eloDe = (nombre) => page.$$eval("#pi-tabla-jugadores tbody tr", (trs, n) => {
+    const tr = trs.find((x) => x.textContent.includes(n));
+    return tr ? tr.children[6].textContent : null;
+  }, nombre);
+  igual("el parecido NO queda con Elo hasta que alguien lo confirme", await eloDe("Luis Soto"), "");
+  const usar = page.locator('#pi-elo-pendientes button', { hasText: "Usar este Elo" });
+  igual("solo el parecido tiene botón para usar el candidato", await usar.count(), 1);
+  ok(/Soto Vega, Luis Diego/.test(await usar.getAttribute("aria-label") || ""), "el botón dice a quién usa", await usar.getAttribute("aria-label"));
+  await usar.click();
+  await page.waitForFunction(() => !document.getElementById("pi-elo-pendientes").textContent.includes("Luis Soto"));
+  igual("al confirmarlo, queda con el Elo del candidato", await eloDe("Luis Soto"), "1720");
+  const guardado = await page.evaluate(() => {
+    for (let i = 0; i < localStorage.length; i++) {
+      const v = localStorage.getItem(localStorage.key(i)) || "";
+      if (v.includes("Luis Soto") && v.includes("6512682")) return true;
+    }
+    return false;
+  });
+  ok(guardado, "y con su ID FIDE, guardado (el TRF lo necesita)");
   await page.click('#pi-elo-pendientes button:has-text("Editar")');
   ok(await vis(page, 'dialog.avisos-dialogo[open] input[name="nombre"]'), "el botón abre el formulario de editar a esa persona");
   await page.fill('dialog.avisos-dialogo[open] input[name="elo"]', "1600");

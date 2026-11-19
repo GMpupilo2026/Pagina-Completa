@@ -1,0 +1,79 @@
+{
+  "numero": 18,
+  "fecha_original": "julio de 2014",
+  "temas": [
+    {
+      "titulo": "Del Comité Antitrampas a la Comisión de Juego Limpio",
+      "desc": "Leyes 2023 art. 11.3 · Fair Play Regulations y Protection Measures (2024)"
+    },
+    {
+      "titulo": "El régimen disciplinario de los árbitros",
+      "desc": "B.06.5 · FIDE Arbiter Disciplinary Regulations (desde 1-jul-2026)"
+    },
+    {
+      "titulo": "¿Qué se requiere para que un torneo sea válido para rating FIDE?",
+      "desc": "Reglamento de Rating (2024) · Resolución del Consejo FIDE sobre ritmos (2026)"
+    }
+  ],
+  "presentacion": "<div class=\"cols\"><p>La FIDE inició el segundo semestre de 2014 con la espada desenvainada, dispuesta a dar una batalla frontal a quienes tengan siquiera la idea de hacer algún tipo de trampa durante sus partidas.</p><p>Las Leyes del Ajedrez 2014 entraron en vigor el 1 de julio y en ellas se ve esa intención: prohibieron por completo llevar consigo un aparato de comunicación —por ejemplo, un teléfono celular—, con la pérdida directa de la partida para quien no cumpla, y dieron al árbitro la posibilidad de revisar a cualquier jugador si es necesario. Todo esto solo daña la imagen del ajedrez.</p><p>Pero eso no es todo: se propusieron dos acciones más. La primera, la creación de una Comisión Antitrampas de la FIDE, con el documento que publicamos en este número y que se presentará en el Congreso de la FIDE del próximo mes. La segunda, una necesidad por las irregularidades que se han presentado con árbitros en diversos eventos: una propuesta de regulaciones disciplinarias para árbitros, que tipifica las faltas y sus sanciones y que también se presentará en el Congreso, en Noruega.</p><p>Finalmente, un artículo breve sobre los torneos válidos para rating FIDE: qué se necesita y qué requisitos deben cumplir.</p><p>Espero que este número sea de su agrado.</p><p style=\"text-align:left\"><b>Santiago García Ramos</b><br>Árbitro Internacional</p></div><p class=\"small\">En esta edición revisada, las dos propuestas de 2014 se presentan como antecedente histórico y se explica lo que rige hoy: el sistema de juego limpio de la FIDE (reglamento de noviembre de 2024) y el reglamento disciplinario de árbitros B.06.5 (versión en vigor desde el 1 de julio de 2026). El artículo sobre torneos válidos para rating se actualizó al Reglamento de Rating de 2024 y a la resolución del Consejo FIDE de noviembre de 2026 sobre los ritmos de 60 y 45 minutos.</p>",
+  "cambios": [
+    [
+      "Comité Antitrampas FIDE/ACP",
+      "Propuesta de 2014: comisión antitrampas permanente, tres niveles de protección, herramienta de análisis, quejas con formulario, sanciones de hasta 3 y 15 años.",
+      "Antecedente histórico (aprobada como «Anti-Cheating Guidelines», nov-2014). Hoy: Fair Play Regulations (desde 18-nov-2024), Protection Measures (2024) y Leyes 11.3, 12.2.7 y 12.9; las sanciones, la EDC."
+    ],
+    [
+      "Niveles de protección",
+      "Máxima: round robins de 2600+ (2400 femeniles); aumentada: premios de más de 20 000 €, round robins de 2400+.",
+      "Máxima: eventos mundiales y continentales mayores, round robins de 2650+ (2450), premios de más de 100 000 €. Aumentada: nacionales, torneos de normas, premios de 15 000 €+, round robins de 2500+ (2300)."
+    ],
+    [
+      "Umbrales estadísticos",
+      "z ≥ 2,75 como apoyo; z ≥ 4,75 como prueba única.",
+      "Art. 1.6: z ≥ 5,00 presencial y 4,25 en línea como prueba única; 2,50 como apoyo."
+    ],
+    [
+      "Dispositivos",
+      "Art. 11.3.b (2014): pérdida por tener el teléfono en el recinto.",
+      "Art. 11.3.2.1 (2023): las bases pueden permitirlo apagado en el bolso; encima, pierde (11.3.2.2)."
+    ],
+    [
+      "Disciplina de árbitros",
+      "Propuesta de 2014: 13 faltas, cada una con su sanción; apelación al Buró Presidencial.",
+      "B.06.5 (desde 1-jul-2026): seis grupos de faltas; advertencia, amonestación o inhabilitación de hasta 18/24 meses; casos graves a la EDC; apelación al Consejo en 15 días (300 €)."
+    ],
+    [
+      "Registro del torneo",
+      "7 días antes.",
+      "3 días; 30 si juega alguien de más de 2700 (o 2500 mujeres) o si hay normas (Rating 0.2; Títulos 1.1.1)."
+    ],
+    [
+      "Ritmo mínimo",
+      "120/90/60 min según 2200/1600; primer control de 40 jugadas.",
+      "Art. 1.1: 120/90/60 min según 2400/1800; primer control de al menos 30 jugadas (1.2). Desde nov-2026, 60′+30″ es estándar y 45′+30″ se admite en ciertos torneos (resolución del Consejo)."
+    ],
+    [
+      "Tarifas, duración, árbitro",
+      "Tarifas de 2014; máximo de 90 días; «licencia» del árbitro.",
+      "Tarifas: Reglamento Financiero vigente. Sin límite de 90 días: informes mensuales si dura más de 30 (art. 4.1). Cuota de registro del árbitro (B.06.1, 6.1-6.2)."
+    ]
+  ],
+  "directorio": [
+    [
+      "Director (edición original)",
+      "Santiago García Ramos · Árbitro Internacional"
+    ],
+    [
+      "Revisión (edición original)",
+      "Ignacio Córdoba Navarro · Periodista"
+    ],
+    [
+      "Diseño (edición original)",
+      "Ángel Antonio Espino · Diseñador gráfico"
+    ],
+    [
+      "Colaboradores (edición original)",
+      "Paula Man Reich · Psicóloga del deporte; Carlos Calleros · Árbitro Internacional (Brasil)"
+    ]
+  ]
+}

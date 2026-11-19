@@ -1357,9 +1357,12 @@
     const lJugadas = campo("Tus jugadas", textoJugadas);
     lJugadas.appendChild(ayudaJugadas);
     /* O una foto de la planilla: la lee ocr-scoresheet (Google Vision, con su
-       tope diario) con el mismo lector de lector-planilla.html
-       (js/planilla-ocr.js), y las jugadas caen en el cuadro para revisarlas
-       antes de guardar. Las que se adivinaron por parecido llevan «?». */
+       tope diario) y la partida se arma con el mismo lector del Lector de
+       planilla y del Centroamericano (js/planilla-reconstruir.js: las celdas
+       por los números impresos, la partida legal que mejor explica todo lo
+       escrito). Las jugadas caen en el cuadro para revisarlas antes de guardar:
+       las que no se leyeron tal cual llevan «?», y lo ilegible no se inventa.
+       Ver «El Lector de planilla lee por columnas» en juegos-y-torneos.md. */
     const foto = el("input", "text-sm text-brand-700 dark:text-brand-200 file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-2 file:font-semibold file:bg-brand-100 file:text-brand-800 dark:file:bg-brand-800 dark:file:text-brand-100");
     foto.type = "file"; foto.accept = "image/*";
     const leerFoto = el("button", BTN_SEGUNDO + " self-start", "📷 Leer la foto");
@@ -1369,25 +1372,34 @@
     leerFoto.addEventListener("click", async () => {
       const archivo = foto.files && foto.files[0];
       if (!archivo) { aviso.textContent = "Elige primero la foto de tu planilla."; foto.focus(); return; }
-      if (!window.PlanillaOcr) { aviso.textContent = "El lector de planilla no está disponible en esta página."; return; }
+      if (!window.PlanillaOcr || !window.PlanillaReconstruir) { aviso.textContent = "El lector de planilla no está disponible en esta página."; return; }
       let token = null;
       try { const { data } = await sb.auth.getSession(); token = data && data.session && data.session.access_token; } catch (e) { token = null; }
       if (!token) { aviso.textContent = "Necesitas iniciar sesión para leer la foto."; return; }
       leerFoto.disabled = true; anotar.disabled = true;
       aviso.textContent = "Leyendo tu planilla… puede tardar unos segundos.";
       try {
-        const { words } = await PlanillaOcr.leerFoto(archivo, token);
-        const r = PlanillaOcr.leerTokens(Chess, PlanillaOcr.reconstructMoveTokens(words));
+        const { words } = await PlanillaOcr.leerFoto(archivo, token, { maxLado: 2600 });
+        const { hojas } = PlanillaReconstruir.hojasDeLaFoto(words || []);
+        const r = hojas.length ? await PlanillaReconstruir.enHilo(hojas, (x) => { aviso.textContent = "Armando la partida… " + Math.round(x * 100) + " %"; }) : { jugadas: [], ilegibleDesde: null, resto: [] };
+        const deQuien = (i) => "la " + (Math.floor(i / 2) + 1) + " de las " + (i % 2 ? "negras" : "blancas");
+        // Si la planilla se volvió ilegible: desde dónde y lo que dice ahí, tal cual.
+        const escritoDespues = (r.resto || []).flat();
+        const ilegible = r.ilegibleDesde === null ? "" : "Desde " + deQuien(r.ilegibleDesde) + " la planilla no se entiende, así que no se inventaron jugadas: complétalas a mano"
+          + (escritoDespues.length ? " (en la planilla dice: " + escritoDespues.slice(0, 8).join(" ") + (escritoDespues.length > 8 ? "…" : "") + ")" : "") + ". ";
         if (!r.jugadas.length) {
-          aviso.textContent = "No encontré jugadas en la foto. Prueba con una más nítida, derecha y con buena luz, o escríbelas.";
+          aviso.textContent = "No encontré jugadas en la foto. " + ilegible + "Prueba con una más nítida, derecha y con buena luz, o escríbelas.";
         } else {
-          const dudosas = new Set(r.adivinadas);
-          textoJugadas.value = r.jugadas.map((x, i) => (i % 2 === 0 ? (i / 2 + 1) + ". " : "") + PlanillaOcr.sanEnEspanol(x) + (dudosas.has(i) ? "?" : "")).join(" ");
-          const cuales = r.adivinadas.slice(0, 5).map((i) => "la " + (Math.floor(i / 2) + 1) + " de las " + (i % 2 ? "negras" : "blancas")).join(", ");
+          // «?» en las que no se leyeron tal cual (corregidas y dudosas): leerJugadas lo salta como una anotación.
+          const revisar = r.jugadas.map((j, i) => (j.estado === "leida" ? -1 : i)).filter((i) => i >= 0);
+          const marcar = new Set(revisar);
+          textoJugadas.value = r.jugadas.map((j, i) => (i % 2 === 0 ? (i / 2 + 1) + ". " : "") + PlanillaOcr.sanEnEspanol(j.san) + (marcar.has(i) ? "?" : "")).join(" ");
+          const cuales = revisar.slice(0, 5).map(deQuien).join(", ");
           aviso.textContent = "Leí " + Math.ceil(r.jugadas.length / 2) + (r.jugadas.length > 2 ? " jugadas" : " jugada") + ". " +
-            (r.adivinadas.length === 1 ? "Una no se leía bien y va con «?», la más parecida que es legal (" + cuales + "): compárala con tu planilla. "
-              : r.adivinadas.length ? r.adivinadas.length + " no se leían bien y van con «?», las más parecidas que son legales (" + cuales + (r.adivinadas.length > 5 ? "…" : "") + "): compáralas con tu planilla. "
+            (revisar.length === 1 ? "Una no se leía tal cual y va con «?» (" + cuales + "): compárala con tu planilla. "
+              : revisar.length ? revisar.length + " no se leían tal cual y van con «?» (" + cuales + (revisar.length > 5 ? "…" : "") + "): compáralas con tu planilla. "
               : "") +
+            ilegible +
             "Revisa que estén todas y que coincidan con tu planilla antes de guardar.";
           textoJugadas.focus();
         }

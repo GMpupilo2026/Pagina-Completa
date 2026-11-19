@@ -1,0 +1,31 @@
+{
+  "numero": 6,
+  "fecha_original": "octubre de 2012",
+  "titulo_presentacion": "Editorial",
+  "temas": [
+    {"titulo": "Criterios arbitrales: firmeza o prepotencia", "desc": "Psicología del deporte · arts. 11.9, 11.10 y 12.9"},
+    {"titulo": "La convocatoria (bases de competencia)", "desc": "Arts. 6.7.1, 9.1.1, 11.3.2 · C.07 · C.04.2 · Rating art. 0.2"},
+    {"titulo": "De las Leyes «2013» a las vigentes", "desc": "Qué cambió en 2014, 2017, 2018 y 2023, con artículos"},
+    {"titulo": "Normas de Árbitro FIDE en rápidas y relámpago", "desc": "B.06.1 · art. 3.9.2 y cambios de 2026"},
+    {"titulo": "Guías rápidas de Swiss Manager (2.ª parte)", "desc": "Guías 11 a 20 · TRF y listas de rating"}
+  ],
+  "presentacion": "<div class=\"cols\"><p>Hola a todos nuevamente. En los últimos meses se han dado muchos cambios en las reglamentaciones de la FIDE, después del Congreso General y de las reuniones de las comisiones, y estamos preparando las traducciones de las resoluciones para que estén al día con las novedades.</p><p>En este número publicamos la versión oficial de las Leyes del Ajedrez de la FIDE aprobadas en el Congreso de Estambul. Nuestra colaboradora, la psicóloga Paula Man Reich, nos escribe un interesante artículo sobre la delgada línea entre la prepotencia y la firmeza de un árbitro. Hemos preparado también un artículo sobre el diseño de una convocatoria y una nueva entrega de las guías rápidas de Swiss Manager.</p><p>Espero que disfruten esta edición.</p><p style=\"text-align:left\"><b>Santiago García Ramos</b><br>Árbitro Internacional</p></div><p class=\"small\">Nota de la revisión: el editorial anunciaba que esas Leyes regirían desde el 1 de julio de 2013. No llegaron a regir: la FIDE aplicó otra versión desde el 1 de julio de 2014. Por eso en esta edición el texto en inglés se sustituye por un artículo que explica qué cambió desde entonces y qué dice hoy la norma.</p>",
+  "cambios": [
+    ["Leyes del Ajedrez «2013»", "Texto completo en inglés de las Leyes de Estambul 2012, «en vigor desde el 1-jul-2013».", "No se reproduce: ese texto <b>nunca rigió</b> (se aplicó la versión de Tallin desde el 1-jul-2014). Se reemplaza por un artículo con los cambios de 2014, 2017, 2018 y 2023 y lo que dicen hoy las Leyes (aplicadas desde el 1-ene-2023), con artículos."],
+    ["Jugada ilegal", "Art. 7.5.b: 2 minutos por cada una de las dos primeras; pérdida a la tercera.", "<b>Art. 7.5.5</b>: 2 minutos a la primera, pérdida a la <b>segunda</b>; pulsar sin mover (<b>7.5.3</b>) y mover con dos manos (<b>7.5.4</b>) cuentan como ilegales. En rápidas y relámpago, 1 minuto (<b>A.3</b>) y <b>A.5.2</b> sin supervisión completa."],
+    ["Numeración", "Art. 10 final a ritmo rápido, 11 puntos, 12 conducta, 13 árbitro; apéndices D a H.", "Art. 10 puntos, <b>11</b> conducta, <b>12</b> árbitro; Pautas I (aplazadas), II (Ajedrez960) y III (finales sin incremento); Apéndice D, ciegos."],
+    ["Teléfonos", "Art. 12.3.b: permitido apagado con permiso del árbitro.", "<b>Art. 11.3.2</b>: prohibido cualquier dispositivo no aprobado; solo apagado en el bolso si las bases lo permiten (<b>11.3.2.1</b>); llevarlo encima = pérdida (<b>11.3.2.2</b>)."],
+    ["Tablas y abandono", "Solo reclamación por triple repetición y 50 jugadas.", "Tablas automáticas: quíntuple repetición y 75 jugadas (<b>9.6.1-9.6.2</b>); abandonar cuando el rival no puede dar mate = tablas (<b>5.1.2</b>, novedad de 2023)."],
+    ["Convocatoria: técnica", "Desempates «Progresivo, Progresivo con cortes, Buchholz total, I y II»; «emparejamientos inapelables»; sin tiempo de espera normado.", "Nombres del <b>C.07 (2026)</b>: PS, BH, BH-C1, SB (arts. 7.5, 8.1, 9.1, 14.1), lista publicada antes del inicio (4.1.1); cambios de emparejamiento según <b>C.04.2 art. 4.4</b>; tiempo de espera en las bases (<b>art. 6.7.1</b>); registro para rating 3 o 30 días antes (<b>B.02 art. 0.2</b>)."],
+    ["Convocatoria: premios", "Puestos 9.º y 10.º rotulados «7.º» y «8.º»; categoría «menores de 10» que en premios era «menores de 12».", "<b>Fe de erratas.</b> Se señala el error y se omiten los montos y premios de 2012; se recomienda indicar cómo se reparten los premios entre empatados (C.07 art. 2.1)."],
+    ["Normas de árbitro en rápidas", "Una norma de AF por torneo rápido o relámpago de 30 jugadores y 9 rondas.", "Sigue vigente (<b>B.06.1 art. 3.9.2</b>: una por solicitud, 30 jugadores con rating, 9 rondas) y se suman los cambios del 1-mar-2026 (arts. 2.4, 2.10, 3.12, 5.4.3)."],
+    ["Seminarios de árbitros", "Recomendación de seminarios de actualización cada 4 años.", "Se aclara que los títulos son vitalicios (<b>B.06.1 art. 1.3</b>) y se remite a B.06.3 para la actividad de los árbitros."],
+    ["Swiss Manager y planillas", "Formato «Krause»; DGT contra Monroi.", "Formato <b>TRF</b> (TRF16 y especificación TRF-2026); planilla electrónica certificada (<b>art. 8.1.1.2</b>) y certificación de equipos (C.02, 2026). Rutas marcadas para comprobar en cada versión."]
+  ],
+  "directorio": [
+    ["Director (edición original)", "Santiago García Ramos · Árbitro Internacional"],
+    ["Revisión (edición original)", "Ignacio Córdoba Navarro · Periodista"],
+    ["Diseño (edición original)", "Ángel Antonio Espino · Diseñador gráfico"],
+    ["Colaboradora (edición original)", "Paula Man Reich · Psicóloga del deporte"]
+  ]
+}

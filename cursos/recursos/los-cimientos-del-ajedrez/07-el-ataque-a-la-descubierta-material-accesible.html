@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,28 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Una de tus piezas tapa una línea importante: piensa qué pasa si se aparta. Juegan las negras; el rival acaba de jugar alfil david 3.</a></li>
+        <li><a href="#posicion-2">Posición 2: Una de tus piezas tapa una línea importante: piensa qué pasa si se aparta. Juegan las blancas; el rival acaba de jugar … rey captura felix 8.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>En un ataque a la descubierta hay dos piezas en línea: una de largo alcance detrás, que puede ser alfil, torre o dama, y otra delante que le tapa el camino. Cuando la pieza de delante se mueve, la de atrás queda atacando de golpe. La fuerza está en que la pieza que se mueve queda libre para hacer lo que quiera: capturar, amenazar otra pieza o dar jaque. El rival recibe dos ataques en una sola jugada y normalmente solo puede responder a uno.</p>
 <p>Para encontrarlo, mira las líneas que salen de tus piezas de largo alcance y fíjate si alguna pieza tuya las tapa. Si al otro lado de esa línea hay algo valioso del rival, como la dama, una torre o el rey, tienes una descubierta preparada. La forma más potente es el jaque a la descubierta: el rival está obligado a atender el jaque y la pieza que se movió captura lo que quiera en la jugada siguiente.</p>
@@ -65,7 +90,7 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>La iniciativa</dt>
   <dd>Tenerla es obligar: el rival contesta a lo que tú haces en vez de hacer lo suyo. No es material y no dura para siempre: o se convierte en algo o se pierde.</dd>
   <dd><strong>El error de siempre:</strong> Soltarla por comer un peón. Perder dos tiempos por un peón devuelve el turno al rival justo cuando estaba obligado, y la ventaja se desarma.</dd>
@@ -73,36 +98,104 @@
   <dt>El jaque descubierto</dt>
   <dd>Una pieza se quita del medio y deja que otra, detrás, dé el jaque. La que se movió queda libre para hacer cualquier cosa, porque el rival está obligado a atender el jaque.</dd>
   <dd><strong>El error de siempre:</strong> Usarlo para dar un jaque cualquiera. El descubierto vale por lo que hace la pieza que se va: si se va a una casilla donde no captura ni amenaza nada, se desperdició la jugada más fuerte del tablero.</dd>
-  <dd><strong>Para verlo:</strong> Torre blanca en e1, alfil blanco en e5, rey negro en e8. El alfil se lleva un peón en b8 con jaque de la torre: el negro tiene que atender el jaque y el alfil se queda con lo que comió.</dd>
+  <dd><strong>Para verlo:</strong> Torre blanca en eva 1, alfil blanco en eva 5, rey negro en eva 8. El alfil se lleva un peón en bella 8 con jaque de la torre: el negro tiene que atender el jaque y el alfil se queda con lo que comió.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Una de tus piezas tapa una línea importante: piensa qué pasa si se aparta. Juegan las negras; el rival acaba de jugar alfil david 3.</h3>
+  <h3 id="posicion-1">Posición 1 de 2: Una de tus piezas tapa una línea importante: piensa qué pasa si se aparta. Juegan las negras; el rival acaba de jugar alfil david 3.</h3>
   
-  <p>Piezas blancas: rey en e1; dama en c2; torres en a1, h1; alfiles en d3, g5; caballos en c3, f3; peones en a2, b2, c4, d4, e3, f2, g2, h2.</p>
-  <p>Piezas negras: rey en e8; dama en a5; torres en a8, h8; alfiles en c8, f8; caballos en d7, e4; peones en a7, b7, c6, d5, e6, f7, g7, h7.</p>
+  <h4>Piezas blancas: 16</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en cesar 2.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en david 3.</li>
+    <li>Alfil en gustav 5.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Caballo en felix 3.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 4.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en eva 3.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 16</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Dama en anna 5.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Alfil en felix 8.</li>
+    <li>Caballo en david 7.</li>
+    <li>Caballo en eva 4.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 6.</li>
+    <li>Peón en david 5.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 8… caballo captura gustav 5, 9. caballo captura gustav 5, david captura cesar 4, 10. alfil captura cesar 4, dama captura gustav 5</p>
+  <h4>La línea: 5 jugadas</h4>
+  <ul>
+    <li>8. Negras: caballo captura gustav 5.</li>
+    <li>9. Blancas: caballo captura gustav 5.</li>
+    <li>9. Negras: david captura cesar 4.</li>
+    <li>10. Blancas: alfil captura cesar 4.</li>
+    <li>10. Negras: dama captura gustav 5.</li>
+  </ul>
   <p>Resultado: Ganan negras</p>
-  <p>Karff–Graf-Stevenson, Moscú 1955. 8… caballo captura gustav 5, 9. caballo captura gustav 5, david captura cesar 4, 10. alfil captura cesar 4, dama captura gustav 5. Ataque descubierto en la quinta fila que gana el caballo de g5. Fíjate en que el golpe sale de dos ataques a la vez: el de la pieza que se mueve y el de la que queda destapada. (Partida Karff–Graf-Stevenson, Moscú 1955. Stockfish 16 a profundidad 18: caballo captura gustav 5 es la mejor (+3,4).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1b1kb1r/pp1n1ppp/2p1p3/q2p2B1/2PPn3/2NBPN2/PPQ2PPP/R3K2R b KQkq - 4 8</p>
+  <p>Karff–Graf-Stevenson, Moscú 1955. 8… caballo captura gustav 5, 9. caballo captura gustav 5, david captura cesar 4, 10. alfil captura cesar 4, dama captura gustav 5. Ataque descubierto en la quinta fila que gana el caballo de gustav 5. Fíjate en que el golpe sale de dos ataques a la vez: el de la pieza que se mueve y el de la que queda destapada. (Partida Karff–Graf-Stevenson, Moscú 1955. Stockfish 16 a profundidad 18: caballo captura gustav 5 es la mejor (+3,4).)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1b1kb1r/pp1n1ppp/2p1p3/q2p2B1/2PPn3/2NBPN2/PPQ2PPP/R3K2R b KQkq - 4 8</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Una de tus piezas tapa una línea importante: piensa qué pasa si se aparta. Juegan las blancas; el rival acaba de jugar … rey captura felix 8.</h3>
+  <h3 id="posicion-2">Posición 2 de 2: Una de tus piezas tapa una línea importante: piensa qué pasa si se aparta. Juegan las blancas; el rival acaba de jugar … rey captura felix 8.</h3>
   
-  <p>Piezas blancas: rey en g1; dama en e4; torre en e3; alfil en e5; peones en a2, b3, d5, g2, h2.</p>
-  <p>Piezas negras: rey en f8; dama en e7; torres en c2, c5; alfil en b7; peones en a7, b6.</p>
+  <h4>Piezas blancas: 9</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en eva 4.</li>
+    <li>Torre en eva 3.</li>
+    <li>Alfil en eva 5.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 3.</li>
+    <li>Peón en david 5.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 7</h4>
+  <ul>
+    <li>Rey en felix 8.</li>
+    <li>Dama en eva 7.</li>
+    <li>Torre en cesar 2.</li>
+    <li>Torre en cesar 5.</li>
+    <li>Alfil en bella 7.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 6.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 32. alfil gustav 7 jaque, rey gustav 8, 33. dama captura eva 7</p>
+  <h4>La línea: 3 jugadas</h4>
+  <ul>
+    <li>32. Blancas: alfil gustav 7 jaque.</li>
+    <li>32. Negras: rey gustav 8.</li>
+    <li>33. Blancas: dama captura eva 7.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>Zukertort–Blackburne, Londres 1883. 32. alfil gustav 7 jaque, rey gustav 8, 33. dama captura eva 7. Jaque descubierto que gana la dama. Fíjate en que el golpe sale de dos ataques a la vez: el de la pieza que se mueve y el de la que queda destapada. (Partida Zukertort–Blackburne, Londres 1883. Stockfish 16 a profundidad 18: alfil gustav 7 jaque es la mejor (mate en 15).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 5k2/pb2q3/1p6/2rPB3/4Q3/1P2R3/P1r3PP/6K1 w - - 0 32</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 5k2/pb2q3/1p6/2rPB3/4Q3/1P2R3/P1r3PP/6K1 w - - 0 32</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
@@ -112,7 +205,7 @@
   <li>En diez ejercicios de descubierto, anota primero a dónde va la pieza que se mueve y solo después mira la solución.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -165,7 +258,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

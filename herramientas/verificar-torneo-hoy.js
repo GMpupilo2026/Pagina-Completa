@@ -54,8 +54,10 @@ ok("el calendario trae las cinco rondas, el almuerzo y la clausura, el domingo 2
   ["Ronda 3", "2026-11-22T13:00", 120, "3"], ["Ronda 4", "2026-11-22T15:00", 120, "4"], ["Ronda 5", "2026-11-22T17:00", 120, "5"],
   ["Clausura", "2026-11-22T19:30", 60, ""]]), JSON.stringify(filas));
 ok("una sola fila es la primera ronda", (html.match(/data-primera-ronda/g) || []).length === 1);
-ok("sin chess-results: ni el enlace, ni el buscador, ni sus scripts", !/chess-results\.com|id="buscador"|centroamericano-vivo\.js/.test(html));
-ok("«Resultados U12» y «Resultados U20» van «Pronto» (sin enlace, con tabindex) hasta que exista su torneo", ["u12", "u20"].every((k) => new RegExp('<div id="ficha-resultados-' + k + '" tabindex="0" aria-disabled="true"').test(html)));
+// Desde el 18/11/2026 los resultados son como en el Centroamericano, con los
+// datos de Pareo Integral (verificar-jdn-pz-resultados.js los prueba).
+ok("sin chess-results: ni el enlace ni sus datos (los resultados, de Pareo Integral)", !/chess-results\.com/.test(html) && /js\/torneo-pareo-datos\.js/.test(html));
+ok("«Resultados U12» y «Resultados U20» abren su ventana de la página", ["u12", "u20"].every((k) => new RegExp('<a href="#resultados-' + k + '" id="ficha-resultados-' + k + '"').test(html)));
 ok("nada lleva a la lista de torneos de Pareo (trae los de otros)", !html.includes('href="torneos-pareo.html"'));
 ok("la ficha «Inscribirme» abre el formulario", /<a href="#inscribirme" id="ficha-inscribirme"/.test(html) && html.includes('<dialog id="inscribirme"'));
 const locales = [...html.matchAll(/(?:href|src)="((?:documentos|img)\/[^"#?]+)"/g)].map((m) => m[1]);

@@ -79,8 +79,14 @@
                 <p id="clase-estado-texto" class="text-sm font-semibold" aria-live="polite"></p>
                 <div class="flex items-center gap-2 flex-wrap">
                     <button type="button" id="clase-abrir-btn" class="hidden bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Abrir la clase</button>
+                    <!-- Quién entra a la clase en curso (clase_asignados, js/clase-asignados.js). -->
+                    <button type="button" id="clase-asignados-btn" aria-expanded="false" aria-controls="clase-asignar" class="hidden bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">👥 </span>Quién entra</button>
                     <button type="button" id="clase-cerrar-btn" class="hidden bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cerrar la clase</button>
                 </div>
+                <!-- ¿Quién entra? Se pide al abrir la clase y se cambia con la clase en
+                     curso: solo entran los de la lista (ver «A la clase entran solo los
+                     asignados»). -->
+                <div id="clase-asignar" hidden class="w-full"></div>
                 <!-- Ponerle nombre y dejar la nota se hace acá mismo al cerrar:
                      mandarlo al panel a escribirlas es mandarlo a otra página
                      justo cuando acaba de terminar y se va. -->
@@ -123,6 +129,7 @@
                 <!-- Lo que dijo la pregunta de salida de la clase anterior: se recuerda al empezar. -->
                 <p id="salida-pasada" hidden class="w-full text-sm text-brand-700 dark:text-brand-200"></p>
             </div>
+
 
             <div class="proyector-contenido grid lg:grid-cols-[1fr_320px] gap-8 items-start">
                 <div class="proyector-columna">
@@ -561,6 +568,67 @@
                             <button id="pensar-elegir-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Elegir a alguien para responder</button>
                         </div>
                     </div>
+
+                    <!-- La llamada de voz de la clase (js/clase-llamada.js): en la misma página que
+                         el tablero, para no saltar entre pestañas con el lector de pantalla. La
+                         palabra es el turno de la clase («Darle la palabra»). Ver «La llamada de voz
+                         de la clase» en docs/decisiones/clase-en-vivo.md.
+                         Va DEBAJO del tablero, no arriba: en el celular el tablero tiene que entrar
+                         entero sin bajar (verificar-clase-movil.js), y los atajos sirven desde
+                         cualquier lado. Después del turno y del tiempo para pensar, que van pegados. -->
+                    <section id="llamada" hidden aria-labelledby="llamada-titulo" class="max-w-[560px] mx-auto mt-3 rounded-xl px-5 py-3 bg-brand-100 dark:bg-brand-900">
+                        <h2 id="llamada-titulo" class="text-sm font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🎧 </span>Llamada de la clase</h2>
+                        <!-- Mientras se graba lo ven todos, escrito y no solo con el punto rojo
+                             (game_state.llamada_grabando; ver «La grabación de la llamada»). -->
+                        <p id="llamada-grabando" hidden class="mt-1 text-sm font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🔴 </span>Se está grabando la clase</p>
+                        <!-- El micrófono, que es lo principal, a todo lo ancho; debajo «Quién está» y «Quién habla»
+                             parejos, y «Salir» aparte. Así ningún texto se parte en el celular. -->
+                        <div class="mt-2 grid grid-cols-2 gap-2">
+                            <button id="llamada-entrar" type="button" class="col-span-2 w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🎧 Entrar a la llamada</button>
+                            <button id="llamada-mic" type="button" hidden aria-pressed="false" class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🔇 Micrófono apagado</button>
+                            <!-- Solo el profe: quién puede hablar (game_state.llamada_modo). El elegido
+                                 lleva aria-pressed y además su texto lo dice («✓»), no solo el color. -->
+                            <div id="llamada-modos" hidden role="group" aria-labelledby="llamada-modos-titulo" class="col-span-2">
+                                <p id="llamada-modos-titulo" class="text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Quién puede hablar</p>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button type="button" data-modo="turno" aria-pressed="true" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-2 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Con turno</button>
+                                    <button type="button" data-modo="libre" aria-pressed="false" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-2 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Todos</button>
+                                    <button type="button" data-modo="bloqueada" aria-pressed="false" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-2 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Nadie</button>
+                                </div>
+                            </div>
+                            <!-- Solo el profe: pausar la grabación o volver a grabar. -->
+                            <button id="llamada-grabar" type="button" hidden aria-pressed="true" class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⏸ Pausar la grabación</button>
+                            <button id="llamada-quien" type="button" hidden class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quién está</button>
+                            <button id="llamada-habla" type="button" hidden class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quién habla</button>
+                            <button id="llamada-salir" type="button" hidden class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Salir de la llamada</button>
+                        </div>
+                        <!-- «Mantener para hablar»: el micrófono suena solo mientras se aprieta (botón o Alt+P). -->
+                        <label id="llamada-ptt-caja" hidden class="mt-2 flex items-start gap-2 text-sm text-brand-800 dark:text-brand-100">
+                            <input id="llamada-ptt" type="checkbox" class="mt-1 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <span>Mantener para hablar: el micrófono suena solo mientras mantienes apretado el botón del micrófono o <kbd>Alt</kbd>+<kbd>P</kbd>, y al soltar se apaga.</span>
+                        </label>
+                        <!-- Dos volúmenes aparte: el de la llamada y el de la voz que dice las jugadas. -->
+                        <div id="llamada-volumenes" hidden class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm text-brand-800 dark:text-brand-100">
+                            <label class="flex flex-col gap-1">
+                                <span>Volumen de la llamada: <output id="llamada-vol-llamada-valor">100 %</output></span>
+                                <input id="llamada-vol-llamada" type="range" min="0" max="100" step="10" value="100" class="w-full accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </label>
+                            <label class="flex flex-col gap-1">
+                                <span>Volumen de la voz de las jugadas: <output id="llamada-vol-voz-valor">100 %</output></span>
+                                <input id="llamada-vol-voz" type="range" min="0" max="100" step="10" value="100" class="w-full accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </label>
+                        </div>
+                        <p id="llamada-estado" role="status" aria-live="polite" class="mt-2 text-sm font-semibold text-brand-800 dark:text-brand-100"></p>
+                        <!-- Quiénes están, un renglón por persona y siempre en el mismo orden (tú, el
+                             profe, los demás por nombre). No es región viva: lo que cambia se anuncia
+                             en #llamada-estado, y «Quién está» lo dice entero. -->
+                        <div id="llamada-gente" hidden class="mt-2">
+                            <h3 id="llamada-gente-titulo" class="text-xs font-semibold text-brand-600 dark:text-brand-300"></h3>
+                            <ul id="llamada-lista" aria-labelledby="llamada-gente-titulo" class="mt-1 divide-y divide-brand-100 dark:divide-brand-700 rounded-lg bg-white dark:bg-brand-950 text-sm"></ul>
+                        </div>
+                        <p class="mt-2 text-xs text-brand-600 dark:text-brand-300">Atajos: <kbd>Alt</kbd>+<kbd>M</kbd> micrófono, <span id="llamada-atajo-mano"><kbd>Alt</kbd>+<kbd>Y</kbd> levantar la mano, </span><kbd>Alt</kbd>+<kbd>Q</kbd> quién está, <kbd>Alt</kbd>+<kbd>W</kbd> quién habla. Usa audífonos para que no haya eco.</p>
+                        <div id="llamada-audios" hidden></div>
+                    </section>
                     <p id="pensar-voz" class="sr-only" aria-live="polite"></p>
 
                     <!-- Cómo abrir el control remoto: la dirección, para escribirla o copiarla en el celular. -->
@@ -1130,6 +1198,24 @@
                             <button id="engine-retry-btn" type="button" class="hidden mt-2 text-xs font-semibold text-accent-700 dark:text-accent-400 hover:underline">🔁 Reintentar</button>
                         </div>
                     </div>
+
+                    <!-- Explorador de aperturas (solo profesor, js/clase-explorador.js): qué
+                         jugaron los maestros en la posición del tablero. Junto al motor
+                         porque se consulta igual que él; arranca apagado porque cada
+                         posición es un pedido a Lichess. Ver «El explorador de aperturas
+                         en la clase» en docs/decisiones/clase-en-vivo.md. -->
+                    <section id="explorador-panel" aria-labelledby="explorador-titulo" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                        <div class="flex items-center justify-between mb-2 gap-2">
+                            <h2 id="explorador-titulo" class="font-serif font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📚</span> Aperturas de maestros</h2>
+                            <button id="explorador-toggle-btn" type="button" aria-pressed="false" aria-controls="explorador-salida" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Activar</button>
+                        </div>
+                        <p id="explorador-estado" role="status" aria-live="polite" class="text-xs text-brand-450 dark:text-brand-350">Solo lo ves tú. Muestra qué jugaron los maestros en la posición del tablero.</p>
+                        <div id="explorador-salida" hidden class="mt-3">
+                            <p id="explorador-apertura" class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-2 empty:hidden"></p>
+                            <ol id="explorador-jugadas" class="space-y-1.5 list-none p-0 m-0" aria-label="Jugadas de los maestros en esta posición"></ol>
+                            <p class="mt-2 text-[0.6875rem] text-brand-450 dark:text-brand-350">Fuente: explorador de Lichess, partidas de maestros.</p>
+                        </div>
+                    </section>
 
                     <!-- Alumnos conectados (solo profesor): siempre a la vista, no es una pestaña.
                          Es a quien se le está dando la clase: quién llegó, quién pide la
@@ -1852,9 +1938,11 @@
     <script src="js/tipos-catalogo.js"></script>
     <script src="js/tipos-reglas.js"></script>
     <script src="js/pdf-diagramas.js"></script>
+    <script src="js/clase-explorador.js"></script>
     <script src="js/avisos.js"></script>
     <script src="js/main.js"></script>
     <script src="js/clase-elegida.js"></script>
+    <script src="js/clase-asignados.js"></script>
     <!-- Partes de la clase en vivo con vida propia: van ANTES que sesion.js (ver «sesion.js en partes»). -->
     <script src="js/clase-votacion.js"></script>
     <script src="js/clase-mapa.js"></script>
@@ -1873,6 +1961,7 @@
     <script src="js/clase-qr.js"></script>
     <script src="js/clase-invitados.js"></script>
     <script src="js/clase-sacar.js"></script>
+    <script src="js/clase-llamada.js"></script>
     <script src="js/clase-herramientas-grandes.js"></script>
     <script src="js/clase-buscar.js"></script>
     <script src="js/clase-presentacion.js"></script>

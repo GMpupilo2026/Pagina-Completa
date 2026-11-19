@@ -118,6 +118,61 @@ function pruebaBase() {
   cierto("asesores_grabaciones() le da todo a quien administra y a cualquier otro solo lo suyo, con coalesce",
     /function\s+public\.asesores_grabaciones[\s\S]{0,900}coalesce\(public\.soy_admin\(\)\s+or\s+ct\.persona_id\s*=\s*\(select\s+auth\.uid\(\)\),\s*false\)/i.test(sql));
 
+  console.log("\n=== Una sesión en varias partes (supabase/migraciones) ===");
+  // La última definición de cada función es la que vale.
+  const ultima = (f) => {
+    const todas = [...sql.matchAll(new RegExp("create\\s+(?:or\\s+replace\\s+)?function\\s+public\\." + f + "\\(", "gi"))];
+    return todas.length ? sql.slice(todas[todas.length - 1].index, todas[todas.length - 1].index + 6000) : "";
+  };
+  cierto("la grabación lleva su parte, de 1 a 9 y 1 por omisión (lo de antes queda como la parte 1)",
+    /alter\s+table\s+public\.grabaciones_clase\s+add\s+column\s+parte\s+smallint\s+not\s+null\s+default\s+1\s+check\s+\(parte\s+between\s+1\s+and\s+9\)/i.test(sql));
+  cierto("la llave es (horario, fecha, parte), también en lo que vio y en lo que contestó",
+    /grabaciones_clase\s+add\s+primary\s+key\s+\(horario_id,\s*fecha,\s*parte\)/i.test(sql)
+    && /grabaciones_vistas\s+add\s+primary\s+key\s+\(horario_id,\s*fecha,\s*parte,\s*persona_id\)/i.test(sql)
+    && /grabacion_respuestas\s+add\s+primary\s+key\s+\(horario_id,\s*fecha,\s*parte,\s*persona_id,\s*n\)/i.test(sql));
+  cierto("y lo que vio y contestó se va con SU parte (llave foránea de tres columnas)",
+    ["grabaciones_vistas", "grabacion_respuestas"].every((t) => new RegExp("alter\\s+table\\s+public\\." + t + "\\s+add\\s+foreign\\s+key\\s+\\(horario_id,\\s*fecha,\\s*parte\\)\\s+references\\s+public\\.grabaciones_clase\\(horario_id,\\s*fecha,\\s*parte\\)\\s+on\\s+delete\\s+cascade", "i").test(sql)));
+  const APARTADAS2 = ["mis_grabaciones()", "grabacion_clase_poner(uuid, date, text, text, integer)",
+    "grabacion_vista_anotar(uuid, date, jsonb)", "grabacion_pregunta_responder(uuid, date, integer, integer)", "asesores_grabaciones(text)", "asesores_preguntas_video(text)"];
+  cierto("las seis de antes quedaron apartadas y sin permiso para nadie",
+    APARTADAS2.every((f) => {
+      const nombre = f.slice(0, f.indexOf("(")), args = f.slice(f.indexOf("("));
+      const esc = (s) => s.replace(/[()]/g, "\\$&").replace(/,\s*/g, ",\\s*");
+      return new RegExp("revoke\\s+execute\\s+on\\s+function\\s+public\\." + nombre + "_apartada2" + esc(args) + "\\s+from\\s+public,\\s*anon,\\s*authenticated", "i").test(sql);
+    }));
+  cierto("las nuevas piden la parte (1 si no viene) y se les quita el execute a public y anon",
+    [["grabacion_clase_poner", "uuid, date, text, text, integer, integer"], ["grabacion_vista_anotar", "uuid, date, jsonb, integer"],
+      ["grabacion_pregunta_responder", "uuid, date, integer, integer, integer"]].every(([f, args]) =>
+      /p_parte\s+integer\s+default\s+1\)/i.test(ultima(f).slice(0, 300))
+      && new RegExp("revoke\\s+execute\\s+on\\s+function\\s+public\\." + f + "\\(" + args.replace(/,\s*/g, ",\\s*") + "\\)\\s+from\\s+public,\\s*anon", "i").test(sql)));
+  cierto("y siguen pidiendo permiso como antes, con coalesce",
+    /if\s+not\s+coalesce\(\s*public\.soy_admin\(\)\s+or\s+\(v_profesor\s+is\s+not\s+null\s+and\s+v_profesor\s+=\s+\(select\s+auth\.uid\(\)\)\)\s*,\s*false\s*\)/i.test(ultima("grabacion_clase_poner"))
+    && /if\s+not\s+coalesce\(v_yo\s+is\s+not\s+null\s+and\s+p_horario\s+in\s+\(select\s+interno\.horarios_del_alumno\(v_yo\)\),\s*false\)/i.test(ultima("grabacion_vista_anotar"))
+    && /coalesce\(v_yo\s+is\s+not\s+null\s+and\s+p_horario\s+in\s+\(select\s+interno\.horarios_del_alumno\(v_yo\)\),\s*false\)/i.test(ultima("grabacion_pregunta_responder"))
+    && ["asesores_grabaciones", "asesores_preguntas_video"].every((f) => /coalesce\(public\.soy_admin\(\)\s+or\s+ct\.persona_id\s*=\s*\(select\s+auth\.uid\(\)\),\s*false\)/i.test(ultima(f)))
+    && /interno\.horarios_del_alumno\(\(select\s+auth\.uid\(\)\)\)/i.test(ultima("mis_grabaciones")));
+  cierto("cada una busca SU parte, no la primera que encuentre",
+    /and\s+g\.parte\s*=\s*v_parte/i.test(ultima("grabacion_clase_poner"))
+    && /and\s+v\.parte\s*=\s*p_parte/i.test(ultima("grabacion_vista_anotar"))
+    && /and\s+g\.parte\s*=\s*p_parte/i.test(ultima("grabacion_pregunta_responder"))
+    && /v\.parte\s*=\s*gr\.parte/i.test(ultima("asesores_grabaciones"))
+    && /r\.parte\s*=\s*gr\.parte/i.test(ultima("asesores_preguntas_video"))
+    && /returns\s+table\([^)]*fecha\s+date,\s*parte\s+smallint/i.test(ultima("mis_grabaciones")));
+
+  console.log("\n=== Los tramos sin clase (supabase/migraciones) ===");
+  cierto("la grabación guarda sus tramos sin clase (vacío = todo es clase)",
+    /alter\s+table\s+public\.grabaciones_clase\s+add\s+column\s+sin_clase\s+int4multirange\s+not\s+null\s+default\s+'\{\}'/i.test(sql));
+  cierto("los pone solo quien administra o el profe de esa clase, con coalesce, y se le quita el execute a public y anon",
+    /if\s+not\s+coalesce\(\s*public\.soy_admin\(\)\s+or\s+\(v_profesor\s+is\s+not\s+null\s+and\s+v_profesor\s+=\s+\(select\s+auth\.uid\(\)\)\)\s*,\s*false\s*\)/i.test(ultima("grabacion_sin_clase_poner"))
+    && /revoke\s+execute\s+on\s+function\s+public\.grabacion_sin_clase_poner\(uuid,\s*date,\s*jsonb,\s*integer\)\s+from\s+public,\s*anon/i.test(sql));
+  cierto("mis_grabaciones() da lo visto de QUIEN PREGUNTA, sin lo que no es clase, y lo que le falta",
+    /v\.persona_id\s*=\s*\(select\s+auth\.uid\(\)\)/i.test(ultima("mis_grabaciones"))
+    && /interno\.segundos_utiles\(v\.vistos,\s*g\.sin_clase/i.test(ultima("mis_grabaciones"))
+    && /returns\s+table\([^)]*util_seg\s+integer,\s*visto_seg\s+integer,\s*sin_clase\s+jsonb,\s*faltan\s+jsonb\)/i.test(ultima("mis_grabaciones")));
+  cierto("la ficha Asesores, lo anotado y las horas del taller cuentan igual (lo visto útil)",
+    ["asesores_grabaciones", "grabacion_vista_anotar"].every((f) => /interno\.segundos_utiles\(v\.vistos,\s*g?r?\.sin_clase/i.test(ultima(f)))
+    && /interno\.segundos_utiles\(v\.vistos,\s*g\.sin_clase/i.test(sql.slice(sql.search(/create\s+or\s+replace\s+function\s+interno\.taller_horas_de\((?![\s\S]*create\s+or\s+replace\s+function\s+interno\.taller_horas_de\()/i))));
+
   console.log("\n=== Las páginas ===");
   const html = fs.readFileSync(path.join(RAIZ, "clases.html"), "utf8");
   const cal = html.search(/<section id="calendario-taller" hidden/);
@@ -138,6 +193,7 @@ function clienteFalso(cfg) {
 window.SUPABASE_URL = "https://falso.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-falsa";
 window.__rpc = [];
+window.__tablas = [];
 (function () {
   const CFG = ${JSON.stringify(cfg)};
   const TABLAS = CFG.tablas || {};
@@ -167,7 +223,7 @@ window.__rpc = [];
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
       signOut: () => Promise.resolve({}),
     },
-    from: (t) => b(TABLAS[t] || []),
+    from: (t) => { window.__tablas.push(t); return b(TABLAS[t] || []); },
     rpc: (n, args) => {
       window.__rpc.push({ n: n, args: args || null });
       if ((CFG.fallan || []).includes(n)) return b(null, "falló " + n);
@@ -221,7 +277,7 @@ function sesiones() {
 }
 
 const YO = "u-asesor";
-function cfg({ taller = true, tareas = [], fallan = [], abierta = false, videollamada = null, grabaciones, vistas, anotar, rechazan } = {}) {
+function cfg({ taller = true, tareas = [], fallan = [], abierta = false, videollamada = null, grabaciones, anotar, rechazan } = {}) {
   const c = {
     yo: YO,
     tablas: { profiles: [{ id: YO, full_name: "Asesora de prueba · Cartago", role: "alumno", is_admin: false, grupo: "MEP" }] },
@@ -236,7 +292,6 @@ function cfg({ taller = true, tareas = [], fallan = [], abierta = false, videoll
     fallan,
   };
   if (grabaciones) c.rpc.mis_grabaciones = grabaciones;
-  if (vistas) c.tablas.grabaciones_vistas = vistas;
   if (anotar !== undefined) c.rpc.grabacion_vista_anotar = anotar;
   if (rechazan) c.rechazan = rechazan;
   return c;
@@ -262,14 +317,15 @@ function contrasteEnPagina(sel) {
   return Math.round(((a + 0.05) / (b + 0.05)) * 100) / 100;
 }
 
-/* La grabación de la sesión que ya pasó (una fila de mis_grabaciones()) y una
-   con un id que no es de YouTube, que no se pinta. */
+/* La grabación de la sesión que ya pasó (una fila de mis_grabaciones(), con
+   lo que `extra` cambie: lo visto, los tramos sin clase…) y una con un id que
+   no es de YouTube, que no se pinta. */
 const VIDEO = "3FzX3ksWwro";
-function grabaciones() {
+function grabaciones(extra) {
   const ayer = diaCR(-DIA);
   return [
-    { horario_id: "h0", fecha: ayer, titulo: "<i>Sesión</i> II", modalidad: "en_linea", youtube_id: VIDEO, inicio: enCR(ayer, "08:00"), fin: enCR(ayer, "12:00"),
-      tema: "Encuadre y reglas básicas", duracion_seg: 11520 },
+    Object.assign({ horario_id: "h0", fecha: ayer, titulo: "<i>Sesión</i> II", modalidad: "en_linea", youtube_id: VIDEO, inicio: enCR(ayer, "08:00"), fin: enCR(ayer, "12:00"),
+      tema: "Encuadre y reglas básicas", duracion_seg: 11520 }, extra || {}),
     { horario_id: "hx", fecha: ayer, titulo: "Con un id roto", modalidad: "en_linea", youtube_id: "javascript:x", inicio: enCR(ayer, "08:00"), fin: enCR(ayer, "12:00") },
   ];
 }
@@ -379,10 +435,10 @@ async function pruebaGrabaciones(browser) {
   await page.click("[data-grabacion]");
   await page.waitForTimeout(300);
   const cine = await page.evaluate(() => {
-    const d = document.getElementById("grabacion-cine"), v = d && d.querySelector("iframe"), a = d && d.querySelector("#grabacion-cine-youtube");
+    const d = document.getElementById("grabacion-cine"), v = d && d.querySelector("iframe"), a = d && d.querySelector("#grabacion-cine-youtube, a[href*='youtu']");
     return { abierta: !!d && d.open && d.checkVisibility(), modal: !!d && d.matches(":modal"), titulo: d && document.getElementById("grabacion-cine-titulo").textContent,
       nombrada: d && d.getAttribute("aria-labelledby"), src: v && v.src, vtitulo: v && v.title, completa: v && v.allowFullscreen,
-      seVe: !!v && v.checkVisibility() && v.getBoundingClientRect().height > 250, afuera: a && [a.href, a.target, a.rel],
+      seVe: !!v && v.checkVisibility() && v.getBoundingClientRect().height > 250, afuera: !!a,
       foco: document.activeElement && document.activeElement.id };
   });
   igual("al tocarla se abre en grande, como ventana sobre la página", [cine.abierta, cine.modal, cine.nombrada], [true, true, "grabacion-cine-titulo"]);
@@ -391,7 +447,7 @@ async function pruebaGrabaciones(browser) {
     "https://www.youtube-nocookie.com/embed/" + VIDEO + "?rel=0&autoplay=1&enablejsapi=1&origin=" + encodeURIComponent(BASE));
   igual("con título para el lector de pantalla y pantalla completa", [cine.vtitulo, cine.completa], ["Grabación de la <i>Sesión</i> II", true]);
   igual("y se ve de verdad, grande", cine.seVe, true);
-  igual("«Abrir en YouTube» va aparte, en otra pestaña", cine.afuera, ["https://youtu.be/" + VIDEO, "_blank", "noopener noreferrer"]);
+  igual("no hay enlace para verla en YouTube (allá no se mide lo visto)", cine.afuera, false);
   igual("el foco queda en «Cerrar»", cine.foco, "grabacion-cine-cerrar");
   igual("ahora sí se pidió el video", page.__youtube.length, 1);
   await page.click("#grabacion-cine-cerrar");
@@ -418,7 +474,7 @@ async function pruebaGrabaciones(browser) {
   await page.evaluate(() => document.documentElement.classList.remove("dark"));
   await page.click("[data-grabacion]");
   await page.waitForTimeout(200);
-  const cineC = [await page.evaluate(contrasteEnPagina, "#grabacion-cine-titulo"), await page.evaluate(contrasteEnPagina, "#grabacion-cine-youtube")];
+  const cineC = [await page.evaluate(contrasteEnPagina, "#grabacion-cine-titulo"), await page.evaluate(contrasteEnPagina, "#grabacion-cine-cerrar")];
   cierto(`contraste del modo cine ≥ 4,5 (${cineC.join(", ")})`, cineC.every((c) => c >= 4.5));
   await page.keyboard.press("Escape");
 
@@ -519,17 +575,17 @@ async function esperarFin(page) {
 async function pruebaLoVisto(browser) {
   console.log("\n=== Cuánto vio de una grabación ===");
   const ayer = diaCR(-DIA);
-  // La suya (la mitad) y, después, la de otra persona, que no tiene que salir.
-  const vistas = [{ persona_id: YO, horario_id: "h0", fecha: ayer, visto_seg: 5760 },
-    { persona_id: "u-otra", horario_id: "h0", fecha: ayer, visto_seg: 11520 }];
-  const { page, errores, cerrar } = await abrirConYoutube(browser, cfg({ grabaciones: grabaciones(), vistas, anotar: 5800 }), REPRODUCTOR);
+  // La mitad: lo trae la misma fila de mis_grabaciones() (la base cuenta solo lo de quien pregunta).
+  const { page, errores, cerrar } = await abrirConYoutube(browser, cfg({ grabaciones: grabaciones({ visto_seg: 5760 }), anotar: 5800 }), REPRODUCTOR);
   const tarjeta = () => page.$eval("[data-grabacion]", (b) => {
     const t = b.querySelector("[data-visto]"), barra = b.querySelector("[data-visto-barra]");
     return { texto: t && t.checkVisibility() ? t.textContent : "no se ve", barra: barra && barra.checkVisibility() ? barra.firstElementChild.style.width : "no se ve",
       adorno: barra && barra.getAttribute("aria-hidden") };
   });
   const antes = await tarjeta();
-  igual("la tarjeta dice cuánto lleva visto (lo suyo, no lo de otra persona)", antes.texto, "Viste 1 h 36 min (50 %)");
+  igual("la tarjeta dice cuánto lleva visto", antes.texto, "Viste 1 h 36 min (50 %)");
+  igual("y no lo pide aparte a grabaciones_vistas (lo trae mis_grabaciones(), sin los tramos sin clase)",
+    await page.evaluate(() => window.__tablas.includes("grabaciones_vistas")), false);
   igual("con la barra al pie de la miniatura, de adorno", [antes.barra, antes.adorno], ["50%", "true"]);
   igual("y el lector de pantalla lo oye con la tarjeta",
     await page.getByRole("button", { name: /^Ver la grabación: .* · 3 h 12 min Viste 1 h 36 min \(50 %\)$/ }).count(), 1);
@@ -600,9 +656,121 @@ async function pruebaLoVisto(browser) {
   await rechazo.cerrar();
 
   console.log("\n=== La que vio completa ===");
-  const completa = await abrir(browser, cfg({ grabaciones: grabaciones(), vistas: [{ persona_id: YO, horario_id: "h0", fecha: ayer, visto_seg: 11000 }] }));
+  const completa = await abrir(browser, cfg({ grabaciones: grabaciones({ visto_seg: 11000 }) }));
   igual("dice que la vio completa", await completa.page.$eval("[data-grabacion] [data-visto]", (t) => t.textContent).catch(() => "no se ve"), "✓ La viste completa");
   await completa.cerrar();
+}
+
+/* Los tramos sin clase (recesos, silencios) no se le exigen a nadie: el
+   porcentaje sale de lo que hay que ver (util_seg), en un tramo sin clase
+   aparece «Saltar», y la ventana dice lo que le falta ver, con un botón para
+   ir a cada tramo; al abrir, el video sigue donde le falta. */
+async function pruebaSinClase(browser) {
+  console.log("\n=== Lo que no es clase no se le exige a nadie ===");
+  // 11520 s de video, 600 sin clase: hay que ver 10920. Vio 5000 (46 %; del video entero serían 43 %).
+  const fila = { visto_seg: 5000, util_seg: 10920, sin_clase: [[2, 12], [5000, 5594]], faltan: [[100, 400], [700, 720]] };
+  // Corre de 0 a 5 (dentro del primer tramo sin clase) y pausa.
+  const EN_RECESO = reproductorQue("corre(0, 5);\npasos.push({ playerState: 2, currentTime: 5 });");
+  const { page, errores, cerrar } = await abrirConYoutube(browser, cfg({ grabaciones: grabaciones(fila), anotar: 5000 }), EN_RECESO);
+  igual("el porcentaje es de lo que hay que ver, no del video entero", await page.$eval("[data-grabacion] [data-visto]", (t) => t.textContent), "Viste 1 h 23 min (46 %)");
+  await page.click("[data-grabacion]");
+  igual("al abrir, el video sigue donde le falta (el primer tramo que no vio)",
+    await page.$eval("#grabacion-cine-video iframe", (f) => new URL(f.src).searchParams.get("start")), "100");
+  const faltan = await page.$$eval("#grabacion-cine-faltan button", (bs) => bs.map((b) => [b.textContent, b.getAttribute("aria-label")]));
+  igual("la ventana dice lo que le falta ver, un botón por tramo", faltan,
+    [["1:40 a 6:40", "Ir a 1:40: falta de 1:40 a 6:40"], ["11:40 a 12:00", "Ir a 11:40: falta de 11:40 a 12:00"]]);
+  cierto("y avisa que los recesos y silencios no cuentan",
+    /^Te falta ver .+ \(los recesos y silencios no cuentan\):$/.test(await page.$eval("#grabacion-cine-faltan p", (p) => p.textContent)));
+  await esperarFin(page);
+  await page.waitForTimeout(200);
+  const saltar = await page.$eval("#grabacion-cine-saltar", (b) => [b.checkVisibility(), b.textContent]);
+  igual("en un tramo sin clase aparece «Saltar», con a dónde sigue", saltar, [true, "⏭ Saltar lo que no es clase (sigue en 0:12)"]);
+  await page.click("#grabacion-cine-saltar");
+  await page.click("#grabacion-cine-faltan button");
+  await page.waitForTimeout(200);
+  igual("«Saltar» lleva al final del tramo y cada tramo que falta, a su comienzo",
+    (await reproductor(page).evaluate(() => window.__ordenes)).filter((o) => /^seekTo/.test(o)), ["seekTo:12,true", "seekTo:100,true"]);
+  if (process.env.CAPTURAS) await page.locator("#grabacion-cine").screenshot({ path: path.join(process.env.CAPTURAS, "panel-taller-falta.png") });
+  const claro = await page.evaluate(contrasteEnPagina, "#grabacion-cine-faltan p");
+  cierto(`contraste de «Te falta ver» ≥ 4,5 (${claro})`, claro >= 4.5);
+  cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
+  await cerrar();
+
+  console.log("\n=== Lo que acaba de ver sale de lo que le falta ===");
+  const VE_UN_TRAMO = reproductorQue("corre(100, 130);\npasos.push({ playerState: 2, currentTime: 130 });");
+  const otra = await abrirConYoutube(browser, cfg({ grabaciones: grabaciones(fila), anotar: 5030 }), VE_UN_TRAMO);
+  await otra.page.click("[data-grabacion]");
+  await esperarFin(otra.page);
+  await otra.page.waitForTimeout(300);
+  igual("al anotarse, la lista se acorta sin volver a abrir", await otra.page.$$eval("#grabacion-cine-faltan button", (bs) => bs.map((b) => b.textContent)),
+    ["2:10 a 6:40", "11:40 a 12:00"]);
+  await otra.cerrar();
+
+  console.log("\n=== Quien no ha empezado ===");
+  const nueva = await abrirConYoutube(browser, cfg({ grabaciones: grabaciones({ util_seg: 10920, faltan: [[0, 10920]] }) }), REPRODUCTOR);
+  await nueva.page.click("[data-grabacion]");
+  igual("arranca del principio y no lista «Te falta ver» (le faltaría todo)",
+    [await nueva.page.$eval("#grabacion-cine-video iframe", (f) => new URL(f.src).searchParams.get("start")), await vis(nueva.page, "#grabacion-cine-faltan")], [null, false]);
+  await nueva.cerrar();
+}
+
+/* Una sesión que quedó en dos videos: UNA ficha para la sesión (la galería
+   va en orden), con lo que lleva entre todas las partes y un botón por parte
+   con su avance; lo que se ve de la parte 2 se anota en la parte 2. */
+async function pruebaPartes(browser) {
+  console.log("\n=== Una sesión en dos partes ===");
+  const ayer = diaCR(-DIA);
+  const parte = (n, id, seg, visto) => ({ horario_id: "h0", fecha: ayer, parte: n, titulo: "Sesión IV", modalidad: "en_linea", youtube_id: id,
+    inicio: enCR(ayer, "08:00"), fin: enCR(ayer, "12:00"), tema: "Uso del reloj", duracion_seg: seg, visto_seg: visto || 0 });
+  // Vio media parte 2 y nada de la 1.
+  const grabadas = [parte(1, "BuN8MirmKB4", 5162), parte(2, "AbCdEfGhIj2", 6000, 3000),
+    { horario_id: "h9", fecha: ayer, titulo: "Sesión III", modalidad: "en_linea", youtube_id: VIDEO, inicio: enCR(ayer, "08:00"), fin: enCR(ayer, "12:00"), tema: "Otra", duracion_seg: 11520 }];
+  const { page, errores, cerrar } = await abrirConYoutube(browser, cfg({ grabaciones: grabadas, anotar: 3010 }), REPRODUCTOR);
+  igual("una sola ficha para la sesión en dos partes, y la de un solo video aparte", await page.evaluate(() =>
+    [...document.querySelectorAll('[aria-label="Grabaciones"] > [role=listitem]')].map((li) => li.querySelector("[data-sesion]") ? "sesión en partes" : li.querySelector("[data-grabacion]") ? li.querySelector("[data-grabacion]").dataset.grabacion : "la próxima")),
+    ["sesión en partes", VIDEO, "la próxima"]);
+  const ficha = await page.$eval("[data-sesion]", (f) => ({
+    titulo: f.querySelector("[data-grabacion-sesion] .p-3 .font-semibold").textContent,
+    dice: f.querySelector("[data-grabacion-sesion] .p-3 .text-xs").textContent,
+    visto: (f.querySelector("[data-grabacion-sesion] [data-visto]") || {}).textContent || "",
+    chip: [...f.querySelectorAll("[data-grabacion-sesion] [aria-hidden=true]")].map((e) => e.textContent).filter((t) => /^\d+:\d\d/.test(t))[0],
+    parteEnMiniatura: [...f.querySelectorAll("[data-grabacion-sesion] [aria-hidden=true] span")].some((e) => /^Parte \d$/.test(e.textContent)),
+    partes: [...f.querySelectorAll("[data-parte]")].map((b) => [b.dataset.parte, b.querySelector("[data-visto]").textContent]),
+  }));
+  igual("la ficha dice la sesión (sin «Parte»), cuánto duran entre todas y en cuántas partes", [ficha.titulo, ficha.chip, / · 3 h 6 min · en 2 partes$/.test(ficha.dice), ficha.parteEnMiniatura],
+    ["Sesión IV", "3:06:02", true, false]);
+  igual("arriba, lo que lleva entre las dos partes (3000 de 11 162 s)", ficha.visto, "Viste 50 min (27 %)");
+  igual("y un botón por parte, en orden, con lo que lleva de cada una", ficha.partes, [["1", ""], ["2", "50 %"]]);
+  const contrastes = async () => [await page.evaluate(contrasteEnPagina, '[data-parte="2"] [data-visto]'), await page.evaluate(contrasteEnPagina, '[data-parte="2"] .font-normal')];
+  const cClaro = await contrastes();
+  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  await page.waitForTimeout(600);
+  const cOscuro = await contrastes();
+  await page.evaluate(() => document.documentElement.classList.remove("dark"));
+  await page.waitForTimeout(600);
+  cierto(`contraste del avance y la duración de cada parte ≥ 4,5 en claro y en oscuro (${cClaro}, ${cOscuro})`, [...cClaro, ...cOscuro].every((c) => c >= 4.5));
+  igual("el lector de pantalla oye la sesión, la parte y su avance",
+    await page.getByRole("button", { name: /^Ver la grabación: Sesión IV, Parte 2 · 1 h 40 min\s*50 %$/ }).count(), 1);
+  await page.click('[data-grabacion][data-parte="2"]');
+  igual("la ventana dice la parte", await page.$eval("#grabacion-cine-titulo", (h) => h.textContent), "Sesión IV · Parte 2 · Uso del reloj");
+  igual("y abre SU video", await page.$eval("#grabacion-cine-video iframe", (f) => /\/embed\/AbCdEfGhIj2\?/.test(f.src)), true);
+  await esperarFin(page);
+  await page.click("#grabacion-cine-cerrar");
+  await page.waitForTimeout(300);
+  const envios = await llamadas(page, "grabacion_vista_anotar");
+  igual("lo visto se anota en la parte 2 de esa clase", [...new Set(envios.map((a) => a.p_horario + " " + a.p_fecha + " parte " + a.p_parte))], ["h0 " + ayer + " parte 2"]);
+  igual("con la ventana cerrada, la parte y la sesión dicen lo nuevo", await page.$eval("[data-sesion]", (f) =>
+    [f.querySelector('[data-parte="2"] [data-visto]').textContent, f.querySelector("[data-grabacion-sesion] [data-visto]").textContent]), ["50 %", "Viste 50 min (27 %)"]);
+  igual("el foco vuelve al botón de la parte", await page.evaluate(() => document.activeElement && document.activeElement.dataset.parte), "2");
+  await page.click("[data-grabacion-sesion]");
+  igual("tocar la ficha abre la parte que le toca (la primera que no ha visto completa)",
+    await page.$eval("#grabacion-cine-video iframe", (f) => /\/embed\/BuN8MirmKB4\?/.test(f.src)), true);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
+  igual("en el celular no se desborda", await page.setViewportSize({ width: 390, height: 900 }).then(() => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), false);
+  if (process.env.CAPTURAS) await page.locator('section[aria-labelledby="grabaciones-taller-titulo"]').screenshot({ path: path.join(process.env.CAPTURAS, "panel-taller-partes.png") });
+  cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
+  await cerrar();
 }
 
 async function pruebaSinTaller(browser) {
@@ -763,6 +931,8 @@ async function pruebaPresentaciones(browser) {
     await pruebaGrabaciones(browser);
     await pruebaPresentaciones(browser);
     await pruebaLoVisto(browser);
+    await pruebaPartes(browser);
+    await pruebaSinClase(browser);
     await pruebaSinTaller(browser);
     await pruebaTarjeta(browser);
   } catch (e) {

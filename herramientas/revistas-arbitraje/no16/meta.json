@@ -1,0 +1,28 @@
+{
+  "numero": 16,
+  "fecha_original": "enero de 2014",
+  "temas": [
+    {"titulo": "El manual de identidad y patrocinio de la FIDE", "desc": "Comisión de Eventos (2013) · cómo invitar a un patrocinador"},
+    {"titulo": "¿Qué es el rating performance?", "desc": "Reglamento de Títulos 2024 · arts. 1.4.6-1.4.9 · TPR, C.07 (2026) art. 10.2"},
+    {"titulo": "Torre de cabeza: ¿jugada ilegal o no?", "desc": "Leyes 2023 · arts. 4.4.4, 6.11.2, 7.4 · Manual del Árbitro 2026"}
+  ],
+  "presentacion": "<p>Con este número, Santiago García Ramos abrió el año 2014. La FIDE había publicado en pocos meses varios reglamentos y manuales, y la revista empezó por el manual de identidad y patrocinio de la Comisión de Eventos, que el autor aprovechó para dar consejos prácticos a los organizadores: no pedir, sino invitar, y llegar siempre con un proyecto.</p><p>El número explicaba también, con un torneo ficticio, cómo se calcula el rating performance, y abría el debate sobre la torre invertida en la coronación, que el Manual del Árbitro de entonces consideraba jugada ilegal.</p><p>Esta edición revisada corrige las cuentas del ejemplo, actualiza los requisitos de las normas de título, añade la solución del ejercicio que quedó pendiente y cuenta cómo terminó la polémica de la torre invertida.</p>",
+  "cambios": [
+    ["Manual de eventos", "Resumen del manual de identidad de la FIDE de 2013, con especificaciones de logotipo, colores y formatos.", "Se presenta como <b>documento histórico</b>: se resume su contenido y se conservan los consejos del autor sobre patrocinio. No se reproducen las especificaciones gráficas, que pueden haber cambiado."],
+    ["Datos de la FIDE", "178 federaciones; cifras de una encuesta de 2012 presentadas como actuales.", "Más de 200 federaciones hoy. Las cifras de la encuesta se identifican como de 2012."],
+    ["Presupuesto de ejemplo", "100 sillas para 200 niños: 370 USD por día, 740 en total.", "<b>Fe de erratas:</b> 204 sillas (una por jugador más 4 para el arbitraje) y 27 mesas: 474 USD por día, 948 por los dos días."],
+    ["Rating performance: regla", "Tabla de mínimos para norma y tabla dp, sin otras condiciones.", "Reglamento de Títulos 2024: Rp = Ra + dp (1.4.8), redondeo de Ra con 0,5 hacia arriba (1.4.7), tabla dp (1.4.9), Ra mínimo, 35 % mínimo, piso de rating (1.4.6) y 9 partidas (1.4.1)."],
+    ["Rating performance: cuentas", "Primer lugar 2787 + 158 = 2495; segundo 2798 + 50 = 2448; último «2800 + −50 = 2698».", "<b>Fe de erratas:</b> 2945, 2848 y 2800 − 102 = 2698. Recalculado todo con un programa: sumas, promedios y dp; corregidos además los ratings mal copiados en las listas de rivales."],
+    ["Jugadores del ejemplo", "Jugadores reales de la élite de 2013 con sus federaciones.", "Mismos ratings y resultados, con nombres ficticios."],
+    ["Ejercicio en casa", "Sin solución (se anunciaba para el número siguiente).", "Se publica la solución completa, verificada."],
+    ["Performance como desempate", "No se mencionaba.", "Se añade el TPR del Reglamento de Desempates C.07 (2026), art. 10.2, y la diferencia con el rating inicial (Reglamento de Rating 2024, art. 8.2.2)."],
+    ["Torre invertida", "El Manual del Árbitro de entonces la consideraba jugada ilegal; el autor opinaba que debía ser torre.", "<b>Hoy es una torre</b> (Manual del Árbitro 2026; revista de árbitros FIDE, 2016): no es jugada ilegal, se pone de pie, y moverla en diagonal sí es ilegal. Se añaden los arts. 4.4.4, 6.11.2 y 7.4."],
+    ["Títulos y contacto", "«Conductor Master de Arbitraje FIDE»; correo del autor y fecha de la siguiente revista.", "Se explica que hoy se dice <i>FIDE Lecturer</i>; se quitaron el correo y las fechas ya caducadas."]
+  ],
+  "directorio": [
+    ["Director (edición original)", "Santiago García Ramos · Árbitro Internacional"],
+    ["Revisión (edición original)", "Ignacio Córdoba Navarro · Periodista"],
+    ["Diseño (edición original)", "Ángel Antonio Espino · Diseñador gráfico"],
+    ["Colaboradores (edición original)", "Paula Man Reich · Psicóloga del deporte; Carlos Calleros · Árbitro Internacional (Brasil)"]
+  ]
+}

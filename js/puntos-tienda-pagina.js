@@ -16,7 +16,14 @@ async function unlock() {
         document.getElementById("sin-sesion-aviso").classList.remove("hidden");
         return;
     }
-    Puntos.montarTienda(document.getElementById("tienda-puntos"), { sb, alumnoId: yo });
+    const tienda = Puntos.montarTienda(document.getElementById("tienda-puntos"), { sb, alumnoId: yo });
+    pintarRango(yo);
+    /* Los premios de la academia: al canjear uno, la tienda vuelve a leer el
+       saldo (si no, seguiría ofreciendo lo que ya no alcanza). */
+    if (window.PremiosAcademia) {
+        PremiosAcademia.montarAlumno(document.getElementById("premios-academia"),
+            { sb, alumnoId: yo, alCanjear: () => tienda && tienda.recargar && tienda.recargar() });
+    }
     const filas = await Puntos.historial(sb, yo, 30);
     const ul = document.getElementById("historial-puntos");
     if (!filas.length) {
@@ -27,6 +34,19 @@ async function unlock() {
     } else {
         Puntos.pintarHistorial(ul, filas);
     }
+}
+
+/* El rango se gana con un examen y lo guarda la base: mi_rango() da el rango,
+   el avance (puntos ganados menos 500 por examen no aprobado), el examen que le
+   toca y el diploma. Ver js/rangos.js. */
+async function pintarRango(yo) {
+    const caja = document.getElementById("rango-caja");
+    if (!caja || !window.Rangos) return;
+    // mi_rango() también le arma el examen si ya tenía los puntos (lo decide la base).
+    const { data, error } = await sb.rpc("mi_rango", { p_alumno: yo });
+    const fila = Array.isArray(data) ? data[0] : data;
+    if (error || !fila) { caja.closest("section").hidden = true; return; }
+    Rangos.pintar(caja, fila, { sb, alCambiar: () => pintarRango(yo) });
 }
 
 // Igual que Logros: exige sesión iniciada en el sitio, porque el saldo y el

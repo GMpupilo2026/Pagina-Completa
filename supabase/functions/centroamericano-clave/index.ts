@@ -45,6 +45,7 @@ import { entrar, leerRonda } from "./chess-results-ingreso.ts";
 import { avance, guardarAvance } from "./avance-ronda.ts";
 import { aBase64, llamarPuente } from "./drive-puente.ts";
 import { leerConCache } from "./lecturas-cache.ts";
+import { esTnrPareo, leerPareo } from "./fuente-pareo.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -165,6 +166,15 @@ async function accionesGenerales(accion: string, cuerpo: Record<string, unknown>
     const trabajar = async () => {
       for (let par = cola.shift(); par; par = cola.shift()) {
         const [t, lista] = par;
+        // Un torneo de Pareo Integral se lee de lo publicado (no tiene clave de chess-results).
+        if (esTnrPareo(t)) {
+          const { data: tp } = await servicio.from("centroamericano_torneos").select("nombre, pareo_id").eq("tnr", t).maybeSingle();
+          const lp = await leerPareo(servicio, tp?.pareo_id, t, tp?.nombre ?? "");
+          if (!lp.ok) { errores.push({ tnr: t, error: lp.error }); continue; }
+          leidos++;
+          if (lp.lectura.ronda > 0) for (const x of lista) await guardarAvance(servicio, x.id, lp.lectura.ronda, avance(lp.lectura.mesas, x.mesa_desde, x.mesa_hasta));
+          continue;
+        }
         const { data: acc } = await servicio.rpc("centroamericano_acceso", { p_tnr: t });
         const a = Array.isArray(acc) ? acc[0] : acc;
         if (!a) { errores.push({ tnr: t, error: "sin clave cargada" }); continue; }

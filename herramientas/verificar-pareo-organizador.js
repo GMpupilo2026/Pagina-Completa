@@ -397,6 +397,15 @@ async function pruebaPublica(browser) {
   await page.waitForFunction(() => /el reporte llegó/.test(document.body.textContent));
   igual("manda el id, el motivo y el detalle (sin espacios de más)", reportes.map((r) => [r.accion, r.id.slice(0, 1), r.motivo, r.detalle]), [["reportar", "2", "falso", "Es una prueba"]]);
 
+  console.log("\n=== Abierta encima de la página de un torneo (?en-ventana=1) ===");
+  await page.goto(BASE + "/torneos-pareo.html?en-ventana=1#t=22222222-2222-4222-8222-222222222222", { waitUntil: "networkidle" });
+  await page.waitForSelector("#tp-organizador");
+  const enVentana = await page.evaluate(() => ({ quitados: ["tp-calendario", "tp-reportar", "tp-incrustar"].filter((id) => document.getElementById(id)),
+    quedan: ["tp-whatsapp", "tp-copiar"].filter((id) => document.getElementById(id)),
+    todos: [...document.querySelectorAll("#tp-contenido a")].some((a) => /Todos los torneos/.test(a.textContent)) }));
+  igual("sin «Agregar a mi calendario», «Reportar este torneo», «Ponerlo en tu página» ni «Todos los torneos»; compartir y copiar quedan",
+    [enVentana.quitados, enVentana.quedan, enVentana.todos], [[], ["tp-whatsapp", "tp-copiar"], false]);
+
   console.log("\n=== La página del organizador ===");
   await page.goto(BASE + "/torneos-pareo.html#o=" + VER, { waitUntil: "networkidle" });
   await page.waitForSelector("#tp-org-cuantos");

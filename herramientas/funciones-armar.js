@@ -50,6 +50,11 @@ const FUNCIONES = {
   "informes-encargados": ["contacto-academia.ts", "remitente-academia.ts", "marca-correo.ts"],
   "cobros-recordatorios": ["usuario-alumno.ts", "contacto-academia.ts", "remitente-academia.ts", "marca-correo.ts", "hora-cr.ts"],
   "mejorar-informe": [],
+  "entrenador-ia": [],
+  // La llamada de voz de la clase en vivo (LiveKit). Ver su cabecera.
+  "clase-llamada": [],
+  // Borra las grabaciones de más de 90 días (verify_jwt en false: la llama pg_cron con el secreto).
+  "clase-grabaciones-limpiar": [],
   // La ficha de los JDN 2027 al Drive (un Apps Script hace de puente). Ver su cabecera.
   "jdn-drive": ["hora-cr.ts"],
   // Pública (verify_jwt en false): ver su cabecera.
@@ -79,6 +84,10 @@ const FUNCIONES = {
   // cabecera.
   "desempates-chess-results": [],
   "explorador-maestros": [],
+  // Los mates básicos del examen de rango Caballo: arbitra la partida contra
+  // el rey solo. Su defensa (defensa-mate.js) la arma herramientas/defensa-mate-armar.js
+  // desde js/tipos-reglas.js y herramientas/lib/finales-dtm.js. Ver su cabecera.
+  "examen-mate": ["defensa-mate.js"],
   // La quiniela de la sala de cine. Ver su cabecera.
   "quiniela": [],
   // El correo al supervisor por un diagnóstico de su enlace (verify_jwt en
@@ -110,7 +119,7 @@ const FUNCIONES = {
   // arriba de los correos es la de siempre. Ver su cabecera.
   // Los avisos push de quien sigue a un jugador usan el mismo cifrado que
   // los de la Academia (notificar): una sola copia en _compartido.
-  "pareo-publicar": ["marca-correo.ts", "webpush.ts"],
+  "pareo-publicar": ["marca-correo.ts", "webpush.ts", "pareo-adjuntos.ts"],
   "notificar": ["webpush.ts"],
   // Los torneos próximos de ajedrezcostarica.com, una vez al día (pg_cron,
   // con su secreto). Su leer.ts es suyo. Ver su cabecera.
@@ -120,13 +129,16 @@ const FUNCIONES = {
   // compartida. «mesa-arbitro» y «centroamericano-clave» exigen sesión y licencia;
   // «centroamericano-mesa» es pública (verify_jwt en false): ver su cabecera.
   "mesa-arbitro": ["chess-results-ingreso.ts"],
-  "centroamericano-clave": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "inscritos-fed.ts"],
+  "centroamericano-clave": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "inscritos-fed.ts", "fuente-pareo.ts"],
   "centroamericano-mesas-vivo": ["inscritos-fed.ts"],
   // El Drive de las inscripciones del Metropolitano 2026: el mismo puente.
   "metropolitano-drive": ["drive-puente.ts"],
   // El correo de confirmación de las inscripciones del Metropolitano 2026.
   "metropolitano-correo": ["envio-resend.ts", "marca-correo.ts"],
-  "centroamericano-mesa": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "pareos-publicos.ts", "inscritos-fed.ts"],
+  // Fair Play lee los torneos de Pareo Integral desde lo publicado (partidasDePareo); fuente-pareo.ts trae
+  // con él la lectura compartida y sus dos ayudantes.
+  "centroamericano-fair-play": ["fuente-pareo.ts", "lecturas-cache.ts", "chess-results-ingreso.ts", "inscritos-fed.ts"],
+  "centroamericano-mesa": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "pareos-publicos.ts", "inscritos-fed.ts", "fuente-pareo.ts", "pareo-adjuntos.ts"],
 };
 
 function armar(nombre) {

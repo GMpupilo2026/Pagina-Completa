@@ -98,7 +98,10 @@ window.ComandosTablero = (function () {
       titulo: "Cómo contestar",
       texto: "Escribe la jugada en el recuadro y pulsa Intro. Vale en español o en inglés y con la " +
         "notación de siempre: \"Cf3\", \"Nf3\", \"e4\", \"Dxh7+\", \"e8=D\", \"O-O\". También sirve " +
-        "escribir la casilla de origen y la de destino separadas, por ejemplo \"e1 g1\".",
+        "escribir la casilla de origen y la de destino separadas, por ejemplo \"e1 g1\". Y con palabras, " +
+        "como se dice: \"caballo f3\", \"caballo a felix 3\", \"peón toma d5\", \"de g1 a f3\", " +
+        "\"dama toma torre\", \"e8 corona dama\", \"enroque corto\". Si lo escrito puede ser más de una " +
+        "jugada, el recuadro dice cuáles.",
     },
     {
       titulo: "Preguntarle al tablero",
@@ -108,6 +111,13 @@ window.ComandosTablero = (function () {
         "del teclado a esa casilla); \"mis jugadas\" (todas las que puedes hacer); \"qué ataca e4\" (a qué piezas apunta); \"quién ataca e4\" y " +
         "\"quién defiende e4\" (quién le apunta a esa casilla); \"última jugada\"; historial (las jugadas " +
         "de la partida); turno (a quién le toca); ayuda (esta lista).",
+    },
+    {
+      titulo: "Poner la posición en tu tablero",
+      texto: "dictar (la posición pieza por pieza: con el recuadro vacío, Intro dice la siguiente, flecha " +
+        "arriba la repite, flecha izquierda vuelve a la anterior y Escape termina); \"dictar solo\" (las dice " +
+        "sola, con una pausa entre cada una, para tener las manos en el tablero; \"dictar solo 8\" deja ocho " +
+        "segundos); \"voz más lenta\", \"voz más rápida\" y \"voz normal\" (la velocidad de la voz del navegador).",
     },
     {
       titulo: "Moverse por el tablero con el teclado",
@@ -495,11 +505,173 @@ window.ComandosTablero = (function () {
     return LETRA_PIEZA[l] ? [LETRA_PIEZA[l]] : [];
   }
 
+  /* ------------------------------------------- la jugada, escrita como se dice
+     Quien no ve el tablero escribe la jugada como la piensa o como la acaba de
+     oír, y casi nunca es «Cf3»: es «caballo f3», «caballo a felix 3», «peón
+     toma d5», «de g1 a f3», «torre a d1», «dama toma torre», «e8 corona dama»,
+     «cf3» en minúscula. Todo eso contestaba «no es una jugada legal», y no era
+     cierto: la jugada era legal, lo que no se entendía era la forma.
+
+     Se arma con lo que SE RECONOCE de lo escrito —la pieza, las casillas, una
+     columna de pista, la coronación— y con eso se filtran las jugadas legales.
+     Si queda una sola, es esa. Dos reglas para no inventar jugadas:
+       - una palabra que no se conoce anula todo («hola e4» no es e4);
+       - si quedan varias, no se elige: se dice cuáles son (ver `ambigua`). */
+  var PALABRA_PIEZA = {
+    rey: "k", king: "k", dama: "q", reina: "q", queen: "q", torre: "r", rook: "r",
+    alfil: "b", bishop: "b", caballo: "n", knight: "n", peon: "p", pawn: "p",
+  };
+  var COLUMNA_DICHA = { anna: "a", ana: "a", bella: "b", cesar: "c", david: "d", eva: "e", felix: "f", gustav: "g", gustavo: "g", hector: "h" };
+  var PALABRA_CAPTURA = /^(x|por|toma|tomo|tomar|tomando|captura|capturo|capturar|capturando|come|como|comer|comiendo)$/;
+  var PALABRA_RELLENO = /^(al|la|el|de|del|desde|en|hasta|hacia|va|voy|ir|mueve|muevo|mover|juego|juega|jugar|mi|con|y|jaque|mate|casilla|para)$/;
+  var CORONA = /(?:=|\b(?:y )?(?:corona|coronando|coronar|promociona|promueve|promocion|se convierte en|pide)\b)\s*(?:a |en |una |un )?\s*(dama|reina|torre|alfil|caballo|queen|rook|bishop|knight|[dtacqrbn])\b/;
+
+  // Lo que se dirá si lo escrito cabía en más de una jugada (noSePudoJugar).
+  var ambigua = null;
+  function anotarAmbigua(juego, texto, caben) {
+    var origenes = {};
+    caben.forEach(function (j) { origenes[j.from] = j; });
+    var desde = Object.keys(origenes);
+    if (desde.length < 2) {
+      // La misma pieza, a más de un lado («dama toma torre», con dos torres a tiro).
+      var a2 = {};
+      caben.forEach(function (j) { a2[j.to] = true; });
+      if (Object.keys(a2).length > 1) {
+        ambigua = {
+          texto: String(texto || "").trim(),
+          frase: "«" + String(texto || "").trim() + "» puede ser más de una jugada: puede ir a " +
+            lista(Object.keys(a2).sort().map(hablada)) + ". Di a cuál, por ejemplo «" + desde[0] + " " + caben[0].to + "».",
+        };
+      }
+      return;
+    }
+    var p = null;
+    try { p = juego.get(desde[0]); } catch (e) {}
+    var iguales = desde.every(function (sq) { return (origenes[sq].piece || "") === (origenes[desde[0]].piece || ""); });
+    var destinos = {};
+    caben.forEach(function (j) { destinos[j.to] = true; });
+    var adonde = Object.keys(destinos).length === 1 ? " a " + hablada(caben[0].to) : "";
+    var ejemplo = desde[0] + " " + origenes[desde[0]].to;
+    ambigua = {
+      texto: String(texto || "").trim(),
+      frase: "«" + String(texto || "").trim() + "» puede ser más de una jugada: " +
+        (iguales && p ? "hay " + desde.length + " " + PLURAL[p.type] + " que pueden ir" + adonde + ", desde " : "puede salir de ") +
+        lista(desde.sort().map(hablada)) + ". Di de cuál, por ejemplo «" + ejemplo + "».",
+    };
+  }
+
+  function enPalabras(juego, legales, texto) {
+    var t = sinTildes(String(texto || "")).toLowerCase()
+      .replace(/^\s*\d+\s*\.(\.\.)?\s*/, "")
+      .replace(/[+#!?¡¿.,;:]/g, " ").replace(/[-–→>]+/g, " ").replace(/\s+/g, " ").trim();
+    if (!t) return null;
+
+    // El enroque, dicho de cualquier forma.
+    if (/\benro[cq]/.test(t) || /^(corto|largo)$/.test(t)) {
+      var reyes = legales.filter(function (j) {
+        return (j.piece || "").toLowerCase() === "k" && Math.abs(j.to.charCodeAt(0) - j.from.charCodeAt(0)) === 2;
+      });
+      var largo = /largo|dama|reina|queen|o o o|0 0 0/.test(t), corto = /corto|rey\b|king|chico/.test(t.replace(/^.*enro\w*/, "x "));
+      if (largo || corto) reyes = reyes.filter(function (j) { return largo ? j.to.charCodeAt(0) < j.from.charCodeAt(0) : j.to.charCodeAt(0) > j.from.charCodeAt(0); });
+      if (reyes.length > 1) ambigua = { texto: String(texto || "").trim(), frase: "Puedes enrocar corto o largo: escribe «enroque corto» o «enroque largo»." };
+      return reyes.length === 1 ? reyes[0] : null;
+    }
+
+    // La coronación sale primero del texto: «e8 corona dama», «e8=D», «e8 y pide torre».
+    var corona = null;
+    var mc = t.match(CORONA);
+    if (mc) {
+      corona = PALABRA_PIEZA[mc[1]] || (tiposDe(mc[1])[0] || null);
+      if (!corona || corona === "k" || corona === "p") return null;
+      t = (t.slice(0, mc.index) + " " + t.slice(mc.index + mc[0].length)).replace(/\s+/g, " ").trim();
+    }
+
+    // «eva 4» → «e4»; «e 4» → «e4».
+    t = t.split(" ").map(function (w) { return COLUMNA_DICHA[w] || w; }).join(" ")
+      .replace(/\b([a-h]) ([1-8])\b/g, "$1$2");
+
+    var pieza = null, capturada = null, casillas = [], pistas = [], captura = false, hayA = false;
+    var palabras = t.split(" ");
+    for (var i = 0; i < palabras.length; i++) {
+      var w = palabras[i];
+      if (/^[a-h][1-8]$/.test(w)) { casillas.push(w); continue; }
+      // «e2e4», «cf3», «txa1» pegados dentro de una frase: «juego cf3».
+      var pegada = w.match(/^([a-h][1-8])x?([a-h][1-8])$/);
+      if (pegada) { casillas.push(pegada[1], pegada[2]); continue; }
+      if (PALABRA_PIEZA[w]) {
+        if (!pieza && !casillas.length && !captura) pieza = PALABRA_PIEZA[w];
+        else if (captura && !capturada && !casillas.length) capturada = PALABRA_PIEZA[w];
+        else if (casillas.length && !corona && PALABRA_PIEZA[w] !== "p" && PALABRA_PIEZA[w] !== "k") corona = PALABRA_PIEZA[w];
+        else if (casillas.length && PALABRA_PIEZA[w] === "p" && !pieza) pieza = "p";
+        else return null;
+        continue;
+      }
+      if (PALABRA_CAPTURA.test(w)) { captura = true; continue; }
+      if (w === "a") { hayA = true; continue; }            // «caballo a f3»… o la columna a
+      if (/^[b-h]$/.test(w)) { pistas.push(w); continue; }  // «caballo b d2», «e por d5»
+      if (PALABRA_RELLENO.test(w)) continue;
+      var san = w.match(/^([tcadrkqn])([a-h])?x?([a-h][1-8])$/);   // «caballo» ya dicho, o «juego cf3»
+      if (san && !pieza && !casillas.length) {
+        var ts = tiposDe(san[1]);
+        if (!ts.length) return null;
+        pieza = ts[0]; if (san[2]) pistas.push(san[2]); casillas.push(san[3]);
+        continue;
+      }
+      return null;   // una palabra que no se conoce: no se adivina
+    }
+    if (!casillas.length && !(pieza && capturada)) return null;
+    if (casillas.length > 2) return null;
+
+    var caben = legales.filter(function (j) {
+      var tipo = (j.piece || "").toLowerCase();
+      if (casillas.length === 2) return j.from === casillas[0] && j.to === casillas[1] && (!pieza || tipo === pieza);
+      if (casillas.length === 1 && j.to !== casillas[0]) return false;
+      if (pieza && tipo !== pieza) return false;
+      if (capturada && (j.captured || "").toLowerCase() !== capturada) return false;
+      return true;
+    });
+    // Sin nombrar la pieza, una casilla sola es de peón («e4»); «toma e5» vale para cualquiera.
+    if (!pieza && casillas.length === 1) {
+      var peones = caben.filter(function (j) { return (j.piece || "").toLowerCase() === "p"; });
+      if (!captura) caben = peones;
+    }
+    if (captura) {
+      var capturan = caben.filter(function (j) { return /[ce]/.test(j.flags || "") || j.captured; });
+      if (capturan.length) caben = capturan;
+    }
+    if (corona) caben = caben.filter(function (j) { return j.promotion === corona; });
+    else if (caben.some(function (j) { return j.promotion; })) {
+      // Sin decir a qué: dama, como en el resto del sitio.
+      caben = caben.filter(function (j) { return !j.promotion || j.promotion === "q"; });
+    }
+    // Las pistas de columna («caballo b d2»). La «a» suelta casi siempre es la
+    // preposición: solo cuenta como columna si sin ella no alcanza.
+    pistas.forEach(function (c) { caben = caben.filter(function (j) { return j.from[0] === c; }); });
+    if (caben.length > 1 && hayA) {
+      var conA = caben.filter(function (j) { return j.from[0] === "a"; });
+      if (conA.length === 1) caben = conA;
+    }
+    if (caben.length === 1) return caben[0];
+    if (caben.length > 1) anotarAmbigua(juego, texto, caben);
+    return null;
+  }
+
   function jugadaEscrita(juego, texto) {
+    ambigua = null;
     if (!juego || !juego.moves) return null;
-    var legales = [];
-    try { legales = juego.moves({ verbose: true }) || []; } catch (e) { return null; }
-    if (!legales.length) return null;
+    var legalesTodas = [];
+    try { legalesTodas = juego.moves({ verbose: true }) || []; } catch (e) { return null; }
+    if (!legalesTodas.length) return null;
+    var mv = jugadaEnNotacion(juego, texto, legalesTodas);
+    if (mv) { ambigua = null; return mv; }
+    var guardada = ambigua;
+    mv = enPalabras(juego, legalesTodas, texto);
+    if (mv) { ambigua = null; return mv; }
+    if (!ambigua) ambigua = guardada;
+    return null;
+  }
+
+  function jugadaEnNotacion(juego, texto, legales) {
 
     var t = sinTildes(String(texto || "")).trim()
       .replace(/^\d+\.(\.\.)?\s*/, "")            // "14. Cf3" o "14...Cf3"
@@ -570,6 +742,21 @@ window.ComandosTablero = (function () {
         var d2 = caben2.filter(function (j) { return !j.promotion || j.promotion === "q"; });
         if (d2.length === 1) return d2[0];
       }
+      if (caben2.length > 1) anotarAmbigua(juego, texto, caben2);
+    }
+    /* La inicial de la pieza en minúscula: «cf3», «txa1», «dh5». Se lee primero
+       como peón (arriba: «bxc3» es una captura de peón de lo más normal) y solo
+       si así no hay jugada se prueba como pieza, con las mismas letras. */
+    if (inicial && !esPieza && tiposDe(inicial).length && m[2] === inicial.toLowerCase()) {
+      var tiposMin = tiposDe(inicial);
+      for (var q = 0; q < tiposMin.length; q++) {
+        var caben3 = legales.filter(function (j) {
+          return j.to === destino && (j.piece || "").toLowerCase() === tiposMin[q] &&
+            (!m[3] || j.from[1] === m[3]) && (!corona || j.promotion === corona);
+        });
+        if (caben3.length === 1) return caben3[0];
+        if (caben3.length > 1) anotarAmbigua(juego, texto, caben3);
+      }
     }
     return null;
   }
@@ -598,12 +785,17 @@ window.ComandosTablero = (function () {
     if (/^(o-o(-o)?|0-0(-0)?|enroque( corto| largo)?)$/.test(t)) return true;
     if (/^(?:[kqrbnrdtac]|rey|dama|torre|alfil|caballo|peon)?\s*[a-h]?[1-8]?\s*x?\s*[a-h][1-8](?:\s*=?\s*[qrbndtac])?$/.test(t)) return true;
     if (/^[a-h][1-8]\s*[-x ]?\s*[a-h][1-8]/.test(t)) return true;
+    // Escrita con palabras: «caballo a f3», «peón toma d5», «dama toma torre», «enroque».
+    if (/\b(rey|dama|reina|torre|alfil|caballo|peon)\b/.test(t) && (/\b[a-h]\s?[1-8]\b/.test(t) || /\b(toma|captura|come|por)\b/.test(t))) return true;
+    if (/\benro[cq]/.test(t)) return true;
     return new RegExp("(" + HABLADAS + ")\\s*[1-8]").test(t);
   }
   // Lo que se pide a un botón («solución», «pista»…) donde la página no lo tiene.
   var ACCIONES_CONOCIDAS = /^(siguiente|anterior|solucion|la solucion|ver la solucion|pista|otra pista|otra vez|reiniciar|comprobar|volver|saltar|tiempo|reloj)$/;
   function noSePudoJugar(texto) {
     var dicho = String(texto || "").trim();
+    // Cabía en más de una jugada: se dice cuáles, no «no es legal» (que no es cierto).
+    if (ambigua && ambigua.texto === dicho) return ambigua.frase;
     if (pareceJugada(dicho)) return "«" + dicho + "» no es una jugada legal en esta posición." +
       // Quien viene del inglés escribe R por la torre: aquí R es el rey.
       (/^R[a-h1-8x]/.test(dicho) ? " R es el rey; la torre se escribe con T." : "");
@@ -631,8 +823,49 @@ window.ComandosTablero = (function () {
       return { manejado: true, tipo: "ayuda", respuesta: ayudaTexto(), html: ayudaHTML() };
     }
 
+    /* La velocidad de la voz del navegador, sin salir del recuadro: «voz más
+       lenta», «más despacio», «voz más rápida», «voz normal». Va antes de
+       mirar si hay tablero: vale en cualquier recuadro. `ctx.sinEfecto` es
+       para quien solo pregunta si esto es un comando del recuadro
+       (js/vision-cuenta.js): contesta que sí y no cambia nada. */
+    var vel = t.match(/^(?:(?:voz|habla|hablar|lee|leer)\s+)?mas\s+(lenta|lento|despacio|rapida|rapido|deprisa)$/);
+    var velNormal = /^(voz normal|velocidad normal|voz a velocidad normal)$/.test(t);
+    if (vel || velNormal) {
+      if (!window.BlindNotation || !BlindNotation.setSpeechRate) return { manejado: true, tipo: "voz", respuesta: "En esta página no se puede cambiar la velocidad de la voz." };
+      if (ctx.sinEfecto) return { manejado: true, tipo: "voz", respuesta: "" };
+      var antes = BlindNotation.getSpeechRate();
+      var lenta = vel && /^(lenta|lento|despacio)$/.test(vel[1]);
+      var nueva = BlindNotation.setSpeechRate(velNormal ? 1 : antes + (lenta ? -0.15 : 0.15));
+      var tope = !velNormal && nueva === antes;
+      return {
+        manejado: true, tipo: "voz",
+        respuesta: (velNormal ? "Voz a velocidad normal."
+          : tope ? "La voz ya está en la velocidad más " + (lenta ? "lenta" : "rápida") + "."
+          : "Voz más " + (lenta ? "lenta" : "rápida") + ": " + Math.round(nueva * 100) + " por ciento.") +
+          " Vale para la voz del navegador; la de un lector de pantalla se cambia en el lector.",
+      };
+    }
+
     // Todo lo que sigue necesita saber qué hay en el tablero.
     if (!juego || !juego.get) return { manejado: false };
+
+    /* «dictar»: la posición pieza por pieza, para ponerla en un tablero de
+       verdad. Acá solo se arman los pasos; quien los va diciendo, uno por cada
+       Intro, es el recuadro (js/cuadro-comandos.js). `respuesta` los trae
+       todos seguidos, cada pieza en su frase, para un recuadro que no sepa
+       dictar: sigue siendo más lento de oír que la posición de corrido.
+       «dictar solo» los dice sin tocar nada, con una pausa entre pieza y
+       pieza («dictar solo 8»: de ocho segundos). */
+    var dic = t.match(/^(?:dictar|dictado|dictame|dictamela|dictar la posicion|dictado de la posicion|pieza por pieza|posicion despacio|posicion lenta|posicion pieza por pieza)(?:\s+(solo|sola|automatico|automatica)(?:\s+(\d{1,2}))?)?$/);
+    if (dic && window.BlindNotation && BlindNotation.pasosDeDictado) {
+      var d = BlindNotation.pasosDeDictado(juego);
+      var cierre = d.fin + soloLoQueVes(juego);
+      return {
+        manejado: true, tipo: "dictado", pasos: d.pasos, fin: cierre, total: d.total,
+        auto: !!dic[1], segundos: dic[2] ? parseInt(dic[2], 10) : null,
+        respuesta: d.pasos.concat([cierre]).join(" "),
+      };
+    }
 
     /* Las palabras van enteras y nunca una letra suelta, por lo mismo que la
        tabla de arriba: "t" y "z" serían letras de opción, y "m" y "x" pueden ser

@@ -12,7 +12,9 @@
  *  - la Edge Function que fija las herramientas con la clave de servicio
  *    deja que un organizador dé herramientas que no tiene;
  *  - la pantalla que ofrece herramientas que no se pueden dar, o el árbitro
- *    que se queda en el panel de la Academia.
+ *    que se queda en el panel de la Academia;
+ *  - una ficha «a la vista» que el árbitro abre sin tener la licencia, o que
+ *    cualquiera le pone o le quita a un árbitro ajeno.
  *
  * Primero lee las promesas en la migración, la función y los scripts; después
  * abre las páginas con un Supabase de mentira.
@@ -65,6 +67,19 @@ ok(/and \(v_todas or l\.herramienta = any \(v_dar\)\)/.test(fijar), "fijar: no q
 ok(/coalesce\(exists \(select 1 from public\.arbitros_cuentas a[\s\S]*?\), false\)/.test(fijar), "fijar: el permiso con coalesce (auth.uid() nulo no pasa)");
 ok(/"arbitros_cuentas"/.test(leer("herramientas/verificar-auditoria.js")), "arbitros_cuentas está en VIGILADAS");
 
+console.log("\nLas fichas a la vista (migración arbitro_fichas_a_la_vista)");
+const migV = fs.readdirSync(path.join(RAIZ, "supabase", "migraciones")).filter((f) => /_arbitro_fichas_a_la_vista\.sql$/.test(f));
+ok(migV.length === 1, "hay una migración arbitro_fichas_a_la_vista");
+const sqlV = migV.length ? leer("supabase/migraciones/" + migV[0]) : "";
+ok(/add column a_la_vista text\[\] not null default/.test(sqlV), "arbitros_cuentas.a_la_vista, una lista por árbitro");
+ok(/coalesce\(exists \(select 1 from public\.arbitros_cuentas a[\s\S]*?organizador_id = v_yo\)\), false\)/.test(sqlV),
+  "fijar las fichas: solo su organizador o administración, con coalesce");
+ok(/h = 'todas'/.test(sqlV) && /set a_la_vista = v_pedidas/.test(sqlV) && /return \(select a\.a_la_vista from public\.arbitros_cuentas/.test(sqlV),
+  "fijar las fichas: deja la lista como llega y vuelve a leerla");
+ok(/revoke execute on function public\.arbitro_fichas_a_la_vista_fijar\(uuid, text\[\]\) from public, anon;/.test(sqlV), "fijar las fichas no lo llama anon");
+ok(!/create policy/.test(sqlV.replace(/^--.*$/gm, "")), "y no abre ninguna política de escritura");
+ok(!/function public\.(tengo_herramienta|mis_herramientas)\(/.test(sqlV), "no toca tengo_herramienta() ni mis_herramientas(): verla no abre nada");
+
 console.log("\nLa Edge Function arbitro-cuentas");
 const ef = leer("supabase/functions/arbitro-cuentas/index.ts");
 ok(/comoQuienLlama\.rpc\("arbitros_puedo_dar"\)/.test(ef), "pregunta si puede con el token de quien llama");
@@ -96,9 +111,11 @@ function cliente(c) {
     window.sb = {
       auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: "yo" }, access_token: "t" } } }),
               getUser: () => Promise.resolve({ data: { user: { id: "yo" } } }),
-              onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) },
-      from: (t) => chain(t === "profiles" ? C.perfil : null),
+              onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+              signOut: () => { window.__salio = true; try { sessionStorage.setItem("__salio", "1"); } catch (e) {} return Promise.resolve({ error: null }); } },
+      from: (t) => chain(t === "profiles" ? C.perfil : (C.tablas && C.tablas[t]) || null),
       rpc: (nombre, args) => { window.__rpc.push([nombre, args || null]);
+        if (nombre === "arbitro_fichas_a_la_vista_fijar") return Promise.resolve({ data: (args.p_herramientas || []).slice().sort(), error: null });
         if (nombre === "arbitro_herramientas_fijar") return Promise.resolve({ data: (args.p_herramientas || []).slice().sort(), error: null });
         return Promise.resolve({ data: nombre in C.rpc ? C.rpc[nombre] : null, error: null }); },
       channel: () => canal, removeChannel: () => {},
@@ -138,7 +155,7 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
     arbitros_puedo_dar: ["pareo", "notara"],
     arbitros_mis: [{ arbitro_id: "11111111-aaaa", nombre: '<img src=x onerror="window.__xss=1">Luis', usuario: "luis.mora@alumno.ajedrez-integral.com",
       organizador_id: "yo", organizador: "Org", creada_en: "2026-11-08T10:00:00Z", ultima_entrada: null, herramientas: ["pareo"], pausadas: [] }],
-  } };
+  }, tablas: { arbitros_cuentas: [{ arbitro_id: "11111111-aaaa", a_la_vista: ["mesa-arbitro"] }] } };
 
   console.log("\nmis-arbitros.html, un organizador con Pareo y Notara");
   {
@@ -159,12 +176,26 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
     igual("enseña el usuario que devolvió el servidor", await page.textContent("#recien-usuario"), "ana.solis");
     igual("el mensaje por WhatsApp lleva usuario y contraseña", decodeURIComponent(await page.getAttribute("#recien-whatsapp", "href")).includes("Usuario: ana.solis"), true);
     igual("la lista pinta al árbitro con su nombre literal", await page.evaluate(() => [!!window.__xss, document.querySelectorAll("#lista img").length, document.querySelector("#lista h3").textContent.startsWith("<img")]), [false, 0, true]);
-    igual("y con sus herramientas marcadas", await page.$$eval("#lista li input[type=checkbox]", (cs) => cs.filter((c) => c.checked).map((c) => c.value)), ["pareo"]);
+    igual("y con sus herramientas marcadas", await page.$$eval("#lista li > [role=group] input[type=checkbox]", (cs) => cs.filter((c) => c.checked).map((c) => c.value)), ["pareo"]);
     await page.check('#lista li input[value="notara"]');
     await page.click("#lista li button:has-text('Guardar sus herramientas')");
     await page.waitForFunction(() => window.__rpc.some((r) => r[0] === "arbitro_herramientas_fijar"));
     igual("Guardar manda la lista entera", await page.evaluate(() => window.__rpc.find((r) => r[0] === "arbitro_herramientas_fijar")[1]),
       { p_arbitro: "11111111-aaaa", p_herramientas: ["pareo", "notara"] });
+    // Las fichas a la vista: cualquier herramienta, también una que el organizador no tiene.
+    const vista = page.locator("#lista li details[data-vista]");
+    igual("«Fichas a la vista» empieza cerrado y dice cuántas tiene",
+      [await vista.evaluate((d) => d.open), (await vista.locator("summary").textContent()).includes("(1)")], [false, true]);
+    await vista.locator("summary").click();
+    igual("ofrece también las que el organizador no tiene, con las suyas marcadas",
+      await vista.evaluate((d) => { const cs = [...d.querySelectorAll("input[type=checkbox]")];
+        return [cs.some((c) => c.value === "normas-titulo"), cs.filter((c) => c.checked).map((c) => c.value)]; }), [true, ["mesa-arbitro"]]);
+    await vista.locator('input[value="pareo-dgt"]').check();
+    await vista.locator("button:has-text('Guardar las fichas a la vista')").click();
+    await page.waitForFunction(() => window.__rpc.some((r) => r[0] === "arbitro_fichas_a_la_vista_fijar"));
+    igual("Guardar manda la lista entera de fichas a la vista",
+      await page.evaluate(() => window.__rpc.find((r) => r[0] === "arbitro_fichas_a_la_vista_fijar")[1].p_herramientas.slice().sort()),
+      ["mesa-arbitro", "pareo-dgt"]);
     const btn = page.locator("#lista li button:has-text('Cambiar su contraseña')");
     igual("«Cambiar su contraseña» dice si está abierto", await btn.getAttribute("aria-expanded"), "false");
     await btn.click();
@@ -181,7 +212,9 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
     await ctx.close();
   }
 
-  const ARB = (mias) => ({ perfil: { full_name: "Luis Mora", role: "arbitro", is_admin: false }, rpc: { mis_herramientas: mias, mi_acceso: { vigente: false, motivo: "arbitro" } } });
+  const ARB = (mias, vista) => ({ perfil: { full_name: "Luis Mora", role: "arbitro", is_admin: false },
+    rpc: { mis_herramientas: mias, mi_acceso: { vigente: false, motivo: "arbitro" } },
+    tablas: { arbitros_cuentas: vista ? { a_la_vista: vista } : null } });
 
   console.log("\narbitro.html, el panel del árbitro");
   {
@@ -192,7 +225,42 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
     await page.waitForFunction(() => document.querySelector('#header a[href$="arbitro.html"]'), null, { timeout: 10000 });
     igual("su «Academia» del encabezado es su panel", await page.$$eval('#header a[href$="clases.html"]', (as) => as.length), 0);
     igual("en sus migas no dice «Academia»", (await page.textContent("#migas")).includes("Academia"), false);
+    // «Ver su manual» queda dentro de su li, no debajo de la tarjeta de la fila siguiente.
+    igual("«Ver su manual» se ve entero, dentro de su tarjeta", await page.evaluate(() => {
+      const m = [...document.querySelectorAll("#lista > li > a")].find((a) => a.textContent === "Ver su manual");
+      if (!m) return "no hay manual";
+      const r = m.getBoundingClientRect(), li = m.parentElement.getBoundingClientRect();
+      return m.checkVisibility() && r.bottom <= li.bottom + 0.5 && r.height > 0;
+    }), true);
+    // La cuenta de árbitro no tiene el panel de la Academia: su salida está acá.
+    igual("tiene «Cerrar sesión» a la vista", await visible(page, "#logout-btn"), true);
+    await page.click("#logout-btn");
+    await page.waitForURL("**/index.html", { timeout: 10000 }).catch(() => {});
+    igual("«Cerrar sesión» cierra la sesión y lleva al inicio",
+      [await page.evaluate(() => sessionStorage.getItem("__salio")), new URL(page.url()).pathname], ["1", "/index.html"]);
     igual("sin errores en la consola", errores, []);
+    await ctx.close();
+  }
+  {
+    const { ctx, page, errores } = await abrir(browser, "arbitro.html", ARB(["pareo"], ["pareo", "notara", "mesa-arbitro"]));
+    await page.waitForFunction(() => !document.getElementById("app").hidden, null, { timeout: 15000 });
+    igual("las fichas a la vista que no abre salen cerradas, y la que abre no se repite",
+      await page.$$eval("#cerradas [data-herramienta]", (cs) => cs.map((c) => c.dataset.herramienta).sort()), ["mesa-arbitro", "notara"]);
+    igual("la sección de las cerradas se ve", await visible(page, "#cerradas-caja"), true);
+    igual("una ficha cerrada no lleva enlace a la herramienta, se alcanza con Tab y dice que falta la licencia",
+      await page.$$eval("#cerradas > li", (lis) => lis.map((li) => {
+        const c = li.querySelector("[data-herramienta]");
+        return [c.tagName, c.hasAttribute("href"), c.tabIndex, c.getAttribute("aria-disabled"), c.textContent.includes("Sin licencia todavía"),
+          [...li.querySelectorAll("a")].every((a) => a.getAttribute("href").startsWith("herramientas-arbitraje.html#"))];
+      })), [["DIV", false, 0, "true", true, true], ["DIV", false, 0, "true", true, true]]);
+    igual("arriba sigue solo la que abre", await page.$$eval("#lista > li > a:first-child", (as) => as.map((a) => a.getAttribute("href"))), ["pareo.html"]);
+    igual("sin errores en la consola", errores, []);
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await abrir(browser, "arbitro.html", ARB(["pareo"]));
+    await page.waitForFunction(() => !document.getElementById("app").hidden, null, { timeout: 15000 });
+    igual("sin fichas a la vista, la sección no se ve", await visible(page, "#cerradas-caja"), false);
     await ctx.close();
   }
   {

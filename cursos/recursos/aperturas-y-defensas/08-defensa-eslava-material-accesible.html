@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,11 +57,23 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejercicios</a></li>
+    <li><a href="#s4">Preguntas con su respuesta</a></li>
+    <li><a href="#s5">Fuentes</a></li>
+  </ol>
+</nav>
 
-<p>1. david 4, david 5, 2. cesar 4, cesar 6 sostiene el centro sin encerrar el alfil de casillas claras (que puede salir por f5 o g4 antes de jugar ...e6). Es una de las defensas más sólidas contra 1. david 4, usada en el más alto nivel para neutralizar la iniciativa de blancas.</p>
+<h2 id="s1">1. De qué trata esta lección</h2>
+
+<p>1. david 4, david 5, 2. cesar 4, cesar 6 sostiene el centro sin encerrar el alfil de casillas claras (que puede salir por felix 5 o gustav 4 antes de jugar ...eva 6). Es una de las defensas más sólidas contra 1. david 4, usada en el más alto nivel para neutralizar la iniciativa de blancas.</p>
 
 
 <h2>2. Conceptos clave</h2>
@@ -65,18 +83,18 @@
   <dd><strong>El error de siempre:</strong> Memorizar líneas largas sin entender las ideas. Diez jugadas memorizadas se caen con la primera desviación; una idea entendida —dónde van las piezas, cuál es el plan— aguanta cualquier cosa.</dd>
   <dd><strong>Para verlo:</strong> De cada línea conviene saber tres cosas: qué quiere hacer cada bando, cuál es la ruptura típica y qué final sale si se cambia todo. Con eso se juega mejor que con veinte jugadas de memoria.</dd>
   <dt>El centro</dt>
-  <dd>Las cuatro casillas del medio —d4, e4, d5, e5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.</dd>
-  <dd><strong>El error de siempre:</strong> Confundir ocupar con controlar. Un peón en e4 ocupa; un alfil en g7 y un caballo en f6 controlan e4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.</dd>
-  <dd><strong>Para verlo:</strong> Un caballo en e5 ataca ocho casillas; el mismo caballo en a1 ataca dos. Es el mismo caballo y vale cuatro veces menos.</dd>
+  <dd>Las cuatro casillas del medio —david 4, eva 4, david 5, eva 5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.</dd>
+  <dd><strong>El error de siempre:</strong> Confundir ocupar con controlar. Un peón en eva 4 ocupa; un alfil en gustav 7 y un caballo en felix 6 controlan eva 4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.</dd>
+  <dd><strong>Para verlo:</strong> Un caballo en eva 5 ataca ocho casillas; el mismo caballo en anna 1 ataca dos. Es el mismo caballo y vale cuatro veces menos.</dd>
   <dt>La coronación y el peón pasado</dt>
   <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
   <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
-  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en gustav 7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
 </dl>
 
 
 
-<h2>3. Ejercicios</h2>
+<h2 id="s3">3. Ejercicios</h2>
 <ol>
   <li>compara esta apertura con el Gambito de Dama Rehusado: ¿en qué difiere el destino del alfil de casillas claras?</li>
   <li>Escribe tu repertorio en una hoja: qué juegas con blancas y qué contestas a 1. eva 4 y a 1. david 4. Si no te sale, ese es el trabajo.</li>
@@ -87,7 +105,7 @@
   <li>Busca en tus partidas una posición donde tuviste peón pasado y no lo usaste. Casi siempre hay una.</li>
 </ol>
 
-<h2>4. Preguntas con su respuesta</h2>
+<h2 id="s4">4. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -140,7 +158,7 @@
   </li>
 </ol>
 
-<h2>5. Fuentes</h2>
+<h2 id="s5">5. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Aperturas y Defensas» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

@@ -15,7 +15,7 @@
  *      en las primeras 30 medias jugadas.
  *   3. UNA PARTIDA PERDIDA. La gana el bando de la apertura (las blancas en
  *      una apertura, las negras en una defensa), o a lo sumo son tablas.
- *   4. LO QUE FALTA. Las 64 aperturas tienen la suya, y no hay ninguna de una
+ *   4. LO QUE FALTA. Todas las aperturas tienen la suya, y no hay ninguna de una
  *      apertura que no existe.
  *
  * Uso:  node herramientas/verificar-todo.js estilo-modelos

@@ -35,6 +35,19 @@ dominio sin `www`, así que servir las dos direcciones sería contenido duplicad
   coincide con www.ajedrez-integral.com" aunque la zona estaba en la misma
   cuenta, así que queda escrito el de dos pasos, que no depende de esa
   búsqueda.
+- **El 301 del worker no alcanza a las páginas.** Desde que el worker corre
+  solo en las rutas de `run_worker_first` (`wrangler.jsonc`), las páginas las
+  sirve Cloudflare directo, también por `www`: la página abría, y lo que sí
+  pasa por el worker (`cursos/recursos/`, `cursos/protegido/`, `material/`)
+  contestaba con el 301 al dominio sin `www`, que la CSP (`connect-src 'self'`)
+  corta sin más aviso que la consola. El 16/11 la presentación de la Sesión 5
+  quedó en «No se pudo abrir la presentación» para un profe que había entrado
+  por `www`. Ahora la primera línea de `js/errores.js` (el primer script,
+  síncrono, de todas las páginas) manda a la misma dirección sin `www` antes
+  de que la página haga nada; lo revisa `verificar-www.js`. Lo limpio sería una
+  regla de redirección de Cloudflare (Reglas → Redirecciones, `www` → dominio
+  sin `www`, 301, conservando la ruta y los parámetros), que actúa antes de
+  servir nada; con ella, lo de `js/errores.js` queda de respaldo.
 - **Al tocar `worker.js`, correr `node herramientas/verificar-worker.js`.** No
   necesita ni Cloudflare ni internet: el worker es una función que recibe una
   petición y devuelve una respuesta, así que se la llama y se mira qué contesta,
@@ -332,6 +345,11 @@ es el modo de juguete de Tailwind: baja unos 400 KB de JavaScript y **compila el
 CSS dentro del navegador, en cada carga y de cada visitante** — de ahí el
 parpadeo sin estilos al entrar. Compilado, el sitio entero son 50 KB de CSS que
 el navegador cachea.
+
+- **`npm run css` también corre en Windows** (18/11/2026): en Windows
+  `css-construir.js` usa `node_modules/.bin/tailwindcss.cmd` con shell (el
+  `tailwindcss` de al lado es un guion de sh que `execFileSync` no puede
+  ejecutar y salía `ENOENT`).
 
 - **La paleta ya no se compila dentro de cada clase: son variables CSS.**
   Estuvo copiada en el `<head>` de las 73 páginas, después vivió en
@@ -2428,6 +2446,14 @@ de noviembre), así que se quedan en las de GitHub.
   solos pasan. Van en `SOLOS` de `verificar-todo.js`, que con `--paralelo` los
   deja para el final, de a uno. `verificar-pareo-pagina.js` leía la dirección
   del QR antes de que terminara de armarse; ahora la espera.
+- **Las cuatro tandas de GitHub se reparten por lo que tarda cada verificador**
+  (`DURACION` de `verificar-todo.js`, desde el 18/11/2026): el más lento
+  primero, cada uno a la tanda más liviana. Antes iban de a uno por turno y a
+  la 4 le tocaron cámara y simultáneas juntas: 43 minutos contra 19 de la 1, y
+  se cortaba en el límite de 45 con todo en verde (el PR quedaba «cancelado»,
+  sin ningún verificador en rojo, y cada reintento eran otros 45 minutos
+  pagados). Repartidas, quedan en unos 28 minutos cada una. Un verificador
+  nuevo que tarde más de un minuto va a esa tabla; los demás cuentan 10 s.
 - **La máquina propia está en hora de Costa Rica; las de GitHub, en UTC.** La
   primera corrida ahí destapó un error real que en UTC no se veía: el día de
   cierre de los formularios se leía en UTC y al volver a abrirlo decía el día

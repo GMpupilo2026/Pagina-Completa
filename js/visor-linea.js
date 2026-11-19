@@ -229,8 +229,15 @@ window.VisorLinea = (function () {
             api.limpiar().decir("");
             irA(n);
           },
+          // Con el recuadro vacío, Enter o → avanzan sin escribir nada (js/cuadro-comandos.js).
+          recorrer: {
+            siguiente: (api) => { if (indice < jugadas.length) { api.decir(""); irA(indice + 1); } else api.decir("Ya estás en la última jugada de la línea."); },
+            anterior: (api) => { if (indice > 0) { api.decir(""); irA(indice - 1); } else api.decir("Ya estás en la posición de salida."); },
+            inicio: (api) => { api.decir(""); irA(0); },
+            final: (api) => { api.decir(""); irA(jugadas.length); },
+          },
         });
-        comandos.ayuda('Recorrer: «siguiente», «anterior», «inicio», «final», «jugada 5». La evaluación: «evaluación». Preguntar: «caballos», «qué hay en e4».');
+        comandos.ayuda('Con el recuadro vacío: Enter o flecha derecha, la jugada siguiente; flecha izquierda, la anterior; Inicio y Fin, las puntas. Escribiendo: «jugada 5». La evaluación: «evaluación». Preguntar: «caballos», «qué hay en e4».');
       }
     }
 

@@ -43,6 +43,10 @@
     if (m.pgn) x.pgn = String(m.pgn);
     // La eliminación directa: el lugar en el cuadro y, si fue tablas, quién pasó y cómo.
     if (m.ko) { x.ko = true; x.slot = m.slot; if (m.pasa) { x.pasa = m.pasa; x.desempate = String(m.desempate || ""); } }
+    // La doble eliminación (la llave, su fase y quién llegó a la final desde
+    // perdedores) y el partido por el tercer puesto.
+    if (m.ko && m.llave) { x.llave = m.llave; x.fase = m.fase; if (m.deP) x.deP = m.deP; }
+    if (m.ko && m.tercer) x.tercer = true;
     return x;
   };
 
@@ -85,7 +89,7 @@
     return {
       nombre: t.nombre || "", grupo: t.grupo || "", ciudad: t.ciudad || "", provincia: PROVINCIAS.includes(t.provincia) ? t.provincia : "", federacion: t.federacion || "",
       fechaInicio: t.fechaInicio || "", fechaFin: t.fechaFin || "", arbitro: t.arbitro || "", arbitroAdjunto: t.arbitroAdjunto || "", ritmo: t.ritmo || "", ritmoTipo: ritmoTipo(t), validoElo: t.validoElo || "",
-      sistema: t.sistema, dobleVuelta: !!t.dobleVuelta, rondasTotales: t.sistema === "scheveningen" || t.sistema === "eliminacion" ? modulo("PareoTorneo", "./torneo.js").rondasDelTorneo(t) : t.rondasTotales, tipo: t.tipo, tableros: t.tableros,
+      sistema: t.sistema, dobleVuelta: !!t.dobleVuelta, dobleEliminacion: t.sistema === "eliminacion" && !!t.dobleEliminacion, tercerPuesto: t.sistema === "eliminacion" && !t.dobleEliminacion && !!t.tercerPuesto, rondasTotales: t.sistema === "scheveningen" || t.sistema === "eliminacion" ? modulo("PareoTorneo", "./torneo.js").rondasDelTorneo(t) : t.rondasTotales, tipo: t.tipo, tableros: t.tableros,
       puntos: t.puntos, desempates: (t.desempates || []).slice(), mesaInicial: t.mesaInicial,
       evento: t.evento ? { nombre: t.evento.nombre || "" } : null,
       jugadores: (t.jugadores || []).map(persona),
@@ -98,6 +102,9 @@
       // Los códigos de los enlaces en vivo: un enlace que ya nadie transmite
       // lleva desde ellos al torneo publicado (js/pareo/ver.js).
       vivo: t.liveCodigo || undefined, codigoEvento: e.codigoEvento || undefined,
+      // El código de las cámaras de Notara (ya va en el QR de cada mesa): con
+      // él, la página del torneo lleva a «Partidas en vivo» (tablero-vivo.html).
+      camaras: t.camaras && t.camaras.activo && t.camaras.codigo ? t.camaras.codigo : undefined,
       resumen: resumenJugadores(t),
     };
   }
@@ -151,10 +158,11 @@
   const reportar = (id, motivo, detalle) => llamar({ accion: "reportar", id, motivo, detalle: detalle || "" });
   const borrar = (p) => llamar({ accion: "borrar", id: p.id, clave: p.clave });
   // La inscripción previa: mandarla (la página pública, sin clave), leerlas
-  // y marcarlas (quien organiza, con la clave de su torneo).
+  // y marcarlas (quien organiza, con la clave de su torneo), con un
+  // comentario que le llega por correo a quien inscribió si dejó un correo.
   const inscribir = (id, inscripcion) => llamar({ accion: "inscribir", id, inscripcion, consentimiento: true });
   const inscripciones = (p) => llamar({ accion: "inscripciones", id: p.id, clave: p.clave });
-  const marcar = (p, ids, estado) => llamar({ accion: "marcar", id: p.id, clave: p.clave, ids, estado });
+  const marcar = (p, ids, estado, comentario) => llamar({ accion: "marcar", id: p.id, clave: p.clave, ids, estado, comentario: comentario || "" });
   // Seguir a un jugador por correo (la página pública, sin cuenta): pedirlo,
   // confirmarlo y darse de baja con los enlaces que llegan por correo.
   const seguirCorreo = (nombre, ident, correo) => llamar({ accion: "seguir_correo", nombre, ident: ident || "", correo, consentimiento: true });

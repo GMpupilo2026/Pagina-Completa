@@ -689,8 +689,10 @@ def presentacion(curso, leccion, destino):
         caja(d, 0.5, 2.3, W - 1.0, 1.4, "Receso", 72, "FFFFFF", True, True)
         caja(d, 0.5, 3.9, W - 1.0, 1.2, ["%d minutos" % m, "Pausa los relojes: seguimos en breve."], 28, "CADCFC", centrado=True)
 
-    # 4 · temas (y el primer receso a la mitad)
-    mitad = (len(leccion["temas"]) + 1) // 2
+    # 4 · temas (y el primer receso a la mitad, o después del tema que lleva
+    # "receso_despues": así cae donde lo pone el cronograma)
+    marcado = [k for k, t in enumerate(leccion["temas"]) if t.get("receso_despues")]
+    mitad = marcado[0] + 1 if marcado else (len(leccion["temas"]) + 1) // 2
     for k, t in enumerate(leccion["temas"]):
         cuerpo_y_lista(t["titulo"], None, t["texto"], t.get("puntos") or [], t["fuente"])
         if k + 1 == mitad and recesos >= 1:

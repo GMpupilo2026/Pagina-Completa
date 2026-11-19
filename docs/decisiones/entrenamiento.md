@@ -346,6 +346,50 @@ que el alumno de 1800 vuelve a empezar en los de 1000.
   nivel estaba incompleto y ahora no): repasar un nivel ya completo no vuelve
   a festejar.
 
+## El puzzle del día
+
+`entreno/temas.html?del-dia=1`, con su caja «🌟 Puzzle del día» en la lista de
+Ejercicios por tema, debajo de «Repasar fallados»: **un ejercicio, el mismo para
+todos durante el día de Costa Rica**. La idea salió de Chessgora. Es un modo más de Ejercicios por tema, como
+«Repasar fallados» y el reto (`abrirDelDia()` en `js/entreno-temas.js`).
+
+- **Sale del banco de siempre** (`temas.json`), así que ninguna posición se
+  inventa, y **se anota bajo su tema de origen** (`temaDeOrigen`): suma Puntos
+  Ajedrez como cualquier ejercicio (una vez: si ya lo había resuelto en su
+  tema, no vuelve a sumar), cuenta para las tareas de ese tema, y si costó
+  entra a «Repasar fallados». **No hay nada nuevo en la base**; el detalle lleva
+  además `del_dia: "AAAA-MM-DD"`, por si un día se quiere contar quién lo hizo.
+- **La elección es una cuenta, no una tabla**: los ejercicios con rating entre
+  1100 y 1700 de los temas de un motivo concreto (`GRUPOS_DE_MOTIVO`:
+  clavada, desviación, mate del pasillo…), sin repetir id, y la fecha de Costa
+  Rica pasada por un hash. Todas las computadoras sacan el mismo. No de
+  «Mezcla equilibrada», las fases o el largo: no dicen de dónde viene ni a qué
+  tema sumarlo (la primera versión decía «Viene del tema «Mezcla
+  equilibrada»»). Si el banco cambia, puede cambiar el de ese día.
+- **El día es el de Costa Rica**, con `Intl` y su `timeZone`: a las 23:30 de
+  allá (05:30 UTC del día siguiente) sigue siendo el mismo.
+- Sin «Saltar» ni selector de dificultad, y no mueve la dificultad que se
+  ajusta sola. Al terminar, «Terminar el puzzle del día →» (el cierre de
+  `EjercicioTablero.fin` ahora acepta `textoSiguiente`) y «Mañana hay otro»;
+  queda anotado en `entreno_del_dia_v1` de ese aparato.
+- **No va en «Hoy te toca»**: ahí siempre habría un renglón más, taparía la
+  sugerencia del panel y rompería el orden que esa lista ya tiene. **Tampoco es
+  una tarjeta del hub**: cada tarjeta del hub es una herramienta de
+  `MaterialPlataforma.HERRAMIENTAS` (lo exigen `verificar-entreno.js` y
+  `verificar-clase-entrenamientos.js`), y la primera versión, con tarjeta, los
+  rompió. La caja dice «Ya resolviste el de hoy» cuando corresponde.
+- **La anotación sigue siendo `log(actividad, { puzzle_id: … })`**, con el
+  `del_dia` adentro: `verificar-premio-temas.js` busca esa forma, la que lee
+  `premio_item()` para el premio de tema terminado (con `Object.assign`, la
+  primera versión lo rompió).
+
+**Al tocarlo, `node herramientas/verificar-todo.js puzzle-del-dia`** (sin
+navegador): misma fecha, mismo ejercicio; treinta días, casi siempre distintos;
+del banco, en la banda y de un tema de motivo que lo contiene; el día de Costa
+Rica; anotado con el tema de origen y en la forma que lee `premio_item()`; la
+caja en Ejercicios por tema y ninguna tarjeta en el hub. Está probado que salta
+con la zona horaria cambiada a UTC.
+
 ## Entender el error y ver la línea (Temas y Mates)
 
 `verificar-entreno-arreglos.js` («La refutación del error» y «Mates: Siguiente
@@ -1502,7 +1546,7 @@ atrás se respeta, 30 días atrás y el futuro pasan a «ahora», y un
 ## Estudio: una ficha por idea, con su mapa y su posición
 
 `entreno/estudio.html` (tarjeta **"📚 Estudio"** en `clases.html` → grupo
-"Aprender") son 198 fichas de estudio: 29 aperturas, 35 defensas, 29 temas
+"Aprender") son 199 fichas de estudio: 30 aperturas, 35 defensas, 29 temas
 tácticos, 27 mates, 52 conceptos y 26 finales. Cada una es **una sola pantalla**: la idea principal
 arriba, cuatro bloques alrededor de un nodo con la pieza, y abajo la posición
 que lo explica, recorrible jugada por jugada.
@@ -1790,7 +1834,7 @@ primero de los tres).
   (`fichas-estudio-pdf.js`; `--solo-accesible` la rehace sin sitio ni PDF), así
   que dice lo mismo que el papel. `verificar-fichas-pdf.py` comprueba que esté al
   día, sin imágenes ni scripts, con un solo h1 y sin saltos de nivel, con todos
-  los enlaces internos llevando a algo que existe y las 198 fichas en orden, en
+  los enlaces internos llevando a algo que existe y las 199 fichas en orden, en
   los dos índices, numeradas, con su posición y su «Volver al índice». Se rompió
   a propósito (una imagen, un h6, un enlace roto) y salta.
 - Los colores están medidos: texto 16,6:1 y enlaces 8,4:1 en claro; 14,8:1 y
@@ -1819,6 +1863,37 @@ nuevas, 76 en total).
 - **La portadilla de Conceptos (52) se iba a una segunda hoja**: con más de 44
   fichas, la lista de la portadilla va con la letra más chica. El libro tiene
   210 páginas y las cartas, 22 hojas.
+
+### La ficha 199: el Colle-Zukertort
+
+El dueño la pidió para una alumna ciega que está estudiando el Colle con b3:
+la ficha «Sistema Colle» que ya existía es la del Colle clásico (c3 y e4), y
+el plan con b3 es otro (Ab2, Ce5, f4 y la torre por f3). Entró con su línea
+`colle-zukertort` (77 en total), y la respuesta a 3…Af5 —el alfil negro sale
+antes de e6 y se ofrece a cambiar el de d3— va escrita en los bloques, sin
+posición propia: una segunda línea para eso habría entrado a la prueba de
+estilo como si fuera otra apertura para recomendar.
+
+- **Una línea nueva mueve la medición de su vecina.** La posición propia del
+  Colle pasó de 3.e3 a 5.c3 (hasta c5 la comparte con el Zukertort), y con las
+  partidas que había no llegaba al mínimo de 15: el Colle quedó sin medir, sin
+  dar ningún error en la ficha. Se completó como dice «Las 7 que faltaban, de
+  KingBase», con `KingBase2017-D00-D29_part_01.pgn`: 109 partidas para el
+  Colle y 292 para el Zukertort, y las 65 aperturas quedaron medidas. Su
+  partida modelo también cambió: la del curso ya no llega a 5.c3, y la nueva
+  sale de KingBase.
+- **`estilo-modelos.js` leía mal las partidas guardadas**: las pasaba por
+  `.map(leerPgn)`, y `map` le da el índice como segundo argumento, que es
+  `hasta`. La partida número *i* se leía solo hasta la media jugada *i*, y
+  casi ninguna llegaba a su apertura: correrlo de nuevo dejaba 42 partidas
+  modelo de 64 sin avisar. El verificador las leía bien (`(t) =>
+  Gen.leerPgn(t)`), por eso `main` estaba en verde. Ahora es
+  `.map((t) => leerPgn(t))`.
+- **En Windows, los generadores de KingBase se corren con LF.** Con
+  `core.autocrlf=true`, el `.pgn` guardado sale con CRLF y la separación por
+  `\n\n` no encuentra ninguna partida. En el CI (Linux) no pasa, pero lo que se
+  genera en la máquina tiene que dar lo mismo que allá.
+- El libro tiene 211 páginas y las cartas, 23 hojas.
 
 ### Los mates, en una pestaña propia
 
@@ -3627,20 +3702,23 @@ esa sola con el motor, como «Revisa esta partida» (`?revisar=torneo:<id>`).
   120 letras, Elo 0–3500): las jugadas las escribe el navegador y se pueden
   tocar desde la consola, así que quien las lee (Informes) vuelve a filtrar
   lo que no tenga forma de jugada.
-- **O con una foto de la planilla** («📷 Leer la foto»). Usa el mismo lector
-  que `lector-planilla.html`, que pasó de la página a `js/planilla-ocr.js`
-  para que haya una sola copia: la foto va a la Edge Function
-  `ocr-scoresheet` (Google Vision, con el tope diario de 30 fotos por persona;
-  ver «El lector de planilla tiene tope diario» en cuentas-y-formularios.md),
-  las palabras se ordenan por filas y cada una se lee como jugada o se
-  cambia por la legal más parecida, comparada también en español («Ac9» es
-  `Bc4`, no `Qc4`). **No se guarda sola**: las jugadas caen en el cuadro, en
-  español, y las adivinadas llevan «?» (que `leerJugadas` salta como una
-  anotación), con un aviso de cuáles son, para que el alumno las compare con
-  su planilla antes de «Guardar y revisar». Lo que dice el servidor (el tope
-  del día, la foto muy grande) se dice tal cual y el cuadro no se toca. Lo
-  prueban `verificar-planilla-ocr.js` (sin navegador) y
-  `verificar-tipos-pagina.js` (con un Vision de mentira).
+- **O con una foto de la planilla** («📷 Leer la foto»). La foto va a la Edge
+  Function `ocr-scoresheet` (Google Vision, con el tope diario de 30 fotos por
+  persona; ver «El lector de planilla tiene tope diario» en
+  cuentas-y-formularios.md) y la partida se arma con el mismo lector del Lector
+  de planilla y del Centroamericano (`js/planilla-reconstruir.js`, en su hilo:
+  ver «El Lector de planilla lee por columnas» en juegos-y-torneos.md). Hasta
+  el 17/11 se ordenaba por filas y cada texto se cambiaba por la jugada legal
+  más parecida: con una planilla en columnas (1-20, 21-40, 41-60) eso daba
+  una partida inventada. **No se guarda sola**: las jugadas caen en el cuadro,
+  en español, y las que no se leyeron tal cual (corregidas o dudosas) llevan
+  «?» (que `leerJugadas` salta como una anotación), con un aviso de cuáles
+  son. Si desde algún punto la planilla no se entiende, el cuadro llega hasta
+  ahí y el aviso dice desde qué jugada y lo que está escrito, para completarlo
+  a mano: no se inventan jugadas. Lo que dice el servidor (el tope del día, la
+  foto muy grande) se dice tal cual y el cuadro no se toca. Lo prueba
+  `verificar-tipos-pagina.js` (con un Vision de mentira: una planilla de
+  una columna, una de tres columnas y una manchada).
 - **El nombre del rival no se guarda.** Es de otra persona, que no tiene
   cuenta ni dio su consentimiento, y para revisar la partida no hace falta. El
   formulario lo dice.
@@ -4543,7 +4621,7 @@ a +1, contra las demás aperturas del mismo color.
   cada medida sin necesidad), hasta 300 por apertura, las que llegan a su
   posición propia, también por transposición, y lo mismo que se guarda de
   las de torneos (40 medias jugadas en UCI, sin nombres). Quedan en
-  `herramientas/datos/estilo-aperturas-kingbase.txt`. Hoy: **64 de 64
+  `herramientas/datos/estilo-aperturas-kingbase.txt`. Hoy: **65 de 65
   medidas**, y `verificar-estilo-aperturas.js` falla si una queda sin medir.
 - La primera versión del extractor miraba, como la medición, si la partida
   pasaba por la posición en sus primeras 30 medias jugadas, y a los 45
@@ -4809,6 +4887,61 @@ editar a mano una medida y la calibración sin el paso de gradiente.
 las clases de ADAES, con su propia actividad (`finales_clases`) y la posición
 en `detail.theme` para mandarla de tarea una por una. Ver «Y para jugarlas en
 casa, de tarea» en `docs/decisiones/accesibilidad.md`.
+
+## El entrenador de IA
+
+Salió de comparar la Academia con otras plataformas (18/11/2026): varias
+tienen un «entrenador» que explica por qué una jugada pierde. El dueño pidió
+construirlo con una condición: **«yo decido a quién se le activa»**.
+
+- **Dónde aparece**: un botón «¿Por qué?» debajo del aviso de «Respuesta
+  incorrecta», en Táctica por tema (`entreno/temas.html`) y en Mates
+  (`entreno/mates.html`). No es un chat: una pregunta, una respuesta. En el
+  reto contra un compañero no aparece.
+- **Quién lo tiene**: nadie, hasta que quien administra lo enciende persona
+  por persona en la ficha de `admin.html` («Entrenador de IA», un
+  `role="switch"` que se pinta con lo que devuelve la base). Tabla
+  `entrenador_ia_personas`, sin política de escritura y con auditoría;
+  `activar_entrenador_ia()` exige `soy_admin()`. Ni un profesor ni quien
+  coordina lo pueden encender: cada explicación cuesta dinero. El navegador
+  pregunta `tengo_entrenador_ia()` (quien administra lo ve siempre, para
+  probarlo). No es la casilla `academia_ia.alumnos` de «Explícame esta
+  posición», que abre a toda una academia.
+- **Quien decide qué era mejor es Stockfish, no la IA.** `js/entrenador-ia.js`
+  analiza en el navegador (el motor compartido, profundidad 14) la mejor línea
+  desde la posición y cómo sigue el motor después de la jugada del alumno. La
+  Edge Function `entrenador-ia` vuelve a jugar todo con chess.js y le pasa al
+  modelo solo eso, con la lista de piezas escrita.
+- **Una jugada que el motor ve casi igual de buena no se «explica»**: el
+  ejercicio guarda UNA solución, y si la del alumno vale menos de 0,6 peones
+  de diferencia la función contesta, sin llamar al modelo y sin gastar, que su
+  jugada también sirve. Pedirle a la IA que explique por qué está mal una
+  jugada buena es pedirle que invente.
+- **Ninguna jugada inventada llega al alumno**: si la explicación nombra una
+  jugada de pieza, una captura o un enroque que no está en las líneas, se
+  descarta entera (422) y se anota por qué. Es el molde de «Explícame esta
+  posición», que corre en Supabase desde el 9/11 y cuyo código nunca entró al
+  repositorio; el entrenador es una función aparte y no la toca.
+- **Lo que viaja al modelo**: la posición y las jugadas. Nada de la persona
+  (ni nombre, ni edad, ni grupo, ni de qué ejercicio viene). `profiles` no
+  guarda la edad, así que el tono «para un niño o un joven» va fijo en las
+  instrucciones.
+- **El gasto**: el mismo `academia_ia` e `ia_uso` de «Mejorar informe», con
+  `que = 'entrenador'`, y un tope por persona y por día en hora de Costa Rica:
+  15 (50 para quien da clase). Todo lo contesta `ia_para_entrenador()`, que es
+  solo de la service role. Lo peor que puede costar la llamada se calcula
+  antes, como en «Mejorar informe».
+- **Los colores del botón son los del texto de la página** (hereda): no se
+  eligió ninguno, y por eso no hay contraste nuevo que medir.
+- **Hace falta la clave**: sin el secreto `ANTHROPIC_API_KEY` en las Edge
+  Functions de Supabase la función contesta «todavía no está configurado». Al
+  18/11/2026 ese secreto nunca se había puesto en el proyecto (`ia_uso`
+  vacío), y solo una academia tenía presupuesto de IA; para quien no tiene
+  academia hace falta la fila general en Academias.
+
+Al tocar esto, `node herramientas/verificar-todo.js entrenador-ia`. Rompiendo
+a propósito el permiso (`tengo_entrenador_ia` siempre true en el doble) o la
+conversión del puntaje a «desde las blancas», salta.
 
 ## Desafíos: la variante hasta el final, y el tablero sin girar
 

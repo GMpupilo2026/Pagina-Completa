@@ -174,6 +174,38 @@ igual("cada entrega, en la clase de antes (recordar) y en la de después (revisa
 ]);
 igual("y dice por qué", pp[1].motivo, "1 alumno no la ha terminado y vence el miércoles 21 de octubre.");
 
+console.log("\n=== Días sin clase ===");
+{
+  const clases = [
+    { inicio: "2026-10-15T16:00:00-06:00", fin: "2026-10-15T17:00:00-06:00", titulo: "7B" },
+    { inicio: "2026-10-22T16:00:00-06:00", fin: "2026-10-22T17:00:00-06:00", titulo: "7B" },
+    { inicio: "2026-10-29T16:00:00-06:00", fin: "2026-10-29T17:00:00-06:00", titulo: "7B" },
+    // A las 11 p. m. de Costa Rica ya es el día siguiente en UTC: el día que cuenta es el de aquí.
+    { inicio: "2026-11-05T23:00:00-06:00", fin: "2026-11-05T23:30:00-06:00", titulo: "Noche" },
+  ];
+  const dias = [
+    { id: "a", profesor_id: "u-profe", fecha: "2026-10-22", motivo: "Torneo" },
+    { id: "b", profesor_id: null, fecha: "2026-10-29", motivo: "Feriado" },
+    { id: "c", profesor_id: "u-otra", fecha: "2026-10-15", motivo: "De otra" },
+    { id: "d", profesor_id: "u-profe", fecha: "2026-11-05", motivo: "Noche libre" },
+  ];
+  igual("quita las clases de sus días y de los feriados, no las del día de otra profe",
+    C.quitarClasesSinClase(clases, dias, "u-profe").map((c) => c.inicio.slice(0, 10)), ["2026-10-15"]);
+  igual("el día es el de Costa Rica (una clase a las 11 p. m. no se corre al día siguiente)",
+    C.quitarClasesSinClase(clases.slice(3), [{ profesor_id: null, fecha: "2026-11-06", motivo: "x" }], "u-profe").length, 1);
+  igual("sin días, las clases quedan igual (y es otra lista)", C.quitarClasesSinClase(clases, [], "u-profe").length, 4);
+  const ev = C.eventosSinClase(dias, { yo: "u-profe", modo: "profe" });
+  igual("como profe: los suyos y los feriados, con quién lo marcó", ev.map((e) => [e.dia, e.titulo, e.detalle]), [
+    ["2026-10-22", "Sin clase: Torneo", "Lo marcaste tú: tus clases de ese día no se cuentan."],
+    ["2026-10-29", "Feriado: Feriado", "Ese día no hay clase en ninguna academia."],
+    ["2026-11-05", "Sin clase: Noche libre", "Lo marcaste tú: tus clases de ese día no se cuentan."],
+  ]);
+  igual("como alumno: lo que la base le deja ver, dicho desde su lado",
+    C.eventosSinClase([dias[0]], { yo: "u-ana", modo: "alumno" }).map((e) => e.detalle), ["Lo marcó tu profe: ese día no hay clase."]);
+  igual("una fecha que no es AAAA-MM-DD no se pinta", C.eventosSinClase([{ profesor_id: null, fecha: "22/10/2026", motivo: "x" }], {}).length, 0);
+  igual("un día sin clase no lleva enlace", ev.every((e) => e.href === "" && e.tipo === "sinclase"), true);
+}
+
 console.log(fallos ? `\n${fallos} comprobación(es) fallaron.` : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);
 

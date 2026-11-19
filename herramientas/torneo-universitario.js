@@ -321,7 +321,7 @@ function pagina(c) {
     ? ["js/main.js", "js/ventana-enlace.js", "js/vendor/supabase.js", "js/supabase-client.js", c.config].concat(c.hoy ? ["js/torneo-hoy.js"] : [], c.scripts || [])
     : ["js/main.js", "js/ventana-enlace.js", "js/vendor/supabase.js", "js/supabase-client.js", c.config,
       "js/pareo/torneo.js", "js/pareo/desempates.js", "js/tabla-imagen.js", "js/vendor/qrcode.js", "js/qr-svg.js",
-      "js/centroamericano-vivo.js", "js/centroamericano-tablas.js", c.hoy ? "js/torneo-hoy.js" : "js/torneo-podio.js"];
+      ...(c.scriptsAntes || []), "js/centroamericano-vivo.js", "js/centroamericano-tablas.js", c.hoy ? "js/torneo-hoy.js" : "js/torneo-podio.js", ...(c.scripts || [])];
   if (c.ediciones && c.ediciones.length) scripts.push("js/torneo-ediciones.js");
   // El logo con fondo blanco (el de una asociación, en JPG) va en un círculo blanco.
   const claseLogo = c.logo.redondo ? "u-logo u-logo-redondo" : "u-logo";
@@ -442,6 +442,30 @@ function configJs(c) {
   lineas.push("    guardado: " + JSON.stringify(t.guardado) + ",");
   lineas.push("    soloPodio: true,");
   if (t.grupos) lineas.push("    grupos: { " + Object.entries(t.grupos).map(([k, v]) => k + ": " + JSON.stringify(v)).join(", ") + " },");
+  // Un torneo dirigido en Pareo Integral: los datos salen de ahí
+  // (js/torneo-pareo-datos.js), no de chess-results.
+  if (t.fuente) {
+    lineas.push("    // Los datos, de Pareo Integral (js/torneo-pareo-datos.js), no de chess-results.");
+    lineas.push("    fuente: " + JSON.stringify(t.fuente) + ", fuenteNombre: " + JSON.stringify(t.fuenteNombre) + ",");
+    lineas.push("    pareo: { nombre: " + JSON.stringify(t.pareo.nombre) + ", desde: " + JSON.stringify(t.pareo.desde) + " },");
+  }
+  if (t.ordenGrupos) lineas.push("    ordenGrupos: " + lista1(t.ordenGrupos) + ",");
+  // Dónde está cada mesa en la foto de la sala (js/torneo-sala-foto.js).
+  if (t.mesasSala) {
+    lineas.push("    // Cada mesa sobre la foto de la sala (js/torneo-sala-foto.js): [número, x, y] en los píxeles de la foto.");
+    lineas.push("    mesasSala: {");
+    lineas.push("      foto: [" + t.mesasSala.foto.join(", ") + "],");
+    lineas.push("      torneos: [");
+    t.mesasSala.torneos.forEach((z) => {
+      lineas.push("        {");
+      lineas.push("          nombre: " + JSON.stringify(z.nombre) + ", color: " + JSON.stringify(z.color) + ", fondo: " + JSON.stringify(z.fondo) + ",");
+      lineas.push("          niveles: " + lista1(z.niveles) + ",");
+      lineas.push("          mesas: [" + z.mesas.map(lista1).join(", ") + "],");
+      lineas.push("        },");
+    });
+    lineas.push("      ],");
+    lineas.push("    },");
+  }
   if (c.hoy) {
     lineas.push("    // Lo que dice «Hoy en el torneo» (js/torneo-hoy.js) cuando el torneo ya terminó.");
     lineas.push("    hoy: { termino: " + JSON.stringify(c.hoy.termino) + ", gracias: " + JSON.stringify(c.hoy.gracias) + ", final: " + JSON.stringify(c.hoy.final) + " },");
@@ -450,6 +474,22 @@ function configJs(c) {
   lineas.push("    nombreCorto: " + JSON.stringify(t.nombreCorto) + ",");
   lineas.push("    imgSub: " + JSON.stringify(t.imgSub) + ",");
   lineas.push('    compartirTexto: (n) => n + " ' + t.compartir.replace(/["\\]/g, "\\$&") + '",');
+  // Los textos propios (en español) que reemplazan los del Centroamericano
+  // en js/centroamericano-vivo.js y -tablas.js; una función va tal cual.
+  const valorJs = (v) => (typeof v === "function" ? v.toString() : JSON.stringify(v));
+  if (t.textos) {
+    lineas.push("    // Los textos propios, en lugar de los del Centroamericano (el certificado, «Así terminó mi torneo», «¡Hoy juega!», el calendario).");
+    lineas.push("    textos: {");
+    Object.entries(t.textos).forEach(([k, v]) => lineas.push("      " + k + ": " + valorJs(v) + ","));
+    lineas.push("    },");
+  }
+  // La cara del certificado (diploma() de js/centroamericano-tablas.js).
+  if (t.diploma) {
+    lineas.push("    // La cara del certificado: el evento, la sede, los colores, la mascota, el marco y el escudo.");
+    lineas.push("    diploma: {");
+    Object.entries(t.diploma).forEach(([k, v]) => lineas.push("      " + k + ": " + valorJs(v) + ","));
+    lineas.push("    },");
+  }
   const im = t.imagen;
   lineas.push("    imagen: {");
   lineas.push("      banda: " + JSON.stringify(im.banda) + ", tinta: " + JSON.stringify(im.tinta) + ", acento: " + JSON.stringify(im.acento) + ", suave: " + JSON.stringify(im.suave) + ",");

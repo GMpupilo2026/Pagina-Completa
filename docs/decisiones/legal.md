@@ -27,7 +27,10 @@ cambiar algo en el sitio, revisar si contradice lo que ya prometen:
 - **Proveedores**: la privacidad nombra a cada servicio que recibe datos
   (Supabase, Cloudflare, Resend, Google —tipografías, Vision del Lector de
   planilla, notificaciones, y Drive para la ficha de los JDN con su foto y su
-  cédula—, Anthropic para mejorar informes, Meet o Zoom, la
+  cédula—, Anthropic para mejorar informes, Meet o Zoom, LiveKit para la llamada de
+  voz de la clase en vivo —LiveKit no graba; la grabación la hace la
+  computadora del profe, con el permiso de cada familia, y se borra a los 90
+  días—, la
   consulta de cédula de Hacienda, y Lichess y Chess.com para bajar las partidas
   públicas de un rival —o las del propio alumno en «Tus propios errores», y si
   lo dejó guardado el hub les pregunta como mucho cada 6 horas si hay nuevas—,
@@ -127,6 +130,7 @@ prueba nada.
 | `responder_encuesta_curso` | `encuesta-curso.html` | `encuesta_curso_respuestas.privacidad_version` y `privacidad_aceptada_en` |
 | `justificar_ausencia` | `justificaciones.html` | `justificaciones_ausencia.privacidad_version` y `privacidad_aceptada_en` (una constancia médica es un dato sensible) |
 | `guardar_mi_foto` | `configuracion.html` | `profiles.foto_privacidad_version` y `foto_aceptada_en` (la foto de perfil; ver «La foto de perfil» en `permisos-y-roles.md`) |
+| `dar_permiso_grabar_voz` | `configuracion.html` | `permisos_grabar_voz.privacidad_version` y `aceptado_en` (el permiso de la familia para grabar la voz del alumno en la llamada de la clase; sin él no habla mientras se graba. Ver «La grabación de la llamada» en `clase-en-vivo.md`) |
 | (trigger `consentimiento`) | `arbitros-cr.html`, «Revisar normas antes de mandarlas» | `arbitros_cr_normas_revision.privacidad_version` y `privacidad_aceptada_en` (el certificado de una norma lleva firmas y datos de otras personas; la casilla dice además que hay permiso del árbitro) |
 | `elegir_plan` | `elegir-plan.html` | `solicitudes_academia.terminos_version` y `terminos_aceptados_en` (y la privacidad, si la solicitud no la tenía) |
 

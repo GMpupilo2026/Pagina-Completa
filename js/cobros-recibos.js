@@ -41,6 +41,8 @@ function entregaDe(r) {
     if (r.estado === "anulado") return { texto: "Anulado", clase: "bg-brand-100 text-brand-450 dark:bg-brand-800 dark:text-brand-350" };
     if (r.entrega === "correo") return { texto: "Enviado por correo", clase: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200" };
     if (r.entrega === "mano") return { texto: "Entregado en mano", clase: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200" };
+    // Los de las cuentas de mensualidades.html: salen al registrar, sin revisión.
+    if (r.entrega === "whatsapp") return { texto: "Enviado por WhatsApp", clase: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200" };
     return { texto: "Por revisar y entregar", clase: "bg-accent-100 text-brand-900 dark:bg-accent-900 dark:text-white" };
 }
 

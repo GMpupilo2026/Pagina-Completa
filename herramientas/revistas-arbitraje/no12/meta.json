@@ -1,0 +1,34 @@
+{
+  "numero": 12,
+  "fecha_original": "mayo de 2013",
+  "temas": [
+    {"titulo": "Presentación", "desc": "Editorial de aniversario y qué cambió en esta edición"},
+    {"titulo": "Habilidades psicológicas del árbitro", "desc": "Psicología del deporte · Paula Man Reich"},
+    {"titulo": "«Patrullaje» para supervisar los relojes", "desc": "Tiempo consumido e incremento · Leyes 2023, arts. 6.10 y 12.3"},
+    {"titulo": "El síndrome de la mesa 1", "desc": "Comportamiento en competencias · Carlos Calleros"},
+    {"titulo": "El prefacio de las Leyes", "desc": "Competencia, buen juicio y objetividad · art. 0.2"},
+    {"titulo": "El reloj Game Time II", "desc": "Programación y ajustes tras una sanción · C.02 (2026)"}
+  ],
+  "presentacion": "<div class=\"cols\"><p>¡Hemos llegado a un año! Estamos muy contentos de llegar a nuestro número 12. Ha sido un año algo complicado, pero el trabajo ha sido muy agradable. Espero que el segundo año sea aún más productivo y que se nos unan más árbitros destacados para enriquecer esta revista de arbitraje.</p><p>Este año contamos principalmente con dos articulistas destacados: el Árbitro Internacional <b>Carlos Calleros</b>, de Brasil, con una larga trayectoria dirigiendo varios de los torneos más prestigiosos de América; y la psicóloga deportiva <b>Paula Man</b>, argentina radicada en México, que trabajaba entonces como terapeuta de los equipos olímpicos mexicanos de taekwondo y judo. Ya conversamos con otros articulistas, que iremos integrando al equipo.</p><p>En este número de aniversario iniciamos una sección que creemos importante para la mayoría de los árbitros: explicaremos el funcionamiento de los relojes electrónicos, empezando por el <b>Game Time II</b>. Siguiendo con los relojes, incluimos el artículo «Patrullaje», con consejos para supervisar el tiempo de los relojes, una tarea que parece sencilla pero muchas veces no lo es.</p><p>El AI Carlos Calleros nos envía «El comportamiento en las competencias y el síndrome de la mesa 1». ¿Sabes cuáles de tus habilidades psicológicas despliegas cuando arbitras? Es el tema del artículo de Paula Man. Y ¿conoces a fondo lo que dice el prefacio de las Leyes del Ajedrez? Descubrirás cosas interesantes que muchos desconocen.</p><p>Espero que este número sea de tu agrado y que nos sigas leyendo un año más.</p><p style=\"text-align:left\"><b>Santiago García Ramos</b><br>Árbitro Internacional · Conferencista FIDE de arbitraje (en la edición original, «Conductor Master FIDE en Arbitraje»)</p></div><p class=\"small\">Nota de la edición revisada: el editorial original presentaba la revista como «la única revista de arbitraje en el mundo»; se omitió esa afirmación, que no podemos comprobar. Los cargos de los colaboradores corresponden a 2013.</p>",
+  "cambios": [
+    ["Supervisión con incremento", "Contaba un incremento por cada jugada hecha.", "Se mantiene para relojes que suman el incremento después de cada jugada y se añade que las especificaciones FIDE vigentes exigen sumarlo <b>antes de la primera jugada</b> (C.02, art. 3.3.3): con esos relojes, cada jugador recibió un incremento más. Ejemplo recalculado."],
+    ["Ejemplo de 20 jugadas a 50 s con 30 s", "16 min 40 s pensados, y luego «16 min 30 s − 10 min = 6 min 30 s».", "<b>Fe de erratas:</b> 16:40 − 10:00 = <b>6 min 40 s</b>."],
+    ["Relojes analógicos: «un minuto extra»", "Ponerlos a las 4:59 en vez de las 5:00 para que la bandera caiga clara.", "Ya no se recomienda: cambia el tiempo asignado, que debe fijarse de antemano (art. 6.3.1). Un reloj con la bandera defectuosa se sustituye (art. 6.10.1). Se añade que las Leyes 2023 solo mencionan relojes analógicos para jugadores con discapacidad visual (art. D.2.6.2)."],
+    ["Qué hacer con un reloj mal", "Cambiarlo o ajustarlo, sin citar la norma.", "Se citan los arts. <b>6.10.1</b> (reloj defectuoso) y <b>6.10.2</b> (configuración incorrecta: el árbitro puede detener el reloj), <b>6.11.1</b> (pausas) y <b>12.6</b> (el árbitro no indica jugadas ni avisa que el rival jugó). Se advierte que la suma no dice cuál de los dos relojes falla."],
+    ["Ejercicios para casa", "Los tiempos de los relojes solo estaban en imágenes.", "Se escriben los datos completos de cada ejercicio; las tres soluciones se recalcularon y son correctas (el 1 tiene 2 minutos de diferencia)."],
+    ["Enroque (anécdota de Calleros)", "«Para enrocar primero se toca el rey».", "Se añaden los arts. <b>4.1</b> y <b>4.4.1 a 4.4.3</b> (tocar torre y luego rey impide enrocar por ese lado), y los <b>11.10, 12.7 y 12.8</b> sobre apelaciones, espectadores y teléfonos."],
+    ["El prólogo de las Leyes", "Texto del prólogo de las Leyes vigentes en 2012; definiciones copiadas del diccionario.", "Se resume el <b>art. 0.2 (Prefacio)</b> de 2023 y se añade lo nuevo: art. 0.1, condición para el rating FIDE, recomendación para partidas no evaluadas y consultas de las federaciones; desaparece el permiso a las federaciones para dictar reglas más detalladas. Las definiciones se explican con palabras propias."],
+    ["Reloj Game Time II y la FIDE", "«Reloj oficial de la Federación Americana», «uno de los mejores».", "Se informa que <b>no figura</b> en la lista de relojes con aceptación técnica de la FIDE (C.02.04, desde el 1-mar-2026) y qué equipos se exigen o toleran según el nivel del torneo (C.02, art. 8). Se omiten afirmaciones comerciales no comprobables."],
+    ["Incremento en el Game Time II", "ACCUM en ON bastaba.", "Según el manual, de fábrica el ACCUM solo actúa en el periodo final: para incremento desde la jugada 1 con varios controles hay que activar <b>ACCUM ALL</b>."],
+    ["Tabla de configuraciones del reloj", "Tabla completa de 96 configuraciones, con descripciones que no coincidían con su abreviatura (p. ej. la 44 y la 70) y las 84–91 descritas como ritmos de ajedrez.", "Se resume y se remite al manual; se aclara que las 84–91 son controles de go y que la HG (lugar del 82) es el reloj de arena."],
+    ["Reclamo incorrecto de tablas", "Se sumaban <b>3 minutos</b> al rival.", "Hoy son <b>2 minutos</b> (art. 9.5.3), y <b>1</b> en rápidas y relámpago (art. A.3)."],
+    ["Ajuste tras jugada ilegal", "Solo se ajustaban tiempos y contador.", "Se añade la sanción del art. <b>7.5.5</b> (2 minutos al rival; 1 en rápidas y relámpago) y el art. 7.1 (derecho a no cambiar los relojes)."],
+    ["Editorial", "«La única revista de arbitraje en el mundo»; «Conductor Master FIDE».", "Se omite la primera afirmación; se explica que el título equivale hoy a Conferencista FIDE (FIDE Lecturer)."]
+  ],
+  "directorio": [
+    ["Director (edición original)", "Santiago García Ramos · Árbitro Internacional"],
+    ["Revisión (edición original)", "Ignacio Córdoba Navarro · Periodista"],
+    ["Diseño (edición original)", "Ángel Antonio Espino · Diseñador gráfico"],
+    ["Colaboradores (edición original)", "Paula Man Reich · Psicóloga del deporte; Carlos Calleros · Árbitro Internacional (Brasil)"]
+  ]
+}

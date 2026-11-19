@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,11 +57,31 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Después de 4. eva 3</a></li>
+        <li><a href="#posicion-2">Posición 2: Después de 6. caballo eva 2</a></li>
+        <li><a href="#posicion-3">Posición 3: Después de 8… caballo captura david 5</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 <p>G. Kamsky – N. Short · Match de Candidatos de la PCA (partida 5), Linares 1994 · 1-0</p>
-<p>En esta Nimzoindia Rubinstein, Kamsky vuelve a quedarse con un peón dama aislado en d4, pero esta vez el resultado es muy distinto al de la partida anterior contra Kárpov: aquí es el propietario del PDA quien saca todo el partido a sus ventajas dinámicas. Short comete dos imprecisiones seguidas en las jugadas 18 y 19, colocando su caballo y su torre en casillas poco útiles, y Kamsky aprovecha para lanzar una ofensiva directa en el flanco de rey con 20. caballo hector 5! y 21. hector 4!. El golpe decisivo llega con 23. david 5!, que abre las líneas justo quando las piezas blancas están mejor situadas, culminando en una combinación que le da a las blancas ventaja decisiva. Es un excelente contraejemplo que muestra el lado dinámico del peón dama aislado.</p>
+<p>En esta Nimzoindia Rubinstein, Kamsky vuelve a quedarse con un peón dama aislado en david 4, pero esta vez el resultado es muy distinto al de la partida anterior contra Kárpov: aquí es el propietario del PDA quien saca todo el partido a sus ventajas dinámicas. Short comete dos imprecisiones seguidas en las jugadas 18 y 19, colocando su caballo y su torre en casillas poco útiles, y Kamsky aprovecha para lanzar una ofensiva directa en el flanco de rey con 20. caballo hector 5! y 21. hector 4!. El golpe decisivo llega con 23. david 5!, que abre las líneas justo quando las piezas blancas están mejor situadas, culminando en una combinación que le da a las blancas ventaja decisiva. Es un excelente contraejemplo que muestra el lado dinámico del peón dama aislado.</p>
 <p>Como todo elemento posicional, el peón dama aislado (PDA) tiene dos caras. Ya vimos su lado débil en la lección anterior; aquí toca ver su lado dinámico. Su propietario disfruta de más espacio, piezas más activas y, a menudo, posibilidades de ataque directo en el flanco de rey, precisamente porque el rival necesita tiempo para reorganizar su defensa contra el peón. Dos principios ayudan a explotar esa cara amable del PDA. Primero, al contrario de lo que busca el defensor, el propietario del peón prefiere mantener muchas piezas sobre el tablero: cuantas más queden, mayor es el peligro potencial contra el rey enemigo, y menos se nota, en proporción, la debilidad estructural del peón. Segundo, el propietario del PDA debe disputar, en la medida de lo posible, la casilla situada justo delante de su peón; si renuncia a ella por completo y deja que el rival la controle con total firmeza, sus perspectivas de ataque suelen quedarse cortas, porque las amenazas del PDA rara vez bastan por sí solas para decidir la partida: hace falta molestar al rival en más de un sector del tablero a la vez.</p>
 <h3>Lo que deja esta partida</h3>
 <ul>
@@ -69,52 +95,156 @@
   <dt>La coronación y el peón pasado</dt>
   <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
   <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
-  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en gustav 7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
   <dt>La captura al paso</dt>
   <dd>Cuando un peón avanza dos casillas y cae al lado de un peón rival, ese peón rival puede capturarlo como si hubiera avanzado una sola. Solo en la jugada inmediatamente siguiente.</dd>
   <dd><strong>El error de siempre:</strong> No usarla porque no se conoce, o intentarla una jugada tarde. El derecho se pierde si no se ejerce de inmediato: no se guarda para después.</dd>
-  <dd><strong>Para verlo:</strong> Peón blanco en e5, el negro juega d7-d5. El blanco puede jugar eva captura david 6 y su peón termina en d6, como si el negro solo hubiera avanzado una. El peón de d5 se retira del tablero.</dd>
+  <dd><strong>Para verlo:</strong> Peón blanco en eva 5, el negro juega david 7-david 5. El blanco puede jugar eva captura david 6 y su peón termina en david 6, como si el negro solo hubiera avanzado una. El peón de david 5 se retira del tablero.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Después de 4. eva 3</h3>
+  <h3 id="posicion-1">Posición 1 de 3: Después de 4. eva 3</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en c1, f1; caballos en c3, g1; peones en a2, b2, c4, d4, e3, f2, g2, h2.</p>
-  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en b4, c8; caballos en b8, f6; peones en a7, b7, c7, d7, e6, f7, g7, h7.</p>
+  <h4>Piezas blancas: 16</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en david 1.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en cesar 1.</li>
+    <li>Alfil en felix 1.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Caballo en gustav 1.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 4.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en eva 3.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 16</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en bella 4.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Caballo en bella 8.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 7.</li>
+    <li>Peón en david 7.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
   
   
-  <p>4. eva 3 marca la Variante Rubinstein de la Nimzoindia: las blancas priorizan evitar los peones doblados en la columna c, aunque esto suponga colocar más tarde su caballo de rey en la casilla algo menos activa e2 en vez de f3.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: rnbqk2r/pppp1ppp/4pn2/8/1bPP4/2N1P3/PP3PPP/R1BQKBNR b KQkq - 0 4</p>
+  <p>4. eva 3 marca la Variante Rubinstein de la Nimzoindia: las blancas priorizan evitar los peones doblados en la columna c, aunque esto suponga colocar más tarde su caballo de rey en la casilla algo menos activa eva 2 en vez de felix 3.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: rnbqk2r/pppp1ppp/4pn2/8/1bPP4/2N1P3/PP3PPP/R1BQKBNR b KQkq - 0 4</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Después de 6. caballo eva 2</h3>
+  <h3 id="posicion-2">Posición 2 de 3: Después de 6. caballo eva 2</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en c1, d3; caballos en c3, e2; peones en a2, b2, c4, d4, e3, f2, g2, h2.</p>
-  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en b4, c8; caballos en c6, f6; peones en a7, b7, c5, d7, e6, f7, g7, h7.</p>
+  <h4>Piezas blancas: 16</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en david 1.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en cesar 1.</li>
+    <li>Alfil en david 3.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Caballo en eva 2.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 4.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en eva 3.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 16</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en bella 4.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Caballo en cesar 6.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 5.</li>
+    <li>Peón en david 7.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
   
   
-  <p>6. caballo eva 2 desarrolla el caballo evitando la clavada sobre c3 y, sobre todo, hace innecesario el gasto de tiempo en a3 antes de recapturar en c3, ya que ahora las negras no pueden doblar los peones blancos con … alfil captura cesar 3.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1bqk2r/pp1p1ppp/2n1pn2/2p5/1bPP4/2NBP3/PP2NPPP/R1BQK2R b KQkq - 3 6</p>
+  <p>6. caballo eva 2 desarrolla el caballo evitando la clavada sobre cesar 3 y, sobre todo, hace innecesario el gasto de tiempo en anna 3 antes de recapturar en cesar 3, ya que ahora las negras no pueden doblar los peones blancos con … alfil captura cesar 3.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1bqk2r/pp1p1ppp/2n1pn2/2p5/1bPP4/2NBP3/PP2NPPP/R1BQK2R b KQkq - 3 6</p>
 </div>
 <div class="posicion">
-  <h3>Posición 3: Después de 8… caballo captura david 5</h3>
+  <h3 id="posicion-3">Posición 3 de 3: Después de 8… caballo captura david 5</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en c1, d3; caballos en c3, e2; peones en a2, b2, d4, f2, g2, h2.</p>
-  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en b4, c8; caballos en c6, d5; peones en a7, b7, e6, f7, g7, h7.</p>
+  <h4>Piezas blancas: 14</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en david 1.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en cesar 1.</li>
+    <li>Alfil en david 3.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Caballo en eva 2.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 14</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en bella 4.</li>
+    <li>Alfil en cesar 8.</li>
+    <li>Caballo en cesar 6.</li>
+    <li>Caballo en david 5.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
   
   
-  <p>8… caballo captura david 5 conduce a una posición típica con peón dama aislado; aunque el caballo blanco en e2, en vez de f3, es poco habitual, los principios generales de este tipo de estructuras siguen siendo válidos.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1bqk2r/pp3ppp/2n1p3/3n4/1b1P4/2NB4/PP2NPPP/R1BQK2R w KQkq - 0 9</p>
+  <p>8… caballo captura david 5 conduce a una posición típica con peón dama aislado; aunque el caballo blanco en eva 2, en vez de felix 3, es poco habitual, los principios generales de este tipo de estructuras siguen siendo válidos.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r1bqk2r/pp3ppp/2n1p3/3n4/1b1P4/2NB4/PP2NPPP/R1BQK2R w KQkq - 0 9</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Pon un peón blanco en cada columna, por turnos, con el rey negro a distintas distancias, y decide con la regla del cuadrado si corona. Después compruébalo jugando.</li>
   <li>Busca en tus partidas una posición donde tuviste peón pasado y no lo usaste. Casi siempre hay una.</li>
@@ -122,7 +252,7 @@
   <li>En tus próximas tres partidas, cada vez que tu rival avance dos casillas al lado de uno de tus peones, párate a mirar si te conviene la captura al paso.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -159,7 +289,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Partidas modelo del ajedrez moderno» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

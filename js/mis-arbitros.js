@@ -6,6 +6,9 @@
      de su licencia propia; administración, todas). Vacío = no puede.
    - `arbitros_mis()`: sus árbitros, con lo que puede usar cada uno.
    - `arbitro_herramientas_fijar()`: deja la lista exactamente como llega.
+   - `arbitro_fichas_a_la_vista_fijar()`: las fichas que el árbitro ve en su
+     panel, cerradas, hasta tener la licencia (no abren nada; ver «Las fichas
+     a la vista»). Se leen de `arbitros_cuentas.a_la_vista`.
    - La Edge Function `arbitro-cuentas` crea la cuenta (usuario y contraseña,
      sin correo) y cambia la contraseña.
    Ver «Las cuentas de árbitro» en docs/decisiones/permisos-y-roles.md. */
@@ -18,6 +21,7 @@
     let puedoDar = [];
     let arbitros = [];
     let soyAdmin = false;
+    let aLaVista = new Map();
 
     function el(tag, clase, texto) {
         const e = document.createElement(tag);
@@ -37,9 +41,9 @@
     }
 
     /* Las casillas de herramientas, agrupadas por la ficha de la vitrina. */
-    function casillas(contenedor, marcadas, prefijo) {
+    function casillas(contenedor, marcadas, prefijo, lista) {
         contenedor.textContent = "";
-        const lista = dables();
+        lista = lista || dables();
         H.TEMAS.forEach((t) => {
             const delTema = lista.filter((h) => h.tema === t.id);
             if (!delTema.length) return;
@@ -160,6 +164,11 @@
         const { data, error } = await sb.rpc("arbitros_mis");
         if (error) throw error;
         arbitros = data || [];
+        // Solo las filas con fichas a la vista: son pocas, y así no se llega al
+        // corte de PostgREST aunque administración tenga muchos árbitros.
+        const vista = await sb.from("arbitros_cuentas").select("arbitro_id, a_la_vista").neq("a_la_vista", "{}");
+        if (vista.error) throw vista.error;
+        aLaVista = new Map((vista.data || []).map((f) => [f.arbitro_id, f.a_la_vista || []]));
         pintar();
     }
 
@@ -209,6 +218,8 @@
                 "También tiene (se las dio administración): " + ajenas.map((id) => (H.porId.get(id) || {}).corto || H.nombre(id)).join(", ") + "."));
         }
 
+        li.appendChild(fichasALaVista(a));
+
         const acciones = el("div", "flex flex-wrap gap-2 mt-4");
         const guardar = el("button", PRINCIPAL, "Guardar sus herramientas");
         guardar.type = "button";
@@ -227,6 +238,45 @@
         acciones.append(guardar, cambiar);
         li.append(acciones, panel);
         return li;
+    }
+
+    /* Las fichas que el árbitro ve en su panel, cerradas, hasta tener la
+       licencia. Cualquier herramienta de la vitrina, también una que quien
+       organiza no tiene: ver la ficha no abre nada. */
+    function fichasALaVista(a) {
+        const marcadas = aLaVista.get(a.arbitro_id) || [];
+        const det = el("details", "mt-3 rounded-xl bg-brand-50 dark:bg-brand-950 p-3");
+        det.dataset.vista = a.arbitro_id;
+        const sum = el("summary", "cursor-pointer text-sm font-semibold text-brand-700 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
+            "Fichas a la vista, sin abrir" + (marcadas.length ? " (" + marcadas.length + ")" : ""));
+        det.appendChild(sum);
+        det.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-300 mt-2",
+            "Las ve en su panel con candado, para saber qué hacen; se abren cuando tenga la licencia."));
+        const caja = el("div");
+        caja.setAttribute("role", "group");
+        caja.setAttribute("aria-label", "Fichas a la vista de " + (a.nombre || "este árbitro"));
+        casillas(caja, marcadas, "v-" + a.arbitro_id.slice(0, 8), H.conLicenciaPropia());
+        det.appendChild(caja);
+        const guardar = el("button", SECUNDARIO + " mt-3", "Guardar las fichas a la vista");
+        guardar.type = "button";
+        guardar.addEventListener("click", () => guardarALaVista(a, caja, guardar));
+        det.appendChild(guardar);
+        return det;
+    }
+
+    async function guardarALaVista(a, contenedor, boton) {
+        boton.disabled = true;
+        try {
+            const { data, error } = await sb.rpc("arbitro_fichas_a_la_vista_fijar", { p_arbitro: a.arbitro_id, p_herramientas: marcadasEn(contenedor) });
+            if (error) throw error;
+            avisar("Listo. " + (a.nombre || "El árbitro") + (data && data.length
+                ? " ve sin abrir: " + data.map((id) => (H.porId.get(id) || {}).corto || H.nombre(id)).join(", ") + "."
+                : " ya no ve fichas sin abrir."));
+            await recargar();
+        } catch (err) {
+            avisar("No se pudieron guardar: " + (err.message || err), true);
+            boton.disabled = false;
+        }
     }
 
     async function guardarHerramientas(a, contenedor, boton) {

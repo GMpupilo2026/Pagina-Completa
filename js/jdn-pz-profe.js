@@ -113,15 +113,16 @@
       + (listo ? " " + listo : "");
   }
 
-  // ¿Ya están los torneos en Pareo Integral? Las fichas apuntan a su torneo.
-  const torneoListo = (k) => /#t=/.test(($("#ficha-resultados-" + k) || {}).getAttribute ? $("#ficha-resultados-" + k).getAttribute("href") : "");
+  // ¿Ya están los torneos en Pareo Integral? Lo sabe js/jdn-pz-resultados.js,
+  // que los lee para sus ventanas.
+  const torneoListo = (k) => !!(window.JdnPzResultados && window.JdnPzResultados.torneo(k.toUpperCase()));
   function textoResultados() {
     const listos = ["u12", "u20"].filter(torneoListo).map((k) => "«Resultados " + k.toUpperCase() + "»");
     const filas = calendario();
     const terminado = filas.length && ahoraCR() >= filas[filas.length - 1].fin;
-    if (!listos.length) return "Los pareos y los resultados se publican en Pareo Integral cuando la organización arme los torneos: entonces se encienden las fichas «Resultados U12» y «Resultados U20».";
-    return (terminado ? "La clasificación final está en " : "Los inscritos, los pareos de cada ronda, los resultados y la clasificación están en ")
-      + listos.join(" y ") + ", en Pareo Integral. Cada jugador revisa que su resultado quede bien anotado antes de la ronda siguiente.";
+    if (!listos.length) return "Los pareos y los resultados salen en las fichas «Resultados U12» y «Resultados U20» en cuanto la organización publique los torneos en Pareo Integral.";
+    return (terminado ? "La clasificación final de cada categoría está en " : "El pareo de cada ronda, mesa por mesa, y la clasificación de cada categoría están en ")
+      + listos.join(" y ") + ". Para un jugador en particular, escribe su nombre en «Busca a tu jugador». Cada jugador revisa que su resultado quede bien anotado antes de la ronda siguiente.";
   }
 
   function datoPortada(nombre) {
@@ -136,6 +137,12 @@
     const ritmo = datoPortada("Ritmo");
     const tolerancia = $$("#reglamento li").map(limpio).find((t) => /tolerancia/i.test(t)) || "";
     return (ritmo ? fin(ritmo) + " " : "") + tolerancia + " El resto está en el reglamento y en las bases.";
+  }
+  // El costo, de su tarjeta en «Inscripciones» (dice «Gratis»).
+  function textoCosto() {
+    const h = $$("#inscripciones h3").find((x) => /Costo/i.test(x.textContent));
+    const costo = h ? limpio(h.nextElementSibling) : "";
+    return (costo || "Lo dicen las condiciones de la inscripción.") + " Para inscribirlo, usa el formulario «Inscribirme».";
   }
   function quienDirige() {
     const p = $$(".cac-organiza p").find((x) => /Dirección del torneo/i.test(x.textContent));
@@ -152,6 +159,7 @@
   const PREGUNTAS = [
     { k: "hora", icono: "🗓️", pregunta: "¿A qué hora es la próxima ronda?", texto: textoHora, pose: "reloj-de-ajedrez", acciones: [["Ver el calendario", () => tocar('a.cac-ficha[href="#calendario"]')]] },
     { k: "inscribir", icono: "📝", pregunta: "¿Cómo inscribo a mi hijo o hija?", texto: textoInscripcion, pose: "te-toca", acciones: [["Inscribirme", () => tocar("#ficha-inscribirme")]] },
+    { k: "costo", icono: "💰", pregunta: "¿Cuánto cuesta?", texto: textoCosto, pose: "te-toca", acciones: [["Inscribirme", () => tocar("#ficha-inscribirme")], ["Ver las condiciones", () => tocar('a.cac-ficha[href="#inscripciones"]')]] },
     { k: "categoria", icono: "🎂", pregunta: "¿En qué categoría juega?", texto: textoCategorias, pose: "presentando", acciones: [["Ver las categorías", () => tocar('a.cac-ficha[href="#categorias"]')]] },
     { k: "resultados", icono: "♟️", pregunta: "¿Contra quién juega y cómo va?", texto: textoResultados, pose: "tablero-italiana", acciones: [["Resultados U12", () => tocar("#ficha-resultados-u12")], ["Resultados U20", () => tocar("#ficha-resultados-u20")]] },
     { k: "congresillo", icono: "🗣️", pregunta: "¿Cuándo es el congresillo?", texto: textoCongresillo, pose: "atencion", acciones: [["Ver el calendario", () => tocar('a.cac-ficha[href="#calendario"]')]] },

@@ -154,7 +154,7 @@ const doble = `(function(){
     const errores = [];
     p.on("pageerror", (e) => { errores.push(e.message); if (process.env.DBG) console.log("   [error]", e.message); });
     if (process.env.DBG) p.on("console", (m) => console.log("   [consola]", m.text()));
-    await p.goto(BASE + "/mesa-arbitro.html", { waitUntil: "load" });
+    await p.goto(BASE + "/mesa-arbitro.html#solo", { waitUntil: "load" });
     await p.waitForFunction(() => document.getElementById("app").checkVisibility());
 
     console.log("\n=== Conectar con el enlace de árbitro ===");
@@ -269,12 +269,17 @@ const doble = `(function(){
     fn.modo = "caida";
     const pc = await ctx.newPage();
     pc.on("pageerror", (e) => errores.push(e.message));
-    await pc.goto(BASE + "/mesa-arbitro.html", { waitUntil: "load" });
+    await pc.goto(BASE + "/mesa-arbitro.html#solo", { waitUntil: "load" });
     await pc.waitForFunction(() => document.getElementById("app").checkVisibility());
     await pc.fill("#p-enlace", "https://ajedrez-integral.com/pareo.html#adjunto=" + CODIGO + "&m=1-3");
     await pc.click("#p-conectar");
     await pc.waitForFunction(() => (window.__oyentesPorCanal || {})["tablero-vivo-camprue2"] && document.querySelector('#p-mesas [data-cam="1"]'), null, { timeout: 8000 }).catch(() => {});
     igual("con el código del principal, escucha las cámaras y cada mesa sin resultado tiene su lugar", await pc.$$eval("#p-mesas [data-cam]", (l) => l.map((x) => x.dataset.cam)), ["1", "2"]);
+    await pc.waitForSelector('#p-mesas [data-cam="2"] [data-camara-poner]', { timeout: 8000 }).catch(() => {});
+    await pc.click('#p-mesas [data-cam="2"] [data-camara-poner] summary').catch(() => {});
+    await pc.waitForSelector('#p-mesas [data-cam="2"] [data-camara-poner] svg', { timeout: 8000 }).catch(() => {});
+    igual("«Poner un teléfono en esta mesa»: el QR que deja a un celular transmitiendo esa mesa", await pc.$eval('#p-mesas [data-cam="2"] [data-camara-poner]', (n) => [!!n.querySelector("svg"), n.querySelector("[data-camara-enlace]").href.replace(/^.*\//, "")]).catch((e) => String(e)),
+      [true, "camara-tablero.html#t=11111111-2222-3333-4444-555555555555&c=camprue2&m=2&r=0"]);
     await pc.evaluate(() => (window.__oyentesPorCanal["tablero-vivo-camprue2"].estado || []).forEach((cb) => cb({ payload: { v: 1, pgn: "1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7#", torneo: "11111111-2222-3333-4444-555555555555", ronda: 2, mesa: 1, t: Date.now(), resultado: "1-0" } })));
     await pc.waitForSelector('#p-mesas [data-cam="1"] [data-camara-confirmar]', { timeout: 8000 }).catch(() => {});
     igual("el tablero de la mesa 1 y lo que dice la cámara, escrito", await pc.$eval('#p-mesas [data-cam="1"]', (n) => [n.querySelectorAll('[aria-hidden="true"] > div').length, /La cámara dice: 1-0 \(ganan blancas\)/.test(n.textContent)]).catch((e) => String(e)), [64, true]);

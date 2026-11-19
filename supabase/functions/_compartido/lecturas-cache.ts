@@ -70,6 +70,8 @@ export async function leerConCache(
   // `leer` solo se cambia en las pruebas (verificar-lecturas-cache.js); en la función real es leerRonda.
   opciones: { maxEdadMs: number; fresca?: boolean; leer?: typeof leerRonda },
 ): Promise<Resultado> {
+  // Un torneo de Pareo Integral (tnr «p…») nunca se le pregunta a chess-results: se lee con fuente-pareo.ts.
+  if (!/^[0-9]{1,7}$/.test(tnr)) return { ok: false, estado: 409, error: "Ese torneo no es de chess-results." };
   const inicio = Date.now();
   let f = await fila(servicio, tnr);
   if (!opciones.fresca && hayLectura(f) && edad(f!.leida) <= opciones.maxEdadMs) {

@@ -1221,6 +1221,15 @@
    ]
   },
   {
+   "clave": "colle-zukertort",
+   "label": "Sistema Colle-Zukertort",
+   "grupo": "Sistema Colle",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
    "clave": "alapin",
    "label": "Ataque Alapin contra la siciliana",
    "grupo": "Defensa siciliana",
@@ -1960,6 +1969,13 @@
   {
    "clave": "colle",
    "label": "Sistema Colle",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "colle-zukertort",
+   "label": "Sistema Colle-Zukertort",
    "grupo": "Aperturas",
    "total": 1,
    "actividades": []

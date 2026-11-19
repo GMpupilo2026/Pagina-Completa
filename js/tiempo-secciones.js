@@ -53,7 +53,7 @@ window.TiempoSecciones = (function () {
         "tipos":                { nombre: "Habilidades",           emoji: "🧠" },
         "memoria":              { nombre: "Memoria",               emoji: "📷" },
         "racha":                { nombre: "Racha táctica",         emoji: "⚔️" },
-        "bot":                  { nombre: "El bot de Oscar",       emoji: "🤖" },
+        "bot":                  { nombre: "Partidas contra el bot", emoji: "🤖" },
         "logros":               { nombre: "Logros",                emoji: "🏅" },
         "partidas":             { nombre: "Partidas",              emoji: "♟️" },
         "torneos":              { nombre: "Torneos",               emoji: "🏆" },

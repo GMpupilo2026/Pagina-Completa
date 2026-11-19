@@ -202,6 +202,18 @@ function ensenaNotacion(texto) {
 function sanEspanol(san) { return aEspanol(String(san), "ingles"); }
 function sanHablada(san) { return hablada(String(san), "ingles"); }
 
-module.exports = { origenDe, textoEspanol, textoHablado, sanEspanol, sanHablada, ensenaNotacion, INGLESA, ESPANOLA };
+// Una casilla como se dice en el sitio: «e4» → «eva 4».
+function casillaHablada(casilla) { return blind().squareSpoken(String(casilla)); }
+/* Las casillas sueltas que quedan en un texto ya pasado a voz («el rey negro
+   en g8», «la diagonal a1-h8»), dichas igual que las de las jugadas. Sin esto
+   el mismo documento decía «anna 4» en la jugada y «a4» dos palabras después,
+   y al oído son dos casillas distintas. */
+function casillasHabladas(texto) {
+  if (texto == null) return texto;
+  return String(texto).replace(/(^|[^A-Za-zÁÉÍÓÚÑáéíóúñ0-9])([a-h][1-8])(?![A-Za-zÁÉÍÓÚÑáéíóúñ0-9])/g,
+    (todo, antes, casilla) => antes + casillaHablada(casilla));
+}
+
+module.exports = { origenDe, textoEspanol, textoHablado, sanEspanol, sanHablada, ensenaNotacion, casillaHablada, casillasHabladas, INGLESA, ESPANOLA };
 
 /*! rev bfb5bbb0d2d82f9f */

@@ -25,7 +25,8 @@
 //   "acumulado"   {tnr, clave, estado: vista|seguir, nota?} → todas las partidas medidas de ese jugador en la categoría
 //   "mesas_arbitro" {arbitro_token, ronda} → para la tablet de un árbitro de mesa: sus mesas elegidas (borde dorado)
 //   "retener"     {arbitro_token, ronda, mesa} → el árbitro de mesa confirma que retuvo a quien se revisa
-//   "actualizar"  {}  → lee los emparejamientos de chess-results (públicos), a lo sumo cada 90 s.
+//   "actualizar"  {}  → lee los emparejamientos de chess-results (públicos), a lo sumo cada 90 s; los de un torneo de
+//                       Pareo Integral salen del torneo publicado (fuente-pareo.ts: partidasDePareo).
 //   "vivo_pendientes" {} → hasta 3 partidas TERMINADAS de los tableros electrónicos que faltan por analizar, directo
 //                       de LiveChess (sin atraso; el enlace nunca sale de acá), con sus posiciones ya armadas
 //   "vivo_guardar" {tnr, ronda, mesa, evals, opciones} → la evaluación de Stockfish de cada posición y sus 3 mejores
@@ -56,6 +57,7 @@ import { ajustar, atraccionDe, casosDePrueba, centroYFactor, claveDe, combinada,
   medir, type MesFide, mesDe, MIN_JUGADAS, mismoJugador, type MovModelo, MULTIPV, nombreLc, opcionesValidas, planillaValida, type Ply, PROFUNDIDAD,
   PROFUNDIDAD_HONDA, puntosBlancas, rachas, rendimiento, RESULTADO_LC, resultadoDe, sanDe, sDeElo, segundosDe, spearman, sSinElJugador, sumar, tablerosDe,
   tendencia, terminadaLc, validar, VERSION_ANALISIS, zCruda, zsCrudas } from "./analisis.ts";
+import { esTnrPareo, partidasDePareo } from "./fuente-pareo.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -184,8 +186,9 @@ Deno.serve(async (req) => {
   try {
     const accion = String(cuerpo.action ?? "");
     if (accion === "leer") {
+      // Una categoría sin ninguna ronda emparejada (un torneo de Pareo que todavía no empieza) no sale: no hay nada que sortear.
       const rondas = (await rpc("centroamericano_fp_rondas", {}) as { tnr: string; nombre: string; prueba: boolean; ronda: number }[])
-        .filter((r) => (token ? !r.prueba : true));
+        .filter((r) => (token ? !r.prueba : true) && r.ronda > 0);
       const tnrs = rondas.map((r) => r.tnr);
       const [{ data: sorteos }, { data: alertas }, acumulado, { data: indiceJ }, { data: modeloA }] = await Promise.all([
         servicio.from("centroamericano_fair_play").select("*").in("tnr", tnrs.length ? tnrs : ["-"]).order("creado", { ascending: false }).range(0, 999),
@@ -278,7 +281,30 @@ async function actualizar(servicio: any, rpc: Rpc) {
 
   // 1. Los emparejamientos de chess-results, ronda por ronda. Una ronda pasada que ya tiene todos sus resultados
   //    no se vuelve a pedir.
-  for (const r of rondas) {
+  // Los torneos de Pareo Integral no están en chess-results: salen enteros del torneo publicado (ver fuente-pareo.ts).
+  const deP = rondas.filter((r) => esTnrPareo(r.tnr));
+  if (deP.length) {
+    const { data: ts } = await servicio.from("centroamericano_torneos").select("tnr, pareo_id").in("tnr", deP.map((r) => r.tnr));
+    const ids = ((ts ?? []) as { tnr: string; pareo_id: string | null }[]).filter((t) => t.pareo_id);
+    const { data: pubs } = ids.length ? await servicio.from("pareo_publicados").select("id, datos").in("id", ids.map((t) => t.pareo_id)) : { data: [] };
+    for (const t of ids) {
+      const pub = ((pubs ?? []) as { id: string; datos: unknown }[]).find((x) => x.id === t.pareo_id);
+      if (!pub) { errores.push(t.tnr + ": el torneo de Pareo Integral ya no está publicado."); continue; }
+      const filas = partidasDePareo(pub.datos).map((p) => ({ tnr: t.tnr, ...p, leida: new Date().toISOString() }));
+      // En Pareo una ronda se puede deshacer y volver a emparejar: la mesa que ya no existe sale (en chess-results,
+      // lo publicado no se deshace).
+      const hay = new Set(filas.map((f) => f.ronda + "|" + f.mesa));
+      const { data: antes } = await servicio.from("centroamericano_fp_partidas").select("ronda, mesa").eq("tnr", t.tnr).range(0, 4999);
+      for (const v of ((antes ?? []) as { ronda: number; mesa: number }[]).filter((x) => !hay.has(x.ronda + "|" + x.mesa))) {
+        await servicio.from("centroamericano_fp_partidas").delete().eq("tnr", t.tnr).eq("ronda", v.ronda).eq("mesa", v.mesa);
+      }
+      if (!filas.length) continue;
+      const { error } = await servicio.from("centroamericano_fp_partidas").upsert(filas, { onConflict: "tnr,ronda,mesa" });
+      if (error) errores.push(t.tnr + ": " + error.message); else pareos += filas.length;
+    }
+  }
+
+  for (const r of rondas.filter((x) => !esTnrPareo(x.tnr))) {
     const { data: hechas } = await servicio.from("centroamericano_fp_partidas").select("ronda, resultado").eq("tnr", r.tnr);
     for (let n = 1; n <= r.ronda; n++) {
       const deEsa = (hechas ?? []).filter((h: { ronda: number }) => h.ronda === n);
@@ -295,7 +321,8 @@ async function actualizar(servicio: any, rpc: Rpc) {
   }
 
   // 2. El ID FIDE de cada jugador y su Elo mes a mes en FIDE (para la tendencia del modelo), de a poco.
-  const fide = await leerFide(servicio, rondas.filter((r) => !r.prueba).map((r) => r.tnr), errores).catch((e) => { errores.push("FIDE: " + (e as Error).message); return null; });
+  //    Solo de chess-results: Pareo Integral no guarda el ID FIDE (lo cambia por una huella al publicar).
+  const fide = await leerFide(servicio, rondas.filter((r) => !r.prueba && !esTnrPareo(r.tnr)).map((r) => r.tnr), errores).catch((e) => { errores.push("FIDE: " + (e as Error).message); return null; });
 
   return { ok: true, pareos, fide, errores, actualizado: new Date().toISOString() };
 }
@@ -581,7 +608,7 @@ async function planillaGuardar(servicio: any, cuerpo: Record<string, unknown>, q
     servicio.from("centroamericano_fp_partidas").select("tnr").eq("tnr", tnr).eq("ronda", ronda).eq("mesa", mesa).maybeSingle(),
     servicio.from("centroamericano_livechess").select("tnr, torneo_id, tableros").eq("tnr", tnr),
   ]);
-  if (!f) throw new Error("Esa mesa todavía no está en los emparejamientos leídos de chess-results (se leen cada 90 s con la pantalla de Fair Play abierta).");
+  if (!f) throw new Error("Esa mesa todavía no está en los emparejamientos leídos (se leen cada 90 s con la pantalla de Fair Play abierta).");
   if (tableroDe((lcs ?? []) as Lc[], tnr, mesa)) return { ok: true, tablero: true };
   const { plies } = partidaDe({ moves: v.jugadas });
   if (plies.length !== v.jugadas.length) throw new Error("La jugada " + (Math.floor(plies.length / 2) + 1) + (plies.length % 2 ? " de las negras" : " de las blancas") + " de la planilla no es legal: no se guardó.");

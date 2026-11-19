@@ -157,6 +157,337 @@ update sobre la sala ajena cambia **0 filas**; otro profesor que no es su
 profesor recibe **0 filas**; y `javascript:`, `http://` y un enlace con espacios
 los rechaza el CHECK.
 
+### La llamada de voz de la clase
+
+La pidió el dueño el 17/11/2026: «un Meet propio adaptado a ciegos». Para un
+alumno ciego lo difícil de Meet no es Meet: es tener la llamada en una pestaña y
+el tablero en otra, saltar entre las dos con el lector de pantalla —el foco se
+pierde en cada salto— y que los anuncios de las dos se pisen. Ahora la voz va
+**en la misma página que el tablero**, en la caja «🎧 Llamada de la clase»
+(`#llamada`, `js/clase-llamada.js`), por **LiveKit** (el servidor de audio, en
+la nube). El botón de Meet/Zoom de siempre se queda: es otra puerta, no se
+reemplaza.
+
+- **La llamada la abre el profe, y al terminarla se cierra para todos.** Lo
+  pidió el dueño con la llamada ya en uso: «que a los estudiantes les salga
+  solo si el profesor la activa» y «si el profesor la cierra, que a todos
+  también». Al alumno la caja no le sale hasta que el profe toca «🎧 Abrir la
+  llamada a la clase» (que además lo hace entrar); el profe no tiene «Salir»
+  sino **«Terminar la llamada»**, que la cierra para todos: a cada alumno la
+  caja se le esconde, sale de la sala y se le dice («Tu profe terminó la
+  llamada de la clase»), en la región viva de la clase (`#clase-voz`), porque
+  la de la caja se va con ella.
+  - Se guarda en `game_state.llamada_sesion` (migración
+    `llamada_la_abre_el_profe`): la clase en la que el profe la abrió. **Está
+    abierta si es la clase abierta de ahora** (`llamadaAbierta()` en
+    `sesion.js`): una clase nueva arranca con la llamada cerrada sin limpiar
+    nada, también si la clase se cerró sola. Viaja con `game_state` por
+    Realtime, así que al alumno la caja le aparece y desaparece al instante.
+  - Solo la escribe el profe: `protect_game_state_teacher_columns()` se la
+    devuelve a cualquier otro. Y no es solo la pantalla: sin la llamada abierta
+    `llamada_de_la_clase()` no le da pase al alumno, y con la llamada terminada
+    «sincronizar» saca de la sala a todos menos al profe.
+  - Si al profe se le cierra la pestaña o se le cae la conexión, la llamada
+    **sigue abierta**: solo la cierra «Terminar la llamada» (o cerrar la
+    clase). Un corte no deja a la clase sin voz.
+  - Comprobado impersonando roles en SQL: con la llamada cerrada el alumno
+    recibe null; el profe la abre y la ve abierta; abierta, el alumno entra; el
+    alumno no la puede cerrar.
+- **Quién puede hablar lo elige el profe: «Con turno», «Todos» o «Nadie».**
+  Lo pidió el dueño en dos mensajes seguidos: «¿se puede que hablen varios a
+  la vez?» y «que el profesor pueda bloquear que los estudiantes puedan
+  hablar, para tener mayor control». Son tres estados de lo mismo, así que van
+  en UNA columna, `game_state.llamada_modo` (`turno`, `libre`, `bloqueada`, con
+  su CHECK), y no en dos interruptores que podrían contradecirse (libre y
+  bloqueado a la vez). Se probó primero un `llamada_libre` booleano
+  (migración `llamada_microfono_libre`) y se reemplazó minutos después, antes
+  de que lo usara ninguna página (`llamada_quien_puede_hablar`).
+  - **Con turno** (siempre al abrir la llamada): habla quien tiene el turno.
+    **Todos**: cualquiera de los que están. **Nadie**: ningún alumno, aunque
+    tenga el turno; solo el profe. Lo hace cumplir el servidor con la misma
+    regla en el pase y en «sincronizar» (`puedeHablar()` de la función).
+  - Solo vale con la llamada abierta en esta clase, solo lo pone el profe
+    (`protect_game_state_teacher_columns`), y abrir o terminar la llamada lo
+    vuelve a «turno»: una llamada nunca arranca con todos hablando ni
+    bloqueada.
+  - Al alumno se le dice cada cambio («Tu profe bloqueó los micrófonos: por
+    ahora solo habla el profe», «…abrió el micrófono para todos…», «…volvió
+    al turno…»), y con «Nadie» Alt+M le recuerda por qué no puede. El
+    micrófono no se enciende solo con «Todos»: lo enciende cada uno.
+  - En la caja del profe son tres botones parejos debajo del micrófono; el
+    elegido lleva `aria-pressed`, el «✓» escrito y el color de acento (el
+    color acompaña, nunca va solo).
+  - Comprobado impersonando roles en SQL: con la llamada cerrada el modo
+    vuelve a «turno»; abierta, el alumno ve el modo que eligió el profe; un
+    modo inventado lo rechaza el CHECK.
+- **La caja va DEBAJO del tablero**, después del turno y del tiempo para
+  pensar, no arriba con la franja de la clase: arriba empujaba el tablero y en
+  el celular dejaba de entrar entero sin bajar (`verificar-clase-movil.js`
+  saltó: el tablero ya arrancaba a 228 px, con el tope en 240). Con lector de
+  pantalla se llega por su título, y los atajos sirven desde cualquier lado.
+- **Se probó antes fuera del sitio** (fase 0, una página local con su propio
+  servidor): se oyó bien, y ahí se eligieron los atajos y los anuncios.
+- **Solo voz.** El pase deja publicar únicamente el micrófono
+  (`canPublishSources`): ni cámara ni compartir pantalla, que a un alumno ciego
+  no le sirven y en una clase de menores son un riesgo de más.
+- **La palabra es el turno de la clase, no otra cola.** Puede hablar el profe y
+  quien tiene `game_state.elegido`: el «🗣️ Darle la palabra» de la mano
+  levantada, o el sorteo (ver «La participación oral»). La mano es la misma de
+  la clase (la presencia). Una segunda cola de manos para la llamada se
+  desincronizaría sin que nada fallara —la mano levantada en una y la palabra
+  dada en la otra—, y el turno ya queda anotado en `clase_elegidos`. Por eso
+  **no hay tabla nueva ni trigger de auditoría**: lo que reparte el permiso de
+  hablar ya está protegido (`protect_game_state_teacher_columns`: solo un
+  profesor cambia `elegido`, y la RLS solo en SU tablero) y anotado.
+- **Quien lo hace cumplir es el servidor de LiveKit, no la página.** La Edge
+  Function `clase-llamada` firma el pase con `canPublish` según el turno, y con
+  «sincronizar» le cambia el permiso a cada uno en la sala (y saca de la sala a
+  quien el profe sacó de la clase, `clase_sacados`). `js/sesion.js` llama a
+  `llamada.sincronizar()` después de `darTurno()` y de `terminarElegido()`, y
+  `js/clase-sacar.js` después de sacar a alguien: aunque el profe no esté en la
+  llamada, porque un alumno puede estar esperando la palabra.
+  - El permiso lo decide `public.llamada_de_la_clase(p_profesor)` (migración
+    `llamada_de_la_clase`), llamada **con el token de quien pide**, nunca con
+    la clave de servicio: pasa por la RLS y por `antes_de_cada_pedido()`, así
+    que la verificación en dos pasos a medias corta antes. Contesta null si no
+    hay clase abierta, si quien pide no es el profesor (`role = 'profesor'`:
+    quien administra no da clase) ni alumno suyo, o si lo sacaron.
+  - **La sala ES la clase abierta** (`clase-<id de class_sessions>`): sin clase
+    no hay llamada, y el pase de la clase de ayer no entra a la de hoy.
+  - Comprobado impersonando roles en SQL (en una transacción que se deshizo):
+    sin clase, null; el profe, `profe` con su sala; la alumna con el turno, con
+    la palabra; el otro alumno, sin ella; el alumno de otro profe, null; el
+    sacado, null (y el profe lo ve en `sacados`); `anon`, sin permiso de
+    ejecutarla.
+  - Comprobado contra el servidor de LiveKit de verdad: el pase firmado a mano
+    entra sin poder hablar; «sincronizar» le da la palabra, no repite un cambio
+    que ya está, se la quita al terminar el turno y saca de la sala al sacado.
+- **LiveKit CONTESTA en snake_case** (`can_publish`) aunque acepte `canPublish`
+  al pedir. Leyendo solo uno, cada «sincronizar» volvía a cambiar a todos. Y la
+  fuente del micrófono se escribe `microphone` en el pase y `MICROPHONE` en
+  Twirp (el nombre del enum de protobuf).
+- **Sin librería de LiveKit en la función**: el pase es un JWT HS256 y las
+  tres llamadas (la lista, cambiar un permiso, sacar) son POST de Twirp, hechos
+  con Web Crypto y `fetch`. En la página sí: `js/vendor/livekit-client.js`
+  (2.23.0, en `herramientas/lib/librerias-vendor.js`), **pedida recién al tocar
+  «Entrar a la llamada»**: pesa 600 kB y la mayoría de las clases no la usa.
+- **El micrófono no se enciende solo** al recibir la palabra: se dice («Tu
+  profe te dio la palabra: enciende el micrófono con Alt M») con un sonido, y lo
+  enciende quien la recibió. Abrirle el micrófono a un menor sin que lo decida
+  él no lo hace la página. Al terminar el turno el servidor lo apaga, y se dice.
+- **Atajos con Alt solo y la tecla física** (`e.code`): Alt+M micrófono, Alt+Y
+  la mano (alumno), Alt+Q quién está, Alt+W quién habla. Ctrl+Alt no, porque en
+  el teclado español es AltGr (Ctrl+Alt+Q escribe «@»); Alt+Mayúsculas tampoco,
+  que en Windows cambia el idioma del teclado; Alt+X tampoco, que el tablero
+  accesible ya usa. Salir no tiene atajo, a propósito: colgar sin querer cuesta
+  más que buscar el botón.
+  **Probados con NVDA el 17/11/2026** en la página de prueba de la fase 0, en
+  modo navegación y en modo foco: los cuatro llegan a la página y no chocan
+  con el lector.
+- **Quiénes están se ve en una lista, siempre en el mismo orden**: tú, el
+  profe y los demás por nombre (`localeCompare` en español, sin distinguir
+  mayúsculas), con «profe», «con la palabra» y «hablando» escritos al lado. En
+  el orden en que fueron entrando, cada reconexión movía a alguien de lugar.
+  «Quién está» (Alt+Q) lo dice en ese mismo orden. La lista NO es región viva:
+  lo que cambia ya se anuncia, y repetir la lista entera a cada rato tapaba la
+  clase. Los botones van con el micrófono a todo lo ancho, «Quién está» y
+  «Quién habla» parejos debajo, y «Salir de la llamada» aparte: de a cuatro o
+  de a dos, en el celular «Micrófono apagado» se partía en dos renglones y las
+  filas quedaban disparejas. En el celular miden 44 px de alto.
+- **Todo se dice en la región viva de la caja** (`#llamada-estado`): entrar y
+  salir (con un sonido corto), la palabra dada o quitada, la conexión mala, la
+  reconexión, «Tu profe te sacó de la llamada». «Activar voz» la lee sola.
+- **Mientras la voz de la página dice una jugada** (`speechSynthesis`: «Activar
+  voz», el recuadro adaptado), la llamada baja al 30 %, para que la voz del
+  profe no la tape. Con lector de pantalla eso no se puede medir desde la
+  página: ahí van los audífonos, y lo dirá la prueba con NVDA.
+- **El micrófono solo se permite en `/sesion`** (`Permissions-Policy` en
+  `_headers`, con el mismo truco de la cámara), y `*.livekit.cloud` va en
+  `connect-src`. LiveKit está en la lista de proveedores de `privacidad.html`:
+  la voz no se graba.
+- **Quién no la tiene**: quien observa (mira, no habla), la vista previa, el
+  proyector y el control remoto (otra ventana de la misma clase). Los invitados
+  sin cuenta tampoco, por ahora: no tienen `auth.uid()` para el permiso.
+- **Secretos de la función** (Supabase › Edge Functions › Secrets):
+  `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`. Sin ellos contesta
+  503 y la caja dice «La llamada de la clase todavía no está disponible».
+
+#### La grabación de la llamada
+
+La pidió el dueño el 17/11/2026: «guardar de forma automática el audio de la
+clase cuando se hace una llamada», para que los alumnos repasen. Antes de
+programarla **aprobó tres cosas que cambian lo que el sitio promete**: el
+permiso de cada familia, 90 días con quién escucha, y el texto de privacidad
+(sin nombrar el servicio de almacenamiento ni decir para qué más la usa el
+profe: lo pidió así).
+
+- **Se graba en el navegador del profe, no en el servidor.** LiveKit cobra la
+  grabación por minuto; la página del profe ya recibe todas las voces, así que
+  las junta en un `AudioContext` y las graba con `MediaRecorder` (Opus, 32
+  kbps: una hora pesa unos 15 MB). Costo extra: solo el almacenamiento.
+  - **Por partes de 5 minutos** (`PARTE_MS`): cada parte es un archivo entero
+    que se escucha solo, la siguiente arranca antes de cerrar la anterior (no
+    se pierde ni un segundo entre partes), y si al profe se le cierra la
+    pestaña se pierde como mucho la última. Se suben al bucket privado
+    `clase-grabaciones` (`<profe>/<clase>/…`) y se anotan con
+    `guardar_parte_grabacion()`, que exige que la clase sea suya (abierta, o
+    cerrada hace menos de 30 minutos: la última se sube al terminar) y que el
+    archivo ya esté subido. La clase viaja CON la parte: al cerrar la clase
+    `currentOpenSessionId` ya está vacío cuando se sube la última.
+  - **Una falla al grabar nunca tumba la llamada**: se dice, se apaga la
+    grabación (y el aviso para todos) y la clase sigue con voz. Pasó en la
+    prueba: la grabadora tiraba un error y sacaba al profe de la llamada.
+- **Empieza sola al abrir la llamada** (`game_state.llamada_grabando`, que
+  abrir pone en true y terminar en false) y el profe la puede pausar («⏸
+  Pausar la grabación» / «⏺ Volver a grabar»). **Nunca se graba sin el aviso
+  puesto**: primero se guarda `llamada_grabando` (lo ven todos por Realtime:
+  «🔴 Se está grabando la clase», escrito), después arranca la grabadora; al
+  pausar, al revés. Al alumno se le dice al entrar y en cada cambio.
+  - Si al profe se le cierra la pestaña, el aviso queda puesto aunque ya no
+    se grabe: es el error del lado seguro (avisar de más, nunca de menos).
+    Al volver a entrar, la grabación sigue sola.
+- **El permiso de cada familia** (`permisos_grabar_voz`, con la versión de la
+  privacidad y la hora del servidor; lo escriben solo `dar_permiso_grabar_voz()`
+  y `quitar_permiso_grabar_voz()`, cada uno sobre su cuenta; lleva la bitácora
+  de auditoría y está en `VIGILADAS`). Se da en **Configuración**, «La
+  grabación de tu voz en las clases» (solo alumnos, no en «Ver como»).
+  **Mientras se graba, un alumno sin permiso no puede hablar**, lo diga el
+  turno o «Todos»: lo hace cumplir el servidor (`puedeHablar()` de
+  `clase-llamada` con `permiso_voz` / `con_permiso_voz` de
+  `llamada_de_la_clase()`), así que nunca queda grabada la voz de alguien sin
+  permiso. Se le dice por qué y dónde se da.
+- **La escuchan el profe de la clase, los alumnos que asistieron
+  (`class_attendance`) y administración**, con el acceso vigente
+  (`clase_grabaciones_select` arma el conjunto una vez; el bucket lee lo que
+  tiene su fila). Se escucha en **«Repasar mis clases»**, debajo del título de
+  la clase: una parte detrás de otra, cada una con su reproductor y su
+  etiqueta («Parte 1 de 3 · 5 minutos»). Si falla, el visor sigue igual.
+- **El profe ve quién no tiene permiso de grabación** (la «5»): en la lista
+  de la llamada, solo a él, «sin permiso de grabación» (y mientras se graba,
+  «no puede hablar»). Lo pregunta a `permisos_grabar_voz` por los alumnos que
+  están (la RLS le deja ver el de sus alumnos), al entrar y cada vez que entra
+  alguien. Así sabe por qué un alumno no puede hablar y puede pausar la
+  grabación para darle la palabra. Al alumno no se le muestra.
+- **La grabación sigue al tablero** (la «2»). La clase NO guarda la hora de
+  cada jugada (`game_state` solo lleva las jugadas en orden y `updated_at`),
+  así que la anota quien graba: cada segundo la página del profe mira la
+  posición que ve la clase (`op.posicion()`: la jugada que el profe muestra,
+  o la última) y, si cambió, anota `{s, fen}` en la parte, que viaja con ella
+  (`clase_grabaciones.marcas`, migración `grabacion_marcas_del_tablero`; la
+  de 4 argumentos de `guardar_parte_grabacion` se borró: con las dos, un
+  pedido con cuatro nombres no sabría a cuál llamar). En «Repasar mis clases»,
+  al escuchar (y al saltar a otro minuto) el tablero va a la última marca que
+  pasó: si es una posición de la partida de la clase se mira ese nodo y se
+  marca en la lista; si no, se pinta igual. **Las jugadas se dicen solo si se
+  marca «Decir las jugadas mientras escucho»**: con lector de pantalla se
+  oirían encima de la voz del profe. Las grabaciones de antes no tienen marcas
+  y se escuchan igual.
+- **La grabación pasada a texto** (la «3»): «📝 Pasar a texto» en cada parte
+  lo saca Whisper EN EL NAVEGADOR de quien la escucha (`js/reporte-transcribir.js`,
+  el mismo de Reportes: el audio no sale de esa computadora). **Lo guarda solo
+  el profe de la clase o administración** (`guardar_texto_grabacion`,
+  `clase_grabaciones.texto`, migración `grabacion_texto`); a un alumno le
+  queda en su pantalla: si pudiera guardarlo, podría poner un texto falso que
+  leerían los demás. Se muestra plegado («Lo que se dijo en esta parte, en
+  texto») y se borra con la grabación.
+- **«Mantener para hablar»** (la «4»): con la casilla, el micrófono suena
+  solo mientras se aprieta el botón del micrófono (dedo, ratón, o
+  Espacio/Enter con el foco en él) o **Alt+P** desde cualquier parte (no la
+  usan los menús de Chrome, Edge ni Firefox, ni el tablero); al soltar se
+  apaga. Para alguien que no ve la pantalla es más fácil que recordar si dejó
+  el micrófono encendido, y no se cuela ruido. Un toque corto al empezar y
+  otro al soltar, sin que el lector hable cada vez; si la ventana pierde el
+  foco con la tecla apretada (el keyup nunca llega) se calla sola. El clic
+  que llega al soltar no conmuta nada. La preferencia se recuerda en el
+  aparato (`localStorage`).
+- **Los temas de la grabación, solos** (pedido del 18/11: «que las marcas se
+  hagan automáticas cuando detecte cambios de tema»). El profe no marca nada:
+  cada segundo, además de la posición, la grabadora pregunta de qué va la
+  clase (`op.tema()` = `temaDeLaClase()` en `sesion.js`) y, si cambió, la
+  marca lleva `tema`, el nombre del capítulo. Gana lo más puntual: una
+  diapositiva («Diapositiva 3: La oposición»), la práctica, la tanda, el
+  calentamiento o el tiempo para pensar tapan al tablero mientras duran; sin
+  nada de eso, el tema es la posición de la que partió la partida (una
+  posición nueva es un capítulo; una jugada, no). Volver a algo que ya se vio
+  dice «De vuelta a: …», y la primera marca de cada parte lleva siempre su
+  tema, para que cada parte diga dónde empieza. Van en las mismas
+  `clase_grabaciones.marcas` (`{s, fen, tema}`, sin migración). En «Repasar
+  mis clases», «Temas de esta parte»: un botón por tema con su minuto, que
+  lleva el audio ahí y lo hace sonar; el que está sonando se marca con «▶» y
+  `aria-current`, no solo con el color. Las grabaciones de antes no tienen
+  temas y no muestran nada.
+- **El alumno sabe su lugar en la fila de manos.** Sale de la misma presencia
+  y con el MISMO orden que el profe ve en su lista (primero las manos, por
+  `hand_at`): «lugar 2» es el segundo que ve el profe. Se dice al levantarla y
+  cada vez que avanza («Avanzaste: vas en el lugar 2…», «Tu mano es la
+  primera de la fila: sigues tú»), en `#clase-voz` y sin mover el foco, y va
+  escrito en el botón («✋ Bajar la mano (lugar 2 de 3)»). Vale con o sin
+  llamada: la mano es la de la clase. Por eso Alt+Y en la llamada ya solo dice
+  «Levantaste la mano»: el lugar llega enseguida, con la presencia.
+- **Los minutos hablados**: cuánto habló cada alumno. Los mide la página del profe mientras
+  él está en la llamada: cada segundo, a cada alumno que LiveKit marca
+  «hablando» se le suma ese segundo. El profe los ve en la lista y en Alt+Q
+  («habló 3 minutos», desde el primer minuto), y cada minuto (y al salir) se
+  mandan a la base: `sumar_segundos_hablados(clase, {persona: segundos})`,
+  migración `llamada_minutos_hablados`, tabla `llamada_participacion`. **Es una
+  tabla aparte y no una columna de `class_attendance`**: esa fila la escribe
+  el mismo alumno al entrar, así que podría ponerse los minutos que quisiera;
+  `llamada_participacion` no tiene ninguna política de escritura. La función
+  la deja solo al profe que abrió la clase (abierta o cerrada hace menos de 30
+  minutos: la última tanda llega al terminar), suma solo a quienes tienen
+  asistencia en esa clase y como mucho 900 segundos por persona en cada
+  pedido. Lo que no se pudo mandar vuelve a la cola de la tanda siguiente. Al
+  recargar la página, el profe vuelve a ver lo que ya llevaban. En «Repasar
+  mis clases», «Quién habló en la llamada»: al alumno, solo lo suyo
+  («Hablaste 4 minutos»: la RLS no le da lo de los demás); al profe y a
+  administración, todos, del que más habló al que menos, y quiénes estuvieron
+  en la clase y no hablaron. Lo que el profe no oyó (no estaba en la llamada)
+  no se cuenta. **Se guardan con la asistencia y no se borran a los 90 días**
+  (lo decidió el dueño el 18/11), y privacidad.html lo dice («Minutos hablados
+  en la llamada», aprobado por él). La versión de la privacidad NO cambió: es
+  una fecha (`interno.version_legal_valida`) y ya era la del mismo día, y
+  ninguna familia había dado el permiso de grabación con ella todavía.
+- **Dos volúmenes aparte**, cada uno con su barra y su valor escrito («50 %»),
+  recordados en el aparato (`localStorage`): el de la llamada (las voces de
+  los demás, `setVolume` de cada pista) y el de la voz de la página que dice
+  las jugadas (`u.volume` en el envoltorio de `speechSynthesis.speak`). El de
+  la voz vale solo mientras se está en la llamada, que es donde está su
+  barra. Mientras esa voz habla, la llamada baja al 30 % DE SU volumen (antes
+  bajaba a un 30 % fijo y volvía al 100 %, pisando lo que la persona eligió).
+- **Vuelve sola a la llamada si se cae.** LiveKit ya aguanta los cortes
+  cortos («Reconectando…»). Si igual se cae del todo (un «Disconnected» que
+  nadie pidió), la página vuelve a entrar en 2, 4, 8, 16 y 30 segundos, y si
+  el aparato dice que no hay red, espera al evento `online`. No vuelve si la
+  persona salió, si el profe la sacó o terminó la llamada, ni si entró con la
+  misma cuenta en otra pestaña (`DUPLICATE_IDENTITY`: se pelearían). Al
+  volver no mueve el foco (puede estar en el tablero); el profe, si estaba
+  grabando, sigue en una parte nueva. El «Disconnected» de un intento fallido
+  llega con la sala vieja y no corta los reintentos (`room !== sala`).
+- **Se borra sola a los 90 días**: pg_cron `limpiar-grabaciones` (1:40 a.m.
+  CR) llama a `clase-grabaciones-limpiar` con el secreto de la bóveda, que
+  borra primero el archivo y después la fila (la base no puede borrar archivos
+  desde SQL; borrar solo la fila dejaría el audio huérfano).
+- **La privacidad cambió de versión (2026-11-18)** para que la grabación no
+  comparta versión con el texto de la mañana, que decía «la voz no se graba».
+- Comprobado impersonando roles en SQL: el permiso con versión inválida se
+  rechaza; con la clase grabándose, la alumna con permiso habla y el que no lo
+  tiene no; el compañero no ve el permiso de otro; el profe recibe la lista de
+  los que tienen permiso; una parte sin archivo subido se rechaza; la
+  grabación la ven el profe y la alumna que asistió, no el que faltó ni el de
+  otro profe. Y los minutos hablados (18/11): el profe de la clase suma, con
+  el tope por pedido, y a quien no tiene asistencia no se le suma nada; el
+  alumno lee solo lo suyo y no inserta, no actualiza ni llama a la función;
+  otro profe y `anon`, rechazados.
+
+**Al tocar la llamada, correr `node herramientas/verificar-todo.js
+clase-llamada`.** Comprueba los enganches de `sesion.js` y `clase-sacar.js`, las
+cabeceras, la migración y la función, y en el navegador la caja con dobles de
+LiveKit y de la función: los anuncios, el micrófono bloqueado sin la palabra, la
+palabra dada y quitada, los atajos y el aviso de cuando no está configurada;
+y desde el 18/11, los temas de la grabación (y sus capítulos en «Repasar mis
+clases»), el lugar en la fila de manos, los minutos hablados, los dos
+volúmenes y la vuelta sola a la llamada (con y sin red).
+
 ### La pantalla se ordena por QUIÉN VE CADA COSA, no por qué hace cada botón
 
 `sesion.html` es la pantalla más cargada del sitio: catorce controles del
@@ -765,6 +1096,39 @@ Estudio):
 - `node herramientas/verificar-todo.js repasar-clases` lo prueba en un
   navegador y comprueba que los tres inserts de `sesion.js` lleven `datos` y
   que el guardado del cierre vaya antes del `ended_at`.
+
+#### Jugar contra el motor desde la clase
+
+Las posiciones de la clase solo se miraban: no había cómo seguir jugándolas
+contra el motor, que en la clase en vivo solo existe cuando el profe lanza
+una práctica. Ahora (17/11/2026) «♟ Jugar desde aquí contra el motor», debajo
+de los botones del visor (o «jugar» en su recuadro), arranca una partida
+desde **lo que se ve**: la jugada de la partida o la posición aparte de una
+pregunta del profe («Ver la posición», que se pinta sin moverse de la
+jugada).
+
+- **El mismo motor que la práctica de la clase**: `PracticeEngine.responder`
+  (`js/practice-engine.js` sobre `js/shared-engine.js`), Stockfish por Elo
+  (1500, 1800 o máxima) con plazo y jugada de respaldo, así el tablero nunca
+  se queda «pensando». El alumno juega con el bando al que le toca.
+- **Un tablero a la vez**: mientras se juega, el de la partida y sus botones
+  se esconden (`#visor-mirar`). Dos tableros visibles eran dos paradas
+  «Tablero» y quien no ve no sabía en cuál jugaba. Las flechas globales del
+  visor no mueven la partida escondida.
+- **Sin ver**: su propio recuadro (jugadas escritas, «otra vez», «terminar»,
+  las preguntas de siempre) y su `TableroAccesible`; cada jugada, la del
+  alumno y la del motor, se dice CONTADA en el renglón de estado (región viva)
+  y con la voz del sitio. Con la cuenta ciega el foco va al recuadro.
+- **Se vuelve a donde se estaba**: «Terminar y volver a la partida» deja el
+  visor en la misma jugada (o en la misma posición de la pregunta). Una
+  respuesta del motor que llega después de terminar o de empezar otra vez se
+  descarta (`turnoDeJuego`). Abrir otra clase termina la práctica.
+- **No se guarda en la base**: es práctica del alumno, no una entrega; el profe
+  no la ve. Si algún día se quiere que la vea, irá a `practice_games` como la
+  de la clase en vivo, con su política.
+- `verificar-repasar-clases.js` la prueba con un motor de mentira (tocando,
+  escribiendo, jugada imposible, «otra vez», «terminar», «jugar» desde el
+  recuadro, la posición aparte y el mate que termina sin que el motor juegue).
 
 ### El alumno elegido al azar para responder
 
@@ -2141,6 +2505,52 @@ con una jugada ilegal, con la correcta siempre en la A, sin el filtro de
 nivel, perdiendo el nivel al poner la posición o copiando el listo antes de
 jugarlo, saltan.
 
+#### El tablero de preguntas
+
+`tablero-preguntas.html` (`js/tablero-preguntas.js`), enlazado desde
+Cuestionarios: un juego de categorías **para proyectar**. Cada columna es un
+cuestionario (de los del profe o de los listos) y cada casilla una de sus
+preguntas, de 100 a 500 puntos (3, 4 o 5 filas). Juegan de 2 a 6 equipos: eligen
+una casilla, contestan en voz alta y el profe muestra la respuesta y da los
+puntos («Acertó …», «Nadie acertó»; con «Restar los puntos al equipo que
+falla», también «Falló …»). Termina en el podio. La idea salió de Chessgora,
+que lo tiene en sus juegos de clase.
+
+- **No se llama como el programa de la tele**: el nombre es marca de otros. El
+  formato de categorías por valores es genérico; el nombre y las preguntas son
+  nuestros.
+- **No escribe nada en la base.** Los equipos no son cuentas y los puntos son
+  del juego, no Puntos Ajedrez: los alumnos no tocan nada, contesta el salón.
+  Solo lee `cuestionarios`, con la misma RLS de Cuestionarios (los alumnos no
+  ven ninguno, porque traen las respuestas); por eso es solo de quien da clase
+  o administra.
+- **Las preguntas con posición se quedan afuera**: se proyecta sin tablero de
+  ajedrez, y una pregunta sobre una posición que no se ve no se contesta.
+  Tampoco entran las que no tienen correcta, ni las de menos de dos opciones.
+  Un cuestionario aparece en la lista si tiene al menos 3 jugables, y `armar()`
+  dice cuál no alcanza para las filas elegidas.
+- Las preguntas de cada columna salen **al azar** del cuestionario, sin
+  repetirse; la de 100 no es «la más fácil» (los cuestionarios no traen
+  dificultad por pregunta), es la primera que sale.
+- **Deshacer el último punto**: un toque equivocado en plena clase se corrige,
+  y si ese punto había cerrado una casilla, la casilla vuelve al tablero.
+- **El juego a medias se guarda en esa computadora** (`localStorage`, con
+  try/catch): recargar en plena clase no lo borra («Seguir el juego que quedó
+  a medias»). Es una comodidad, no un dato.
+- Accesible: las casillas son botones con nombre («Aperturas, 300 puntos»); la
+  que ya salió dice «Ya salió», con `aria-disabled` (sigue alcanzándose con
+  Tab); al abrir una pregunta el foco va al texto, y al volver, a la casilla.
+  La correcta va escrita («✓ (la correcta)»), no solo en verde. Contrastes
+  medidos contra el fondo real: casilla libre 7,85; la que ya salió 6,6 (6,8
+  en oscuro); la correcta 8,7.
+
+**Al tocarlo, `node herramientas/verificar-todo.js tablero-preguntas`** (sin
+navegador): qué preguntas entran, los límites de `armar()`, que cada casilla sea
+una pregunta del cuestionario con su misma correcta y sin repetir, el podio con
+empates, que la página esté en la cabecera con sus migas y que nada escrito por
+una persona pase por `innerHTML`. Está probado que salta dejando entrar las
+preguntas con posición.
+
 ### Las prácticas de Formación Ajedrez en la clase
 
 En «Preguntar», debajo del cuestionario, «📝 Prácticas de Formación Ajedrez»
@@ -2899,6 +3309,8 @@ en vivo está cerrada para el alumno. Con eso «hay clase» pasa a significar al
   justamente lo que aquella variable existía para atajar. Quedan las **dos
   puertas deliberadas del profesor**: mandar una posición
   (`aplicarPosicionEnClase()`) y el botón «Abrir la clase».
+  Las dos, desde que cada clase tiene su lista, primero preguntan quién entra
+  (ver «A la clase entran solo los asignados»).
   - Eso **no deja clases sin registrar, al revés**: antes el registro dependía
     de que entrara alguien; ahora sin abrirla no hay clase que dar, así que
     queda garantizado por construcción.
@@ -2962,6 +3374,93 @@ presencia otras 3, y quitando el candado de la tarjeta 3 en la otra.
   `upsert()`: desde que hay clase abierta la alumna marca su asistencia sola, y
   sin ese método la página muere con un TypeError que la prueba cuenta como
   fallo suyo — era el doble el que estaba incompleto.
+
+### A la clase entran solo los asignados
+
+Con la clase abierta entraba **cualquier** alumno del profe. El de CENFO se
+metía por error a la clase del grupo de SJ y quedaba con asistencia en una
+clase que no era la suya; y en el informe, el «fue a 3 de N» usaba el total de
+clases cerradas, así que **las clases de los otros grupos le contaban a todos
+como faltas**. Nada de eso daba un error.
+
+Ahora cada clase en vivo tiene su lista, `public.clase_asignados` (clase,
+alumno), y solo entran los de la lista.
+
+- **Lo hace cumplir la base.** `interno.me_toca_la_clase_de(profe)` («su clase
+  está abierta y estoy en su lista») reemplazó a `clase_abierta_de()` en
+  `game_state_select`, `variant_nodes_select` y `profesor_videollamada_select`:
+  fuera de la lista, el tablero, las variantes y la sala de la videollamada dan
+  0 filas. `clase_abierta_de()` sigue solo para los invitados, que entran con su
+  enlace. Y dos restrictivas, `class_attendance_solo_asignados` y
+  `class_presence_log_solo_asignados`, no dejan que un alumno se anote asistencia
+  ni tiempo en una clase con lista en la que no está (la ficha presencial, donde
+  el profe anota a otros, no se toca).
+- **La lista se pide al abrir, siempre.** Una clase en vivo ya no se abre con un
+  INSERT suelto: `class_sessions_insert` solo deja crear la ficha presencial, y
+  la en vivo se abre con `abrir_clase_en_vivo(p_alumnos, p_titulo)`, que crea la
+  clase **y** su lista en una llamada (partido en dos, entre una cosa y la otra
+  la clase existiría vacía) y rechaza una lista vacía o con alguien que no es
+  alumno de quien la abre. Las dos puertas de `sesion.html` —«Abrir la clase» y
+  mandar una posición— muestran «¿Quién entra a esta clase?» y nadie entra hasta
+  que el profe confirma. «Iniciar clase» del panel lleva a
+  `sesion.html?abrir=1` con el selector abierto (y el título escrito).
+  - Si cancela el selector, mandar otra posición **no se lo vuelve a poner
+    encima** en cada jugada: queda el botón.
+  - Si ya había una abierta (la otra pestaña), la función devuelve ESA sin
+    cambiarle la lista.
+- **La lista viene marcada**, porque pasar lista de doce es desmarcar a los dos
+  que no son: con los del grupo o subgrupo de la clase de su **horario** que toca
+  ahora (desde media hora antes) y, si no hay, con los de su **última clase**. Lo
+  dice escrito («Vienen marcados los de tu horario de ahora: grupo SJ»), para que
+  no se confirme sin mirar. Hay un botón por grupo («Grupo SJ (8)»), el selector
+  de subgrupos, «Todos» y «Ninguno»; cada uno marca a esos y desmarca al resto,
+  como en Tareas. El selector es `js/clase-asignados.js`, una sola copia.
+- **La lista se cambia con la clase en curso**: «👥 Quién entra» (con su
+  `aria-expanded`) abre la misma lista y guarda con
+  `cambiar_asignados_de_la_clase()`, que la deja **exactamente como llega** (la
+  regla de `set_teachers`). Al que agregan le llega el aviso y su pantalla de
+  espera entra sola (escucha `clase_asignados` filtrado por su id, por eso la
+  tabla va en Realtime con su `verificacion_en_dos_pasos`); al que quitan ya no
+  le llega el tablero. La franja dice cuántos pueden entrar.
+- **El aviso al celular va solo a los de la lista.** Lo mandaba el trigger
+  `class_sessions_avisa_push` a todos los alumnos del profe, y además corre
+  antes de que exista la lista; se borró y el aviso lo manda
+  `abrir_clase_en_vivo()`.
+- **Al alumno que no está en la lista se le dice eso**, no «todavía no ha
+  abierto la clase», que lo dejaría esperando a una clase que no es la suya:
+  «Karina Rojas tiene una clase en curso ahora, pero no estás en la lista de
+  esta clase. Si te toca estar, pídele que te agregue». Para eso `mis_clases()`
+  cambió: `clase_abierta` quiere decir **abierta para mí** (así el panel no le
+  destapa la tarjeta ni la videollamada) y lleva al final `abierta_sin_mi`. Hubo
+  que borrarla y volverla a crear, y devolverle el `execute` a `authenticated`.
+  Dentro de la clase, que se abra una NUEVA de su profe recarga la página: el
+  arranque decide si le toca.
+- **Las ausencias cuentan solo las clases que le tocaban.**
+  `clases_que_le_tocaban()` (SECURITY INVOKER) da, por alumno, las clases
+  cerradas de su lista, las que entró y —en las que no tienen lista— las de sus
+  profesores. `informes.js` usa ese número para el «de N» (si la función falla,
+  vuelve al total) y `faltas_justificadas()` ya no cuenta como falta justificada
+  una clase con lista en la que no estaba.
+  - **`class_sessions.solo_asignados` no es un dato derivado**: dice qué regla
+    tiene la clase. Las que se abren desde ahora van en `true`; las de antes y
+    las presenciales en `false`, y se siguen contando como siempre (a todos los
+    alumnos del profe). Mirar «si tiene filas en la lista» no servía: un alumno
+    no ve la lista de los demás y le parecería que ninguna clase la tiene.
+  - Las clases que estaban abiertas al aplicar la migración quedaron asignadas
+    a todos los alumnos de su profe: nadie se quedó afuera a mitad de clase.
+  - La ficha presencial **no tiene lista** todavía: cuenta para todos los
+    alumnos del profe, como antes.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-asignados
+clase-registrada panel informes`.** `verificar-clase-asignados.js` comprueba la
+lista propuesta (horario y última clase), los botones de grupo, cambiar la lista
+en curso (manda la lista entera), que la alumna fuera de la lista no monte la
+sesión ni marque asistencia y se le diga por qué, que la de la lista sí entre, y
+que ninguna página abra una clase con `from("class_sessions").insert`. Está
+probado que falla de verdad: dejando entrar a la alumna con `abierta_sin_mi`,
+saltan 4 comprobaciones. El doble de `verificar-clase-registrada.js` sabe
+`abrir_clase_en_vivo`, `cambiar_asignados_de_la_clase` y calcula `clase_abierta`
+de `mis_clases()` con la lista, como la base.
 
 ### La clase en vivo, vista por quien supervisa
 
@@ -4439,6 +4938,100 @@ claves quedaron en las láminas 47 a 55. Para agregar
 o quitar láminas en una sesión con práctica: los datos, el curso, la práctica
 y las claves, juntos.
 
+**La Sesión 5: acreditación, congresillo y materiales.** Pedido del dueño
+(15/11/2026, para la clase del día siguiente): explicar uno a uno los
+requisitos de la acreditación con la Boleta Oficial, qué se revisa en cada
+congresillo técnico y qué se puede y qué no, y un simulacro de materiales.
+Entraron ocho temas después de «Logística antes del torneo», cada uno con sus
+artículos de la Normativa PJDE 2026 (2.a, 17, 18, 27 a 30, 33 a 35, 59, 60,
+66, 81, 85, 86 y 90), y la logística del cronograma pasó de 35 a 45 minutos
+(el método, de 35 a 25). Para que el receso siguiera después de la logística
+y no a la mitad de los temas, un tema puede llevar `"receso_despues": true`
+(`presentacion()` de `curso-generar-formacion.py`). La sesión pasó de 25 a 33
+láminas; la práctica, de las 17-20 a las 25-28, y la migración
+`formacion_sesion5_acreditacion_congresillo` vuelve a sembrar sus claves con
+la misma guarda que la de la Sesión 3. El ejercicio de materiales ahora cuenta
+mesas dobles (40 estudiantes: 20 partidas, 10 mesas dobles).
+Se aplicó el 15/11 con `apply_migration` (versión `20261115173251`), sin
+respuestas guardadas de esa práctica, y se comprobó que las claves quedaron en
+las láminas 26 a 28. Se aplicó sin su comentario de cabecera, así que el
+archivo es solo el SQL aplicado (su md5 es el de la base); el porqué está acá.
+El esquema no cambió (el retrato dio la misma huella), solo su `# al-dia-con:`.
+Al aplicarla, la base ya tenía cuatro migraciones más que el repositorio
+(689 contra 685): la huella del punto de restauración no coincide, y no es
+por esta.
+
+- **Generado en Windows**: las láminas se dibujaron con Segoe UI Emoji (no
+  había Noto Color Emoji), así que los íconos de la Sesión 5 tienen otro
+  estilo que los de las demás. La huella se calcula sobre el texto: con
+  `core.autocrlf` los archivos quedan en CRLF y la huella sale distinta de la
+  del CI, así que se generó con el worktree en LF
+  (`git -c core.autocrlf=false reset --hard` después de `git rm -r --cached .`).
+  `archivos-catalogo.js` también cuenta kB distintos con CRLF.
+- **El simulador de logística, como material de la sesión**: el Excel del
+  simulacro (mesas dobles, tableros, relojes, sillas y árbitros a partir de
+  los inscritos de cada torneo) va en `extras` de la lección 5, con el botón
+  «🧮 Simulador de logística del torneo (Excel)», detrás del mismo candado que
+  el resto de `cursos/recursos/`. Lo arma
+  `herramientas/formacion-simulador-logistica.py` (openpyxl y Pillow): las
+  cuentas son fórmulas, así que Excel las calcula al abrirlo y openpyxl no
+  guarda ningún resultado. Viene cargado con los 16 torneos de la Regional de
+  Alajuela 2026 (74 mesas dobles y 142 tableros en el turno más cargado,
+  comprobado abriéndolo en Excel). Excel no tiene marca de agua detrás de las
+  celdas: la de Ajedrez Integral (tomada de `herramientas/lib/marca-agua.js`)
+  va como imagen en Instrucciones y en Resumen, a la derecha de lo que se usa,
+  y escrita en el pie de cada hoja al imprimir.
+- **La sala, el salón virtual y la mesa** (pedido del dueño, 15/11/2026):
+  cuatro láminas después de «Calcular los materiales», todas con los números
+  de las estadísticas de inscripción de la Regional de Alajuela 2026 (los
+  mismos del simulador): 15 la foto de la sala del Tacho Chess 2, 16 el plano
+  de la Regional con sus 15 torneos (una fila de mesas por torneo, mesa de
+  control al frente, público detrás de la tela y las zonas de los 8 árbitros
+  de sala), 17 la lista de lo que se lleva y 18 cómo se coloca cada mesa:
+  vistas desde el árbitro de frente al reloj, blancas a su izquierda y negras
+  a su derecha, reloj a la derecha de las negras, para que al anotar un
+  resultado izquierda sea blancas en toda la sala. Después se sumó la 19, con
+  dos fotos de torneos reales: el árbitro mal colocado (el reloj le queda
+  incómodo) y bien colocado (de frente al reloj); cada foto lleva su crédito.
+  Con las 4 primeras la sesión pasó a 37 láminas y la práctica a las 29-32 (migración
+  `formacion_sesion5_salon_virtual`, versión `20261116023301`, aplicada el
+  15/11 sin respuestas guardadas; con la misma guarda; el esquema no cambió,
+  solo el `# al-dia-con:` del retrato).
+  - Más tarde (mismo día) entraron otras cinco: después de «Qué se revisa en
+    cada congresillo», la hoja de conformación del equipo y cómo se alinea
+    cuando entra el suplente (sistema olímpico, art. 66.2.h: el orden no
+    cambia, los de abajo suben y el suplente entra en el tablero 4; sin
+    suplente nadie se mueve: si falta B, el tablero 2 queda vacío aunque B
+    no llegue, como lo aclaró el dueño); y después de «Calcular
+    los materiales», el paso a paso del Excel: paso 1 los torneos
+    individuales, paso 2 los de equipos (torneo por torneo: sistema, rondas,
+    partidas o encuentros, tableros y mesas) y paso 3 la razón de cada
+    cantidad de la lista. Todos los números se comprobaron contra la hoja
+    Eventos del simulador abierta en Excel (1848 planillas y 155 hojas de
+    resultados en juego). La sesión quedó en 42 láminas y la práctica en las
+    34-37: la migración `formacion_sesion5_equipo_y_paso_a_paso` (versión
+    `20261116025030`, misma guarda, sin respuestas guardadas) dejó sus claves
+    en las 35-37. La lámina 19 de las fotos no tuvo migración propia: se
+    juntó con esta.
+  - `formacion-laminas.js` tiene cuatro tipos nuevos: `foto` (una foto de
+    `herramientas/datos/fotos/`, metida como `data:`; la huella cuenta sus
+    bytes), `sala` (el plano, que el verificador mide con el tope de una
+    tabla, porque sus rótulos son datos), `fotos` (dos fotos lado a lado,
+    cada una con su marca escrita y su crédito) y `mesa` (la mesa vista desde arriba;
+    se comprobó que la esquina a la derecha de cada jugador es clara).
+  - Cambiar el generador cambia la huella de **todas** las presentaciones.
+    Las demás no se volvieron a dibujar: los tipos nuevos no tocan lo que ya
+    había, y dibujarlas en Windows les cambiaba los íconos (Segoe UI Emoji en
+    vez de Noto). Se les escribió la huella nueva sin redibujar.
+    `formacion-practicas.js` sí redibuja `practica-01`: sus imágenes se
+    devolvieron a las de antes con `git checkout`.
+  - La lámina de la sala real (hoy la 20) pasó de `foto` a `fotos`: la sala
+    del Tacho Chess 2 y la de un torneo de la FCA en un gimnasio del ICODER
+    (un bloque rotulado por categoría y el público en las graderías), sin
+    agregar láminas, para que la práctica no se moviera.
+  - La foto de la mesa que mandó el dueño por el chat no quedó en ningún
+    archivo, así que la mesa se dibujó; si llega la foto, va como `foto`.
+
 #### El ejercicio del tablero mal colocado
 
 Pedido del dueño (11/11/2026): un ejercicio para el tema «El tablero y el
@@ -5329,6 +5922,26 @@ existe, que cada dibujo sea de esa profe, a quién le sale (con un
 documento de mentira), quién contesta lo del bot y el orden de los scripts.
 Roto a propósito (quitando la condición de alumno), salta.
 
+### Si la marca guardada estaba vieja, la página se corrige sola
+
+El dueño vio que a los alumnos de CCDR POCOCI les seguía saliendo «Juega contra
+Oscar». El código estaba bien: el profe se decide **al cargar la página** con
+la marca guardada en el aparato (`academia_marca_v1`), porque se dibuja antes
+de que llegue la sesión, y esa marca estaba vacía (los alumnos habían quedado
+en dos academias por un rato, y con dos `mi_marca_academia()` no devuelve
+nada). Lo mismo le pasa a cualquiera la primera vez que entra en un aparato: la
+página pinta a Oscar y lo corrige recién en la siguiente.
+
+- `js/marca-academia.js`, cuando pide la marca fresca, la compara con el profe
+  que se pintó (`profeAlDia()`): si le toca otro, **recarga la página una vez**.
+  `sessionStorage` impide recargar dos veces seguidas por el mismo profe, así
+  que no hay bucle aunque la marca vuelva a cambiar.
+- Solo pasa cuando la marca guardada no era la de verdad: con la marca al día,
+  el profe pintado ya es el que toca y no se recarga nada.
+
+Lo prueba `verificar-profe-ayuda.js` («Si la marca guardada estaba vieja…»: los
+cinco casos, con el módulo cargado en Node). Roto a propósito, salta.
+
 ### La profe Pame en el resto de la plataforma
 
 Además del avatar, el bot, la tarjeta «Juega contra mí» y el «¿Te ayudo?», lo
@@ -5345,10 +5958,12 @@ el «está el bot de Oscar» de Competir cuando no hay nadie en línea.
 - `bot.html` es el bot de niveles para las variantes, no el que juega con el
   libro de cada profe (`tablero.html`): se le cambia el nombre porque en la
   plataforma es «el bot del profe», y para un alumno de Pococi el profe es ella.
-- Sin cambiar: el nombre de la sección en Informes y en el informe a la casa
-  («El bot de Oscar», `js/tiempo-secciones.js` y `SECCIONES` de la función),
-  que lee un profesor o una familia, y las páginas sobre Oscar mismo
-  (`sobre-oscar.html`, la portada).
+- La sección del bot en Informes y en el informe a la casa
+  (`js/tiempo-secciones.js` y `SECCIONES` de la función) dejó de decir «El bot
+  de Oscar» y dice **«Partidas contra el bot»**, para todas las academias: la
+  función que manda el correo no sabe qué profe le toca a cada academia (eso
+  vive en `js/avatar-profe-oscar.js`) y un nombre neutro no miente en ninguna.
+- Sin cambiar: las páginas sobre Oscar mismo (`sobre-oscar.html`, la portada).
 
 Lo prueba `verificar-profe-ayuda.js` («La profe Pame en el resto de la
 plataforma»: `vestirPagina()` con un documento de mentira para las dos
@@ -5386,3 +6001,79 @@ Lo prueba `verificar-clase-camara.js` (en `sesion.html` de verdad con el
 doble: el botón del profe y no de la alumna, el código, las jugadas que
 entran también con lo nuevo, otra partida que no toca nada, la espera
 mientras se repasa y «Desconectar»). Roto a propósito, salta.
+
+## 100 maestros dijeron
+
+`maestros-dijeron.html` (18/11/2026), un juego por equipos para proyectar en
+la clase, al lado del tablero de preguntas (se llega desde Cuestionarios). Sale
+una posición de una apertura conocida y los equipos adivinan qué jugaron ahí
+los maestros; cada jugada vale lo que pesa («52 de cada 100»). Con tres fallos
+el turno pasa al otro equipo. La idea de un concurso de encuestas salió de
+Chessgora («100 Ajedrecistas Dijeron»).
+
+- **Los datos son de verdad**: las partidas de maestros del explorador de
+  Lichess, por la Edge Function `explorador-maestros` (la del explorador de la
+  clase, que guarda lo que contesta). Un «100 ajedrecistas dijeron» con
+  respuestas puestas a mano sería una encuesta inventada presentada como real;
+  por eso el nombre dice «maestros» y la pantalla dice la fuente.
+- **Ninguna posición se inventa**: cada una sale de jugar con chess.js una
+  línea de la lista (`APERTURAS` de `js/maestros-dijeron.js`); una línea que
+  no se puede jugar se descarta. Una posición con menos de tres respuestas
+  (de al menos 1 de cada 100, sin redondear) se salta.
+- **Lo que dice el equipo** se entiende en español y en inglés: Cf3 = Nf3,
+  Ab5 = Bb5, 0-0 = O-O, sin importar la x ni el jaque. La R mayúscula es el
+  Rey, como se escribe acá; por eso la jugada de chess.js (en inglés) se limpia
+  pero NO se traduce: traducida, la torre «Rd1» pasaba a rey. Se muestra en
+  español.
+- No escribe nada en la base: los equipos no son cuentas y los puntos son del
+  juego. Solo quien da clase o administra lo arma (como el tablero de
+  preguntas). El tablero se dibuja con `ChessPieceSVG` y dice la posición en
+  texto («Posición después de 1.e4 e5 2.Cf3. Juegan negras.»); los nombres de
+  los equipos van por `textContent`.
+
+Lo prueba `verificar-maestros-dijeron.js`: las cuentas en Node (las 15
+aperturas con chess.js, el peso, la notación, el turno y los fallos, el podio)
+y la página con su marcado y un doble de la función (solo para quien da clase,
+el tablero, destapar y sumar, tres fallos, sin token). Con la jugada de chess.js
+traducida, salta.
+
+## El explorador de aperturas en la clase
+
+`js/clase-explorador.js`, el panel «📚 Aperturas de maestros» junto al motor
+(18/11/2026). Muestra qué jugaron los maestros en la posición del tablero de la
+clase: la apertura con su código ECO, cuántas partidas pasaron por ahí y, por
+cada jugada (las ocho más jugadas), qué parte de las veces se juega y cuánto
+ganan blancas, tablas y negras. La idea salió de Chessgora, que lo tiene al
+lado del tablero del maestro.
+
+- **Solo lo ve el profesor**, como el motor. No se monta en el proyector ni en
+  el control remoto, y a los alumnos no les llega nada.
+- **Arranca apagado.** Cada posición nueva es un pedido a la Edge Function
+  `explorador-maestros` (la misma de «Dónde deja la teoría», en
+  `docs/decisiones/paneles.md`), que le pregunta a Lichess con el token del
+  servidor y guarda la respuesta 180 días. La mayoría de las clases no son de
+  aperturas: encendido siempre, gastaría pedidos en finales y táctica.
+- **Se entera de la posición dentro de `updateEngineEval()`** de `sesion.js`,
+  antes de mirar si el motor está encendido. Es el único lugar por donde pasa
+  cada cambio del tablero del profe; un segundo aviso aparte se olvidaría en el
+  próximo camino nuevo.
+- **Una posición por vez, con 450 ms de espera**: el profe que recorre una
+  línea rápido no pide cada jugada, solo donde se para. Lo ya preguntado en la
+  clase se guarda en la página y no se vuelve a pedir.
+- **Las cifras van escritas** («ganan blancas 45 % · tablas 30 % · ganan negras
+  25 %»); la barrita de colores es `aria-hidden` y no lleva ningún dato que no
+  esté en el texto.
+- **El permiso de la función se amplió**: antes solo contestaba a quien tenía
+  la preparación de rivales activada (`puedo_preparar_rivales()`); ahora
+  también a todo profesor y a quien administra. Las dos preguntas van con la
+  sesión de quien llama (pasan por `antes_de_cada_pedido()` y la RLS de
+  `profiles`), nunca con la clave de servicio. Sigue sin ser un proxy abierto:
+  solo `/masters` y solo FEN válidos.
+- Sin `LICHESS_TOKEN` en el servidor, el panel lo dice con el mismo texto que
+  la preparación de rivales.
+
+Lo prueba `verificar-clase-explorador.js`: las cuentas en Node; el panel con el
+marcado de `sesion.html` y un pedido falso (apagado no pide, encendido pide una
+vez, mover rápido pide solo la última, lo visto no se repide, fuera de teoría
+lo dice, el 403 dice que no está activo); y el cableado (`updateEngineEval`, el
+bloque del profe, el permiso de la función). Con la espera en 0, salta.

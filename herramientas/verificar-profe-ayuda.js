@@ -123,6 +123,32 @@ console.log("\n=== La profe Pame en el resto de la plataforma ===");
   igual("Competir ofrece el bot de quien le toca", /el bot de ' \+ BOT \+ '/.test(leer("js/competir.js")), true);
 }
 
+console.log("\n=== Si la marca guardada estaba vieja, la página se corrige sola ===");
+{
+  const ruta = require.resolve("../js/marca-academia.js");
+  function probar(profePintado, academia, yaRecargado) {
+    delete require.cache[ruta];
+    let recargas = 0;
+    const guardado = {};
+    if (yaRecargado) guardado.profe_recargado = yaRecargado;
+    global.window = { __marcaAcademiaSinArranque: true,
+      AvatarProfeOscar: { PROFE: profePintado, PROFE_DE_ACADEMIA: { "9b224c6b-c9aa-403c-bb20-2aeb897cc8d4": "pame" } } };
+    global.sessionStorage = { getItem: (k) => guardado[k] || null, setItem: (k, v) => { guardado[k] = v; } };
+    global.location = { reload: () => { recargas += 1; } };
+    const M = require(ruta);
+    M.profeAlDia(academia ? { academia_id: academia, nombre: "x" } : null);
+    delete global.window; delete global.sessionStorage; delete global.location;
+    return recargas;
+  }
+  igual("pintó a Oscar y es de CCDR POCOCI: recarga una vez", probar("oscar", "9b224c6b-c9aa-403c-bb20-2aeb897cc8d4"), 1);
+  igual("ya recargó por eso en esta pestaña: no vuelve a recargar", probar("oscar", "9b224c6b-c9aa-403c-bb20-2aeb897cc8d4", "pame"), 0);
+  igual("pintó a la profe que le toca: no recarga", probar("pame", "9b224c6b-c9aa-403c-bb20-2aeb897cc8d4"), 0);
+  igual("de otra academia y pintó a Oscar: no recarga", probar("oscar", "otra"), 0);
+  igual("ya no es de CCDR POCOCI y pintó a la profe Pame: recarga", probar("pame", null), 1);
+  igual("marca-academia.js lo revisa con la marca recién pedida",
+    /guardar\(uid, marca, academias\);[\s\S]{0,120}profeAlDia\(marca\)/.test(leer("js/marca-academia.js")), true);
+}
+
 console.log(fallos ? `\n✗ ${fallos} comprobación(es) fallaron.` : "\n✓ Todo bien.");
 process.exit(fallos ? 1 : 0);
 

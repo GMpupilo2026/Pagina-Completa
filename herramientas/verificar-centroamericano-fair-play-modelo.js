@@ -35,7 +35,8 @@ const igual = (que, salio, esperaba) => {
     const codigo = fs.readFileSync(path.join(FUNCION, "index.ts"), "utf8")
         .replace('"npm:@supabase/supabase-js@2"', '"./supabase-falso.mjs"').replace('"npm:chess.js@0.10.3"', '"./chess-falso.mjs"') + "\nexport { modelo };\n";
     fs.writeFileSync(path.join(dir, "index.ts"), codigo);
-    fs.copyFileSync(path.join(FUNCION, "analisis.ts"), path.join(dir, "analisis.ts"));
+    // Los demás archivos, los mismos que se despliegan (los suyos y los de _compartido): herramientas/funciones-armar.js.
+    for (const f of require("./funciones-armar.js").armar("centroamericano-fair-play")) if (f.name !== "index.ts") fs.writeFileSync(path.join(dir, f.name), f.content);
     fs.writeFileSync(path.join(dir, "supabase-falso.mjs"), "export const createClient = () => ({});\n");
     fs.writeFileSync(path.join(dir, "chess-falso.mjs"), "export class Chess {}\n");
     const esbuild = require("esbuild");

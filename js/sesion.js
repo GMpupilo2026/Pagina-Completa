@@ -40,6 +40,15 @@
 
         // El recuadro del Modo Adaptado de cada tablero (js/clase-adaptada.js).
         let claseAcc = null, preguntaAcc = null, practicaAcc = null;
+        // La llamada de voz de la clase (js/clase-llamada.js): null si no se montó.
+        let llamada = null;
+        /* La clase en la que el profe abrió la llamada (game_state.llamada_sesion):
+           está abierta si es la clase abierta de ahora. Al alumno la caja le sale
+           solo entonces, y la base tampoco le da pase sin eso. */
+        let llamadaSesion = null;
+        let llamadaModo = "turno";   // game_state.llamada_modo: quién puede hablar (turno, libre, bloqueada)
+        let llamadaGrabando = false; // game_state.llamada_grabando: el profe graba la llamada en su navegador
+        const llamadaAbierta = () => Boolean(llamadaSesion && llamadaSesion === currentOpenSessionId);
         /* Las flechas y los círculos que el profe dibuja, dichos al alumno
            (ClaseAdaptada.vigiaDeMarcas, la misma que usan los invitados): antes se
            pintaban en silencio, y para quien no ve el tablero son la mitad de la
@@ -578,6 +587,39 @@
         });
 
         // ---------- Estado compartido del tablero (posición, flechas, control cedido) ----------
+        /* De qué va la clase ahora, para los capítulos de la grabación
+           (clase-llamada.js lo mira cada segundo mientras graba). Gana lo más
+           puntual: una diapositiva, la práctica, la tanda, el calentamiento o el
+           tiempo para pensar tapan al tablero mientras duran; sin nada de eso, el
+           tema es la posición de la que partió la partida (una posición nueva es
+           un capítulo; una jugada, no). `clave` decide si cambió; `texto` es el
+           nombre del capítulo. */
+        function temaDeLaClase() {
+            try {
+                if (typeof presentacionActual !== "undefined" && presentacionActual && presentacionActual.deck) {
+                    const n = presentacionActual.n;
+                    const d = presentacionDatos && Array.isArray(presentacionDatos.diapositivas) ? presentacionDatos.diapositivas[n - 1] : null;
+                    const titulo = d && d.titulo && !/^Diapositiva \d+$/.test(d.titulo) ? ": " + d.titulo : "";
+                    return { clave: "diapositiva:" + presentacionActual.deck + ":" + n, texto: "Diapositiva " + n + titulo };
+                }
+                if (typeof formacionActual !== "undefined" && formacionActual) {
+                    return { clave: "practica:" + (formacionActual.id || formacionActual.titulo), texto: "Práctica" + (formacionActual.titulo ? ": " + formacionActual.titulo : "") };
+                }
+                if (typeof tandaActual !== "undefined" && tandaActual) {
+                    return { clave: "tanda:" + tandaActual.at, texto: "Tanda de ejercicios" + (tandaActual.titulo ? ": " + tandaActual.titulo : "") };
+                }
+                if (typeof calentamientoActual !== "undefined" && calentamientoActual) {
+                    return { clave: "calentamiento:" + calentamientoActual.at, texto: "Calentamiento" + (calentamientoActual.titulo ? ": " + calentamientoActual.titulo : "") };
+                }
+                if (pensarActual && PreguntaClase.estadoPensar(pensarActual)) {
+                    const que = String(pensarActual.texto || "").trim();
+                    return { clave: "pensar:" + pensarActual.at, texto: "Tiempo para pensar" + (que ? ": " + que : "") };
+                }
+                const inicio = board.startFen || "";
+                return { clave: "posicion:" + inicio, texto: inicio ? "Posición nueva en el tablero" : "Partida desde la posición inicial" };
+            } catch (e) { return null; }
+        }
+
         function applyGameStateRow(row) {
             // Lo que había ANTES, leído del propio tablero: así la jugada que acaba de
             // hacer este mismo navegador vuelve como eco idéntico y no se anuncia dos veces.
@@ -591,6 +633,10 @@
             // "Aplicar" la transmite y "Cancelar" vuelve a leer el estado de la base.
             const primeraVez = !antes && !editando;
             const vistaAntes = JSON.stringify(board.currentView());
+            llamadaSesion = row.llamada_sesion || null;
+            llamadaModo = row.llamada_modo || "turno";
+            llamadaGrabando = Boolean(row.llamada_grabando);
+            if (llamada) llamada.estado(llamadaAbierta(), llamadaModo, llamadaGrabando);
             if (!editando) board.loadMoves(row.moves || [], row.start_fen);
             /* Quien sigue la clase ve lo que mira el profe. El profe, en cambio, ya
                tiene su vista en el tablero: solo la retoma al cargar la página (la
@@ -1505,24 +1551,86 @@
          * clase»— y por eso tampoco hace falta acordarse de quién estaba
          * conectado al cerrar. */
 
-        async function abrirClaseSiHaceFalta() {
-            if (!isTeacher || currentOpenSessionId || abriendoClase) return;
-            abriendoClase = true;
-            const { data, error } = await sb.from("class_sessions")
-                .insert({ created_by: profile.id }).select().maybeSingle();
-            abriendoClase = false;
-            if (error) {
-                // 23505 es el índice único: alguien más (la otra pestaña, el otro
-                // disparador) ya la abrió. No es un fallo — es justo lo que el
-                // índice tiene que hacer. Se busca la que quedó.
-                if (error.code === "23505") { await checkOpenClassSession(); return; }
-                setStatus("No se pudo abrir la clase: " + error.message
-                    + " — la asistencia de tus alumnos no se está registrando.");
-                return;
-            }
-            if (data) { currentOpenSessionId = data.id; currentOpenSessionStartedAt = data.started_at || null; }
+        /* ---- ¿Quién entra? La lista de la clase ----
+         * A la clase entran solo los alumnos que el profe asignó
+         * (`clase_asignados`; lo hace cumplir la RLS, no esta pantalla). Abrir
+         * la clase ya no es un INSERT suelto: las dos puertas —el botón y
+         * mandar una posición— muestran el selector (js/clase-asignados.js), y
+         * la clase se abre con su lista en UNA llamada, abrir_clase_en_vivo().
+         * Nadie entra hasta que el profe confirma a quiénes. Ver «A la clase
+         * entran solo los asignados». */
+        let elegirAsignados = null;
+        let asignadosDeLaClase = new Set();
+        // Si canceló el selector, mandar otra posición no se lo vuelve a poner
+        // encima en cada jugada: queda el botón «Abrir la clase».
+        let selectorDescartado = false;
+
+        function montarElegirAsignados() {
+            if (elegirAsignados || !window.ClaseAsignados) return elegirAsignados;
+            elegirAsignados = ClaseAsignados.montar({
+                sb, caja: document.getElementById("clase-asignar"), profesorId: profile.id,
+                alConfirmar: (ids, modo) => (modo === "abrir" ? abrirClaseCon(ids) : cambiarAsignados(ids)),
+                alCerrar: () => { if (!currentOpenSessionId) selectorDescartado = true; modoListaAbierta = null; pintarEstadoDeClase(); },
+            });
+            return elegirAsignados;
+        }
+
+        async function abrirClaseSiHaceFalta(desdeElBoton) {
+            if (!isTeacher || currentOpenSessionId || abriendoClase || modoProyector || modoControl) return;
+            if (desdeElBoton !== true && selectorDescartado) return;
+            const sel = montarElegirAsignados();
+            if (!sel || sel.abierto()) return;
+            modoListaAbierta = "abrir";
+            await sel.abrir("abrir");
             pintarEstadoDeClase();
         }
+
+        // Devuelve el error para que el selector lo diga, o null si se abrió.
+        async function abrirClaseCon(ids) {
+            if (abriendoClase) return "La clase ya se está abriendo.";
+            abriendoClase = true;
+            const titulo = (new URLSearchParams(location.search).get("titulo") || "").slice(0, 200) || null;
+            const { data, error } = await sb.rpc("abrir_clase_en_vivo", { p_alumnos: ids, p_titulo: titulo });
+            abriendoClase = false;
+            if (error) {
+                return "No se pudo abrir la clase: " + error.message
+                    + " — mientras tanto tus alumnos no pueden entrar y no se registra nada.";
+            }
+            /* Si ya había una abierta (la otra pestaña, a la vez), la función
+               devuelve ESA, con su lista: el índice de una abierta por profe
+               no deja abrir dos. Por eso la lista se vuelve a leer de la base. */
+            const { data: fila } = await sb.from("class_sessions").select("id, started_at").eq("id", data).maybeSingle();
+            currentOpenSessionId = data;
+            currentOpenSessionStartedAt = (fila && fila.started_at) || new Date().toISOString();
+            selectorDescartado = false;
+            modoListaAbierta = null;
+            cargarSacados();
+            await cargarAsignados();
+            pintarEstadoDeClase();
+            return null;
+        }
+
+        async function cambiarAsignados(ids) {
+            if (!currentOpenSessionId) return "La clase ya no está abierta.";
+            const { error } = await sb.rpc("cambiar_asignados_de_la_clase", { p_clase: currentOpenSessionId, p_alumnos: ids });
+            if (error) return "No se pudo guardar la lista: " + error.message;
+            asignadosDeLaClase = new Set(ids);
+            modoListaAbierta = null;
+            pintarEstadoDeClase();
+            setStatus("✅ Lista guardada: " + (ids.length === 1 ? "entra 1 alumno." : "entran " + ids.length + " alumnos."));
+            return null;
+        }
+
+        async function cargarAsignados() {
+            if (!isTeacher || !currentOpenSessionId) { asignadosDeLaClase = new Set(); return; }
+            const { data, error } = await sb.from("clase_asignados").select("student_id").eq("class_session_id", currentOpenSessionId);
+            if (error) { console.error(error); return; }
+            asignadosDeLaClase = new Set((data || []).map((f) => f.student_id));
+            pintarEstadoDeClase();
+        }
+
+        // En qué modo está abierto el selector ("abrir" | "cambiar"), o null.
+        let modoListaAbierta = null;
 
         async function cerrarClaseDesdeAqui() {
             if (!isTeacher || !currentOpenSessionId) return;
@@ -1570,6 +1678,7 @@
             }
             const cerrada = currentOpenSessionId;
             currentOpenSessionId = null;
+            if (llamada) llamada.salir();   // sin clase no hay llamada
             await limpiarLoDeLaClase();
             cargarSacados();
             const paraAusentes = document.getElementById("clase-para-ausentes").checked;
@@ -1769,7 +1878,14 @@
             const abrir = document.getElementById("clase-abrir-btn");
             const cerrar = document.getElementById("clase-cerrar-btn");
             const campos = document.getElementById("clase-cerrar-campos");
+            const quienes = document.getElementById("clase-asignados-btn");
             caja.classList.remove("hidden");
+            // La lista abierta para CAMBIARLA no sobrevive a que la clase se cierre.
+            if (!currentOpenSessionId && modoListaAbierta === "cambiar" && elegirAsignados) {
+                elegirAsignados.cerrar();
+                modoListaAbierta = null;
+            }
+            quienes.setAttribute("aria-expanded", String(modoListaAbierta === "cambiar"));
 
             if (currentOpenSessionId && claseDeOtroDia()) {
                 /* Quedó abierta de otro día: el índice de una abierta por profe no
@@ -1784,13 +1900,17 @@
                     + ": lo de hoy se está sumando a esa. Ciérrala y abre una nueva.";
                 abrir.classList.add("hidden");
                 cerrar.classList.remove("hidden");
+                quienes.classList.remove("hidden");
                 document.getElementById("clase-despues").hidden = true;
             } else if (currentOpenSessionId) {
                 caja.className = "mb-3 rounded-xl px-5 py-2 flex items-center justify-between gap-3 flex-wrap bg-green-50 dark:bg-green-950/30";
                 texto.className = "text-sm font-semibold text-green-700 dark:text-green-400";
-                texto.textContent = "🔴 Clase en curso: se está registrando la asistencia y el tiempo de tus alumnos.";
+                const n = asignadosDeLaClase.size;
+                texto.textContent = "🔴 Clase en curso: se está registrando la asistencia y el tiempo de tus alumnos."
+                    + (n ? " Pueden entrar " + (n === 1 ? "1 alumno" : n + " alumnos") + " de tu lista." : "");
                 abrir.classList.add("hidden");
                 cerrar.classList.remove("hidden");
+                quienes.classList.remove("hidden");
                 // Una clase nueva: el enlace a la tarea era de la anterior.
                 document.getElementById("clase-despues").hidden = true;
             } else {
@@ -1802,10 +1922,13 @@
                    tiempo. Un "todavía no hay clase abierta" a secas no le dice a
                    un entrenador nuevo que la clase que está por dar no la va a
                    ver nadie. */
-                texto.textContent = "⚪ La clase todavía no está abierta: tus alumnos no pueden entrar"
-                    + " y no se está registrando nada. Se abre con este botón o en cuanto mandes"
-                    + " una posición al tablero.";
-                abrir.classList.remove("hidden");
+                const eligiendo = modoListaAbierta === "abrir";
+                texto.textContent = eligiendo
+                    ? "⚪ La clase todavía no está abierta: marca quién entra y ábrela. Solo los de la lista pueden entrar."
+                    : "⚪ La clase todavía no está abierta: tus alumnos no pueden entrar"
+                    + " y no se está registrando nada. Al abrirla eliges quién entra.";
+                abrir.classList.toggle("hidden", eligiendo);
+                quienes.classList.add("hidden");
                 cerrar.classList.add("hidden");
                 campos.classList.add("hidden");
                 cerrar.textContent = "Cerrar la clase";
@@ -1836,7 +1959,7 @@
             mostrarSalidaPasada();
             // Si lo sacaron de esta clase, recargar no lo vuelve a meter.
             if (openSession && await meSacaronDe(openSession.id)) { await quedarFueraDeLaClase(); return; }
-            if (isTeacher) cargarSacados();
+            if (isTeacher) { cargarSacados(); cargarAsignados(); }
             if (openSession) {
                 await markAttendance(openSession.id);
                 await startPresenceLog(openSession.id);
@@ -1846,17 +1969,29 @@
 
         function conectarControlesDeClase() {
             if (!isTeacher) return;
-            document.getElementById("clase-abrir-btn").addEventListener("click", abrirClaseSiHaceFalta);
+            document.getElementById("clase-abrir-btn").addEventListener("click", () => abrirClaseSiHaceFalta(true));
             document.getElementById("clase-cerrar-btn").addEventListener("click", cerrarClaseDesdeAqui);
+            document.getElementById("clase-asignados-btn").addEventListener("click", async () => {
+                const sel = montarElegirAsignados();
+                if (!sel || !currentOpenSessionId) return;
+                if (modoListaAbierta === "cambiar") { sel.cerrar(); modoListaAbierta = null; pintarEstadoDeClase(); return; }
+                modoListaAbierta = "cambiar";
+                pintarEstadoDeClase();
+                await sel.abrir("cambiar", new Set(asignadosDeLaClase));
+            });
         }
 
         function subscribeClassSessions() {
             sb.channel("class_sessions-sesion:" + boardOwnerId)
                 .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions", filter: "created_by=eq." + boardOwnerId }, (payload) => {
                     if (payload.eventType === "INSERT" && !payload.new.ended_at) {
+                        /* Una clase NUEVA de su profe no es necesariamente para
+                           el alumno: cada una tiene su lista. Se recarga y el
+                           arranque decide (mis_clases() dice si le toca). */
+                        if (!isTeacher && !esObservador && !vistaPrevia) { window.location.reload(); return; }
                         currentOpenSessionId = payload.new.id;
                         currentOpenSessionStartedAt = payload.new.started_at || null;
-                        if (isTeacher) cargarSacados();
+                        if (isTeacher) { cargarSacados(); cargarAsignados(); }
                         markAttendance(payload.new.id);
                         startPresenceLog(payload.new.id);
                         pintarEstadoDeClase();
@@ -1871,6 +2006,7 @@
                             // La pudo cerrar desde el panel, o desde otra pestaña:
                             // la franja de acá tiene que decir la verdad igual.
                             currentOpenSessionId = null;
+                            if (llamada) llamada.salir();
                             cargarSacados();
                             pintarEstadoDeClase();
                         }
@@ -2973,7 +3109,7 @@
         function updateRaiseHandBtn() {
             const btn = document.getElementById("raise-hand-btn");
             if (!btn) return;
-            btn.textContent = handRaised ? "✋ Bajar la mano" : "🖐️ Levantar la mano";
+            btn.textContent = handRaised ? "✋ Bajar la mano" + (lugarEnLaFila ? " (lugar " + lugarEnLaFila.lugar + " de " + lugarEnLaFila.total + ")" : "") : "🖐️ Levantar la mano";
             btn.setAttribute("aria-pressed", handRaised ? "true" : "false");
             btn.classList.toggle("bg-accent-500", handRaised);
             btn.classList.toggle("hover:bg-accent-600", handRaised);
@@ -2991,8 +3127,36 @@
         async function setHandRaised(value) {
             handRaised = !!value;
             handAt = handRaised ? (handAt || new Date().toISOString()) : null;
+            if (!handRaised) lugarEnLaFila = null;
             updateRaiseHandBtn();
             await anunciarPresencia();
+        }
+
+        /* El alumno sabe su lugar en la fila de manos. Sale de la misma
+           presencia y con el MISMO orden que ve el profe en su lista (primero
+           las manos, por hand_at: renderStudentsList), así que «lugar 2» es el
+           segundo que ve el profe. Se dice al levantarla y cada vez que avanza
+           (la región de #clase-voz, sin robar el foco), y va en el botón. */
+        let lugarEnLaFila = null;   // {lugar, total} o null
+        function lugarEnLaFilaDeManos(alumnos, yo) {
+            const llegada = (info) => (info.hand_at ? new Date(info.hand_at).getTime() : Infinity);
+            const fila = [...alumnos].filter(([, info]) => info && info.hand_raised)
+                .sort((a, b) => llegada(a[1]) - llegada(b[1]));
+            const i = fila.findIndex(([id]) => id === yo);
+            return i < 0 ? null : { lugar: i + 1, total: fila.length };
+        }
+        function avisarLugarEnLaFila() {
+            if (isTeacher || esObservador) return;
+            const antes = lugarEnLaFila;
+            lugarEnLaFila = handRaised ? lugarEnLaFilaDeManos(onlineStudents, profile.id) : null;
+            updateRaiseHandBtn();
+            const ahora = lugarEnLaFila;
+            if (!ahora || (antes && antes.lugar === ahora.lugar)) return;
+            const texto = ahora.lugar === 1
+                ? (ahora.total === 1 ? "Tu mano es la única levantada: tu profe la ve primero." : "Tu mano es la primera de la fila: sigues tú.")
+                : (antes && ahora.lugar < antes.lugar ? "Avanzaste: vas" : "Vas") + " en el lugar " + ahora.lugar + " de la fila de manos (hay " + ahora.total + " manos levantadas).";
+            const r = document.getElementById("clase-voz");
+            if (r) { r.textContent = ""; setTimeout(() => { r.textContent = texto; }, 60); }
         }
 
         /* Todo anuncio de la presencia sale por acá, nunca con track() suelto.
@@ -3165,7 +3329,7 @@
                 }
                 dictarFotografiaDeLaPresencia(state);
                 if (!isTeacher && !esObservador) pintarEntrenoDelProfe(state);
-                if (!isTeacher && !esObservador) { pintarMiFoto(); renderCompanerosList(); }
+                if (!isTeacher && !esObservador) { pintarMiFoto(); renderCompanerosList(); avisarLugarEnLaFila(); }
                 renderStudentsList();
                 pintarCuentaCalentamiento();
                 if (isTeacher && tandaActual) { anotarTandaDeLaPresencia(); pintarTandaProfe(); }
@@ -3290,6 +3454,9 @@
         }
 
         async function updateEngineEval() {
+            // El explorador de aperturas se entera de cada posición en el mismo lugar que
+            // el motor (js/clase-explorador.js): no hay un segundo aviso que se pueda olvidar.
+            if (window.ClaseExplorador && board && !modoProyector && !modoControl) ClaseExplorador.posicion(board.fen());
             if (!engineEnabled || modoProyector || modoControl || typeof ClasesEngine === "undefined") return;
             const myRequestId = ++engineRequestId;
             const fen = board.fen();
@@ -4293,6 +4460,8 @@
             if (errTurno) { console.error(errTurno); turnoActualId = null; }
             else { turnoActualId = data && data.id; sumarTurno(id, null); }
             pintarTurnos();
+            // En la llamada, puede hablar quien tiene el turno (lo pone el servidor).
+            if (llamada) llamada.sincronizar();
             return true;
         }
 
@@ -4353,6 +4522,7 @@
             turnoActualId = null;
             document.getElementById("elegido-caja").hidden = true;
             pintarTurnos();
+            if (llamada) llamada.sincronizar();   // se terminó el turno: se le apaga el micrófono
             if (resultado) setStatus("Anotado: " + quien + " respondió " + (resultado === "bien" ? "bien" : "casi") + ".");
         }
 
@@ -7358,7 +7528,8 @@
             pintarAvisoVentaja();
             if (!myPracticeGame || myPracticeGame.status !== "playing") {
                 if (practiceBoard) practiceBoard.setInteractive(false);
-                statusEl.textContent = myPracticeGame ? practiceStatusLabel(myPracticeGame.status) : "";
+                statusEl.textContent = myPracticeGame
+                    ? practiceJugadaDelMotorDicha() + practiceStatusLabel(myPracticeGame.status) : "";
                 resignBtn.classList.add("hidden");
                 retryEngineBtn.classList.add("hidden");
                 retryBtn.classList.toggle("hidden", !myPracticeGame || practiceIntentosQuedan() === 0);
@@ -7374,7 +7545,25 @@
             retryEngineBtn.classList.toggle("hidden", !stuck);
             statusEl.textContent = practiceEngineBusy
                 ? "El motor está pensando…"
-                : (myTurn ? "Es tu turno." : (stuck ? "El motor no respondió — toca \"Pedir jugada del motor\" para intentarlo de nuevo." : "Esperando la jugada del motor…"));
+                : (myTurn ? practiceJugadaDelMotorDicha() + "Es tu turno." : (stuck ? "El motor no respondió — toca \"Pedir jugada del motor\" para intentarlo de nuevo." : "Esperando la jugada del motor…"));
+        }
+
+        /* «El motor jugó e5. »: la jugada del motor va DENTRO del aviso de turno
+           (o del resultado, si con ella terminó la partida), no en un aviso
+           aparte. Antes se decía en el recuadro y medio segundo después —cuando
+           terminaba de guardarse en la base— «Es tu turno.» llegaba a esta otra
+           región: el lector de pantalla cortaba la jugada para decir solo eso, y
+           la voz del navegador (baja visión), con cuatro avisos en fila, vaciaba
+           la fila y decía solo el último. Ni quien no ve ni quien ve poco se
+           enteraba de qué había jugado el motor. Un solo aviso, el último, no se
+           pisa con nada (lo revisa verificar-clase-voz-motor.js).
+           La jugada es del motor si ahora le toca al alumno; "" si no la hay. */
+        function practiceJugadaDelMotorDicha() {
+            if (!practiceBoard || !myPracticeGame) return "";
+            const hechas = practiceBoard.game.history();
+            if (!hechas.length || practiceBoard.game.turn() !== myPracticeGame.student_color) return "";
+            const ultima = hechas[hechas.length - 1];
+            return "El motor jugó " + (window.ComandosTablero ? ComandosTablero.jugadaParaMostrar(ultima) : ultima) + ". ";
         }
 
         async function savePracticeGameRow(patch) {
@@ -7493,11 +7682,9 @@
             if (move) {
                 practiceBoard.render();
                 pintarAyudaAlumno();
-                if (practicaAcc) {
-                    practicaAcc.actualizar();
-                    practicaAcc.decir("El motor jugó " + ClaseAdaptada.hablarJugada(move.san) + ". "
-                        + (practiceBoard.game.game_over() ? "" : "Te toca."));
-                }
+                // La jugada se anuncia en el aviso de turno (practiceJugadaDelMotorDicha),
+                // cuando termina de guardarse: dicha acá también, ese aviso la pisaba.
+                if (practicaAcc) practicaAcc.actualizar();
                 const newFen = practiceBoard.game.fen();
                 const newMoves = practiceBoard.game.history();
                 const newStatus = practiceResultForStudent(practiceBoard.game, myPracticeGame.student_color);
@@ -7700,8 +7887,16 @@
             // hace falta: si no, el alumno se queda esperando a quien hoy no va a
             // abrir mientras su otra clase ya empezó, y eso no se adivina.
             const otra = clasesDelAlumno.find((c) => c.clase_abierta && c.profesor_id !== boardOwnerId);
+            /* Abierta, pero no está en la lista de ESTA clase (es la de otro
+               grupo): se le dice eso y no «todavía no ha abierto», que lo
+               dejaría esperando a una clase que no es la suya. */
+            const sinMi = !!(mia && mia.abierta_sin_mi);
             document.getElementById("sin-clase-texto").textContent = otra
-                ? nombre + " todavía no ha abierto la clase, pero " + otra.profesor + " sí tiene una en curso ahora mismo."
+                ? nombre + (sinMi ? " tiene una clase en curso, pero no estás en su lista; " : " todavía no ha abierto la clase, pero ")
+                    + otra.profesor + " sí tiene una en curso ahora mismo para ti."
+                : sinMi
+                ? nombre + " tiene una clase en curso ahora, pero no estás en la lista de esta clase."
+                    + " Si te toca estar, pídele que te agregue: vas a entrar directo en cuanto lo haga."
                 : nombre + " todavía no ha abierto la clase. Cuando la abra vas a entrar directo al tablero.";
             // El selector es el mismo de arriba y solo aparece con dos o más
             // profesores; acá es además la forma de pasarse a la clase que sí
@@ -7717,21 +7912,28 @@
            recargara — sin que nada fallara. */
         function esperarLaClase() {
             const ids = [...new Set(clasesDelAlumno.map((c) => c.profesor_id).filter(Boolean))];
+            /* Que se abra una clase de su profe ya no quiere decir que sea para
+               él: cada clase tiene su lista. Se vuelve a preguntar (mis_clases()
+               dice si le toca) y solo se entra si está en ella. Recargar y no
+               montar acá es la misma decisión que cambiar de clase — todo
+               cuelga de boardOwnerId y montarlo a mano dejaría la mitad sin
+               suscribir. */
+            const repreguntar = async () => {
+                const { clases } = await ClaseElegida.resolver();
+                if (clases && clases.length) clasesDelAlumno = clases;
+                const mia = clasesDelAlumno.find((c) => c.profesor_id === boardOwnerId);
+                if (mia && mia.clase_abierta) { window.location.reload(); return; }
+                mostrarSinClase();
+            };
             ids.forEach((id) => {
                 sb.channel("clase-abre:" + id)
-                    .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions", filter: "created_by=eq." + id }, async (payload) => {
-                        const abrio = payload.new && !payload.new.ended_at;
-                        // La suya y abierta: se entra. Recargar y no montar acá
-                        // es la misma decisión que cambiar de clase — todo
-                        // cuelga de boardOwnerId y montarlo a mano dejaría la
-                        // mitad sin suscribir.
-                        if (abrio && id === boardOwnerId) { window.location.reload(); return; }
-                        const { clases } = await ClaseElegida.resolver();
-                        if (clases && clases.length) clasesDelAlumno = clases;
-                        mostrarSinClase();
-                    })
+                    .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions", filter: "created_by=eq." + id }, repreguntar)
                     .subscribe();
             });
+            // Y si el profe lo agrega a la lista con la clase en curso.
+            sb.channel("clase-asignado:" + profile.id)
+                .on("postgres_changes", { event: "INSERT", schema: "public", table: "clase_asignados", filter: "student_id=eq." + profile.id }, repreguntar)
+                .subscribe();
         }
 
         // ---------- Arranque ----------
@@ -7878,6 +8080,9 @@
                 acomodarChatDelProfe();
                 document.getElementById("modo-sencillo-fila").classList.remove("hidden");
                 document.getElementById("engine-panel").classList.remove("hidden");
+                // Solo se monta: la posición le llega por updateEngineEval() en cuanto el
+                // tablero existe (acá todavía puede ser null y tumbaría la clase entera).
+                if (window.ClaseExplorador && !modoProyector && !modoControl) ClaseExplorador.montar();
                 document.getElementById("teacher-tabs-wrap").classList.remove("hidden");
                 document.getElementById("clear-chat-btn").classList.remove("hidden");
                 if (!modoProyector && !modoControl) {
@@ -7925,6 +8130,94 @@
             if (meSacaron) return;
             subscribeClassSessions();
             conectarControlesDeClase();
+            // Desde el panel («Iniciar clase»): llega con el selector ya abierto.
+            if (isTeacher && !currentOpenSessionId && new URLSearchParams(location.search).get("abrir") === "1") abrirClaseSiHaceFalta(true);
+            /* La llamada de voz, en la misma página que el tablero: el profe que da
+               la clase y sus alumnos. Ni quien observa (mira, no habla), ni la vista
+               previa, ni el proyector o el control remoto (otra ventana de la misma
+               clase). La mano es la de la clase. */
+            if (window.ClaseLlamada && !esObservador && !vistaPrevia && !modoProyector && !modoControl
+                && (!isTeacher || profile.role === "profesor")) {
+                llamada = ClaseLlamada.montar({
+                    sb, profesorId: boardOwnerId, esProfe: isTeacher, miNombre: profile.full_name || "",
+                    alternarMano: async () => { await setHandRaised(!handRaised); return handRaised; },
+                    /* El profe abre la llamada (en ESTA clase) o la termina para todos.
+                       Solo él puede escribirla: protect_game_state_teacher_columns. */
+                    abrir: async (abrirla) => {
+                        if (abrirla && !currentOpenSessionId) return "Abre la clase primero: la llamada es de la clase.";
+                        const valor = abrirla ? currentOpenSessionId : null;
+                        // Una llamada nueva (o terminada) vuelve al turno: nunca arranca con todos hablando ni bloqueada.
+                        // Y se graba sola al abrirla (el profe la puede pausar); terminada, ya no.
+                        const { error } = await sb.from("game_state").update({ llamada_sesion: valor, llamada_modo: "turno", llamada_grabando: Boolean(abrirla) }).eq("id", myGameStateId);
+                        if (error) { console.error(error); return "No se pudo: " + error.message; }
+                        llamadaSesion = valor;
+                        llamadaModo = "turno";
+                        llamadaGrabando = Boolean(abrirla);
+                        return "";
+                    },
+                    // Grabar o pausar: lo ven todos («Se está grabando la clase»).
+                    grabar: async (encender) => {
+                        const { error } = await sb.from("game_state").update({ llamada_grabando: Boolean(encender) }).eq("id", myGameStateId);
+                        if (error) { console.error(error); return "No se pudo: " + error.message; }
+                        llamadaGrabando = Boolean(encender);
+                        return "";
+                    },
+                    claseActual: () => currentOpenSessionId,
+                    // La posición que está viendo la clase (la jugada que el profe muestra, o la última).
+                    posicion: () => { try { return (board.viewGame || board.game).fen(); } catch (e) { return null; } },
+                    tema: temaDeLaClase,
+                    /* Los segundos que habló cada alumno (los cuenta clase-llamada.js).
+                       true si quedaron guardados o no tiene sentido reintentar (la
+                       clase ya no es suya o se cerró hace rato). */
+                    sumarHablado: async (clase, tanda) => {
+                        if (!clase) return true;
+                        const { error } = await sb.rpc("sumar_segundos_hablados", { p_clase: clase, p_segundos: tanda });
+                        if (error) console.error(error);
+                        return !error || error.code === "42501";
+                    },
+                    hablaronAntes: async (clase) => {
+                        const { data, error } = await sb.from("llamada_participacion").select("persona_id, segundos").eq("class_session_id", clase).range(0, 999);
+                        if (error) { console.error(error); return null; }
+                        return new Map((data || []).map((f) => [f.persona_id, f.segundos || 0]));
+                    },
+                    /* Cuáles de estos alumnos tienen el permiso de su familia para grabar
+                       su voz (permisos_grabar_voz; la RLS le deja ver el de SUS alumnos).
+                       null si no se pudo saber: entonces no se marca a nadie. */
+                    permisosDeVoz: async (ids) => {
+                        if (!ids.length) return new Set();
+                        const { data, error } = await sb.from("permisos_grabar_voz").select("persona_id").in("persona_id", ids);
+                        if (error) { console.error(error); return null; }
+                        return new Set((data || []).map((f) => f.persona_id));
+                    },
+                    /* Una parte de la grabación: al almacenamiento privado y su fila
+                       (guardar_parte_grabacion comprueba que la clase sea suya). La
+                       clase viaja con la parte: la última se sube al cerrar, cuando
+                       currentOpenSessionId ya está vacío. */
+                    subirParte: async (blob, segundos, tipo, clase, marcas) => {
+                        if (!clase) return "Sin clase para la grabación.";
+                        const ext = /mp4/.test(tipo) ? "m4a" : /ogg/.test(tipo) ? "ogg" : "webm";
+                        const ruta = profile.id + "/" + clase + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+                        const { error: errSubir } = await sb.storage.from("clase-grabaciones").upload(ruta, blob, { contentType: tipo });
+                        if (errSubir) { console.error(errSubir); return "No se pudo guardar una parte de la grabación."; }
+                        const { error: errFila } = await sb.rpc("guardar_parte_grabacion", { p_clase: clase, p_ruta: ruta, p_segundos: Math.round(segundos), p_bytes: blob.size, p_marcas: marcas && marcas.length ? marcas : null });
+                        if (errFila) { console.error(errFila); return "No se pudo guardar una parte de la grabación."; }
+                        return "";
+                    },
+                    // Quién puede hablar: con turno, todos o nadie (solo el profe).
+                    modo: async (modo) => {
+                        const { error } = await sb.from("game_state").update({ llamada_modo: modo }).eq("id", myGameStateId);
+                        if (error) { console.error(error); return "No se pudo: " + error.message; }
+                        llamadaModo = modo;
+                        return "";
+                    },
+                    // Lo que se le dice al alumno cuando la caja se esconde (su región viva se va con ella).
+                    anunciarFuera: (texto) => {
+                        const r = document.getElementById("clase-voz");
+                        if (r) { r.textContent = ""; setTimeout(() => { r.textContent = texto; }, 60); }
+                    },
+                });
+                llamada.estado(llamadaAbierta(), llamadaModo, llamadaGrabando);
+            }
             await loadVariantTree();
             subscribeVariants();
             /* Quien observa ve el tablero, las variantes y quién está
