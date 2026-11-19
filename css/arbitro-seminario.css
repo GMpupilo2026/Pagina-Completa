@@ -127,6 +127,25 @@
   .sem-l-portada-titulo { font-size: 1.9rem; max-width: none; }
   .sem-l-portada-sub { font-size: 1rem; max-width: 80%; }
 }
+/* El avatar de «IA Oscar Angulo Cubero» (js/avatar-profe-oscar.js): cambia de
+   pose cada 6 s con un fundido; con «reducir movimiento», ni cambia ni funde. */
+.sem-avatar { display: block; width: auto; object-fit: contain; transition: opacity .35s ease; }
+.sem-avatar-sale { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .sem-avatar { transition: none; } }
+.sem-con-avatar { display: flex; align-items: center; gap: .9rem; }
+.sem-con-avatar-txt { min-width: 0; }
+.sem-avatar-chico { height: 5.5rem; flex: none; }
+.sem-instructor { font-weight: 600; }
+.sem-l-portada-instructor { font-size: 2.1cqw; font-weight: 700; opacity: .95; }
+.sem-l-con-avatar .sem-l-marco > :not(.sem-l-portada-avatar) { max-width: 58cqw; position: relative; }
+.sem-l-portada-avatar { position: absolute; right: 4cqw; bottom: 0; height: 92%; width: 31cqw; object-fit: contain; object-position: right bottom; pointer-events: none; filter: drop-shadow(0 .6cqw 1.2cqw rgba(0, 0, 0, .25)); }
+@container (max-width: 600px) {
+  .sem-l-portada-instructor { font-size: .85rem; }
+  .sem-l-con-avatar .sem-l-marco { padding-right: 38%; }
+  .sem-l-con-avatar .sem-l-marco > :not(.sem-l-portada-avatar) { max-width: none; }
+  .sem-l-portada-avatar { right: 3%; height: 80%; width: 34%; }
+  .sem-l-con-avatar .sem-l-portada-sub { max-width: none; }
+}
 /* Pregunta: la misma franja, sin el 16:9 (crece con sus opciones). Tiene
    tamaño mínimo para que se lea en el celular. */
 .sem-l-libre { margin-top: 1rem; }

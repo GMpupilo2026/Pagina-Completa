@@ -32,6 +32,7 @@
     const EXAMEN_MINUTOS = 45;
 
     let yo = null;          // id de la cuenta
+    let soyAdmin = false;   // la sala de administración la da la IA (INSTRUCTOR_IA)
     let caja = null;        // la sección
     let canales = [];
     let sondeo = null;
@@ -99,6 +100,56 @@
         cont.appendChild(fig);
     }
 
+    /* El instructor de la sala de administración es «IA Oscar Angulo Cubero»
+       (ese nombre lo manda seminario_salas_para_mi): donde sale, sale con su
+       avatar, y el avatar va cambiando de pose (js/avatar-profe-oscar.js,
+       siempre los dibujos del profe Oscar, sin mirar la academia). Con
+       «reducir movimiento» se elige una pose al azar y se queda quieta. */
+    const INSTRUCTOR_IA = "IA Oscar Angulo Cubero";
+    const POSES = {
+        tarjeta: ["hola", "bienvenidos", "arbitro", "presentando", "brazos-cruzados", "reloj-de-ajedrez"],
+        cabecera: ["arbitro", "presentando", "atencion", "idea", "reloj-de-ajedrez", "caballo", "a-repasar", "mmm"],
+        portada: ["bienvenidos", "presentando", "hola", "arbitro", "tablero-italiana", "clase-en-linea", "ensenando"],
+    };
+    const quieto = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    function avatarIA(clase, poses) {
+        const A = window.AvatarProfeOscar;
+        if (!A) return null;
+        const lista = poses.map((id) => A.LISTA.find((a) => a.id === id)).filter(Boolean);
+        if (!lista.length) return null;
+        let i = Math.floor(Math.random() * lista.length);
+        const img = el("img", "sem-avatar " + (clase || ""));
+        img.decoding = "async";
+        img.width = 160; img.height = 480;
+        const poner = (a) => { img.src = A.rutaDe("oscar", a.id); img.alt = a.alt; };
+        poner(lista[i]);
+        if (quieto() || lista.length < 2) return img;
+        // Precarga las demás para que el cambio no parpadee.
+        lista.forEach((a) => { const p = new Image(); p.src = A.rutaDe("oscar", a.id); });
+        const t = setInterval(() => {
+            if (!img.isConnected) { clearInterval(t); return; }
+            img.classList.add("sem-avatar-sale");
+            setTimeout(() => {
+                i = (i + 1) % lista.length;
+                poner(lista[i]);
+                img.classList.remove("sem-avatar-sale");
+            }, 350);
+        }, 6000);
+        return img;
+    }
+    // «Instructor: …» con el avatar al lado cuando es la IA.
+    function lineaInstructor(nombre, extra) {
+        const p = el("p", "sem-nota sem-instructor", "Instructor: " + nombre + (extra || ""));
+        if (nombre !== INSTRUCTOR_IA) return p;
+        const fila = el("div", "sem-con-avatar");
+        const img = avatarIA("sem-avatar-chico", POSES.tarjeta);
+        if (img) fila.appendChild(img);
+        const txt = el("div", "sem-con-avatar-txt");
+        txt.appendChild(p);
+        fila.appendChild(txt);
+        return fila;
+    }
+
     /* Las diapositivas se ven como las láminas del seminario de asesores
        (Formación Ajedrez, herramientas/formacion-laminas.js): 16:9, franja azul
        con la sección arriba y el título grande, y el contenido en tarjetas
@@ -161,7 +212,7 @@
     }
 
     // Una diapositiva tal como la ven todos (instructor y árbitros).
-    function diapositiva(tema, n, tituloSala) {
+    function diapositiva(tema, n, tituloSala, instructor) {
         const d = tema && tema.diapositivas[n];
         if (!d) {
             // Portada, como la primera lámina de cada sesión de asesores.
@@ -169,9 +220,16 @@
             marco.appendChild(el("p", "sem-l-seccion", "Ajedrez Integral · Arbitraje"));
             marco.appendChild(el("h3", "sem-diap-titulo sem-l-portada-titulo", tituloSala || "Seminario de Árbitro FIDE"));
             marco.appendChild(el("p", "sem-l-portada-sub", "En un momento empieza: el instructor todavía no eligió qué mostrar."));
-            const deco = el("span", "sem-l-deco", "♞");
-            deco.setAttribute("aria-hidden", "true");
-            marco.appendChild(deco);
+            const fig = instructor === INSTRUCTOR_IA ? avatarIA("sem-l-portada-avatar", POSES.portada) : null;
+            if (fig) {
+                marco.appendChild(el("p", "sem-l-portada-instructor", "Instructor: " + INSTRUCTOR_IA));
+                marco.appendChild(fig);
+                art.classList.add("sem-l-con-avatar");
+            } else {
+                const deco = el("span", "sem-l-deco", "♞");
+                deco.setAttribute("aria-hidden", "true");
+                marco.appendChild(deco);
+            }
             return art;
         }
         const { art, marco } = lamina(d.fen ? "sem-l-con-tablero" : "");
@@ -269,7 +327,7 @@
         salas.forEach((s) => {
             const fila = el("div", "sem-tarjeta");
             fila.appendChild(el("h3", "sem-h3", s.titulo));
-            fila.appendChild(el("p", "sem-nota", "Instructor: " + s.instructor));
+            fila.appendChild(lineaInstructor(s.instructor));
             if (s.mi_estado === "esperando") {
                 fila.appendChild(el("p", "sem-estado", "⏳ Estás en la sala de espera. El instructor te deja entrar en cuanto te vea."));
             } else {
@@ -293,7 +351,10 @@
         caja.textContent = "";
         const cab = el("div", "sem-cabecera");
         cab.appendChild(el("h2", "sem-h2", "🎓 " + info.titulo));
-        cab.appendChild(el("p", "sem-nota", "Instructor: " + info.instructor + ". Lo que él proyecta aparece aquí."));
+        const linea = lineaInstructor(info.instructor, ". Lo que él proyecta aparece aquí.");
+        const img = linea.querySelector && linea.querySelector("img");
+        if (img) { img.remove(); const otra = avatarIA("sem-avatar-chico", POSES.cabecera); if (otra) linea.prepend(otra); }
+        cab.appendChild(linea);
         caja.appendChild(cab);
         const vista = el("div", "sem-vista");
         const preg = el("div", "sem-pregunta-caja");
@@ -306,7 +367,7 @@
             if (r.error || !r.data || r.data.cerrada_en) { salaArbitro = null; vistaArbitro(); return; }
             const s = r.data;
             if (!ultima || ultima.tema !== s.tema || ultima.diapositiva !== s.diapositiva) {
-                vista.replaceChildren(diapositiva(temaPorId(s.tema), s.diapositiva, info.titulo));
+                vista.replaceChildren(diapositiva(temaPorId(s.tema), s.diapositiva, info.titulo, info.instructor));
             }
             if (!ultima || ultima.pregunta_id !== s.pregunta_id || ultima.correcta !== s.correcta || ultima.pregunta_hasta !== s.pregunta_hasta) {
                 await pintarPreguntaArbitro(preg, s);
@@ -538,7 +599,7 @@
         };
         const pintarVista = () => {
             const t = temaPorId(sala.tema);
-            vista.replaceChildren(diapositiva(t, sala.diapositiva, sala.titulo));
+            vista.replaceChildren(diapositiva(t, sala.diapositiva, sala.titulo, soyAdmin ? INSTRUCTOR_IA : null));
             ant.disabled = !t || sala.diapositiva <= 0;
             sig.disabled = !t || sala.diapositiva >= t.diapositivas.length - 1;
             pintarPreguntasDelTema(pregCaja);
@@ -728,7 +789,8 @@
             const { data: { session } } = await sb.auth.getSession();
             if (!session) return;
             yo = session.user.id;
-            const perfil = await sb.from("profiles").select("role").eq("id", yo).maybeSingle();
+            const perfil = await sb.from("profiles").select("role, is_admin").eq("id", yo).maybeSingle();
+            soyAdmin = !!(perfil.data && perfil.data.is_admin);
             const esArbitro = perfil.data && perfil.data.role === "arbitro";
             if (esArbitro) { $("seminario-caja").hidden = false; return vistaArbitro(); }
             const puede = await sb.rpc("arbitros_puedo_dar");
