@@ -5749,6 +5749,31 @@ Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
       tardaba de 20 a 60 s. La lectura queda, sin el encabezado, en
       `herramientas/lib/lectura-real-pareo-2.js`, con la partida entera
       sacada a ojo de las planillas.
+  - **La planilla para imprimir** (lo pidió el dueño el 18/11, para un
+    torneo de unas 500 partidas): `planilla-pareo-integral.pdf`, en la raíz
+    (se baja de `ajedrez-integral.com/planilla-pareo-integral.pdf`), la arma
+    `herramientas/planilla-pareo-pdf.js`. Es una planilla común de 60
+    jugadas dibujada a la medida de `hojasDeLaFoto()`: tres bloques de 20 con
+    los números grandes y en negrita (el lector se guía por ellos), rayas en
+    gris claro, renglones de 10,2 mm y la marca de agua tenue en el
+    encabezado, lejos de las casillas. Después de verla, el dueño pidió (19/11):
+    el nombre del torneo en grande en lugar de «Planilla de anotación»
+    (`--torneo "…"`; sin él, una raya para escribirlo), sin Elo ni ID FIDE,
+    Ronda/Mesa/Fecha en un renglón y Blancas/Negras en otro, espacio de verdad
+    para las firmas, de consejos solo el de «si te equivocas», y **Blancas y
+    Negras del mismo ancho**. Con columnas iguales, una jugada corta de las
+    Negras escrita pegada a la raya («d5») tiene el centro antes de
+    `NEGRAS_DESDE` (0,565, medido con las planillas de la FCA) y caía en las
+    Blancas («Cf3d5»). En vez de achicar las Negras, `hojasDeLaFoto()`
+    aprendió a devolverla: si la casilla de las Negras quedó vacía y la última
+    palabra de las Blancas va aparte y empieza pasada la mitad del bloque, es
+    de las Negras. Las 46 comprobaciones de las fotos de verdad siguen igual.
+    La prueba
+    `verificar-planilla-pareo-pdf.js` mide la planilla en el navegador, le
+    escribe una partida de 60 jugadas (al centro y pegada a la raya, con una
+    hoja sola y con las dos en una foto torcida) y comprueba que cada jugada
+    cae en su casilla y que sale la partida entera. Si se cambian las
+    medidas de la planilla, o `NEGRAS_DESDE` en el lector, esa prueba lo dice.
   - Lo prueba `herramientas/verificar-pareo-planilla.js` (un doble de
     `ocr-scoresheet` con las planillas de verdad de la mesa 11). **Sin
     probar de verdad**: Google Vision con planillas de un torneo de Pareo.
