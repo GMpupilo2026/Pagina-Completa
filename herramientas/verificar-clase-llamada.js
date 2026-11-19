@@ -263,6 +263,47 @@ console.log("\n=== Lo del 19/11: reacciones, pregunta, marcas y avisos ===");
   si(/timeZone: 'America\/Costa_Rica'/.test(rep), "…y la hora de cada marca se muestra en hora de Costa Rica");
 }
 
+console.log("\n=== Lo del 19/11 (2): quién habla, turnos, sala de espera, batería y el mes ===");
+{
+  const sesion = leer("js/sesion.js");
+  const plan = (sesion.match(/function planDelTurno\(e, ahora, esElProfe, yo\) \{[\s\S]*?\n        }\n/) || [""])[0];
+  let planDelTurno = null;
+  try { planDelTurno = new Function(plan + "; return planDelTurno;")(); } catch (e) { planDelTurno = null; }
+  if (planDelTurno) {
+    const t0 = Date.parse("2026-11-19T15:00:00Z");
+    const e = { id: "ana", at: "x", hasta: "2026-11-19T15:01:00Z" };
+    const profe = planDelTurno(e, t0, true, "profe");
+    const ana = planDelTurno(e, t0, false, "ana");
+    const otro = planDelTurno(e, t0, false, "beto");
+    const corto = planDelTurno({ id: "ana", hasta: "2026-11-19T15:00:05Z" }, t0, true, "profe");
+    const sin = planDelTurno({ id: "ana" }, t0, true, "profe");
+    si(profe.aviso === 50000 && profe.fin === 60000 && ana.aviso === 50000 && ana.fin === null && otro.aviso === null && otro.fin === null,
+      "un turno de 1 minuto: aviso a los 50 s al profe y al alumno del turno (no a los demás), y solo la página del profe lo termina (" + JSON.stringify([profe, ana, otro]) + ")");
+    si(corto.aviso === null && corto.fin === 5000 && sin.aviso === null && sin.fin === null, "…con menos de 10 s no hay aviso, y un turno sin tiempo no se termina solo");
+  } else mal("no encontré planDelTurno() en sesion.js");
+  si(/if \(tiempoDeTurnoMs > 0\) elegido\.hasta = /.test(sesion) && /programarFinDeTurno\(elegidoActual\);/.test(sesion),
+    "el tiempo viaja con el turno (game_state.elegido.hasta) y el reloj se arma también al recargar");
+  si(/const siguiente = await siguienteMano\(\);/.test(sesion) && /info\.hand_raised && \(!elegidoActual \|\| id !== elegidoActual\.id\)/.test(sesion),
+    "al acabarse el tiempo la palabra pasa a la siguiente mano de la fila (no a quien ya la tenía)");
+  const ll = leer("js/clase-llamada.js");
+  si(/navigator\.getBattery/.test(ll) && /bateria\.charging/.test(ll) && /pct <= 5 \? 5 : pct <= 15 \? 15 : 0/.test(ll), "la batería: avisa al 15 % y al 5 % si no está cargando");
+  // La participación del mes: la función pura, tal cual está.
+  const part = leer("js/participacion-llamada.js");
+  let porMes = null;
+  try { const w = {}; new Function("window", part)(w); porMes = w.ParticipacionLlamada.porMes; } catch (e) { porMes = null; }
+  if (porMes) {
+    const meses = porMes(
+      [{ clase: "c1", inicio: "2026-11-03T15:00:00Z" }, { clase: "c2", inicio: "2026-11-10T15:00:00Z" }, { clase: "c3", inicio: "2026-11-17T15:00:00Z" }, { clase: "c0", inicio: "2026-10-27T15:00:00Z" }],
+      [{ clase: "c1", inicio: "2026-11-03T15:00:00Z", segundos: 125 }, { clase: "c3", inicio: "2026-11-17T15:00:00Z", segundos: 300 }],
+      (x) => x.slice(0, 7));
+    si(meses.length === 2 && meses[0].mes === "2026-11" && meses[0].total === 425 && meses[0].hablo === 2 && meses[0].estuvo === 3 && meses[1].hablo === 0 && meses[1].estuvo === 1,
+      "la participación del mes: minutos, en cuántas clases habló y en cuántas estuvo, del mes más nuevo al más viejo (" + JSON.stringify(meses.map((m) => [m.mes, m.total, m.hablo, m.estuvo])) + ")");
+  } else mal("no se pudo leer ParticipacionLlamada.porMes");
+  const inf = leer("js/informes.js");
+  si((inf.match(/renderParticipacion\(/g) || []).length >= 3 && /src="js\/participacion-llamada\.js"/.test(leer("informes.html")),
+    "…y está en el informe del alumno, en la vista del profe y en la propia");
+}
+
 /* ------------------------------------------------------------------ 4 */
 
 // La caja, tal cual está en sesion.html.
@@ -370,6 +411,8 @@ async function abrir(browser, { esProfe = false, respuesta, abierta = true, grab
       preguntarSiNo: async (abrir) => { (window.__preguntas = window.__preguntas || []).push(abrir); return abrir ? null : { si: ["Ana"], no: ["Zoe"], faltan: [] }; },
       marcarMomento: async () => { window.__marcas = (window.__marcas || 0) + 1; return ""; },
       enfocarTablero: () => { window.__alTablero = (window.__alTablero || 0) + 1; return true; },
+      siguienteMano: async () => ({ nombre: window.__siguiente === undefined ? "Beto Solís" : window.__siguiente }),
+      tiempoDeTurno: (ms) => { (window.__tiempos = window.__tiempos || []).push(ms); },
       alternarMano: async () => { mano = !mano; window.__manos.push(mano); return mano; },
       // Como sesion.js: abrir la llamada la deja grabando; terminarla, no.
       abrir: async (v) => { window.__abrir.push(v); window.__llamada.estado(v, "turno", v); return ""; },
@@ -815,6 +858,37 @@ async function pruebas(browser) {
   si(!r.errores.length, "sin errores en la página" + (r.errores.length ? ": " + r.errores.join(" | ") : ""));
   await r.ctx.close();
 
+  // Decir quién empieza a hablar y la sala de espera (alumno).
+  r = await abrir(browser, { respuesta: PASE("pase-sin-palabra") });
+  await r.page.click("#llamada-decir-quien");
+  await r.page.click("#llamada-entrar");
+  await r.page.waitForTimeout(2800);
+  const hablar = (id, si) => r.page.evaluate(({ id, si }) => {
+    const p = window.__sala.remoteParticipants.get(id);
+    p.isSpeaking = si;
+    window.__sala.activeSpeakers = si ? [p] : [];
+    window.__sala.emit("ActiveSpeakersChanged", window.__sala.activeSpeakers);
+  }, { id, si });
+  await hablar("zoe", true);
+  await r.page.waitForTimeout(900);
+  si(await r.page.textContent("#llamada-estado") === "Habla Zoe Álvarez.", "con «Decir quién empieza a hablar», se dice el nombre de quien habla");
+  await r.page.evaluate(() => { document.getElementById("llamada-estado").textContent = ""; });
+  await hablar("zoe", false);
+  await hablar("zoe", true);
+  await r.page.waitForTimeout(900);
+  si(await r.page.textContent("#llamada-estado") === "", "…y no se repite si la misma persona sigue hablando enseguida");
+  await hablar("zoe", false);
+  await hablar("profe", true);
+  await r.page.waitForTimeout(900);
+  si(await r.page.textContent("#llamada-estado") === "Habla Karina Rojas, el profe.", "…y cuando la voz pasa a otro, se dice (el profe, como profe)");
+  await hablar("profe", false);
+  // La sala de espera: el profe sale de la sala grande.
+  await r.page.evaluate(() => { const p = window.__sala.remoteParticipants.get("profe"); window.__sala.remoteParticipants.delete("profe"); window.__sala.emit("ParticipantDisconnected", p); });
+  await r.page.waitForTimeout(1800);
+  si(/Tu profe salió de la llamada: te aviso cuando vuelva/.test(await r.page.textContent("#llamada-estado")), "si el profe sale de la llamada, el alumno lo sabe");
+  si(!r.errores.length, "sin errores en la página" + (r.errores.length ? ": " + r.errores.join(" | ") : ""));
+  await r.ctx.close();
+
   // Lo del 19/11, del lado del profe: las reacciones le llegan y la pregunta de sí o no.
   r = await abrir(browser, { esProfe: true, respuesta: PASE("pase-con-palabra"), abierta: false });
   await r.page.click("#llamada-entrar");
@@ -832,6 +906,16 @@ async function pruebas(browser) {
   si(/Contestaron todos: 1 sí, 1 no/.test(await anuncio(r.page)), "…y dice cuando contestaron todos");
   await r.page.click("#llamada-pregunta-btn");
   si(/Cerraste la pregunta: 1 sí, 1 no/.test(await anuncio(r.page)), "al cerrarla dice el conteo final");
+  // Siguiente mano y el tiempo de cada turno.
+  si(await visible(r.page, "#llamada-siguiente") && await visible(r.page, "#llamada-turno-tiempo"), "el profe tiene «Siguiente mano» y «Tiempo para cada turno»");
+  await r.page.keyboard.press("Alt+KeyN");
+  si(/Le diste la palabra a Beto Solís/.test(await anuncio(r.page)), "Alt+N le da la palabra a la siguiente mano y lo dice");
+  await r.page.evaluate(() => { window.__siguiente = null; });
+  await r.page.click("#llamada-siguiente");
+  si(/No hay manos levantadas/.test(await anuncio(r.page)), "…y sin manos levantadas, lo dice");
+  await r.page.selectOption("#llamada-turno-tiempo", "60");
+  si(JSON.stringify(await r.page.evaluate(() => window.__tiempos)) === "[0,60000]" && /Cada turno va a durar 1 minuto/.test(await anuncio(r.page)),
+    "elegir 1 minuto por turno se lo dice a la clase (sesion.js cuenta el tiempo) y lo anuncia");
   si(!r.errores.length, "sin errores en la página" + (r.errores.length ? ": " + r.errores.join(" | ") : ""));
   await r.ctx.close();
 

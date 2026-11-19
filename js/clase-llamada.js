@@ -72,7 +72,7 @@
        grave; el profe que apaga tu micrófono, dos golpes iguales. */
     const SON = { entra: [523, 784], sale: [784, 523], palabra: [659, 784, 988], finTurno: [988, 659],
         debil: [262, 262], apagado: [440, 440], reaccion: [1175, 880], pregunta: [659, 880, 659],
-        callado: [523, 523, 523], eco: [392, 330] };
+        callado: [523, 523, 523], eco: [392, 330], aviso: [880, 880] };
     // En el celular, además, vibra (si el aparato puede): se nota sin audífonos.
     function vibrar(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* sin vibración */ } }
 
@@ -120,6 +120,10 @@
         const preguntaEstado = $("llamada-pregunta-estado");
         const soloProfeIn = $("llamada-solo-profe");
         const marcarBtn = $("llamada-marcar");
+        const decirQuienIn = $("llamada-decir-quien");
+        const siguienteBtn = $("llamada-siguiente");
+        const tiempoSel = $("llamada-turno-tiempo");
+        const turnosCaja = $("llamada-turnos");
         let sala = null;
         let entrando = false;
         let LK = null;
@@ -249,6 +253,8 @@
             if (preguntaCaja) preguntaCaja.hidden = !(dentro && esProfe);
             if (soloProfeIn) soloProfeIn.closest("label").hidden = !(dentro && !esProfe);
             if (marcarBtn) marcarBtn.hidden = !dentro;
+            // Los turnos (siguiente mano y su tiempo): el profe, dentro o fuera de la llamada.
+            if (turnosCaja) turnosCaja.hidden = !esProfe;
             // Con la pregunta del profe abierta, «Sí» y «No» lo dicen: contestan.
             if (reaccionesCaja) reaccionesCaja.querySelectorAll('[data-reaccion="si"], [data-reaccion="no"]').forEach((b) => {
                 const si = b.dataset.reaccion === "si";
@@ -814,6 +820,106 @@
             }
             (enLlamada() ? mic : entrar).focus();
         }
+
+        /* ---------- Decir quién empieza a hablar ----------
+           Casilla opcional (se recuerda): cuando la voz pasa a otra persona, se
+           dice su nombre («Habla Zoe Álvarez»). Para no hablar encima a cada
+           rato: la persona tiene que seguir hablando un instante (700 ms), y a
+           quien acaba de nombrarse no se lo vuelve a nombrar hasta que pasen 15
+           segundos sin que hable. A uno mismo no se lo nombra. */
+        const CLAVE_DECIR_QUIEN = "llamadaDecirQuienHabla_v1";
+        let decirQuien = false;
+        try { decirQuien = localStorage.getItem(CLAVE_DECIR_QUIEN) === "1"; } catch (e) { /* sin almacenamiento */ }
+        if (decirQuienIn) {
+            decirQuienIn.checked = decirQuien;
+            decirQuienIn.addEventListener("change", () => {
+                decirQuien = decirQuienIn.checked;
+                try { localStorage.setItem(CLAVE_DECIR_QUIEN, decirQuien ? "1" : "0"); } catch (e) { /* sin almacenamiento */ }
+                anunciar(decirQuien ? "Se va a decir el nombre de quien empieza a hablar." : "Ya no se dice quién empieza a hablar.");
+            });
+        }
+        let nombrado = null;        // identidad del último que se nombró
+        const ultimaVoz = new Map(); // identidad → cuándo se lo oyó hablar por última vez
+        let porNombrar = null;
+        function quizasDecirQuienHabla() {
+            if (!sala) return;
+            const ahora = Date.now();
+            const hablan = sala.activeSpeakers.filter((p) => p.isSpeaking && p !== sala.localParticipant);
+            for (const p of hablan) {
+                const antes = ultimaVoz.get(p.identity) || 0;
+                ultimaVoz.set(p.identity, ahora);
+                // Volvió a hablar después de 15 s callado: se lo puede volver a nombrar.
+                if (p.identity === nombrado && ahora - antes > 15000) nombrado = null;
+            }
+            if (!decirQuien || !hablan.length || hablan[0].identity === nombrado) return;
+            const quien = hablan[0];
+            clearTimeout(porNombrar);
+            porNombrar = setTimeout(() => {
+                if (!sala || !quien.isSpeaking || quien.identity === nombrado) return;
+                nombrado = quien.identity;
+                anunciar("Habla " + nombreDe(quien) + (esElProfe(quien) ? ", el profe" : "") + ".");
+            }, 700);
+        }
+
+        /* ---------- Siguiente mano y el tiempo de cada turno (el profe) ----------
+           Alt+N (o el botón): la palabra pasa a la primera mano de la fila. El
+           tiempo de cada turno lo cuenta sesion.js (va con el turno, en
+           game_state.elegido.hasta): acá solo se elige y se recuerda. */
+        async function siguienteMano() {
+            if (!esProfe || !op.siguienteMano) return;
+            const r = await op.siguienteMano();
+            if (r && r.error) { anunciar(r.error); return; }
+            anunciar(r && r.nombre ? "Le diste la palabra a " + r.nombre + "." : "No hay manos levantadas.");
+        }
+        const CLAVE_TIEMPO_TURNO = "llamadaTiempoDeTurno_v1";
+        if (tiempoSel) {
+            try { const t = localStorage.getItem(CLAVE_TIEMPO_TURNO); if (t && [...tiempoSel.options].some((o) => o.value === t)) tiempoSel.value = t; } catch (e) { /* sin almacenamiento */ }
+            if (op.tiempoDeTurno) op.tiempoDeTurno(Number(tiempoSel.value) * 1000);
+            tiempoSel.addEventListener("change", () => {
+                try { localStorage.setItem(CLAVE_TIEMPO_TURNO, tiempoSel.value); } catch (e) { /* sin almacenamiento */ }
+                if (op.tiempoDeTurno) op.tiempoDeTurno(Number(tiempoSel.value) * 1000);
+                const s = Number(tiempoSel.value);
+                anunciar(s ? "Cada turno va a durar " + (s < 60 ? s + " segundos" : s / 60 + (s === 60 ? " minuto" : " minutos")) + ": a los 10 segundos del final suena un aviso y después la palabra pasa a la siguiente mano."
+                    : "Los turnos no tienen límite de tiempo.");
+            });
+        }
+        if (siguienteBtn) siguienteBtn.addEventListener("click", siguienteMano);
+
+        /* ---------- Sala de espera ----------
+           El alumno que está en la sala grande sin el profe (todavía no entra,
+           se cayó, o está escuchando un grupo) lo sabe: al entrar se le dice, y
+           cuando el profe sale de la llamada, también. Que entre ya se anuncia
+           («Entró a la llamada …, el profe», con su tono). En un grupo no se
+           dice: ahí lo normal es estar sin el profe. */
+        const hayProfe = () => Boolean(sala && [...sala.remoteParticipants.values()].some(esElProfe));
+        function avisarSinProfe(alEntrar) {
+            if (esProfe || grupoActual || !enLlamada() || hayProfe()) return;
+            anunciar(alEntrar ? "Tu profe todavía no está en la llamada: te aviso cuando entre." : "Tu profe salió de la llamada: te aviso cuando vuelva.");
+        }
+
+        /* ---------- La batería del celular ----------
+           Donde el navegador lo deja saber (Chrome y Edge; Safari y Firefox no):
+           si al aparato le queda poca batería y no está cargando, se avisa una
+           vez al 15 % y otra al 5 %, para que lo conecte antes de que se corte
+           la llamada. */
+        let bateria = null;
+        let avisoBateria = 100;
+        function revisarBateria() {
+            if (!bateria || !enLlamada() || bateria.charging) return;
+            const pct = Math.round(bateria.level * 100);
+            const umbral = pct <= 5 ? 5 : pct <= 15 ? 15 : 0;
+            if (!umbral || umbral >= avisoBateria) return;
+            avisoBateria = umbral;
+            sonido(SON.debil);
+            anunciar("A tu aparato le queda " + pct + " % de batería: conéctalo al cargador para que no se corte la llamada.");
+        }
+        if (navigator.getBattery) {
+            navigator.getBattery().then((b) => {
+                bateria = b;
+                b.addEventListener("levelchange", revisarBateria);
+                b.addEventListener("chargingchange", () => { if (b.charging) avisoBateria = 100; });
+            }).catch(() => { /* sin batería que mirar */ });
+        }
         async function pedir(accion, extra) {
             const body = Object.assign({ accion, profesor: profesorId }, extra || {});
             if (esProfe) { body.grupo = grupoDelProfe; body.viejos = [...gruposVistos]; }
@@ -880,6 +986,10 @@
                             : "Para hablar, levanta la mano con Alt Y."));
                 }
                 if (!esProfe && grabando) anunciar("Esta clase se está grabando." + (permisoVoz ? "" : " " + SIN_PERMISO));
+                // Sin el profe en la sala grande, se dice (después del aviso de entrada).
+                if (!esProfe) setTimeout(() => avisarSinProfe(true), 2500);
+                avisoBateria = 100;
+                setTimeout(revisarBateria, 4000);
                 if (esProfe) { sincronizar(); refrescarPermisos(); empezarAContar(); if (grabando) empezarAGrabar(); }
                 pintar();
                 // Al volver solo no se mueve el foco: puede estar en el tablero.
@@ -1374,12 +1484,13 @@
                 .on(E.ParticipantDisconnected, (p) => {
                     sonido(SON.sale);
                     anunciar((grupoActual ? "Salió del grupo " : "Salió de la llamada ") + nombreDe(p) + ".");
+                    if (esElProfe(p)) setTimeout(() => avisarSinProfe(false), 1500);
                     paneos.delete(p.identity);
                     calidad.delete(p.identity);
                     pintarGente(); acomodarVoces();
                 })
                 // Quién habla cambia a cada rato: solo se repinta la lista (no se anuncia).
-                .on(E.ActiveSpeakersChanged, anotarQuienHabla)
+                .on(E.ActiveSpeakersChanged, () => { anotarQuienHabla(); quizasDecirQuienHabla(); })
                 .on(E.TrackSubscribed, (track) => {
                     if (track.kind === "audio") { audios.appendChild(track.attach()); aplicarVolumenDeLaLlamada(); acomodarVoces(); }
                     acomodarFuentes();
@@ -1467,6 +1578,7 @@
             KeyQ: quienEsta,
             KeyW: quienHabla,
             KeyK: marcarMomento,
+            KeyN: siguienteMano,
             KeyT: saltar,
             // Las reacciones del alumno (Sí y No contestan la pregunta del profe, si hay una).
             Digit1: () => reaccionar("no_entendi"),
@@ -1497,10 +1609,14 @@
         if (atajoMano) atajoMano.hidden = esProfe;
         const atajoReacciones = $("llamada-atajo-reacciones");
         if (atajoReacciones) atajoReacciones.hidden = esProfe;
+        const atajoSiguiente = $("llamada-atajo-siguiente");
+        if (atajoSiguiente) atajoSiguiente.hidden = !esProfe;
         // Al alumno la caja le sale cuando el profe abre la llamada (estado(true)).
         caja.hidden = !esProfe;
         pintar();
-        return { sincronizar, salir, anunciar, estado: ponerEstado, reaccion: recibirReaccion, respuestas: ponerRespuestas, pregunta: ponerPregunta };
+        // Un tono suelto (sesion.js: el aviso de los 10 segundos del turno).
+        const tono = (nombre) => { if (SON[nombre]) { sonido(SON[nombre]); vibrar(120); } };
+        return { sincronizar, salir, anunciar, estado: ponerEstado, reaccion: recibirReaccion, respuestas: ponerRespuestas, pregunta: ponerPregunta, tono };
     }
 
     window.ClaseLlamada = { montar };
