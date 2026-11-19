@@ -143,6 +143,7 @@ tabla  estilo_pruebas  rls=true
 tabla  estilo_seguimiento  rls=true
 tabla  estudios  rls=true
 tabla  examen_items  rls=true
+tabla  examen_mate_partidas  rls=true
 tabla  examen_respuestas  rls=true
 tabla  examenes  rls=true
 tabla  explorador_maestros_cache  rls=true
@@ -172,6 +173,7 @@ tabla  interno.envios_publicos  rls=true
 tabla  interno.lector_planilla_uso  rls=true
 tabla  interno.premio_tema_items  rls=true
 tabla  interno.premio_temas  rls=true
+tabla  interno.rango_examen_banco  rls=false
 tabla  interno.salud_base  rls=true
 tabla  jde_eventos  rls=true
 tabla  jdn_correcciones  rls=true
@@ -261,6 +263,8 @@ tabla  questions  rls=true
 tabla  quiniela_participantes  rls=true
 tabla  quiniela_partidas  rls=true
 tabla  quiniela_pronosticos  rls=true
+tabla  rango_examenes  rls=true
+tabla  rangos_alumno  rls=true
 tabla  recibo_contadores  rls=true
 tabla  recibos  rls=true
 tabla  recordatorios_informe  rls=true
@@ -1562,6 +1566,15 @@ columna  examen_items.orden  integer
 columna  examen_items.peso  integer
 columna  examen_items.tipo  text
 columna  examen_items.visible  jsonb
+columna  examen_mate_partidas.alumno_id  uuid
+columna  examen_mate_partidas.empezo_at  timestamp with time zone
+columna  examen_mate_partidas.examen_id  uuid
+columna  examen_mate_partidas.fen  text
+columna  examen_mate_partidas.item_id  uuid
+columna  examen_mate_partidas.jugadas  jsonb
+columna  examen_mate_partidas.posiciones  jsonb
+columna  examen_mate_partidas.resultado  text
+columna  examen_mate_partidas.terminado_at  timestamp with time zone
 columna  examen_respuestas.correcta  boolean
 columna  examen_respuestas.created_at  timestamp with time zone
 columna  examen_respuestas.examen_id  uuid
@@ -1821,6 +1834,9 @@ columna  interno.premio_temas.grupo  text
 columna  interno.premio_temas.nombre  text
 columna  interno.premio_temas.tema  text
 columna  interno.premio_temas.total  integer
+columna  interno.rango_examen_banco.item  jsonb
+columna  interno.rango_examen_banco.item_id  text
+columna  interno.rango_examen_banco.rango  text
 columna  interno.salud_base.aviso_enviado  boolean
 columna  interno.salud_base.cron_fallidos  integer
 columna  interno.salud_base.lenta  boolean
@@ -2655,6 +2671,18 @@ columna  quiniela_pronosticos.participante_id  uuid
 columna  quiniela_pronosticos.partida_id  text
 columna  quiniela_pronosticos.pronostico  text
 columna  quiniela_pronosticos.sala_id  uuid
+columna  rango_examenes.alumno_id  uuid
+columna  rango_examenes.certificado_id  uuid
+columna  rango_examenes.created_at  timestamp with time zone
+columna  rango_examenes.examen_id  uuid
+columna  rango_examenes.porcentaje  numeric(5,2)
+columna  rango_examenes.rango  text
+columna  rango_examenes.resuelto_at  timestamp with time zone
+columna  rango_examenes.resultado  text
+columna  rangos_alumno.alumno_id  uuid
+columna  rangos_alumno.desde  timestamp with time zone
+columna  rangos_alumno.rango  text
+columna  rangos_alumno.titulo  text
 columna  recibo_contadores.anio  integer
 columna  recibo_contadores.prefijo  text
 columna  recibo_contadores.ultimo  integer
@@ -3313,6 +3341,7 @@ funcion  duelo_guardar(p_sala uuid, p_ronda integer, p_parte text, p_valor jsonb
 funcion  ejercicios_para_revisar(p_audio uuid)  definer  anon=false  auth=true
 funcion  elegir_academia_activa(p_academia uuid)  definer  anon=false  auth=true
 funcion  elegir_plan(p_id uuid, p_plan text, p_version_terminos text, p_version_privacidad text)  definer  anon=false  auth=true
+funcion  elegir_titulo_rango(p_titulo text)  definer  anon=false  auth=true
 funcion  eliminar_plan_cobro(p_plan uuid, p_anular_sin_pagos boolean)  definer  anon=false  auth=true
 funcion  elo_de_alumno(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  emitir_certificado(p_alumno uuid, p_curso text)  definer  anon=false  auth=true
@@ -3476,6 +3505,7 @@ funcion  interno.items_del_tema_conjunto(p_grupo text, p_tema text)  definer  an
 funcion  interno.jsonb_o_nulo(p text)  invoker  anon=false  auth=true
 funcion  interno.leccion_abierta(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
 funcion  interno.lecciones_hechas(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
+funcion  interno.mate_finalizar(p_item uuid, p_resultado text)  definer  anon=false  auth=false
 funcion  interno.material_compartido_conmigo(p_producto text)  definer  anon=false  auth=true
 funcion  interno.me_sacaron_de(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.me_sacaron_de_la_pregunta(p_pregunta uuid)  definer  anon=false  auth=true
@@ -3500,6 +3530,7 @@ funcion  interno.mis_retos_ejercicios()  definer  anon=false  auth=true
 funcion  interno.modalidad_de_la_ronda()  invoker  anon=false  auth=false
 funcion  interno.monto_rango(p_base date, p_meses integer, p_precio numeric, p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
+funcion  interno.nombre_rango(p_rango text, p_titulo text)  invoker  anon=false  auth=false
 funcion  interno.norma_jugada(p_jugada text)  invoker  anon=false  auth=false
 funcion  interno.otorgar_puntos(p_alumno uuid, p_cantidad integer, p_origen text, p_motivo text, p_referencia text, p_creado_por uuid)  definer  anon=false  auth=false
 funcion  interno.otorgar_puntos_de_clase()  definer  anon=false  auth=false
@@ -3512,6 +3543,7 @@ funcion  interno.plantillas_casa_tope()  definer  anon=false  auth=false
 funcion  interno.practica_guardar_intento()  definer  anon=false  auth=false
 funcion  interno.practica_ventaja_maxima()  definer  anon=false  auth=false
 funcion  interno.prefijo_de_nombre(p_nombre text)  invoker  anon=false  auth=true
+funcion  interno.pregunta_de_rango(p_item jsonb)  invoker  anon=false  auth=false
 funcion  interno.preguntas_visibles_para_mi_supervision()  definer  anon=false  auth=true
 funcion  interno.premiar_tema_terminado()  definer  anon=false  auth=false
 funcion  interno.premio_grupo(p_activity text)  invoker  anon=true  auth=true
@@ -3531,12 +3563,18 @@ funcion  interno.puestos_de_la_clase(p_clase uuid)  definer  anon=false  auth=tr
 funcion  interno.puestos_de_tandas(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.puntos_de_una_respuesta(p_dificultad integer, p_intentos integer, p_puesto integer)  invoker  anon=false  auth=true
 funcion  interno.puntos_ganados(p_alumno uuid)  definer  anon=false  auth=false
+funcion  interno.puntos_para_rango(p_alumno uuid)  definer  anon=false  auth=false
 funcion  interno.purgar_auditoria()  definer  anon=false  auth=false
+funcion  interno.rango_al_entregar()  definer  anon=false  auth=false
+funcion  interno.rango_al_ganar()  definer  anon=false  auth=false
+funcion  interno.rango_siguiente(p_rango text)  invoker  anon=false  auth=false
 funcion  interno.relevo_a_quien_le_toca(p_relevo uuid, p_fen text, p_jugadas integer)  definer  anon=false  auth=false
 funcion  interno.repertorio_coherente()  definer  anon=false  auth=false
+funcion  interno.resolver_examen_rango(p_examen uuid)  definer  anon=false  auth=false
 funcion  interno.retos_ejercicios_abiertos_para_mi()  definer  anon=false  auth=true
 funcion  interno.retos_ejercicios_cuantas()  definer  anon=false  auth=true
 funcion  interno.retos_ejercicios_tope()  definer  anon=false  auth=false
+funcion  interno.revisar_examen_rango(p_alumno uuid)  definer  anon=false  auth=false
 funcion  interno.rondas_de_mis_alumnos()  definer  anon=false  auth=true
 funcion  interno.salas_torneo_sello()  invoker  anon=false  auth=false
 funcion  interno.segundos_para_reclamar()  invoker  anon=false  auth=false
@@ -3558,6 +3596,7 @@ funcion  interno.training_progress_hora()  definer  anon=false  auth=false
 funcion  interno.tramos_jsonb(p_tramos int4multirange)  invoker  anon=false  auth=false
 funcion  interno.tramos_largos(p_tramos int4multirange, p_min integer)  invoker  anon=false  auth=false
 funcion  interno.ultima_actividad_de_clase(p_clase uuid)  definer  anon=false  auth=false
+funcion  interno.umbral_rango(p_rango text)  invoker  anon=false  auth=false
 funcion  interno.validar_periodo(p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.veo_cuenta_cobro(p_cuenta uuid)  definer  anon=false  auth=true
 funcion  interno.verificacion_al_dia()  definer  anon=false  auth=true
@@ -3593,6 +3632,8 @@ funcion  marcar_coordinador(p_profesor uuid, p_valor boolean)  definer  anon=fal
 funcion  marcar_partida_revisada(p_room_id uuid)  definer  anon=false  auth=true
 funcion  marcar_supervisor(p_persona uuid, p_valor boolean)  definer  anon=false  auth=true
 funcion  marcar_vision(p_persona uuid, p_vision text)  definer  anon=false  auth=true
+funcion  mate_estado(p_item uuid, p_alumno uuid)  definer  anon=false  auth=false
+funcion  mate_registrar(p_item uuid, p_alumno uuid, p_fen_antes text, p_fen_despues text, p_jugada jsonb, p_posicion text, p_resultado text)  definer  anon=false  auth=false
 funcion  material_compartir(p_producto text, p_persona uuid, p_academia uuid, p_todos boolean, p_compartir boolean)  definer  anon=false  auth=true
 funcion  mediciones_de_partidas(p_dias integer)  definer  anon=false  auth=true
 funcion  mensajes_casa_de(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
@@ -3634,6 +3675,7 @@ funcion  mi_grupo()  definer  anon=false  auth=true
 funcion  mi_marca_academia()  definer  anon=false  auth=true
 funcion  mi_panel_taller()  definer  anon=false  auth=true
 funcion  mi_proxima_clase()  definer  anon=false  auth=true
+funcion  mi_rango(p_alumno uuid)  definer  anon=false  auth=true
 funcion  mi_reporte_de_pago()  definer  anon=false  auth=true
 funcion  minutos_minimos_por_ejercicio(p_grupo text)  invoker  anon=false  auth=true
 funcion  minutos_por_tramos(p_tramos tramo_crudo[])  invoker  anon=true  auth=true
@@ -4150,6 +4192,7 @@ politica  estudios  estudios_update_propio  UPDATE
 politica  examen_items  examen_items_delete  DELETE
 politica  examen_items  examen_items_insert  INSERT
 politica  examen_items  examen_items_select  SELECT
+politica  examen_mate_partidas  examen_mate_partidas_ver  SELECT
 politica  examen_respuestas  examen_respuestas_select  SELECT
 politica  examenes  examenes_delete  DELETE
 politica  examenes  examenes_insert  INSERT
@@ -4374,6 +4417,8 @@ politica  questions  verificacion_en_dos_pasos  ALL  restrictiva
 politica  quiniela_participantes  quiniela_participantes_admin  SELECT
 politica  quiniela_partidas  quiniela_partidas_admin  SELECT
 politica  quiniela_pronosticos  quiniela_pronosticos_admin  SELECT
+politica  rango_examenes  rango_examenes_ver  SELECT
+politica  rangos_alumno  rangos_alumno_ver  SELECT
 politica  realtime.messages  sala_juego_avisar  INSERT
 politica  realtime.messages  sala_juego_escuchar  SELECT
 politica  realtime.messages  verificacion_en_dos_pasos  ALL  restrictiva
@@ -4574,6 +4619,7 @@ trigger  examenes  avisar_examen_asignado
 trigger  examenes  avisar_examen_reabierto
 trigger  examenes  examenes_exige_acceso_al_empezar
 trigger  examenes  otorgar_puntos_de_examen
+trigger  examenes  rango_al_entregar
 trigger  familia_enlaces  auditar
 trigger  formularios  formularios_academia_propia
 trigger  fourplayer_games  reloj_de_partida
@@ -4633,6 +4679,7 @@ trigger  prospectos  prospectos_sellar
 trigger  proyecto_grupos  auditar
 trigger  pruebas_gratis  auditar
 trigger  puntos_ajustes  auditar
+trigger  puntos_ajustes  rango_al_ganar
 trigger  puntos_ajustes  tareas_por_puntos_al_ganar
 trigger  question_answers  protect_answer_grading_trigger
 trigger  question_answers  respuesta_calificar_y_plazo_trigger
@@ -4973,6 +5020,7 @@ indice  estudios  estudios_pkey
 indice  examen_items  examen_items_examen_id_orden_key
 indice  examen_items  examen_items_examen_idx
 indice  examen_items  examen_items_pkey
+indice  examen_mate_partidas  examen_mate_partidas_pkey
 indice  examen_respuestas  examen_respuestas_examen_idx
 indice  examen_respuestas  examen_respuestas_item_id_key
 indice  examen_respuestas  examen_respuestas_pkey
@@ -5049,6 +5097,7 @@ indice  interno.lector_planilla_uso  lector_planilla_uso_pkey
 indice  interno.premio_tema_items  premio_tema_items_item
 indice  interno.premio_tema_items  premio_tema_items_pkey
 indice  interno.premio_temas  premio_temas_pkey
+indice  interno.rango_examen_banco  rango_examen_banco_pkey
 indice  interno.salud_base  salud_base_pkey
 indice  jde_eventos  jde_eventos_anio_fase_idx
 indice  jde_eventos  jde_eventos_pkey
@@ -5269,6 +5318,10 @@ indice  quiniela_participantes  quiniela_participantes_un_correo_por_sala
 indice  quiniela_partidas  quiniela_partidas_pkey
 indice  quiniela_pronosticos  quiniela_pronosticos_pkey
 indice  quiniela_pronosticos  quiniela_pronosticos_sala
+indice  rango_examenes  rango_examenes_alumno
+indice  rango_examenes  rango_examenes_pkey
+indice  rango_examenes  rango_examenes_uno_pendiente
+indice  rangos_alumno  rangos_alumno_pkey
 indice  recibo_contadores  recibo_contadores_pkey
 indice  recibos  recibos_academia_id_fk
 indice  recibos  recibos_emitido_por_fk
@@ -6066,6 +6119,7 @@ grant  examen_items  authenticated  SELECT
 grant  examen_items  authenticated  TRIGGER
 grant  examen_items  authenticated  TRUNCATE
 grant  examen_items  authenticated  UPDATE
+grant  examen_mate_partidas  authenticated  SELECT
 grant  examen_respuestas  anon  DELETE
 grant  examen_respuestas  anon  INSERT
 grant  examen_respuestas  anon  REFERENCES
@@ -6587,6 +6641,8 @@ grant  questions  authenticated  UPDATE
 grant  quiniela_participantes  authenticated  SELECT
 grant  quiniela_partidas  authenticated  SELECT
 grant  quiniela_pronosticos  authenticated  SELECT
+grant  rango_examenes  authenticated  SELECT
+grant  rangos_alumno  authenticated  SELECT
 grant  recibos  authenticated  REFERENCES
 grant  recibos  authenticated  SELECT
 grant  recibos  authenticated  TRIGGER

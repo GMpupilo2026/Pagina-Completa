@@ -173,6 +173,38 @@ async function pagina(browser) {
     igual("sin errores (texto ajeno)", errores.join(" | "), "");
     await ctx.close();
   }
+  // El diploma de un rango (curso 'rango:<id>'): otro papel, sin profesor, con la
+  // pieza rellena y los colores de SU rango (los de cada rango estuvieron un rato
+  // sin aplicarse: la regla general les ganaba y todos salían plateados).
+  const cinta = {};
+  for (const [id, titulo, pieza] of [["caballo", "Rango Caballo", "♞"], ["dragon", "Rango Dragón", "🐉"]]) {
+    const dip = Object.assign({}, CERT, { curso: "rango:" + id, curso_titulo: titulo, lecciones: 0 });
+    const { page, ctx, errores } = await abrir(browser, "/certificado.html?c=0123456789", { "rpc:certificado_publico": [dip] });
+    await page.waitForFunction(() => !document.getElementById("app").hidden, null, { timeout: 15000 });
+    const r = await page.evaluate(() => {
+      const vis = (sel) => { const e = document.querySelector(sel); return !!(e && e.checkVisibility()); };
+      const t = (id) => document.getElementById(id).textContent;
+      return { diploma: vis("#diploma"), curso: vis(".certificado-marco"), alumno: t("diploma-alumno"), rango: t("diploma-rango"),
+        pieza: t("diploma-pieza"), nivel: t("diploma-nivel"), academia: vis("#diploma-academia-fila") ? t("diploma-academia") : null,
+        qr: !!document.querySelector("#diploma-qr svg path"), validez: t("validez-texto"), titulo: document.title,
+        profesor: /Profesor/.test(document.getElementById("diploma").textContent),
+        cinta: getComputedStyle(document.getElementById("diploma-nivel")).backgroundImage };
+    });
+    igual(`diploma de ${id}: se ve el diploma y no el certificado de curso`, [r.diploma, r.curso], [true, false]);
+    igual(`diploma de ${id}: dice lo que guardó la base, sin profesor`, [r.alumno, r.rango, r.pieza, r.academia, r.qr, r.profesor],
+      ["Ana Rojas", titulo, pieza, "CENFOTEC", true, false]);
+    igual(`diploma de ${id}: arriba y en la pestaña dice «diploma»`, [r.validez, r.titulo.startsWith("Diploma: ")], ["✅ Diploma auténtico.", true]);
+    cinta[id] = r.cinta;
+    await page.emulateMedia({ media: "print" });
+    igual(`diploma de ${id}: se imprime en su propia página, carta apaisada`, await page.evaluate(() => getComputedStyle(document.getElementById("certificado")).page), "diploma-rango");
+    igual(`diploma de ${id}: sin errores`, errores.join(" | "), "");
+    await ctx.close();
+  }
+  igual("cada rango pinta sus propios colores", cinta.caballo !== cinta.dragon && /127, 29, 29/.test(cinta.dragon), true);
+  // Dos @page con el mismo nombre se pisan sin avisar: el diploma salía en dos hojas
+  // porque los diplomas de Pareo ya usaban «@page diploma» con 1,5 cm de margen.
+  const nombres = [...fs.readFileSync(path.join(__dirname, "..", "css/styles.css"), "utf8").matchAll(/@page ([a-z][\w-]*)\s*\{/g)].map((m) => m[1]);
+  igual("ningún @page con nombre está repetido en styles.css", nombres.filter((n, i) => nombres.indexOf(n) !== i), []);
 }
 
 (async () => {

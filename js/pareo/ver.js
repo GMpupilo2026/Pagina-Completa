@@ -1058,26 +1058,27 @@ window.PareoVer = (function () {
     let camaras = null, conectandoCam = null, mesasCam = [];
     const descartadas = new Set();
     const textosCam = { sinNoticias: tx("camAdjSinNoticias"), enVivo: (n) => (n === 1 ? tx("camAdjEnVivoUna") : tx("camAdjEnVivo", { n })),
-      dice: (r) => tx("camAdjDice", { r }), confirmar: (r) => tx("camAdjConfirmar", { r }), noEs: tx("camAdjNoEs") };
+      dice: (r) => tx("camAdjDice", { r }), confirmar: (r) => tx("camAdjConfirmar", { r }), noEs: tx("camAdjNoEs"),
+      poner: tx("camAdjPoner"), ponerAyuda: tx("camAdjPonerAyuda"), abrirAqui: tx("camAdjAbrirAqui"), qr: (m) => tx("camAdjQr", { m }) };
     function pintarCamara(f) {
       const caja = cont.querySelector('[data-cam="' + f + '"]');
       const m = mesasCam.find((x) => (x.f || x.m) === f);
       if (!caja || !m || !window.PareoCamarasAdjunto) return;
       const dc = camaras && camaras.mesa(f);
-      PareoCamarasAdjunto.pintar(caja, dc, { tam: 136, textos: textosCam, textoResultado: (r) => tx("corto_" + r),
+      PareoCamarasAdjunto.pintar(caja, dc, { tam: 136, mesa: f, enlace: camaras && !m.r ? camaras.enlace(f) : null, textos: textosCam, textoResultado: (r) => tx("corto_" + r),
         conResultado: !m.r && !enviadas.has(m.m), descartada: !!dc && descartadas.has(f + "|" + dc.resultado),
         confirmar: (r) => { const sel = document.getElementById("pi-adj-" + m.m); if (sel && !sel.disabled) { sel.value = r; sel.dispatchEvent(new Event("change")); } pintarCamara(f); },
         descartar: (r) => { descartadas.add(f + "|" + r); pintarCamara(f); } });
     }
     function sincronizarCamaras(d) {
-      const quiere = d.camaras && d.torneo && window.PareoCamarasAdjunto ? d.camaras + "|" + d.torneo + "|" + d.ronda : "";
-      const tiene = camaras ? camaras.codigo + "|" + camaras.torneo + "|" + camaras.ronda : conectandoCam || "";
+      const quiere = d.camaras && d.torneo && window.PareoCamarasAdjunto ? d.camaras + "|" + d.torneo + "|" + d.ronda + "|" + (d.camRetraso || 0) : "";
+      const tiene = camaras ? camaras.codigo + "|" + camaras.torneo + "|" + camaras.ronda + "|" + camaras.retraso : conectandoCam || "";
       if (quiere === tiene) return;
       if (camaras) camaras.cerrar();
       camaras = null;
       conectandoCam = quiere || null;
       if (!quiere) return;
-      PareoCamarasAdjunto.conectar({ codigo: d.camaras, torneo: d.torneo, ronda: d.ronda, alCambiar: pintarCamara })
+      PareoCamarasAdjunto.conectar({ codigo: d.camaras, torneo: d.torneo, ronda: d.ronda, retraso: d.camRetraso || 0, alCambiar: pintarCamara })
         .then((c) => { if (conectandoCam !== quiere) { c.cerrar(); return; } camaras = c; conectandoCam = null; mesasCam.forEach((x) => pintarCamara(x.f || x.m)); })
         .catch(() => { conectandoCam = null; });
     }

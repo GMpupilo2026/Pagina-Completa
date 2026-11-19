@@ -922,6 +922,8 @@ cualquiera compruebe, sin cuenta, que es auténtico.
   como en el encabezado (el caballo y el nombre sobre el azul): el caballo es
   claro y sobre el papel blanco no se vería. `logo-completo-*.png` es la marca
   personal de Oscar, no la del sitio.
+- **El diploma de un rango** usa esta misma página y este mismo código, pero
+  con otro papel (ver «El diploma de rango» en `puntos-y-premios.md`).
 - **En Informes** (`cursoCertificado` en `js/informes.js`): con el curso
   completo, el profe ve «🎓 Dar certificado» (con confirmación) y, si ya lo dio,
   «Ver certificado» y «Anular». El alumno ve el suyo, o «Cuando tu profe lo

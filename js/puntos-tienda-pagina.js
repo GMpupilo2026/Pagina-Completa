@@ -36,14 +36,17 @@ async function unlock() {
     }
 }
 
-/* El rango sale de los puntos GANADOS (public.puntos_ganados_de), no del
-   saldo: canjear un premio no baja de rango. Ver js/rangos.js. */
+/* El rango se gana con un examen y lo guarda la base: mi_rango() da el rango,
+   el avance (puntos ganados menos 500 por examen no aprobado), el examen que le
+   toca y el diploma. Ver js/rangos.js. */
 async function pintarRango(yo) {
     const caja = document.getElementById("rango-caja");
     if (!caja || !window.Rangos) return;
-    const { data, error } = await sb.rpc("puntos_ganados_de", { p_alumno: yo });
-    if (error || data == null) { caja.closest("section").hidden = true; return; }
-    Rangos.pintar(caja, data);
+    // mi_rango() también le arma el examen si ya tenía los puntos (lo decide la base).
+    const { data, error } = await sb.rpc("mi_rango", { p_alumno: yo });
+    const fila = Array.isArray(data) ? data[0] : data;
+    if (error || !fila) { caja.closest("section").hidden = true; return; }
+    Rangos.pintar(caja, fila, { sb, alCambiar: () => pintarRango(yo) });
 }
 
 // Igual que Logros: exige sesión iniciada en el sitio, porque el saldo y el
