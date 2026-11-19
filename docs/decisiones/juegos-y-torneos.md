@@ -9361,6 +9361,61 @@ Lo prueban `verificar-pareo-adjuntos.js` (la forma equivocada sin preguntar
 a la base, el que no existe, el bueno escrito como venga con el rango de la
 base, `#codigo=…` solo) y `verificar-candado-herramienta.js` (la casilla se ve
 sin sesión y sin el editor; quitada la entrada `#codigo`, salta).
+
+### Un teléfono para cada mesa, desde Pareo Integral
+
+Pedido del dueño el 18/11/2026: que desde Pareo Integral o la Mesa del árbitro
+se le pueda decir a Notara «transmite ESTA mesa» sin dar vueltas; que, así
+como se asignan árbitros a las mesas, se asignen teléfonos, y que con leer un
+código el celular quede en esa transmisión.
+
+El QR por mesa ya existía (ver «La cámara sin cuenta con el QR de la mesa»),
+pero solo lo armaba Notara: había que entrar a `camara-tablero.html` con
+cuenta de administración, elegir el torneo publicado, imprimir la hoja, y
+después volver a Pareo Integral a **copiar a mano** el código de 8 letras en
+«Recibir de las cámaras». Ahora sale todo del lado del árbitro:
+
+- **El código ya viene puesto.** «Recibir de las cámaras» (y «Poner cámaras en
+  las mesas», en el Centro del evento) abre el formulario con el código del
+  torneo o, si no tenía, **uno nuevo** (`PartidaEnVivo.nuevoCodigo`): se toca
+  «Recibir» y listo. Quien ya tiene cámaras andando con otro código, lo
+  escribe encima. Ahí mismo se elige el **retraso de la transmisión pública**
+  (0, 5, 10, 15 o 30 min; `camaras.retraso`, que no se guarda si es 0).
+- **«Imprimir el QR de cada mesa»** (en la caja de las cámaras de la ronda y
+  en el Centro): un rótulo por mesa de la sala (`V.mesaFisica`, las que
+  necesita el torneo), con la hoja de los rótulos de mesa. **Sirve para todo
+  el torneo**: la mesa es la de la sala y la cámara sigue la última ronda.
+- **Tocar una mesa en el Centro del evento muestra su QR en la pantalla**
+  (`verQrDeMesa`): para el celular que llega tarde o el que hubo que cambiar,
+  sin imprimir nada. Cada mesa es un botón con su `aria-expanded`; el QR
+  abierto va en el modelo que compara el Centro (`qr`), así el repintado de
+  cada 4 s no lo cierra.
+- **El adjunto también**: en su celular (`pareo.html`) y en la Mesa del
+  árbitro, una mesa de la que no llega nada ofrece **«Poner un teléfono en
+  esta mesa»**, que muestra el mismo QR y el enlace para abrir la cámara en
+  ese aparato. Una sola copia, en `PareoCamarasAdjunto.pintar`
+  (`ponerTelefono`); el retraso le llega con el estado (`camRetraso`).
+- **Una sola copia del enlace**: `PartidaEnVivo.enlaceCamara({ torneo, codigo,
+  mesa, tablero, retraso })`, que usan la hoja de QR de Notara, Pareo Integral
+  y el adjunto. Es el de siempre
+  (`camara-tablero.html#t=…&c=…&m=…&r=…`), todo después del `#`.
+- **No abre nada que no estuviera abierto**: el QR lleva lo mismo que el de
+  Notara (el id del torneo publicado, que es público, y el código del canal).
+  Quien lo lee puede transmitir esa mesa; el resultado sigue sin anotarse
+  solo.
+- **En equipos, no**: cada tablero de un encuentro lleva su cámara (`&b=`), y
+  esa hoja la sigue armando Notara.
+- **El retraso va en el QR**: si se cambia después de imprimir, hay que
+  volver a imprimirlos (lo dice el formulario).
+
+Lo prueban `verificar-pareo-camaras.js` (el código ya puesto, un QR por mesa
+con el torneo, el código y su mesa, el mismo enlace que arma la cámara, el
+retraso en el QR), `verificar-pareo-centro.js` (tocar la mesa muestra su QR,
+dice si está abierto, el foco se queda y se cierra),
+`verificar-pareo-adjuntos.js` y `verificar-mesa-arbitro-pareo.js` («Poner un
+teléfono en esta mesa», y que una mesa que ya transmite no lo ofrezca) y
+`verificar-camara-tablero.js` (la hoja de Notara sigue dando el mismo enlace).
+
 ## Mesas de los árbitros del Centroamericano
 
 El Centroamericano y del Caribe de la Juventud 2026 (del 1 al 8 de noviembre, 12 torneos de
