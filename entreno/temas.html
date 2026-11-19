@@ -107,6 +107,9 @@
 
   .progress-track{max-width:420px; margin:0 auto 14px; height:6px; background:var(--line); border-radius:3px; overflow:hidden;}
   .progress-fill{height:100%; background:var(--brass); border-radius:3px; transition:width .3s;}
+  .rating-tactico{margin:10px 0 0; font-size:0.85rem; color:var(--text-muted);}
+  .rating-tactico-corto{font-weight:600;}
+  .rating-tactico-corto::before{content:"· "; font-weight:400;}
   .progress-label{max-width:420px; margin:0 auto 10px; text-align:center; font-size:0.82rem; color:var(--text-muted);}
 
   .board-wrap{max-width:420px; margin:0 auto; position:relative;}
@@ -208,6 +211,9 @@
           <span><b id="total-left">0</b> por resolver</span>
           <span><b id="total-count">0</b> ejercicios en <b id="total-themes">0</b> temas</span>
         </div>
+        <!-- El rating táctico (js/rating-tactico.js): lo calcula la base desde los
+             ejercicios anotados. Ver «El rating táctico» en docs/decisiones/entrenamiento.md. -->
+        <p class="rating-tactico" data-rating-tactico="largo" hidden></p>
       </section>
       <!-- «Repasar fallados» (js/repaso-fallados.js): lo que se resolvió con
            error o con pista vuelve con repaso espaciado. Solo sale si hoy toca
@@ -251,6 +257,7 @@
         <span>Racha: <span class="streak-count" id="streak-count">0</span></span>
         <span aria-hidden="true">·</span>
         <span>Mejor: <span class="streak-count" id="streak-best">0</span></span>
+        <span class="rating-tactico-corto" data-rating-tactico="corto" hidden></span>
       </div>
       <div id="progress-label" class="progress-label"></div>
       <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
@@ -319,6 +326,7 @@
 <script src="../js/comandos-tablero.js"></script>
 <script src="../js/cuadro-comandos.js"></script>
 <script src="../js/entreno-progress.js"></script>
+<script src="../js/rating-tactico.js"></script>
 <script src="../js/progreso-usuario.js"></script>
 <script src="../js/repaso-espaciado.js"></script>
 <script src="../js/repaso-fallados.js"></script>

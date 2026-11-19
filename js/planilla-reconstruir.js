@@ -418,7 +418,9 @@
     };
     const poner = (w, u) => {
       const i = (u.fila - 1) * 2 + (u.negras ? 1 : 0);
-      (hojas[u.hi].celdas[i] = hojas[u.hi].celdas[i] || []).push(w);
+      // dónde empieza y termina la palabra dentro del bloque (0: el número, 1: el bloque siguiente)
+      const p = Object.assign({}, w, { rx0: (w.x0 - u.xNum) / u.ancho, rx1: (w.x1 - u.xNum) / u.ancho });
+      (hojas[u.hi].celdas[i] = hojas[u.hi].celdas[i] || []).push(p);
     };
     ws.forEach((w) => {
       if (usadas.has(w)) return;
@@ -431,6 +433,17 @@
       hojas: hojas.map((h) => {
         const out = [];
         const largo = h.celdas.length;
+        // Una jugada corta de las Negras escrita pegada a la raya («d5») tiene el centro antes de
+        // NEGRAS_DESDE y caía en las Blancas («Cf3d5»), con las Negras vacías. Si la casilla de las
+        // Negras quedó vacía y la última palabra de las Blancas va aparte y empieza pasada la mitad
+        // del bloque (donde ya están las Negras en cualquier planilla), es de las Negras. Pasó al
+        // hacer la planilla imprimible con Blancas y Negras del mismo ancho (19/11).
+        for (let i = 0; i + 1 < largo; i += 2) {
+          const bl = (h.celdas[i] || []).sort((a, b) => a.cx - b.cx);
+          if (bl.length < 2 || (h.celdas[i + 1] || []).length) continue;
+          const ult = bl[bl.length - 1], ant = bl[bl.length - 2];
+          if (ult.rx0 >= 0.48 && ult.rx0 - ant.rx1 >= 0.01) h.celdas[i + 1] = [bl.pop()];
+        }
         for (let i = 0; i < largo; i++) out.push((h.celdas[i] || []).sort((a, b) => a.cx - b.cx).map((w) => w.t).join(""));
         // El número del final de las Blancas que Vision le pegó a las Negras: «De» | «20-0» era
         // «De2» | «0-0» (segunda planilla de verdad de Pareo, 18/11). Se devuelve solo si las
