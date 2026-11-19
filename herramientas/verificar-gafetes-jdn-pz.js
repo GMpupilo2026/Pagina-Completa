@@ -192,8 +192,8 @@ async function aceptar(page, boton) {
     return window.GafetesDibujo.gafetes(diseno, datos.filas).map((x) => ({ n: x.nombre, d: x.detalles, f: x.franja, c: x.codigo, color: x.color, qr: x.qr }));
   });
   igual("el nombre en MAYÚSCULAS pasa a Nombre Propio", g[1].n, ["Zúñiga Rojas", "Mateo"]);
-  igual("debajo del nombre, la categoría, el ID FIDE de la inscripción (sin él, la línea no sale) y el torneo; sin Elo", [g[0].d, g[2].d, g[3].d],
-    [["U12 Femenino", "ID FIDE: 6512345", "Juega el torneo U12"], ["U16 Femenino", "Juega el torneo U20"], ["U20 Absoluto", "ID FIDE: 6599999", "Juega el torneo U20"]]);
+  igual("debajo del nombre, la categoría y el ID FIDE de la inscripción (sin él, la línea no sale); sin Elo ni «Juega el torneo»", [g[0].d, g[2].d, g[3].d],
+    [["U12 Femenino", "ID FIDE: 6512345"], ["U16 Femenino"], ["U20 Absoluto", "ID FIDE: 6599999"]]);
   igual("los ID FIDE se pidieron a la función de los aceptados, por torneo", await page.evaluate(() => window.__pedidos.filter((p) => p.tabla === "rpc:pareo_fide_de_aceptados").length), 2);
   igual("la franja dice el club", g.map((x) => x.f), ["ESCUELA PEDREGOSO", "ADAPZ", "ADAPZ", "ADAPZ"]);
   igual("el horario va centrado en el dorso", await page.evaluate(() => window.Gafetes._estado().diseno.dorso.horarioCentro), true);

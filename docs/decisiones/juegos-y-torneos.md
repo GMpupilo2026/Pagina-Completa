@@ -16069,7 +16069,7 @@ sus pts y su puesto actual».
   cada uno en el píxel.
 - **19/11, más pedidos del dueño:** el nombre va **en negro** (`nombre.color`;
   «fácil de ver para el árbitro»), debajo del nombre **la categoría** a la que
-  pertenece, luego el ID FIDE y el torneo; la U16 pasa del turquesa al
+  pertenece y luego el ID FIDE («Juega el torneo U…» se quitó: no le gustó); la U16 pasa del turquesa al
   **celeste oscuro** `#1873b4` (5,1 : 1 con letra blanca; el celeste de la
   bandera del cantón, azul rey, celeste y blanco, no aguanta letra blanca), y
   abajo del dorso va **la categoría sola**, sin el número (`{Edad}`).

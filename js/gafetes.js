@@ -100,9 +100,9 @@
     // es lo que busca el árbitro (lo pidió el dueño).
     d.nombre = { linea1: "{Apellidos}", linea2: "{Nombre}", propio: true, color: "#000000" };
     // El club va en la franja; debajo del nombre, la categoría a la que
-    // pertenece, el ID FIDE (en lugar del Elo; sin ID, esa línea no sale) y
-    // el torneo que juega (todo lo pidió el dueño).
-    d.detalles = ["{Categoría}", "ID FIDE: {FIDE ID}", "Juega el torneo {Torneo}"];
+    // pertenece y el ID FIDE (en lugar del Elo; sin ID, esa línea no sale).
+    // «Juega el torneo U…» no va (lo pidió el dueño).
+    d.detalles = ["{Categoría}", "ID FIDE: {FIDE ID}", ""];
     d.bandera = { plantilla: "", texto: true };
     d.franja = { plantilla: "{Club}" };
     // Contraste con la letra blanca: U12 6,0:1, U16 5,1:1 (el celeste oscuro
