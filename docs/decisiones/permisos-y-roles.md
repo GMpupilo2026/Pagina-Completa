@@ -2575,6 +2575,14 @@ preguntaron cuatro cosas y eligió:
   día, `js/arbitro-seminario/contenido.js`), preguntas con tiempo (quién
   contestó qué) y el examen de práctica de 25 preguntas con su nota sobre 100
   (se aprueba con 80).
+- **Cómo se ven (18/11/2026):** el dueño pidió que las diapositivas se vieran
+  como las del seminario de asesores (Formación Ajedrez). Se dibujan en HTML
+  con el mismo diseño de `herramientas/formacion-laminas.js`: 16:9, franja azul
+  #1d5c99 con la sección y el título, tarjetas blancas con ícono y la portada
+  azul mientras el instructor no proyecta nada. Todo se mide en `cqw`, así que
+  la lámina escala entera; si un texto no cabe, `ajustar()` baja la letra
+  (hasta el 70 %). En una pantalla de menos de 600 px la lámina deja el 16:9 y
+  se apila con letra legible. Las preguntas usan la misma franja.
 
 **Todo pasa en `arbitro.html`**, en la sección «Sala de seminario»
 (`js/arbitro-seminario.js`, `css/arbitro-seminario.css`): el árbitro la ve
