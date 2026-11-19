@@ -4586,40 +4586,40 @@
            sin buscarla en la lista. Darle la palabra a otro ya termina el turno
            de antes. Sin manos levantadas, solo se termina el turno. Devuelve a
            quién se la dio (o null). */
-        /* La ronda: la palabra pasa por todos los alumnos conectados, por nombre,
+        /* La ronda de la llamada: la palabra pasa por todos los alumnos conectados, por nombre,
            uno tras otro (con el tiempo de cada turno, si hay). Mientras dura,
            «Siguiente mano» y el fin del tiempo pasan al siguiente de la ronda,
            no a las manos levantadas; quien se desconectó se salta. El turno
            queda registrado como elegido por el profe ('profe'). */
-        let ronda = null;            // { ids, i }
-        let rondaTermino = false;    // la última «siguiente» cerró la ronda
-        async function empezarRonda() {
+        let rondaDeVoz = null;            // { ids, i }
+        let rondaDeVozTermino = false;    // la última «siguiente» cerró la ronda
+        async function empezarRondaDeVoz() {
             if (!currentOpenSessionId) return { error: "Abre la clase primero: cada turno queda en su registro." };
             const ids = [...onlineStudents.keys()].sort((a, b) => nombreDeConectado(a).localeCompare(nombreDeConectado(b), "es", { sensitivity: "base" }));
             if (!ids.length) return { error: "No hay alumnos conectados para la ronda." };
             if (turnosDeLaClase !== currentOpenSessionId) await cargarTurnos();
-            ronda = { ids, i: 0 };
+            rondaDeVoz = { ids, i: 0 };
             await darTurno(ids[0], "profe");
             return { nombre: nombreDeConectado(ids[0]), total: ids.length };
         }
-        async function terminarRonda() {
-            if (!ronda) return;
-            ronda = null;
+        async function terminarRondaDeVoz() {
+            if (!rondaDeVoz) return;
+            rondaDeVoz = null;
             if (elegidoActual) await terminarElegido(null);
         }
 
         async function siguienteMano() {
-            rondaTermino = false;
-            if (ronda) {
-                ronda.i++;
-                while (ronda.i < ronda.ids.length && !onlineStudents.has(ronda.ids[ronda.i])) ronda.i++;
-                if (ronda.i >= ronda.ids.length) {
-                    ronda = null;
-                    rondaTermino = true;
+            rondaDeVozTermino = false;
+            if (rondaDeVoz) {
+                rondaDeVoz.i++;
+                while (rondaDeVoz.i < rondaDeVoz.ids.length && !onlineStudents.has(rondaDeVoz.ids[rondaDeVoz.i])) rondaDeVoz.i++;
+                if (rondaDeVoz.i >= rondaDeVoz.ids.length) {
+                    rondaDeVoz = null;
+                    rondaDeVozTermino = true;
                     if (elegidoActual) await terminarElegido(null);
                     return null;
                 }
-                const id = ronda.ids[ronda.i];
+                const id = rondaDeVoz.ids[rondaDeVoz.i];
                 await darTurno(id, "profe");
                 return nombreDeConectado(id);
             }
@@ -4677,7 +4677,7 @@
             if (!elegidoActual || elegidoActual.at !== e.at) return;   // ya lo terminó o le dio la palabra a otro
             const quien = nombreDeConectado(e.id);
             const siguiente = await siguienteMano();
-            avisarAlProfe("Se acabó el tiempo de " + quien + (siguiente ? ": la palabra pasa a " + siguiente + "." : rondaTermino ? ". Terminó la ronda: hablaron todos." : "."));
+            avisarAlProfe("Se acabó el tiempo de " + quien + (siguiente ? ": la palabra pasa a " + siguiente + "." : rondaDeVozTermino ? ". Terminó la ronda: hablaron todos." : "."));
         }
         function avisarAlProfe(texto) {
             if (llamada) llamada.anunciar(texto);
@@ -8358,10 +8358,10 @@
                     siguienteMano: async () => {
                         if (!currentOpenSessionId) return { error: "Abre la clase primero: cada turno queda en su registro." };
                         const nombre = await siguienteMano();
-                        return { nombre, finRonda: rondaTermino, enRonda: Boolean(ronda), lugar: ronda ? ronda.i + 1 : 0, total: ronda ? ronda.ids.length : 0 };
+                        return { nombre, finRonda: rondaDeVozTermino, enRonda: Boolean(rondaDeVoz), lugar: rondaDeVoz ? rondaDeVoz.i + 1 : 0, total: rondaDeVoz ? rondaDeVoz.ids.length : 0 };
                     },
                     // La ronda: empezarla (devuelve a quién le tocó y cuántos son) o terminarla.
-                    ronda: async (empezar) => (empezar ? empezarRonda() : (await terminarRonda(), {})),
+                    ronda: async (empezar) => (empezar ? empezarRondaDeVoz() : (await terminarRondaDeVoz(), {})),
                     // Hablarle en privado a un alumno (null: volver a hablarle a todos). Va por la presencia.
                     privado: async (id) => {
                         privadoPresencia = id ? { id, at: new Date().toISOString() } : null;

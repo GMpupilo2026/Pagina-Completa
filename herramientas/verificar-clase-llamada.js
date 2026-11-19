@@ -315,6 +315,39 @@ console.log("\n=== Lo del 19/11 (3): tonos, guía, primera vez, práctica y qui�
 
 console.log("\n=== Lo del 19/11 (4): ronda, en privado, jugada por voz y concentración ===");
 {
+  /* Ningún nombre global repetido entre los scripts de sesion.html. sesion.js
+     es un script clásico: sus `let`/`const` de arriba son GLOBALES y comparten
+     espacio con los de los demás scripts de la página. El 19/11 una `let ronda`
+     nueva en sesion.js chocó con la de js/clase-ronda.js: «Identifier 'ronda'
+     has already been declared» y la clase entera dejó de cargar. Cada archivo
+     compilaba bien solo; el choque es entre los dos, y la caja de la llamada
+     se prueba suelta, sin sesion.js. Aquí se juntan las declaraciones de arriba
+     de cada script (con acorn) y se busca la misma en dos. */
+  const acorn = require("acorn");
+  const html = leer("sesion.html");
+  const scripts = [...html.matchAll(/<script src="(js\/[^"?]+\.js)"/g)].map((m) => m[1]).filter((s) => fs.existsSync(path.join(RAIZ, s)));
+  const dueno = new Map();   // nombre → [archivo, tipo]
+  const choques = [];
+  for (const f of scripts) {
+    let arbol = null;
+    try { arbol = acorn.parse(leer(f), { ecmaVersion: "latest", sourceType: "script" }); } catch (e) { choques.push(f + " no compila: " + e.message); continue; }
+    for (const n of arbol.body) {
+      const nombres = n.type === "VariableDeclaration" ? n.declarations.filter((d) => d.id.type === "Identifier").map((d) => [d.id.name, n.kind])
+        : n.type === "ClassDeclaration" || n.type === "FunctionDeclaration" ? [[n.id.name, n.type === "ClassDeclaration" ? "class" : "function"]] : [];
+      for (const [nombre, tipo] of nombres) {
+        const antes = dueno.get(nombre);
+        /* let, const y class repetidos rompen la página entera; dos function con el
+           mismo nombre no dan error, pero la segunda REEMPLAZA a la primera sin
+           avisar (le iba a pasar a terminarRonda, la de la ronda rápida). Solo dos
+           var pueden repetirse. */
+        if (antes && antes[0] !== f && !(tipo === "var" && antes[1] === "var")) {
+          choques.push(nombre + " (" + antes[0] + " y " + f + ")");
+        }
+        if (!antes) dueno.set(nombre, [f, tipo]);
+      }
+    }
+  }
+  si(scripts.length > 20 && !choques.length, "ningún nombre global se declara en dos scripts de sesion.html (" + scripts.length + " scripts)" + (choques.length ? ": " + choques.join(", ") : ""));
   const ll = leer("js/clase-llamada.js");
   let jugadaDicha = null;
   try { const w = {}; new Function("window", "document", "localStorage", ll)(w, {}, { getItem: () => null, setItem() {} }); jugadaDicha = w.ClaseLlamada.jugadaDicha; } catch (e) { jugadaDicha = null; }
@@ -327,7 +360,7 @@ console.log("\n=== Lo del 19/11 (4): ronda, en privado, jugada por voz y concent
   si(/setTrackSubscriptionPermissions\(false, \[\{ participantIdentity: p\.identity, allowAll: true \}\]\)/.test(ll) && /new Set\(privadoCon \? \[\] : pistasDeAudio\(\)\)/.test(ll),
     "en privado: el servidor de LiveKit deja oír al profe solo a ese alumno, y la grabación queda en silencio");
   const sesion = leer("js/sesion.js");
-  si(/await darTurno\(id, "profe"\);/.test(sesion) && /!onlineStudents\.has\(ronda\.ids\[ronda\.i\]\)/.test(sesion) && /rondaTermino = true;/.test(sesion),
+  si(/await darTurno\(id, "profe"\);/.test(sesion) && /!onlineStudents\.has\(rondaDeVoz\.ids\[rondaDeVoz\.i\]\)/.test(sesion) && /rondaDeVozTermino = true;/.test(sesion),
     "la ronda pasa por todos, salta a quien se desconectó y se cierra sola al terminar (el turno queda como del profe)");
   si(/privado: privadoPresencia \|\| undefined/.test(sesion) && /input\.form\.requestSubmit\(\)/.test(sesion), "lo privado va por la presencia, y la jugada dicha entra al cuadro como si se escribiera");
 }
