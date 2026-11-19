@@ -18899,7 +18899,13 @@ torneo de Tacho Chess y pidió quitarlo). Ahora:
   de Pareo.
 - La mascota sigue siendo el botón de «Todas las mesas». Un torneo de Pareo cuyo
   nombre coincide con una entrada de `MASCOTAS` (hoy, `/tacho\s*chess/i` → Tacho,
-  `img/tacho-chess-2/mascota.png`) trae su mascota; cualquier otro, el pizote.
+  `img/tacho-chess-2/mascota.png`) trae su mascota; cualquier otro (y el
+  Centroamericano), el **logo de Ajedrez Integral** (`img/logo-marca.png`, con
+  `.cam-mascota-logo`). El pizote salió el 19/11/2026, a pedido del dueño.
+- **En el medio de la franja va el nombre del torneo** (`#torneo-centro`, de
+  `estado.torneo`); antes iba ahí el logo. Debajo de «Mis mesas» queda solo la
+  categoría y la rama, si el torneo tiene. En el celular el nombre baja a una
+  fila propia, a todo lo ancho.
   Tacho es de pie (450 × 755) y se mide por el alto (`.cam-mascota-alta`), para
   no estirar la franja.
 - La imagen de Tacho tenía el zapato izquierdo deformado (sin punta, salido así
