@@ -455,7 +455,14 @@ function crearServidor(red) {
         const error = trigger(vieja, nueva);
         // Una escritura que tardó en llegar se cobra entera en la base: el
         // navegador no la puede descontar, y eso no lo arregla el retraso.
-        if (lenta) recortes.slice(antes).forEach((x) => { x.lenta = true; });
+        // Tardó lo que pasó desde que la página la armó hasta acá: la demora
+        // que pone esta base a propósito y también la de la computadora que
+        // corre la prueba (de la pestaña a Node). Antes contaba solo la de la
+        // base, y en el CI de 2 núcleos, con 50 pestañas, una escritura que
+        // la computadora atrasó más de un segundo salía como «llegó a tiempo
+        // y hubo que recortarla» (17/11/2026). La raya es la misma: 0,8 s.
+        const tardo = pedido.creado ? Date.now() - pedido.creado : 0;
+        if (lenta || tardo > 800) recortes.slice(antes).forEach((x) => { x.lenta = true; });
         if (error) { rechazos.push(error); return { data: null, error: { message: error } }; }
         salas.set(nueva.id, nueva);
         tocadas.push(nueva);
@@ -516,7 +523,8 @@ function doble(usuario, pagina) {
       in(c, v) { pedido.filtros.push(["in", c, v]); return b; },
       is() { return b; }, not() { return b; }, or(x) { pedido.filtros.push(["or", x]); return b; }, gte() { return b; }, lte() { return b; },
       gt() { return b; }, lt() { return b; }, order() { return b; }, limit() { return b; }, range() { return b; },
-      update(cambio) { pedido.op = "update"; pedido.cambio = cambio; return b; },
+      // Cuándo armó la página lo que escribe (con el reloj adentro): la base de mentira mide cuánto tardó en llegarle.
+      update(cambio) { pedido.op = "update"; pedido.cambio = cambio; pedido.creado = Date.now(); return b; },
       insert() { pedido.op = "insert"; return b; }, upsert() { pedido.op = "insert"; return b; },
       delete() { pedido.op = "delete"; return b; },
       maybeSingle() { pedido.unica = true; return b; }, single() { pedido.unica = true; return b; },

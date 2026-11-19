@@ -117,6 +117,8 @@
         $("btn-seguir").disabled = !t.h;
         $("btn-armado").disabled = !t.h;
         $("btn-ahorro").disabled = !fuente;
+        // Cuántas esquinas lleva: verificar-camara-tablero.js comprueba que sus toques llegaron.
+        lienzo.dataset.esquinas = String(t.esquinas.length);
     }
 
     function tamano(ancho, alto) {
@@ -146,6 +148,12 @@
             return;
         }
         if (typeof id !== "string") { try { id = localStorage.getItem(CAMARA) || ""; } catch (e) { id = ""; } }
+        /* Abrir la cámara tarda (el permiso, el celular ocupado): si mientras
+         * tanto se eligió una foto o se soltó la cámara, este pedido ya no
+         * vale. Antes la cámara llegaba tarde, le ganaba a la foto y borraba
+         * las esquinas ya tocadas (en la mesa por QR, que la abre sola). */
+        const pedido = ++pedidoCamara;
+        const vigente = () => pedido === pedidoCamara;
         dejarVideo();
         if (video.srcObject) { video.srcObject.getTracks().forEach((x) => x.stop()); video.srcObject = null; }
         /* Lo justo: la imagen se trabaja a 640 (o 960 con dos tableros) y se
@@ -162,8 +170,10 @@
                 if (!id || e.name === "NotAllowedError") throw e;
                 flujo = await pedir(""); // la que se recordaba ya no está conectada
             }
+            if (!vigente()) { flujo.getTracks().forEach((x) => x.stop()); return; }
             video.srcObject = flujo;
             await video.play();
+            if (!vigente()) return; // quien lo dejó sin vigencia ya soltó el flujo
             mantenerEncendida();
             const pista = flujo.getVideoTracks()[0];
             const usada = pista && pista.getSettings ? pista.getSettings().deviceId || "" : "";
@@ -177,6 +187,7 @@
             pintarVar();
             if (sola) avisar("La cámara volvió: sigue leyendo la partida.", "bien");
         } catch (e) {
+            if (!vigente()) return;
             if (sola && !(e && e.name === "NotAllowedError")) { camaraCortada(); return; }
             avisar(e && e.name === "NotAllowedError"
                 ? "No se dio permiso para usar la cámara. Actívalo en los permisos del sitio y vuelve a tocar «Abrir la cámara»."
@@ -209,7 +220,7 @@
      * la pantalla no se apaga; en un torneo eso y la batería le llegan a
      * Pareo con un latido cada 30 s, que también le dice que la cámara sigue
      * viva aunque nadie mueva. */
-    let camaraAbierta = false, intentosCamara = 0, reabriendo = null;
+    let camaraAbierta = false, intentosCamara = 0, reabriendo = null, pedidoCamara = 0;
     const espera = (n) => Math.min(30000, 1000 * 2 ** n);
     function vigilarPista(flujo) {
         const pista = flujo && flujo.getVideoTracks()[0];
@@ -2116,6 +2127,7 @@
     const horaPartida = () => (archivoVideo && fuente === video ? archivoVideo.inicio + video.currentTime * 1000 : Date.now());
     const mmss = (seg) => { const s = Math.max(0, Math.floor(seg)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
     function soltarCamara() {
+        pedidoCamara++; // una cámara que todavía se estaba abriendo ya no entra
         camaraAbierta = false; clearTimeout(reabriendo); reabriendo = null;
         if (video.srcObject) { video.srcObject.getTracks().forEach((x) => x.stop()); video.srcObject = null; }
         if (pantalla) { pantalla.release().catch(() => {}); pantalla = null; $("pantalla-encendida").hidden = true; }
