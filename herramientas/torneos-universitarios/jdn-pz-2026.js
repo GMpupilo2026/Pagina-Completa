@@ -83,12 +83,25 @@ Pérez Zeledón» en docs/decisiones/juegos-y-torneos.md.`,
     ["Dirección del torneo", "Itzel Karina Rojas Acuña"],
     ["Árbitro principal", "FA Jean Carlo Quesada Arauz"],
   ],
-  resultados: "pareo",
+  // Los resultados, como en el Centroamericano (lo pidió el dueño el
+  // 18/11/2026: «colocar como en centroamericano para que se vea todo más
+  // ordenado»): «Busca a tu jugador», el podio y la clasificación de cada
+  // categoría y el proyector, con los datos de Pareo Integral, que
+  // js/torneo-pareo-datos.js lee y entrega a js/centroamericano-vivo.js (lo
+  // mismo que Tacho Chess 2). «Resultados U12» y «Resultados U20» abren su
+  // torneo en una ventana de la página (js/jdn-pz-resultados.js), y
+  // «Inscritos», la lista de los aprobados con su foto (js/jdn-pz-inscritos.js).
+  scriptsAntes: ["js/torneo-pareo-datos.js"],
+  buscador: {
+    texto: "Escribe su nombre o su apellido: te decimos su categoría, su puesto, sus puntos, su mesa y su rival en la ronda que se juega, y contra quién jugó cada ronda.",
+    ejemplo: "Ulcigrai",
+  },
   // La profe Karina ayuda en la página (js/jdn-pz-profe.js): va después de la
-  // inscripción, porque lee lo que esa pinta; sus dibujos, de js/avatar-profe-oscar.js.
-  scripts: ["js/pareo/publicar.js", "js/pareo/elo-nacional.js", "js/jdn-pz-inscripcion.js", "js/avatar-profe-oscar.js", "js/jdn-pz-profe.js"],
+  // inscripción y de los resultados, porque lee lo que esos pintan; sus
+  // dibujos, de js/avatar-profe-oscar.js.
+  scripts: ["js/pareo/publicar.js", "js/pareo/elo-nacional.js", "js/jdn-pz-inscripcion.js", "js/jdn-pz-resultados.js", "js/jdn-pz-inscritos.js", "js/avatar-profe-oscar.js", "js/jdn-pz-profe.js"],
   // Nada lleva a los torneos de otros (lo pidió el dueño): ni el menú ni la despedida.
-  menu: [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#inscribirme", "Inscribirme"], ["#calendario", "Calendario"]],
+  menu: [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#inscritos", "Inscritos"], ["#inscribirme", "Inscribirme"], ["#calendario", "Calendario"]],
   hoy: {
     etiqueta: "La eliminatoria",
     principal: "Domingo 22 de noviembre de 2026",
@@ -100,21 +113,41 @@ Pérez Zeledón» en docs/decisiones/juegos-y-torneos.md.`,
   },
   fichas: [
     { href: "#inscribirme", id: "ficha-inscribirme", color: "rojo", icono: "📝", titulo: "Inscribirme", texto: "El formulario de inscripción: con el año de nacimiento va solo al torneo de su categoría, y el árbitro lo aprueba.", accion: "Inscribirme" },
+    { href: "#inscritos", color: "verde", icono: "🧑‍🤝‍🧑", titulo: "Inscritos", texto: "Quiénes ya están aprobados y listos para jugar, con su foto, su categoría y su Elo.", accion: "Ver los inscritos" },
     { href: "documentos/jdn-pz-2026/bases-eliminatoria-cantonal-jdn-pz-2026.pdf", id: "ficha-bases", externo: true, ventana: "Bases de la eliminatoria", color: "morado", icono: "📄", titulo: "Bases de la eliminatoria", texto: "Las bases oficiales completas: inscripciones, categorías, sistema, horario, desempates y organización.", accion: "Abrir el PDF" },
-    // «Pronto» hasta que la organización publique el torneo: entonces
-    // js/jdn-pz-inscripcion.js la cambia por el enlace a ESE torneo (nunca a la
-    // lista de Pareo, que trae los torneos de otros).
-    { id: "ficha-resultados-u12", pronto: "aparece cuando la organización publique el torneo", color: "morado", icono: "♟️", titulo: "Resultados U12", texto: "El torneo U12 en Pareo Integral: inscritos, pareos de cada ronda, resultados y clasificación." },
-    { id: "ficha-resultados-u20", pronto: "aparece cuando la organización publique el torneo", color: "azul", icono: "♞", titulo: "Resultados U20", texto: "El torneo U20 (con la U16) en Pareo Integral: inscritos, pareos de cada ronda, resultados y clasificación." },
+    // Cada torneo en su ventana, con el diseño de la página (js/jdn-pz-resultados.js):
+    // el pareo de la ronda mesa por mesa y la clasificación de cada categoría.
+    { href: "#resultados-u12", id: "ficha-resultados-u12", color: "morado", icono: "♟️", titulo: "Resultados U12", texto: "El torneo U12: el pareo de la ronda mesa por mesa y la clasificación de U12 Absoluto y U12 Femenino.", accion: "Ver el torneo U12" },
+    { href: "#resultados-u20", id: "ficha-resultados-u20", color: "azul", icono: "♞", titulo: "Resultados U20", texto: "El torneo U20 (con la U16): el pareo de la ronda mesa por mesa y la clasificación de cada categoría.", accion: "Ver el torneo U20" },
+    { href: "#medallero", color: "naranja", icono: "🥇", titulo: "El podio de cada categoría", texto: "El 1.º, 2.º y 3.º lugar de cada categoría y rama, con sus puntos.", accion: "Ver el podio" },
     { href: "#inscripciones", color: "rojo", icono: "✅", titulo: "Quién puede jugar", texto: "Quién puede inscribirse, cuánto cuesta y hasta cuándo hay tiempo.", accion: "Ver las condiciones" },
     { href: "#categorias", color: "naranja", icono: "🎂", titulo: "Categorías", texto: "U12, U16 y U20, en Absoluto y Femenino, con los años de nacimiento de cada una.", accion: "Ver las categorías" },
     { href: "#calendario", color: "naranja", icono: "🗓️", titulo: "Calendario de rondas", texto: "La hora de cada una de las cinco rondas, el almuerzo y la clausura.", accion: "Ver el calendario" },
     { href: "#reglamento", color: "azul", icono: "📋", titulo: "Reglamento", texto: "El sistema, el ritmo de juego, la tolerancia, los desempates y lo que dicen las bases al final.", accion: "Ver el reglamento" },
+    { href: "#proyector", color: "azul", icono: "📺", titulo: "Para proyectar", texto: "Los pareos y la clasificación en letra grande, para una pantalla en la sala.", accion: "Abrir en grande" },
     { href: "https://maps.app.goo.gl/VhAZtamiKgvUeNp86", externo: true, color: "verde", icono: "📍", titulo: "Cómo llegar", texto: "El Hotel del Sur, en Pérez Zeledón: la ubicación que dan las bases.", accion: "Abrir el mapa" },
   ],
   despedida: { href: "#inscribirme", titulo: "¡Nos vemos en el Hotel del Sur!", texto: "¿Ya inscribiste a tu jugador? Las inscripciones cierran a las 10:00 p.m. del viernes 20 de noviembre.", accion: "Inscribirme" },
   dialogos: {
+    tituloClasificacion: "Clasificación por categoría",
+    podio: "El 1.º, 2.º y 3.º lugar de cada categoría y rama, según la clasificación de su torneo en Pareo Integral. Es provisional hasta la última ronda.",
+    clasificacion: "Cada categoría por separado, en el orden de la clasificación de su torneo en Pareo Integral (con sus desempates), con sus puntos.",
     propios: [
+      {
+        id: "resultados-u12", icono: "♟️", titulo: "Resultados U12", ancho: "max-w-3xl",
+        comentario: "El torneo U12 con el diseño de la página, como cada categoría del\nCentroamericano: el pareo de la ronda y la clasificación de cada categoría.\nLo arma js/jdn-pz-resultados.js con los datos de Pareo Integral.",
+        cuerpo: '<div id="resultados-u12-contenido" data-torneo="U12" class="mt-2">\n    <p class="text-brand-600 dark:text-brand-300">Cargando…</p>\n</div>\n',
+      },
+      {
+        id: "resultados-u20", icono: "♞", titulo: "Resultados U20", ancho: "max-w-3xl",
+        comentario: "El torneo U20 (con la U16), igual que el de U12 (js/jdn-pz-resultados.js).",
+        cuerpo: '<div id="resultados-u20-contenido" data-torneo="U20" class="mt-2">\n    <p class="text-brand-600 dark:text-brand-300">Cargando…</p>\n</div>\n',
+      },
+      {
+        id: "inscritos", icono: "🧑‍🤝‍🧑", titulo: "Inscritos", ancho: "max-w-5xl",
+        comentario: "Los inscritos aprobados por el árbitro, con su foto (js/jdn-pz-inscritos.js):\nlos que ya están en la lista de su torneo en Pareo Integral. Las fotos, de\nherramientas/jdn-pz-fotos.py.",
+        cuerpo: '<div id="inscritos-contenido" class="mt-2">\n    <p class="text-brand-600 dark:text-brand-300">Cargando…</p>\n</div>\n',
+      },
       {
         id: "inscribirme", icono: "📝", titulo: "Inscribirme", ancho: "max-w-3xl",
         comentario: `El formulario de inscripción (js/jdn-pz-inscripcion.js): busca los dos torneos
@@ -294,6 +327,12 @@ js/torneo-hoy.js; los resultados, Pareo Integral. Lo propio:
   torneoPagina: {
     sala: "jdn-pz-2026",
     guardado: "jdnpz",
+    // Los datos, de los dos torneos de Pareo Integral (js/torneo-pareo-datos.js):
+    // «Eliminatoria Cantonal JDN CCDRPZ – U12» y «– U20-U16».
+    fuente: "pareo",
+    fuenteNombre: "Pareo Integral",
+    pareo: { nombre: "JDN CCDRPZ", desde: "2026-11-01" },
+    ordenGrupos: ["U12 Absoluto", "U12 Femenino", "U16 Absoluto", "U16 Femenino", "U20 Absoluto", "U20 Femenino"],
     nombreCorto: "Eliminatoria JDN Pérez Zeledón 2026",
     imgSub: "Eliminatoria Cantonal JDN · CCDR Pérez Zeledón · ADAPZ",
     compartir: "en la Eliminatoria Cantonal JDN de Pérez Zeledón 2026:",

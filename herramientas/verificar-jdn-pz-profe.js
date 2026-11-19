@@ -49,6 +49,9 @@ function doble(datos) {
       select() { return q; },
       eq(c, v) { f.push((r) => r[c] === v); return q; },
       in(c, vs) { f.push((r) => vs.includes(r[c])); return q; },
+      // Los de js/torneo-pareo-datos.js (los resultados, como en el Centroamericano).
+      gte(c, v) { f.push((r) => String(r[c]) >= String(v)); return q; },
+      ilike(c, patron) { const x = patron.toLowerCase().replace(/^%|%$/g, ""); f.push((r) => String(r[c]).toLowerCase().includes(x)); return q; },
       order() { return q; },
       range() { return q; },
       then(okf, ko) { return Promise.resolve({ data: filas.filter((r) => f.every((g) => g(r))), error: null }).then(okf, ko); },
@@ -60,8 +63,10 @@ function doble(datos) {
 const ORGS = [{ id: "org-adapz", nombre: "ADAPZ", verificado: true }];
 const abierta = { abierta: true, hasta: "2026-11-21" };
 const CON_TORNEOS = { pareo_organizadores: ORGS, pareo_publicados: [
-  { id: U12, nombre: "Eliminatoria JDN PZ U12", creado: "2026-11-15T10:00:00Z", organizador_id: "org-adapz", inscripcion: abierta },
-  { id: U20, nombre: "Eliminatoria JDN PZ U20", creado: "2026-11-15T10:05:00Z", organizador_id: "org-adapz", inscripcion: abierta },
+  { id: U12, nombre: "Eliminatoria Cantonal JDN CCDRPZ – U12", creado: "2026-11-15T10:00:00Z", organizador_id: "org-adapz", inscripcion: abierta,
+    datos: { jugadores: [{ id: "a", nombre: "Mora, Ana", categoria: "U12 Femenino", elo: 0 }], rondas: [] } },
+  { id: U20, nombre: "Eliminatoria Cantonal JDN CCDRPZ – U20-U16", creado: "2026-11-15T10:05:00Z", organizador_id: "org-adapz", inscripcion: abierta,
+    datos: { jugadores: [{ id: "b", nombre: "Rojas, Beto", categoria: "U16 Absoluto", elo: 0 }], rondas: [] } },
 ] };
 const SIN_TORNEOS = { pareo_organizadores: ORGS, pareo_publicados: [] };
 
@@ -75,6 +80,8 @@ async function abrir(nav, datos, cuando, ancho) {
   await p.clock.setFixedTime(new Date(cuando || "2026-11-16T12:00:00-06:00"));
   await p.goto(BASE + "/jdn-pz-2026.html", { waitUntil: "load" });
   await p.waitForFunction(() => !/Buscando/.test(document.getElementById("insc-estado-torneos").textContent), null, { timeout: 5000 }).catch(() => {});
+  // Los resultados los lee js/jdn-pz-resultados.js al cargar (de Pareo, como en el Centroamericano).
+  await p.waitForFunction(() => window.CentroamericanoVivo && window.CentroamericanoVivo.datos(), null, { timeout: 5000 }).catch(() => {});
   return { ctx, p, errores };
 }
 const texto = (p, k) => p.evaluate((k) => window.JdnPzProfe.texto(k), k);
@@ -100,7 +107,7 @@ const texto = (p, k) => p.evaluate((k) => window.JdnPzProfe.texto(k), k);
       /Soy la profe Karina/.test(await x.p.textContent("#profe-panel")) && /Dirijo la eliminatoria/.test(await x.p.textContent("#profe-panel")));
     ok("la próxima ronda es la 1, con su día y su hora del calendario", /próxima es la Ronda 1: domingo 22 de noviembre a las 8:00 a\.m\. Todas/.test(await texto(x.p, "hora")), await texto(x.p, "hora"));
     ok("la inscripción dice lo que dice su ventana", /Inscripción abierta hasta las 10:00 p\.m\./.test(await texto(x.p, "inscribir")), await texto(x.p, "inscribir"));
-    ok("los resultados, en los dos torneos de Pareo", /«Resultados U12» y «Resultados U20», en Pareo Integral/.test(await texto(x.p, "resultados")), await texto(x.p, "resultados"));
+    ok("los resultados, en los dos torneos de Pareo", /están en «Resultados U12» y «Resultados U20»\./.test(await texto(x.p, "resultados")), await texto(x.p, "resultados"));
     ok("las categorías, de su tabla", /U12: nacidos de 2015 a 2020; U16: nacidos de 2011 a 2014; U20: nacidos de 2007 a 2010/.test(await texto(x.p, "categoria")), await texto(x.p, "categoria"));
     ok("la sede, de la portada", /La sede: Hotel del Sur, Pérez Zeledón\./.test(await texto(x.p, "llegar")), await texto(x.p, "llegar"));
     ok("el ritmo y la tolerancia", /30 minutos \+ 30 segundos.*Tolerancia de 30 minutos/.test(await texto(x.p, "ritmo")), await texto(x.p, "ritmo"));
@@ -134,7 +141,7 @@ const texto = (p, k) => p.evaluate((k) => window.JdnPzProfe.texto(k), k);
 
     console.log("\nSin los torneos en Pareo todavía");
     x = await abrir(nav, SIN_TORNEOS);
-    ok("los resultados dicen que se publican cuando la organización arme los torneos", /cuando la organización arme los torneos/.test(await texto(x.p, "resultados")), await texto(x.p, "resultados"));
+    ok("los resultados dicen que salen cuando la organización publique los torneos", /en cuanto la organización publique los torneos/.test(await texto(x.p, "resultados")), await texto(x.p, "resultados"));
     ok("la inscripción dice que todavía no está abierta", /todavía no está abierta/.test(await texto(x.p, "inscribir")), await texto(x.p, "inscribir"));
     await x.ctx.close();
 

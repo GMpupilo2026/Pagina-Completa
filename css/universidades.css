@@ -331,4 +331,23 @@
 .dark .cac-u .cac-jugador { border-left-color: var(--u-claro); }
 .cac-u .cac-proyector-barra { background: var(--cac-morado); }
 
+/* «Inscritos» de la Eliminatoria JDN de PZ (js/jdn-pz-inscritos.js): una
+ * tarjeta por jugador con su foto (o sus iniciales) y «Aprobado».
+ * Contraste: #166534 sobre #DCFCE7 6,49; en oscuro, #86EFAC sobre brand-900
+ * 10,43; #1F3A7A sobre #E6F3FC 9,56; #9FD0F3 sobre brand-900 8,92. */
+.jdn-inscritos { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+.jdn-inscrito { width: 100%; height: 100%; display: flex; align-items: center; gap: 0.85rem; text-align: left; padding: 0.7rem; border-radius: 1rem; background: #fff; border: 2px solid var(--u-luz, #dfe0f7); }
+.jdn-inscrito:hover { border-color: var(--u-fuerte, #40478f); }
+.jdn-inscrito:focus-visible { outline: 3px solid var(--u-fuerte, #40478f); outline-offset: 2px; }
+.dark .jdn-inscrito { background: rgb(var(--c-brand-900, 16 42 67)); border-color: rgb(255 255 255 / 0.15); }
+.jdn-inscrito-foto { flex-shrink: 0; width: 4.5rem; height: 4.5rem; border-radius: 9999px; overflow: hidden; border: 3px solid var(--u-celeste, #4aa3e3); background: var(--u-suave, #e6f3fc); display: flex; align-items: center; justify-content: center; }
+.jdn-inscrito-foto img { width: 100%; height: 100%; object-fit: cover; }
+.jdn-inscrito-sin-foto { color: var(--u-1, #1f3a7a); font-weight: 800; font-size: 1.35rem; }
+.dark .jdn-inscrito-sin-foto { background: rgb(255 255 255 / 0.08); color: var(--u-claro, #9fd0f3); }
+.jdn-inscrito-datos { display: grid; gap: 0.15rem; min-width: 0; }
+.jdn-inscrito-nombre { font-weight: 800; line-height: 1.25; }
+.jdn-inscrito-sub { font-size: 0.875rem; }
+.jdn-inscrito-listo { justify-self: start; margin-top: 0.2rem; font-size: 0.75rem; font-weight: 800; padding: 0.1rem 0.55rem; border-radius: 999px; background: #dcfce7; color: #166534; }
+.dark .jdn-inscrito-listo { background: rgb(134 239 172 / 0.12); color: #86efac; }
+
 /*! rev bfb5bbb0d2d82f9f */

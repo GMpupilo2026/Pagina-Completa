@@ -113,15 +113,16 @@
       + (listo ? " " + listo : "");
   }
 
-  // ¿Ya están los torneos en Pareo Integral? Las fichas apuntan a su torneo.
-  const torneoListo = (k) => /#t=/.test(($("#ficha-resultados-" + k) || {}).getAttribute ? $("#ficha-resultados-" + k).getAttribute("href") : "");
+  // ¿Ya están los torneos en Pareo Integral? Lo sabe js/jdn-pz-resultados.js,
+  // que los lee para sus ventanas.
+  const torneoListo = (k) => !!(window.JdnPzResultados && window.JdnPzResultados.torneo(k.toUpperCase()));
   function textoResultados() {
     const listos = ["u12", "u20"].filter(torneoListo).map((k) => "«Resultados " + k.toUpperCase() + "»");
     const filas = calendario();
     const terminado = filas.length && ahoraCR() >= filas[filas.length - 1].fin;
-    if (!listos.length) return "Los pareos y los resultados se publican en Pareo Integral cuando la organización arme los torneos: entonces se encienden las fichas «Resultados U12» y «Resultados U20».";
-    return (terminado ? "La clasificación final está en " : "Los inscritos, los pareos de cada ronda, los resultados y la clasificación están en ")
-      + listos.join(" y ") + ", en Pareo Integral. Cada jugador revisa que su resultado quede bien anotado antes de la ronda siguiente.";
+    if (!listos.length) return "Los pareos y los resultados salen en las fichas «Resultados U12» y «Resultados U20» en cuanto la organización publique los torneos en Pareo Integral.";
+    return (terminado ? "La clasificación final de cada categoría está en " : "El pareo de cada ronda, mesa por mesa, y la clasificación de cada categoría están en ")
+      + listos.join(" y ") + ". Para un jugador en particular, escribe su nombre en «Busca a tu jugador». Cada jugador revisa que su resultado quede bien anotado antes de la ronda siguiente.";
   }
 
   function datoPortada(nombre) {

@@ -15728,9 +15728,10 @@ suizo a 5 rondas a 30 minutos + 30 segundos.
   buscador, la clasificación, el podio ni el proyector de
   `js/centroamericano-vivo.js` (leen chess-results por `sala-jugadores`), ni
   sus scripts; la página suma los suyos (`scripts`) y su propio menú
-  (`menu`). «Resultados U12» y «Resultados U20» abren encima la página
-  pública de cada torneo en Pareo (`torneos-pareo.html#t=<id>`; sin el
-  torneo encontrado, la lista de Pareo, que es cierta siempre), y la ficha
+  (`menu`). «Resultados U12» y «Resultados U20» abrían encima la página
+  pública de cada torneo en Pareo (`torneos-pareo.html#t=<id>`); desde el
+  18/11/2026 son como en el Centroamericano, con los datos de Pareo (ver
+  «Los resultados U12 y U20, como en el Centroamericano», abajo), y la ficha
   «Inscribirme» abre el formulario (ver «La inscripción de la Eliminatoria
   Cantonal JDN de Pérez Zeledón», abajo). La portada de Torneos
   (`PORTADAS`) lleva un enlace a Pareo a las fichas, las bases a su ficha y
@@ -15949,6 +15950,87 @@ el celular, en `verificar-pareo-seguir.js` (con el enlace tal cual lo trae el
 QR) y en `verificar-pareo-publicar.js`. Rompiendo a propósito el QR por fila
 y el filtro de los retirados saltan doce comprobaciones; la mesa de la sala,
 dos.
+
+### Los resultados U12 y U20, como en el Centroamericano
+
+El 18/11/2026 el dueño pidió que «Resultados U12» y «Resultados U20» de
+`jdn-pz-2026.html` fueran «como en centroamericano para que se vea todo más
+ordenado», leyendo los datos de Pareo Integral. Antes abrían encima la página
+pública de cada torneo en Pareo, con otro diseño.
+
+- **La página dejó `resultados: "pareo"`** y quedó como la de Tacho Chess 2:
+  `fuente: "pareo"` en `torneoPagina` y `js/torneo-pareo-datos.js` en
+  `scriptsAntes`, así que `js/centroamericano-vivo.js` y
+  `js/centroamericano-tablas.js` leen los dos torneos de Pareo
+  (`pareo.nombre: "JDN CCDRPZ"`, los que publicó Ajedrez Integral, con el
+  sello) en lugar de chess-results. Con eso salen solos «Busca a tu
+  jugador», el podio y la clasificación de cada categoría y el proyector.
+  `ordenGrupos` pone las categorías en su orden (U12 Absoluto, U12
+  Femenino, U16…): el grupo de cada jugador es su categoría de Pareo, que
+  es como se clasifica a los Juegos Nacionales.
+- **Cada ficha abre su ventana** (`#resultados-u12`, `#resultados-u20`), que
+  arma `js/jdn-pz-resultados.js` con el diseño de cada categoría del
+  Centroamericano: arriba cómo va (ronda, partidas terminadas, jugadores),
+  los botones «Pareo de la ronda» y «Clasificación», y un buscador. El pareo
+  va en una tarjeta por mesa (como `#categoria`: en el celular una tabla
+  dejaba las negras afuera), con la categoría, el Elo y los puntos de cada
+  uno; la clasificación, una tabla por categoría con el puesto en la
+  categoría y el general, en el orden de Pareo (sus desempates). No se usó
+  `#categoria` del Centroamericano porque va por grupo, y aquí el grupo es
+  la categoría: el pareo de «U12 Femenino» dejaría fuera las mesas que no
+  tienen a una niña. Aquí se ve el torneo entero. El torneo de cada ventana
+  se reconoce por el nombre («U12»; «U20» o «U16»), como en la inscripción.
+- **Tocar un nombre lo busca en «Busca a tu jugador»** (cierra la ventana y
+  escribe el nombre), no con `#jugador=`: ese enlace pide un número de
+  torneo de chess-results, y el de Pareo es un UUID.
+- **Se pone al día sola** mientras la ventana está abierta (cada 20 s
+  pregunta la hora de actualización, `TorneoPareoDatos.cambio`), como
+  «Pareos de la ronda».
+- **Los torneos se leen al cargar la página** (`V.pedir()`), una vez: la
+  profe Karina (`js/jdn-pz-profe.js`) pregunta `JdnPzResultados.torneo()`
+  para saber si ya están publicados, y antes lo sabía por el enlace de la
+  ficha, que ya no cambia.
+- La ficha «Los torneos en Pareo Integral» no se puso: la ventana trae
+  abajo «Ver el torneo completo en Pareo Integral».
+
+`herramientas/verificar-jdn-pz-resultados.js` lo revisa con un doble de la
+base (la ronda 2 a medias, un torneo de la misma organización que no es de
+la eliminatoria, sin torneos y en el celular).
+
+### Los inscritos de la Eliminatoria JDN de PZ, con su foto
+
+El mismo día pidió «una ficha de lista de inscritos y que se pueda ver
+quienes están aprobados y listos para la competencia», con la foto de cada
+uno (las tomó Tecnicolor Fotografía para la ADAPZ; carpeta «ADA PZ» de
+Google Drive).
+
+- **Aprobado es estar en la lista del torneo en Pareo**: la inscripción del
+  formulario queda pendiente hasta que el árbitro la acepta. La ventana
+  `#inscritos` (`js/jdn-pz-inscritos.js`) muestra solo a los aprobados,
+  con «✓ Aprobado · listo para jugar», su categoría y su Elo; se filtra por
+  categoría (con su cuenta), se ordena por nombre o por Elo y se busca. **Las
+  pendientes no salen**: son datos de menores que nadie aprobó, y su tabla
+  no es de lectura pública. La ventana lo explica para quien mandó una y no
+  la ve.
+- **El nombre se muestra con el nombre primero** y arregla las palabras
+  escritas todas en mayúscula o todas en minúscula («VALVERDE ALVARADO,
+  LEONARDO» → «Leonardo Valverde Alvarado»); en las tablas va como en Pareo.
+- **Las fotos las arma `herramientas/jdn-pz-fotos.py`**: baja de Drive la
+  versión «MEDIOS DIGITALES», recorta la cabeza y los hombros de cada uno
+  (busca dónde empieza la cabeza sobre el fondo blanco y dónde empieza la
+  mesa, que va de borde a borde: una camiseta oscura no es la mesa) y la
+  guarda a 360 × 360 en `img/jdn-pz-2026/jugadores/<nombre de Pareo sin
+  tildes>.jpg`, con la lista de las que hay en `lista.json`. La página pide
+  solo las de la lista: antes daba un 404 por cada jugador sin foto.
+- **Los archivos de Drive traen solo el nombre de pila** («24 SANTIAGO»).
+  El mapa del script lo arma una persona contra el nombre de Pareo, y un
+  nombre repetido NO se adivina por la cara: dos Aaron (Piedra y
+  Barrantes), dos Santiago (Cordero y Segura), Samuel Quesada y Samuel
+  Beitia (hay tres fotos «SAMUEL» sin apellido), Sofía Cordova (hay
+  «SOFIA» y «SOFIA BADILLA») y Elizabeth Badilla quedaron con sus
+  iniciales hasta que alguien diga cuál foto es de quién. Ponerle a un niño
+  la cara de otro en una página pública es peor que no ponerle ninguna.
+  Para agregar una: su línea en `MAPA` y correr el script.
 
 ### La del Tacho Chess 2
 
