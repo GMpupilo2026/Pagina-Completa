@@ -1781,7 +1781,10 @@
             document.getElementById("participacion-sub").textContent = propio
                 ? "Cuánto hablaste en la llamada de la clase, mes a mes."
                 : "Cuánto habló en la llamada de la clase, mes a mes. Una clase sin minutos puede haber sido sin llamada.";
-            const meses = await ParticipacionLlamada.montar(sb, "participacion-body", studentId, { propio });
+            // Es un extra: si falla, el bloque no se destapa y el resto del informe sigue igual.
+            let meses = 0;
+            try { meses = await ParticipacionLlamada.montar(sb, "participacion-body", studentId, { propio }); }
+            catch (e) { console.warn("La participación en la llamada no se pudo cargar:", e); }
             panel.classList.toggle("hidden", !meses);
         }
 
