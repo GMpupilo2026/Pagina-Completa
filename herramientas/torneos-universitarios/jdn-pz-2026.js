@@ -99,7 +99,7 @@ Pérez Zeledón» en docs/decisiones/juegos-y-torneos.md.`,
   // La profe Karina ayuda en la página (js/jdn-pz-profe.js): va después de la
   // inscripción y de los resultados, porque lee lo que esos pintan; sus
   // dibujos, de js/avatar-profe-oscar.js.
-  scripts: ["js/pareo/publicar.js", "js/pareo/elo-nacional.js", "js/jdn-pz-inscripcion.js", "js/jdn-pz-resultados.js", "js/jdn-pz-inscritos.js", "js/avatar-profe-oscar.js", "js/jdn-pz-profe.js"],
+  scripts: ["js/pareo/publicar.js", "js/pareo/elo-nacional.js", "js/jdn-pz-inscripcion.js", "js/jdn-pz-resultados.js", "js/jdn-pz-inscritos.js", "js/torneo-en-vivo.js", "js/avatar-profe-oscar.js", "js/jdn-pz-profe.js"],
   // Nada lleva a los torneos de otros (lo pidió el dueño): ni el menú ni la despedida.
   menu: [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#inscritos", "Inscritos"], ["#inscribirme", "Inscribirme"], ["#calendario", "Calendario"]],
   hoy: {
@@ -333,9 +333,45 @@ js/torneo-hoy.js; los resultados, Pareo Integral. Lo propio:
     fuenteNombre: "Pareo Integral",
     pareo: { nombre: "JDN CCDRPZ", desde: "2026-11-01" },
     ordenGrupos: ["U12 Absoluto", "U12 Femenino", "U16 Absoluto", "U16 Femenino", "U20 Absoluto", "U20 Femenino"],
+    // «En vivo» (js/torneo-en-vivo.js), como en Tacho Chess 2: el botón azul de ADAPZ.
+    botonVivo: "pz-boton",
     nombreCorto: "Eliminatoria JDN Pérez Zeledón 2026",
     imgSub: "Eliminatoria Cantonal JDN · CCDR Pérez Zeledón · ADAPZ",
     compartir: "en la Eliminatoria Cantonal JDN de Pérez Zeledón 2026:",
+    // Los textos del Centroamericano que se colaban, como en Tacho Chess 2 (lo
+    // preguntó el dueño el 18/11/2026: «ya tiene las actualizaciones que se
+    // hicieron al tacho?»): el certificado, «Así terminó mi torneo», «¡Hoy
+    // juega!», las imágenes y el calendario decían «Centroamericano 2026» y
+    // «El torneo empieza el 2 de noviembre». Al podio no se le dice oro, plata
+    // o bronce: la eliminatoria clasifica a los Juegos Nacionales. Las
+    // funciones van tal cual a js/jdn-pz.js: no pueden usar nada de este archivo.
+    textos: {
+      finTexto: (n) => "Así terminó la Eliminatoria JDN de Pérez Zeledón para " + n + ":",
+      dipPodio: (p, cat) => "por obtener el " + (p === 1 ? "1.er" : p === 3 ? "3.er" : p + ".º") + " lugar en la categoría " + cat,
+      hjLugar: "Hotel del Sur, Pérez Zeledón",
+      hjMensaje: (n, r, m, cuando, dias) => "📣 ¡" + (dias === 0 ? "Hoy juega " : dias === 1 ? "Mañana juega " : "Juega ") + n + "! Ronda " + r + ", mesa " + m + (cuando ? ", " + cuando.charAt(0).toLowerCase() + cuando.slice(1) : "") + ", en la Eliminatoria JDN de Pérez Zeledón.",
+      imgAntes: "La eliminatoria es el domingo 22 de noviembre",
+      diaTexto: (titulo) => titulo + " en la Eliminatoria JDN de Pérez Zeledón:",
+      numTitulo: "La eliminatoria en números",
+      numTexto: "La Eliminatoria JDN de Pérez Zeledón en números:",
+      imgResumenSub: "Eliminatoria JDN · Pérez Zeledón 2026",
+      whatsappTitulo: (pais, r) => pais + " — Ronda " + r + ", Eliminatoria JDN Pérez Zeledón",
+      calRonda: (r, nombre) => "Ronda " + r + " · " + nombre + " — Eliminatoria JDN Pérez Zeledón",
+      calLugar: "Hotel del Sur, Pérez Zeledón, Costa Rica",
+      calNombre: (nombre) => "Rondas de " + nombre + " · Eliminatoria JDN Pérez Zeledón",
+    },
+    // El certificado con la cara de ADAPZ: el azul marino degradado (blanco
+    // encima, 10,80 y 13,86), la píldora en el azul fuerte con letra blanca
+    // (6,00), el marco celeste y blanco de sus franjas, el logo de ADAPZ
+    // arriba a la izquierda y el del CCDR a la derecha, y sin el pizote ni las
+    // hojas del Centroamericano.
+    diploma: {
+      evento: "Eliminatoria Cantonal JDN · Pérez Zeledón 2026",
+      lugar: "Hotel del Sur · Pérez Zeledón · domingo 22 de noviembre de 2026",
+      fondo: ["#1f3a7a", "#142a5c"], pildora: "#1d64b0", sombra: "rgba(10, 20, 48, 0.5)",
+      dibujo: null, hojas: null, escudo: "img/adapz/logo.jpg", escudoDerecha: "img/adapz/ccdr-pz.jpg",
+      marco: [["#4aa3e3", 22, 44], ["#ffffff", 6, 74]],
+    },
     imagen: { banda: "#1f3a7a", tinta: "#1f3a7a", acento: "#1f3a7a", suave: "#eef6fd", archivo: "eliminatoria-jdn-pz-2026", franjas: [["#4aa3e3", 1046], ["#1f3a7a", 1060]] },
   },
 };

@@ -150,7 +150,7 @@ dueño; la cuenta regresiva es de js/torneo-hoy.js. Ver «La del Tacho Chess
   },
   // El profe ayuda en la página (js/tacho-chess-profe.js): va después de los
   // resultados, porque lee lo que esos pintan; sus dibujos, de js/avatar-profe-oscar.js.
-  scripts: ["js/torneo-pareos.js", "js/torneo-sala.js", "js/tacho-chess-resultados.js", "js/avatar-profe-oscar.js", "js/tacho-chess-profe.js"],
+  scripts: ["js/torneo-pareos.js", "js/torneo-sala.js", "js/tacho-chess-resultados.js", "js/torneo-en-vivo.js", "js/avatar-profe-oscar.js", "js/tacho-chess-profe.js"],
   menu: [["index.html", "Inicio"], ["#fichas", "Fichas"], ["#clasificacion", "Clasificación"], ["#inscribirme", "Inscribirme"], ["#calendario", "Calendario"]],
   hoy: {
     etiqueta: "El torneo",
@@ -364,6 +364,8 @@ regresiva la arma js/torneo-hoy.js. Lo propio:
     fuenteNombre: "Pareo Integral",
     pareo: { nombre: "tacho", desde: "2026-10-01" },
     ordenGrupos: NIVELES,
+    // «En vivo» (js/torneo-en-vivo.js): el botón rojo del afiche.
+    botonVivo: "tacho-boton",
     // Cada mesa sobre la foto de la sala (js/torneo-sala-foto.js): las marcó
     // el dueño una por una el 14/11/2026 en una página aparte sobre la misma
     // foto; [número, x, y] en los píxeles de img/tacho-chess-2/sala.jpg. Los

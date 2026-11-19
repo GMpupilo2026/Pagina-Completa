@@ -21,6 +21,12 @@
  *     sus cuentas, la foto de quien la tiene (lista.json) y las iniciales de
  *     quien no, SIN pedir la foto que no existe; ordenar por Elo; «Aprobado»;
  *   - sin torneos publicados, las ventanas lo dicen;
+ *   - LO DEL TACHO (ver «Lo del Tacho, también en la Eliminatoria JDN de
+ *     PZ»): «En vivo» en «El torneo» (js/torneo-en-vivo.js, con un doble de
+ *     los canales que hace de cámara): «Próximamente», la partida de la
+ *     cámara cuando transmite, con el botón azul de ADAPZ, y de vuelta a
+ *     «Próximamente»; y el certificado y los textos sin nada del
+ *     Centroamericano (lo que escribe y dibuja el lienzo del certificado);
  *   - en el celular no hay scroll de costado, y no hay errores.
  *
  * Ver «Los resultados U12 y U20, como en el Centroamericano» y «Los inscritos
@@ -47,12 +53,26 @@ function ok(nombre, cond, detalle) {
 function doble(datos) {
   return `(function(){
   const D = ${JSON.stringify(datos)};
-  window.sb = { from(tabla) {
+  window.__dobleDatos = D;
+  window.__pedidos = [];
+  // Los canales de Broadcast: la prueba hace de cámara con __emitir, y ve
+  // qué se pidió en __enviados.
+  window.__canales = new Map();
+  window.__enviados = [];
+  window.__emitir = (nombre, payload) => { const c = window.__canales.get(nombre); if (c) c.oyentes.forEach((f) => f({ payload })); };
+  window.sb = { channel(nombre) {
+    const c = { oyentes: [], on(tipo, filtro, f) { if (filtro.event === "estado") c.oyentes.push(f); return c; },
+      subscribe(cb) { setTimeout(() => cb("SUBSCRIBED"), 0); return c; }, send(m) { window.__enviados.push(nombre + ": " + m.event); return Promise.resolve(); } };
+    window.__canales.set(nombre, c);
+    return c;
+  }, removeChannel(c) { for (const [k, v] of window.__canales) if (v === c) window.__canales.delete(k); }, from(tabla) {
     const filas = (D[tabla] || []).slice();
     const f = [];
     let orden = null;
+    // «alias:datos->>campo», como PostgREST: un campo de los datos, en texto.
+    let alias = [];
     const q = {
-      select() { return q; },
+      select(cols) { window.__pedidos.push(tabla + ": " + cols); alias = [...String(cols || "").matchAll(/(\\w+):datos->>(\\w+)/g)].map((m) => [m[1], m[2]]); return q; },
       eq(c, v) { f.push((r) => r[c] === v); return q; },
       in(c, vs) { f.push((r) => vs.includes(r[c])); return q; },
       gte(c, v) { f.push((r) => String(r[c]) >= String(v)); return q; },
@@ -62,6 +82,7 @@ function doble(datos) {
       range() { return q; },
       then(okf, ko) {
         let out = filas.filter((r) => f.every((g) => g(r)));
+        if (alias.length) out = out.map((r) => { const x = Object.assign({}, r); alias.forEach(([a, c]) => { const v = r.datos && r.datos[c]; x[a] = v == null ? null : String(v); }); return x; });
         if (orden) out.sort((a, b) => (a[orden[0]] < b[orden[0]] ? -1 : 1) * orden[1]);
         return Promise.resolve({ data: out, error: null }).then(okf, ko);
       },
@@ -95,7 +116,7 @@ const U20 = {
 const OTRO = { id: "33333333-3333-4333-8333-333333333333", nombre: "Tacho Chess U12", organizador_id: "org-ai", creado: "2026-11-13T19:00:00Z",
   datos: { jugadores: [jug("z", "Intruso, Pepe", "Primer grado", 0)], rondas: [] } };
 
-async function abrir(nav, publicados, hash, ancho) {
+async function abrir(nav, publicados, hash, ancho, reloj) {
   const ctx = await nav.newContext({ viewport: { width: ancho || 1280, height: 900 }, serviceWorkers: "block" });
   await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble({ pareo_organizadores: ORGS, pareo_publicados: publicados }) }));
   await ctx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: "" }));
@@ -104,7 +125,8 @@ async function abrir(nav, publicados, hash, ancho) {
   const errores = [], fotos = [];
   p.on("pageerror", (e) => errores.push(String(e)));
   p.on("request", (q) => { if (/\/jugadores\//.test(q.url())) fotos.push(q.url().split("/").pop()); });
-  await p.clock.setFixedTime(new Date("2026-11-22T10:40:00-06:00"));
+  if (reloj) await p.clock.install({ time: new Date("2026-11-22T10:40:00-06:00") });
+  else await p.clock.setFixedTime(new Date("2026-11-22T10:40:00-06:00"));
   await p.goto(BASE + "/jdn-pz-2026.html" + (hash || ""), { waitUntil: "load" });
   return { ctx, p, errores, fotos };
 }
@@ -120,6 +142,10 @@ const texto = (p, sel) => p.evaluate((s) => [...document.querySelectorAll(s)].ma
   ok("los datos son de Pareo Integral (fuente \"pareo\", los torneos «JDN CCDRPZ»), no de chess-results",
     /fuente: "pareo"/.test(cfg) && /pareo: \{ nombre: "JDN CCDRPZ"/.test(cfg) && /js\/torneo-pareo-datos\.js/.test(html) && !/chess-results\.com/.test(html));
   ok("nada lleva a la lista de torneos de Pareo (trae los de otros)", !html.includes('href="torneos-pareo.html"'));
+  ok("carga «En vivo» (js/torneo-en-vivo.js, la misma copia del Tacho) con el botón azul de ADAPZ",
+    /<script src="js\/torneo-en-vivo\.js"><\/script>/.test(html) && /botonVivo: "pz-boton"/.test(cfg));
+  ok("lleva sus textos y la cara de su certificado, sin nada del Centroamericano",
+    /textos: \{/.test(cfg) && /diploma: \{/.test(cfg) && /evento: "Eliminatoria Cantonal JDN · Pérez Zeledón 2026"/.test(cfg) && !/Centroamericano 2026|centroamericano-2026\//.test(cfg));
 
   const nav = await chromium.launch(fs.existsSync(CHROME) ? { executablePath: CHROME } : {});
   try {
@@ -192,6 +218,59 @@ const texto = (p, sel) => p.evaluate((s) => [...document.querySelectorAll(s)].ma
     ok("ordenar por Elo pone primero al de más Elo", (await texto(x.p, "#inscritos .jdn-inscrito-nombre")).slice(0, 2).join("|") === "Shane Stevens Sequeira Solís|Giordano Ulcigrai Ramírez");
     ok("sin errores en la página", !x.errores.length, x.errores.join(" | "));
     await x.ctx.close();
+
+    console.log("\n«En vivo», con la cámara de Notara");
+    {
+      const r = await abrir(nav, [U12, U20, OTRO], "", 1280, true);
+      await r.p.waitForFunction(() => document.getElementById("hoy-vivo"), null, { timeout: 8000 }).catch(() => {});
+      await r.p.waitForTimeout(300);
+      const vivo = () => r.p.evaluate(() => { const z = document.getElementById("hoy-vivo"); return z ? { dentro: !!z.closest("#hoy"), visible: z.checkVisibility(), estado: z.dataset.estado, texto: z.innerText.replace(/\s+/g, " ").trim(),
+        enlaces: [...z.querySelectorAll("a")].map((a) => [a.getAttribute("href"), a.textContent.trim(), a.dataset.ventana || "", a.checkVisibility(), getComputedStyle(a).backgroundColor, getComputedStyle(a).color]) } : null; });
+      let v = await vivo();
+      ok("sin cámaras, en «El torneo» dice «En vivo: próximamente»",
+        v && v.dentro && v.visible && v.estado === "pronto" && /En vivo: próximamente/.test(v.texto) && !v.enlaces.length && !(await r.p.evaluate(() => window.__canales.size)), JSON.stringify(v));
+      ok("pregunta liviano por las cámaras (solo el código, sin los datos del torneo)",
+        (await r.p.evaluate(() => window.__pedidos)).includes("pareo_publicados: id, camaras:datos->>camaras"), JSON.stringify(await r.p.evaluate(() => window.__pedidos)));
+      await r.p.evaluate(() => { window.__dobleDatos.pareo_publicados[0].datos.camaras = "abcd2345"; window.__dobleDatos.pareo_publicados[2].datos.camaras = "zzzz9999"; });
+      await r.p.clock.fastForward(61000);
+      await r.p.waitForTimeout(300);
+      const enviados = await r.p.evaluate(() => window.__enviados);
+      ok("al conectar las cámaras en Pareo, al minuto escucha el canal del U12 y le pide la partida (no el del torneo ajeno)",
+        enviados.includes("tablero-vivo-abcd2345: pedir") && !enviados.some((e) => /zzzz9999/.test(e)) && (await vivo()).estado === "pronto", JSON.stringify(enviados));
+      await r.p.evaluate((id) => window.__emitir("tablero-vivo-abcd2345", { v: 1, pgn: "1. d4", torneo: id, mesa: 1, blancas: "Zuñiga Arias, Yariela Sofia", negras: "Ulcigrai Ramírez, Giordano", t: Date.now() }), U12.id);
+      await r.p.waitForTimeout(150);
+      v = await vivo();
+      ok("cuando la cámara transmite, sale esa partida y «Ver la partida en vivo» abre tablero-vivo.html encima, en esa mesa",
+        v.estado === "vivo" && /En vivo ahora Mesa 1: Zuñiga Arias, Yariela Sofia – Ulcigrai Ramírez, Giordano/.test(v.texto)
+        && JSON.stringify(v.enlaces.map((e) => e.slice(0, 4))) === JSON.stringify([["tablero-vivo.html#abcd2345&t=" + U12.id + "&m=1", "Ver la partida en vivo →", "En vivo: Mesa 1", true]]), JSON.stringify(v));
+      ok("y el botón va en el azul de ADAPZ (#1D64B0) con letra blanca", v.enlaces[0] && v.enlaces[0][4] === "rgb(29, 100, 176)" && v.enlaces[0][5] === "rgb(255, 255, 255)", JSON.stringify(v.enlaces));
+      await r.p.clock.fastForward(61000);
+      await r.p.waitForTimeout(300);
+      ok("si la cámara deja de transmitir, vuelve a «Próximamente»", (await vivo()).estado === "pronto", JSON.stringify(await vivo()));
+
+      console.log("\nEl certificado y los textos, sin el Centroamericano");
+      const cert = await r.p.evaluate(async () => {
+        const V = window.CentroamericanoVivo, T = window.CentroamericanoTablas;
+        const x = V.jugadores().find((j) => /Ulcigrai/.test(j.j.nombre));
+        const escritos = [], dibujos = [];
+        const fill = CanvasRenderingContext2D.prototype.fillText, draw = CanvasRenderingContext2D.prototype.drawImage;
+        CanvasRenderingContext2D.prototype.fillText = function (t) { escritos.push(String(t)); return fill.apply(this, arguments); };
+        CanvasRenderingContext2D.prototype.drawImage = function (img) { if (img && img.src) dibujos.push(img.src.split("/").slice(-2).join("/")); return draw.apply(this, arguments); };
+        try { await T.diploma(x); } finally { CanvasRenderingContext2D.prototype.fillText = fill; CanvasRenderingContext2D.prototype.drawImage = draw; }
+        const tt = T.textosTablas(), tv = V.textos();
+        return { escritos, dibujos, imgAntes: tt.imgAntes, fin: tt.finTexto("Ana"), hoy: tt.hjMensaje("Ana", 2, 3, "", 0), lugar: tt.hjLugar, cal: tv.calRonda(1, "Ana") + " | " + tv.calLugar + " | " + tv.calNombre("Ana") };
+      });
+      const todo = cert.escritos.join(" | ");
+      ok("el certificado dice el evento, la sede y la fecha de la eliminatoria",
+        todo.includes("ELIMINATORIA CANTONAL JDN · PÉREZ ZELEDÓN 2026") && todo.includes("Hotel del Sur · Pérez Zeledón · domingo 22 de noviembre de 2026") && /GIORDANO ULCIGRAI RAMÍREZ/.test(todo), todo);
+      ok("y nada del Centroamericano (ni el festival, ni La Sabana, ni chess-results)", !/Centroamericano|Festival|Sabana|chess-results/i.test(todo), todo);
+      ok("con el logo de ADAPZ y el del CCDR, sin el pizote ni las hojas", cert.dibujos.includes("adapz/logo.jpg") && cert.dibujos.includes("adapz/ccdr-pz.jpg") && !cert.dibujos.some((d) => /centroamericano/.test(d)), JSON.stringify(cert.dibujos));
+      ok("las imágenes, «¡Hoy juega!» y el calendario hablan de la eliminatoria",
+        cert.imgAntes === "La eliminatoria es el domingo 22 de noviembre" && /Eliminatoria JDN de Pérez Zeledón/.test(cert.fin) && /Eliminatoria JDN de Pérez Zeledón\.$/.test(cert.hoy)
+        && cert.lugar === "Hotel del Sur, Pérez Zeledón" && !/Centroamericano|Sabana/.test(cert.cal) && /Pérez Zeledón/.test(cert.cal), JSON.stringify(cert).slice(0, 600));
+      ok("«En vivo» y el certificado: sin errores de JavaScript", !r.errores.length, r.errores.join(" | "));
+      await r.ctx.close();
+    }
 
     console.log("\nSin torneos publicados");
     const y = await abrir(nav, [OTRO], "#resultados-u12");
