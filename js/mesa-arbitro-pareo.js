@@ -138,20 +138,20 @@
         const m = misMesas().find((x) => (x.f || x.m) === f);
         if (!caja || !m || !window.PareoCamarasAdjunto) return;
         const dc = camaras && camaras.mesa(f);
-        window.PareoCamarasAdjunto.pintar(caja, dc, { tam: 120, textoResultado: textoR,
+        window.PareoCamarasAdjunto.pintar(caja, dc, { tam: 120, mesa: f, enlace: camaras && !m.r ? camaras.enlace(f) : null, textoResultado: textoR,
             conResultado: !m.r && !esperando.has(m.m), descartada: !!dc && descartadas.has(f + "|" + dc.resultado),
             confirmar: (r) => { mandar(m, r); pintarCamara(f); },
             descartar: (r) => { descartadas.add(f + "|" + r); pintarCamara(f); } });
     }
     function sincronizarCamaras(d) {
-        const quiere = d && d.camaras && d.torneo && window.PareoCamarasAdjunto ? d.camaras + "|" + d.torneo + "|" + d.ronda : "";
-        const tiene = camaras ? camaras.codigo + "|" + camaras.torneo + "|" + camaras.ronda : conectandoCam || "";
+        const quiere = d && d.camaras && d.torneo && window.PareoCamarasAdjunto ? d.camaras + "|" + d.torneo + "|" + d.ronda + "|" + (d.camRetraso || 0) : "";
+        const tiene = camaras ? camaras.codigo + "|" + camaras.torneo + "|" + camaras.ronda + "|" + camaras.retraso : conectandoCam || "";
         if (quiere === tiene) return;
         if (camaras) camaras.cerrar();
         camaras = null;
         conectandoCam = quiere || null;
         if (!quiere) return;
-        window.PareoCamarasAdjunto.conectar({ codigo: d.camaras, torneo: d.torneo, ronda: d.ronda, alCambiar: pintarCamara })
+        window.PareoCamarasAdjunto.conectar({ codigo: d.camaras, torneo: d.torneo, ronda: d.ronda, retraso: d.camRetraso || 0, alCambiar: pintarCamara })
             .then((c) => { if (conectandoCam !== quiere) { c.cerrar(); return; } camaras = c; conectandoCam = null; misMesas().forEach((x) => pintarCamara(x.f || x.m)); })
             .catch(() => { conectandoCam = null; });
     }
