@@ -35,12 +35,14 @@
         { id: "perfil", nombre: "Perfil", icono: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>' }
     ];
 
-    // Las secciones fijas de clases.html, por id.
+    /* Las secciones fijas de clases.html, por id. Una puede vivir en dos
+       pestañas («inicio clases»): la clase en vivo es lo de hoy y es también
+       de Clases. */
     const SECCIONES = {
         "instalar-app": "inicio",
         "fondo-region": "inicio",
         "lado-alumno-card": "inicio",
-        "session-status-card": "inicio",
+        "session-status-card": "inicio clases",
         "pendientes-aviso": "inicio",
         "seguir-curso": "inicio",
         "progreso-alumno": "inicio",
@@ -54,9 +56,9 @@
 
     // Los grupos de tarjetas, por su título (el de TILE_GROUPS en clases.js).
     const GRUPOS = {
-        "Clase en vivo": "inicio",
+        "Clase en vivo": "inicio clases",
         "Lo que te pone tu profesor": "inicio",
-        "Estudiar": "clases",
+        "Estudiar": "entrenar",
         "Aprender": "entrenar",
         "Entrenamiento básico": "entrenar",
         "Entrenamiento intermedio": "entrenar",
@@ -69,12 +71,34 @@
         "Otras": "perfil"
     };
 
+    /* Lo de adentro de una pestaña, cada cosa por separado: en la computadora
+       van debajo de su pestaña en el menú de la izquierda; en el celular, en
+       una fila de botones arriba de la pestaña. Un `grupo` deja a la vista
+       solo ese grupo de tarjetas (y lo abre si está plegado); un `enlace` lleva
+       a otra página. */
+    const SUBSECCIONES = {
+        entrenar: [
+            { grupo: "Estudiar", nombre: "Estudiar" },
+            { grupo: "Aprender", nombre: "Aprender" },
+            { grupo: "Entrenamiento básico", nombre: "Entrenamiento básico" },
+            { grupo: "Entrenamiento intermedio", nombre: "Entrenamiento intermedio" },
+            { grupo: "Entrenamiento avanzado", nombre: "Entrenamiento avanzado" },
+            { grupo: "Mejorar por habilidades", nombre: "Habilidades" }
+        ],
+        jugar: [
+            // «Prepárate tú»: el plan contra el rival de tu próxima partida.
+            { enlace: "plan-rival.html", nombre: "Preparar a un rival" }
+        ]
+    };
+
     // Lo que pasa a Perfil aunque viva dentro de «Tus clases».
     const A_PERFIL = ["puntos-ajedrez", "puntos-mes"];
 
     const CLAVE = "panel_jornada_pestana_v1";
     let actual = "inicio";
+    let seccion = null; // el grupo abierto solo, dentro de la pestaña (o null: toda la pestaña)
     let activo = false;
+    const pestanasDe = (el) => (el.dataset.jornada || "").split(" ");
 
     function tituloDeGrupo(section) {
         const h2 = section.querySelector("h2");
@@ -90,8 +114,10 @@
         const grilla = document.getElementById("tile-grid");
         if (grilla) {
             Array.from(grilla.children).forEach((s) => {
-                const p = GRUPOS[tituloDeGrupo(s)];
-                if (p) s.dataset.jornada = p; else delete s.dataset.jornada;
+                const t = tituloDeGrupo(s);
+                const p = GRUPOS[t];
+                if (p) { s.dataset.jornada = p; s.dataset.grupo = t; }
+                else { delete s.dataset.jornada; delete s.dataset.grupo; }
             });
         }
     }
@@ -106,27 +132,67 @@
         const todo = buscando();
         document.body.classList.toggle("jornada-buscando", todo);
         document.querySelectorAll("[data-jornada]").forEach((el) => {
-            el.classList.toggle("jornada-fuera", !todo && el.dataset.jornada !== actual);
+            const enLaPestana = pestanasDe(el).includes(actual);
+            // Con una sección elegida, de los grupos de tarjetas solo queda ese.
+            const otroGrupo = !!(seccion && el.dataset.grupo && el.dataset.grupo !== seccion);
+            el.classList.toggle("jornada-fuera", !todo && (!enLaPestana || otroGrupo));
         });
+        /* La pestaña abierta lleva aria-current="page"; con una sección suya
+           elegida, la sección es la página y la pestaña queda en "true". */
         document.querySelectorAll(".jornada-nav button[data-pestana]").forEach((b) => {
-            if (b.dataset.pestana === actual) b.setAttribute("aria-current", "page");
+            if (b.dataset.pestana === actual) b.setAttribute("aria-current", seccion ? "true" : "page");
+            else b.removeAttribute("aria-current");
+        });
+        document.querySelectorAll("button[data-seccion]").forEach((b) => {
+            // «Todo» (data-seccion vacío) es la pestaña entera.
+            if (b.dataset.pestanaDe === actual && (b.dataset.seccion || null) === seccion) b.setAttribute("aria-current", "page");
             else b.removeAttribute("aria-current");
         });
     }
 
-    function ir(id, enfocar) {
+    function guardar() {
+        try { sessionStorage.setItem(CLAVE, JSON.stringify({ pestana: actual, seccion: seccion })); } catch (e) { /* sin almacenamiento: arranca en Inicio */ }
+    }
+
+    function abrirGrupo(titulo) {
+        const s = Array.from(document.querySelectorAll("#tile-grid > section")).find((x) => x.dataset.grupo === titulo);
+        const boton = s && s.querySelector("h2 button[aria-expanded='false']");
+        if (boton) boton.click();
+    }
+
+    function ir(id, enfocar, sec) {
         if (!PESTANAS.some((p) => p.id === id)) return;
         actual = id;
-        try { sessionStorage.setItem(CLAVE, id); } catch (e) { /* sin almacenamiento: arranca en Inicio */ }
+        seccion = sec || null;
+        guardar();
         aplicar();
+        if (seccion) abrirGrupo(seccion);
         if (enfocar) {
             const titulo = document.getElementById("jornada-titulo");
             if (titulo) {
-                titulo.textContent = PESTANAS.find((p) => p.id === id).nombre;
+                const sub = seccion && (SUBSECCIONES[id] || []).find((x) => x.grupo === seccion);
+                titulo.textContent = PESTANAS.find((p) => p.id === id).nombre + (sub ? " · " + sub.nombre : "");
                 titulo.focus({ preventScroll: true });
             }
             window.scrollTo({ top: 0 });
         }
+    }
+
+    // Un botón (o enlace) de sección: el mismo para el menú y para la fila del celular.
+    function botonDeSeccion(pestana, s) {
+        let el;
+        if (s.enlace) {
+            el = document.createElement("a");
+            el.href = s.enlace;
+        } else {
+            el = document.createElement("button");
+            el.type = "button";
+            el.dataset.seccion = s.grupo;
+            el.dataset.pestanaDe = pestana;
+            el.addEventListener("click", () => ir(pestana, true, s.grupo));
+        }
+        el.textContent = s.nombre;
+        return el;
     }
 
     function armarNav() {
@@ -145,10 +211,41 @@
             b.appendChild(t);
             b.addEventListener("click", () => ir(p.id, true));
             li.appendChild(b);
+            // Lo de adentro, debajo de su pestaña (solo se ve en la computadora).
+            if (SUBSECCIONES[p.id]) {
+                const sub = document.createElement("ul");
+                sub.className = "jornada-sub";
+                sub.setAttribute("aria-label", "Dentro de " + p.nombre);
+                SUBSECCIONES[p.id].forEach((s) => {
+                    const sli = document.createElement("li");
+                    sli.appendChild(botonDeSeccion(p.id, s));
+                    sub.appendChild(sli);
+                });
+                li.appendChild(sub);
+            }
             lista.appendChild(li);
         });
         nav.appendChild(lista);
         return nav;
+    }
+
+    // En el celular, lo de adentro de la pestaña va en una fila de botones arriba.
+    function armarFilas(contenedor, antes) {
+        Object.keys(SUBSECCIONES).forEach((pestana) => {
+            const fila = document.createElement("nav");
+            fila.className = "jornada-fila";
+            fila.dataset.jornada = pestana;
+            fila.setAttribute("aria-label", "Dentro de " + PESTANAS.find((p) => p.id === pestana).nombre);
+            const todo = document.createElement("button");
+            todo.type = "button";
+            todo.dataset.seccion = "";
+            todo.dataset.pestanaDe = pestana;
+            todo.textContent = "Todo";
+            todo.addEventListener("click", () => ir(pestana, true));
+            fila.appendChild(todo);
+            SUBSECCIONES[pestana].forEach((s) => fila.appendChild(botonDeSeccion(pestana, s)));
+            contenedor.insertBefore(fila, antes);
+        });
     }
 
     function armar() {
@@ -181,14 +278,23 @@
         app.insertBefore(marco, contenedor);
         marco.append(armarNav(), contenedor);
 
+        // Las filas de secciones del celular, justo debajo del buscador.
+        const buscador = document.getElementById("buscar-panel");
+        armarFilas(contenedor, buscador ? buscador.nextSibling : titulo.nextSibling);
+
         document.body.classList.add("jornada");
         activo = true;
         marcar();
 
         let guardada = null;
-        try { guardada = sessionStorage.getItem(CLAVE); } catch (e) { /* nada */ }
-        actual = PESTANAS.some((p) => p.id === guardada) ? guardada : "inicio";
-        if (!irAlHash()) aplicar();
+        try {
+            const g = sessionStorage.getItem(CLAVE) || "";
+            guardada = g.startsWith("{") ? JSON.parse(g) : { pestana: g, seccion: null };
+        } catch (e) { /* nada */ }
+        actual = guardada && PESTANAS.some((p) => p.id === guardada.pestana) ? guardada.pestana : "inicio";
+        const valida = guardada && (SUBSECCIONES[actual] || []).some((s) => s.grupo && s.grupo === guardada.seccion);
+        seccion = valida ? guardada.seccion : null;
+        if (!irAlHash()) { aplicar(); if (seccion) abrirGrupo(seccion); }
 
         if (grilla) new MutationObserver(() => { marcar(); aplicar(); }).observe(grilla, { childList: true });
         const campo = document.getElementById("buscar-panel-campo");
@@ -203,7 +309,8 @@
         const el = document.getElementById(id);
         const conPestana = el && el.closest("[data-jornada]");
         if (!conPestana) return false;
-        ir(conPestana.dataset.jornada, false);
+        // Si vive en dos pestañas, la primera; y la pestaña entera, sin sección.
+        ir(pestanasDe(conPestana)[0], false);
         return true;
     }
 
@@ -237,7 +344,7 @@
         armar();
     });
 
-    window.PanelJornada = { ir, PESTANAS, SECCIONES, GRUPOS };
+    window.PanelJornada = { ir, PESTANAS, SECCIONES, GRUPOS, SUBSECCIONES };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */
