@@ -16000,7 +16000,15 @@ sus pts y su puesto actual».
   aceptados del 18/11 se emparejaron solas 24: lo demás era de verdad
   dudoso (dos Aaron y una foto, dos Santiago con «SANTIAGO» y «SANTI», los
   Samuel, «MATEW» por Matthew) y se elige a mano en la lista, que dice
-  cuántos tienen foto y qué fotos sobraron. **Las fotos no salen de la
+  cuántos tienen foto y qué fotos sobraron. Después la organización les puso apellidos,
+  casi siempre a la versión de «MEDIOS DIGITALES» («10 SAMUEL Quesada Aguero
+  MEDIOS DIGITALES.jpg» junto a «10 SAMUEL.jpg»), y a una le sobró un nombre
+  («23 Elizabeth SOFIA BADILLA Mena»). Por eso de cada número se usa la foto
+  limpia pero se busca con el nombre más completo de las dos (`busca`), y una
+  foto le sirve a un jugador si todas sus palabras están en su nombre o si
+  coinciden al menos dos (`puntaje`); un archivo que quedó para dos es del que
+  mejor calza. Con la carpeta así, el 19/11 se emparejaron solas 31 de 32: la
+  que falta es «12 MATEW» (Matthew), que se elige a mano. **Las fotos no salen de la
   computadora ni se guardan**, como el Excel: se achican en el navegador y se
   pierden al cerrar la página.
 - **El recorte**: son de medio cuerpo frente al tablero, así que se
@@ -16010,8 +16018,23 @@ sus pts y su puesto actual».
   Con un recorte fijo desde arriba, una niña bajita salía con la cara chica
   abajo y mucho blanco encima. Se miraron los 46 recortes en una hoja: todos
   con la cabeza arriba y la cara del mismo tamaño. Una foto que ya viene de cabeza y
-  hombros (más ancha que 0,72, como la de Aaron González que mandó el dueño
+  hombros (más ancha que 0,72, como la de Aaron Barrantes que mandó el dueño
   por el chat) no se recorta de más: entra entera a lo alto.
+- **Hoja carta para imprimir en casa** (pedido del dueño: los imprime en
+  una Brother T530, hojas carta, por ambos lados, «listos solo para
+  cortar»). En «Cómo salen» (`salida.formato`: «imprenta», un gafete por
+  página, o «carta»; el diseño de la PZ viene en «carta»). Caben **9 por
+  hoja** (3 × 3, derechos; acostados, 8): con 5 mm de margen para lo que una
+  impresora de casa no imprime, pegados entre sí (cada corte sirve para dos)
+  y centrados, con 25,45 mm de margen a los lados y 12,2 mm arriba y abajo.
+  Cada hoja son dos páginas: los frentes, con marcas de corte en el margen
+  (nunca encima de un gafete), y los dorsos **en espejo por columnas**, que
+  al voltear por el borde largo caen cada uno detrás de su frente
+  (`hojaCarta` en `js/gafetes.js`; `agregarHoja` en `js/gafetes-pdf.js`).
+  Si la impresora no calza exacto, «córrelo» (`salida.dorsoX`/`dorsoY`, en
+  mm) mueve solo los dorsos. El verificador mira en el PDF que cada dorso
+  esté en el espejo de su frente, que las marcas vayan solo en los frentes y
+  sin pisar un gafete, y que el corrimiento mueva solo los dorsos.
 - **Los dos logos, del mismo alto** (lo preguntó el dueño): los archivos son
   cuadrados pero traen márgenes blancos distintos (el de la ADAPZ ocupa el
   73 % del alto de su archivo; el del CCDR, el 65 %), así que en la misma
@@ -16019,6 +16042,26 @@ sus pts y su puesto actual».
   (`sinMargen` en `js/gafetes-dibujo.js`) se les quita el margen al
   cargarlos y los dos llenan su caja; el verificador mide el alto dibujado de
   cada uno en el píxel.
+- **19/11, a pedido del dueño con el borrador en la mano:** (1) **el QR es
+  cuadrado** siempre: su caja se escalaba distinto a lo ancho y a lo alto (en
+  5,5 × 8,5, 0,55 contra 0,61) y quedaba más alta que ancha, con blanco de
+  más abajo; ahora usa el lado chico de la escala, pegado a la misma esquina.
+  (2) **Las fotos centradas**: a lo ancho, la cabeza va al medio del marco
+  (`cabezaDeLaPersona`: el medio de lo oscuro en la franja de la cabeza, en
+  toda la foto), y el recorte es más cerca (el 44 % del alto, desde un poco
+  arriba del pelo), con menos tablero. (3) **La profe Karina cambia de pose en
+  cada dorso**, por turno (`dorso.ilustraciones`): presentando, te toca, con
+  el reloj, con el caballo, pulgar arriba, tú puedes, con el trofeo y
+  saludando (de cuerpo entero y sin nada ancho al lado). (4) **El ID FIDE en
+  el frente**, en lugar del Elo: Pareo no lo publica y la lista de FIDE no
+  contestaba, así que sale del que se puso al inscribirse, con
+  `public.pareo_fide_de_aceptados` (solo administración, solo aceptadas, el
+  nombre y el ID; un «0» no cuenta), emparejado por el nombre sin tildes;
+  sin ID, la línea no sale. Del 19/11: 13 de 34 con ID. La función es la
+  migración `20261119050629_pareo_fide_de_aceptados.sql`, aplicada con
+  permiso del dueño y comprobada impersonando: anon no la puede ejecutar,
+  una cuenta que no administra recibe el rechazo y quien administra recibe
+  los ID (10 en el torneo U20; el «0» no cuenta).
 - **La franja del frente dice el club** («ADAPZ»; pedido del dueño), y
   debajo del nombre solo va «Juega el torneo U…»: la categoría y el Elo
   salieron del frente (también lo pidió el dueño). La categoría sigue de lado
