@@ -134,7 +134,7 @@ console.log("\n=== Las cabeceras y la privacidad ===");
   const rep = leer("js/repasar-clases.js");
   si(/from\('clase_grabaciones'\)/.test(rep) && /createSignedUrls\(/.test(rep) && /cargarGrabacion\(p\.class_session_id\)/.test(rep), "«Repasar mis clases» trae la grabación de la clase que se abre (firmada por una hora)");
   si(/catch \(e\) \{ console\.warn\('La grabación de la clase no se pudo cargar/.test(rep), "…y si falla, el visor sigue igual");
-  si(/select\('id, ruta, parte, segundos, marcas, texto, profesor_id'\)/.test(rep) && /addEventListener\('timeupdate', seguir\)/.test(rep) && /addEventListener\('seeked', seguir\)/.test(rep),
+  si(/select\('id, ruta, parte, segundos, marcas, texto, profesor_id, creado_en'\)/.test(rep) && /addEventListener\('timeupdate', seguir\)/.test(rep) && /addEventListener\('seeked', seguir\)/.test(rep),
     "al escucharla, el tablero sigue a la grabación (también al saltar a otro minuto)");
   const seguir = (rep.match(/function seguirGrabacion\(marcas, t\)\{[\s\S]*?\n\}/) || [""])[0];
   si(/visor-grabacion-decir'\)\.checked/.test(seguir) && /if \(decir\) \{ mirar\(n\); return; \}/.test(seguir), "…y dice las jugadas solo si se marcó «Decir las jugadas mientras escucho»");
@@ -230,6 +230,36 @@ console.log("\n=== Lo del 18/11 (2): micrófono, señal, grupos y resumen ===");
     si(JSON.stringify(frases("", 5)) === "[]", "…y sin texto no inventa nada");
   } else mal("no encontré frasesPrincipales() en repasar-clases.js");
   si(/pintarResumen\(data\.filter/.test(rep) && /pintarResumen\(\[\]\)/.test(rep), "el resumen se arma con la grabación y se borra al cambiar de clase");
+}
+
+console.log("\n=== Lo del 19/11: reacciones, pregunta, marcas y avisos ===");
+{
+  const mig = fs.readdirSync(path.join(RAIZ, "supabase/migraciones")).find((f) => /clase_marcas/.test(f));
+  const sql = mig ? leer("supabase/migraciones/" + mig) : "";
+  si(/create policy clase_marcas_select [^;]*using \(persona_id = \(select auth\.uid\(\)\)\)/.test(sql) && !/for (insert|update|all)/i.test(sql),
+    "las marcas: cada uno ve solo las suyas, y no hay política para escribirlas (las escribe la función)");
+  si(/v_hora timestamptz := now\(\)/.test(sql) && /coalesce\(yo is not null and exists/.test(sql) && /c\.ended_at is null/.test(sql),
+    "…la hora la pone la base, y solo marca quien está en una clase abierta (coalesce)");
+  si(/revoke execute on function public\.marcar_momento_de_clase\(uuid\) from public, anon/.test(sql), "…y la función no es de public ni anon");
+  const sesion = leer("js/sesion.js");
+  si(/reaccion: reaccionPresencia \|\| undefined/.test(sesion) && /pregunta_si_no: preguntaPresencia \|\| undefined/.test(sesion) && /revisarReaccionesYPregunta\(state\)/.test(sesion),
+    "las reacciones y la pregunta de sí o no van por la presencia de la clase (no se guardan)");
+  si(/rpc\("marcar_momento_de_clase", \{ p_clase: currentOpenSessionId \}\)/.test(sesion), "«Marcar este momento» llama a marcar_momento_de_clase() con la clase abierta");
+  const ll = leer("js/clase-llamada.js");
+  si(/mediaStreamTrack\.clone\(\)/.test(ll) && /monitor\.pista\.stop\(\)/.test(ll), "el aviso de hablar callado escucha una copia de la pista y la suelta al salir");
+  const rep = leer("js/repasar-clases.js");
+  const donde = (rep.match(/function dondeCae\(partes, t\)\{[\s\S]*?\n\}\n/) || [""])[0];
+  let dondeCae = null;
+  try { dondeCae = new Function(donde + "; return dondeCae;")(); } catch (e) { dondeCae = null; }
+  if (dondeCae) {
+    const partes = [{ creado_en: "2026-11-19T15:05:00Z", segundos: 300 }, { creado_en: "2026-11-19T15:10:00Z", segundos: 300 }];
+    const a = dondeCae(partes, Date.parse("2026-11-19T15:07:30Z"));
+    const b = dondeCae(partes, Date.parse("2026-11-19T15:01:00Z"));
+    const c = dondeCae(partes, Date.parse("2026-11-19T16:00:00Z"));
+    si(a && a.i === 1 && a.s === 145 && b && b.i === 0 && b.s === 55 && c === null,
+      "una marca cae en su parte y su minuto (5 s antes), y una de cuando no se grababa no lleva a ningún lado (" + JSON.stringify([a, b, c]) + ")");
+  } else mal("no encontré dondeCae() en repasar-clases.js");
+  si(/timeZone: 'America\/Costa_Rica'/.test(rep), "…y la hora de cada marca se muestra en hora de Costa Rica");
 }
 
 /* ------------------------------------------------------------------ 4 */
@@ -335,6 +365,10 @@ async function abrir(browser, { esProfe = false, respuesta, abierta = true, grab
       nombreDe: (id) => ({ "u-beto": "Beto Solís", "u-cata": "Cata Mora" })[id] || "",
       alumnosDeLaClase: () => ["u-a", "u-b", "u-c", "u-d", "u-e"],
       grupos: async (v) => { (window.__grupos = window.__grupos || []).push(v); window.__llamada.estado(true, "turno", false, v); return ""; },
+      reaccionar: async (tipo) => { (window.__reacciones = window.__reacciones || []).push(tipo); return window.__preguntaAbierta && (tipo === "si" || tipo === "no") ? "respuesta" : "reaccion"; },
+      preguntarSiNo: async (abrir) => { (window.__preguntas = window.__preguntas || []).push(abrir); return abrir ? null : { si: ["Ana"], no: ["Zoe"], faltan: [] }; },
+      marcarMomento: async () => { window.__marcas = (window.__marcas || 0) + 1; return ""; },
+      enfocarTablero: () => { window.__alTablero = (window.__alTablero || 0) + 1; return true; },
       alternarMano: async () => { mano = !mano; window.__manos.push(mano); return mano; },
       // Como sesion.js: abrir la llamada la deja grabando; terminarla, no.
       abrir: async (v) => { window.__abrir.push(v); window.__llamada.estado(v, "turno", v); return ""; },
@@ -720,6 +754,83 @@ async function pruebas(browser) {
   await r.page.waitForTimeout(400);
   a = await anuncio(r.page);
   si(await pases() === antesPases + 2 && /Volviste a la sala grande/.test(a), "…y al terminar los grupos vuelve a la sala grande: «" + a + "»");
+  si(!r.errores.length, "sin errores en la página" + (r.errores.length ? ": " + r.errores.join(" | ") : ""));
+  await r.ctx.close();
+
+  // Lo del 19/11, del lado del alumno: reacciones, la pregunta, solo el profe, marcar y saltar al tablero.
+  r = await abrir(browser, { respuesta: PASE("pase-sin-palabra") });
+  si(!(await visible(r.page, "#llamada-reacciones")) && !(await visible(r.page, "#llamada-marcar")), "fuera de la llamada no están las reacciones ni «Marcar este momento»");
+  await r.page.click("#llamada-entrar");
+  await anuncio(r.page);
+  si(await visible(r.page, "#llamada-reacciones") && await visible(r.page, "#llamada-marcar") && await visible(r.page, "#llamada-solo-profe"), "dentro: «Decirle a tu profe», «Marcar este momento» y «Solo oír al profe»");
+  await r.page.keyboard.press("Alt+Digit1");
+  a = await anuncio(r.page);
+  si(JSON.stringify(await r.page.evaluate(() => window.__reacciones)) === '["no_entendi"]' && /Le dijiste a tu profe que no entendiste/.test(a), "Alt+1 le dice al profe «no entendí» y lo confirma: «" + a + "»");
+  await r.page.evaluate(() => { window.__preguntaAbierta = true; window.__llamada.pregunta(true); });
+  a = await anuncio(r.page);
+  si(/Tu profe hace una pregunta de sí o no: contesta con Alt 3/.test(a) && await r.page.textContent('[data-reaccion="si"]') === "Sí (contestar)", "cuando el profe pregunta, se dice cómo contestar y «Sí» dice que contesta");
+  await r.page.keyboard.press("Alt+Digit3");
+  si(/Contestaste sí a la pregunta de tu profe/.test(await anuncio(r.page)), "Alt+3 contesta sí");
+  await r.page.evaluate(() => { window.__preguntaAbierta = false; window.__llamada.pregunta(false); });
+  si(/Tu profe cerró la pregunta/.test(await anuncio(r.page)), "…y se dice cuando el profe la cierra");
+  const vols = await r.page.evaluate(() => {
+    window.__v = {};
+    for (const [id, p] of window.__sala.remoteParticipants) p.audioTrackPublications.set("a", { track: { setVolume: (v) => { window.__v[id] = v; } } });
+    const c = document.getElementById("llamada-solo-profe");
+    c.checked = true;
+    c.dispatchEvent(new Event("change", { bubbles: true }));
+    return window.__v;
+  });
+  si(vols.profe === 1 && vols.ana === 0 && vols.zoe === 0, "«Solo oír al profe» deja al profe y silencia a los compañeros, solo en este aparato (" + JSON.stringify(vols) + ")");
+  await r.page.keyboard.press("Alt+KeyK");
+  si(await r.page.evaluate(() => window.__marcas) === 1 && /Marcaste este momento/.test(await anuncio(r.page)), "Alt+K marca este momento y lo dice");
+  await r.page.focus("#llamada-quien");
+  await r.page.keyboard.press("Alt+KeyT");
+  si(await r.page.evaluate(() => window.__alTablero) === 1, "Alt+T desde la llamada lleva al tablero");
+  // El tablero de mentira no se lleva el foco: se pone en un botón fuera de la llamada.
+  await r.page.evaluate(() => { const b = document.createElement("button"); b.id = "afuera"; b.textContent = "Tablero"; document.body.prepend(b); b.focus(); });
+  await r.page.keyboard.press("Alt+KeyT");
+  si(await r.page.evaluate(() => document.activeElement.id) === "llamada-mic", "…y desde otra parte, a la llamada (el micrófono)");
+  // Hablar con el micrófono apagado: un tono de prueba como «voz» en la copia de la pista.
+  const callado = await r.page.evaluate(async () => {
+    try {
+      const ctx = new AudioContext();
+      await ctx.resume();
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      g.gain.value = 0.5;
+      const dest = ctx.createMediaStreamDestination();
+      osc.connect(g).connect(dest);
+      osc.start();
+      const track = dest.stream.getAudioTracks()[0];
+      window.__sala.localParticipant.audioTrackPublications.set("mic", { track: { mediaStreamTrack: track } });
+      window.__sala.emit("LocalTrackPublished");
+      return true;
+    } catch (e) { return String(e); }
+  });
+  await r.page.waitForTimeout(2200);
+  a = await r.page.textContent("#llamada-estado");
+  si(callado === true && /Estás hablando con el micrófono apagado: nadie te oye\. Para hablar, levanta la mano con Alt Y/.test(a), "si hablas con el micrófono apagado, se dice (y sin la palabra, cómo pedirla): «" + a + "»");
+  si(!r.errores.length, "sin errores en la página" + (r.errores.length ? ": " + r.errores.join(" | ") : ""));
+  await r.ctx.close();
+
+  // Lo del 19/11, del lado del profe: las reacciones le llegan y la pregunta de sí o no.
+  r = await abrir(browser, { esProfe: true, respuesta: PASE("pase-con-palabra"), abierta: false });
+  await r.page.click("#llamada-entrar");
+  await anuncio(r.page);
+  si(!(await visible(r.page, "#llamada-reacciones")) && await visible(r.page, "#llamada-pregunta"), "el profe no tiene «Decirle a tu profe», y sí «Preguntar sí o no»");
+  await r.page.evaluate(() => window.__llamada.reaccion("u-ana2", "ana Mora", "lento", false));
+  a = await anuncio(r.page);
+  si(/ana Mora pide ir más lento/.test(a) && /pide más lento/.test(await r.page.textContent("#llamada-lista")), "al profe le llega «pide ir más lento», con su tono, y queda en la lista: «" + a + "»");
+  await r.page.click("#llamada-pregunta-btn");
+  si(JSON.stringify(await r.page.evaluate(() => window.__preguntas)) === "[true]" && /Abriste una pregunta de sí o no/.test(await anuncio(r.page))
+    && await r.page.getAttribute("#llamada-pregunta-btn", "aria-pressed") === "true", "«Preguntar sí o no» la abre (aria-pressed) y lo dice");
+  await r.page.evaluate(() => window.__llamada.respuestas({ si: ["Ana"], no: [], faltan: ["Zoe"] }));
+  si(await r.page.textContent("#llamada-pregunta-estado") === "Respuestas: 1 sí, 0 no; falta Zoe.", "…muestra el conteo y quién falta");
+  await r.page.evaluate(() => window.__llamada.respuestas({ si: ["Ana"], no: ["Zoe"], faltan: [] }));
+  si(/Contestaron todos: 1 sí, 1 no/.test(await anuncio(r.page)), "…y dice cuando contestaron todos");
+  await r.page.click("#llamada-pregunta-btn");
+  si(/Cerraste la pregunta: 1 sí, 1 no/.test(await anuncio(r.page)), "al cerrarla dice el conteo final");
   si(!r.errores.length, "sin errores en la página" + (r.errores.length ? ": " + r.errores.join(" | ") : ""));
   await r.ctx.close();
 

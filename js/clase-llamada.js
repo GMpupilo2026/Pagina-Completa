@@ -71,7 +71,8 @@
        sube; perderla baja (distinto de «alguien salió»); la señal débil es
        grave; el profe que apaga tu micrófono, dos golpes iguales. */
     const SON = { entra: [523, 784], sale: [784, 523], palabra: [659, 784, 988], finTurno: [988, 659],
-        debil: [262, 262], apagado: [440, 440] };
+        debil: [262, 262], apagado: [440, 440], reaccion: [1175, 880], pregunta: [659, 880, 659],
+        callado: [523, 523, 523], eco: [392, 330] };
     // En el celular, además, vibra (si el aparato puede): se nota sin audífonos.
     function vibrar(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* sin vibración */ } }
 
@@ -113,6 +114,12 @@
         const gruposArmar = $("llamada-grupos-armar");
         const gruposLista = $("llamada-grupos-lista");
         const gruposTerminar = $("llamada-grupos-terminar");
+        const reaccionesCaja = $("llamada-reacciones");
+        const preguntaCaja = $("llamada-pregunta");
+        const preguntaBtn = $("llamada-pregunta-btn");
+        const preguntaEstado = $("llamada-pregunta-estado");
+        const soloProfeIn = $("llamada-solo-profe");
+        const marcarBtn = $("llamada-marcar");
         let sala = null;
         let entrando = false;
         let LK = null;
@@ -163,6 +170,7 @@
             if (esProfe && !yo && sinPermiso.has(p.identity)) d.push(grabando ? "sin permiso de grabación: no puede hablar" : "sin permiso de grabación");
             if (esProfe && !yo && !esElProfe(p)) { const m = textoDeMinutos(p.identity); if (m) d.push(m); }
             if ((esProfe || yo) && senalDebil(p)) d.push("señal débil");
+            if (esProfe && !yo) { const r = reaccionReciente(p.identity); if (r) d.push(REACCIONES[r.tipo].enLista); }
             if (p.isSpeaking) d.push("hablando");
             return d;
         }
@@ -237,6 +245,15 @@
             // Probar el micrófono es antes de entrar: dentro, la llamada ya dice si se oye.
             if (probarBtn) probarBtn.hidden = dentro;
             pintarGrupos();
+            if (reaccionesCaja) reaccionesCaja.hidden = !(dentro && !esProfe);
+            if (preguntaCaja) preguntaCaja.hidden = !(dentro && esProfe);
+            if (soloProfeIn) soloProfeIn.closest("label").hidden = !(dentro && !esProfe);
+            if (marcarBtn) marcarBtn.hidden = !dentro;
+            // Con la pregunta del profe abierta, «Sí» y «No» lo dicen: contestan.
+            if (reaccionesCaja) reaccionesCaja.querySelectorAll('[data-reaccion="si"], [data-reaccion="no"]').forEach((b) => {
+                const si = b.dataset.reaccion === "si";
+                b.textContent = (si ? "Sí" : "No") + (preguntaAbierta ? " (contestar)" : "");
+            });
             const encendido = micEncendido();
             mic.setAttribute("aria-pressed", String(encendido));
             mic.textContent = ptt.checked
@@ -276,7 +293,9 @@
             if (!sala) return;
             const v = volLlamada * (vozHablando ? 0.3 : 1);
             for (const p of sala.remoteParticipants.values()) {
-                for (const pub of p.audioTrackPublications.values()) if (pub.track) pub.track.setVolume(v);
+                // «Solo oír al profe»: los compañeros, en silencio en este aparato.
+                const suyo = soloProfe && !esElProfe(p) ? 0 : v;
+                for (const pub of p.audioTrackPublications.values()) if (pub.track) pub.track.setVolume(suyo);
             }
         }
         function guardarVolumenes() {
@@ -609,6 +628,192 @@
         }
         let yoApague = 0;   // cuándo lo apagó uno mismo (para no confundirlo con el profe)
 
+
+        /* ---------- Reacciones y preguntas de sí o no ----------
+           El alumno le dice algo al profe sin interrumpir ni esperar el turno:
+           «No entendí», «Más lento», «Sí», «No» (botones, o Alt+1 a Alt+4). Al
+           profe le suena un tono corto, se le dice quién y qué, y la lista lo
+           muestra un minuto. El profe puede abrir una pregunta de sí o no: cada
+           alumno contesta con Sí o No, el profe ve el conteo y quién falta, y
+           se le dice cuando contestaron todos. Va por la presencia de la clase
+           (sesion.js), como la mano: no se guarda en ningún lado. */
+        const REACCIONES = {
+            no_entendi: { alProfe: (n) => n + " no entendió.", enLista: "no entendió", yo: "Le dijiste a tu profe que no entendiste." },
+            lento: { alProfe: (n) => n + " pide ir más lento.", enLista: "pide más lento", yo: "Le pediste a tu profe que vaya más lento." },
+            si: { alProfe: (n) => n + " dijo sí.", enLista: "dijo sí", yo: "Le dijiste sí a tu profe." },
+            no: { alProfe: (n) => n + " dijo no.", enLista: "dijo no", yo: "Le dijiste no a tu profe." },
+        };
+        const recientes = new Map();   // profe: identidad → { tipo, t }
+        let preguntaAbierta = false;   // profe: su pregunta; alumno: la de su profe
+        let respuestas = null;         // profe: { si: [], no: [], faltan: [] }
+        let todosContestaron = false;
+        const reaccionReciente = (id) => { const r = recientes.get(id); return r && Date.now() - r.t < 60000 ? r : null; };
+        async function reaccionar(tipo) {
+            if (esProfe || !op.reaccionar || !REACCIONES[tipo] || !enLlamada()) return;
+            try {
+                const como = await op.reaccionar(tipo);
+                sonido([880]);
+                anunciar(como === "respuesta" ? "Contestaste " + (tipo === "si" ? "sí" : "no") + " a la pregunta de tu profe." : REACCIONES[tipo].yo);
+            } catch (e) { console.error(e); anunciar("No se pudo mandar."); }
+        }
+        // Profe: llegó una reacción (sesion.js la saca de la presencia).
+        function recibirReaccion(id, nombre, tipo, esRespuesta) {
+            if (!esProfe || !REACCIONES[tipo]) return;
+            recientes.set(id, { tipo, t: Date.now() });
+            pintarGente();
+            sonido(SON.reaccion);
+            // Las respuestas a la pregunta no se dicen de a una: se cuentan.
+            if (!esRespuesta) anunciar(REACCIONES[tipo].alProfe(nombre || "Un alumno"));
+        }
+        function textoDelConteo(c) {
+            if (!c) return "";
+            const s = c.si.length + " sí, " + c.no.length + " no";
+            return c.faltan.length ? s + "; falta" + (c.faltan.length === 1 ? " " : "n ") + decirLista(c.faltan) : s;
+        }
+        function ponerRespuestas(c) {
+            if (!esProfe || !preguntaAbierta) return;
+            respuestas = c;
+            pintarPregunta();
+            const total = c.si.length + c.no.length;
+            if (total && !c.faltan.length && !todosContestaron) {
+                todosContestaron = true;
+                anunciar("Contestaron todos: " + textoDelConteo(c) + ".");
+            } else if (c.faltan.length) todosContestaron = false;
+        }
+        async function alternarPregunta() {
+            if (!esProfe || !op.preguntarSiNo || !enLlamada()) return;
+            const abrir = !preguntaAbierta;
+            const final = await op.preguntarSiNo(abrir);
+            preguntaAbierta = abrir;
+            todosContestaron = false;
+            respuestas = abrir ? { si: [], no: [], faltan: [] } : null;
+            pintarPregunta();
+            anunciar(abrir ? "Abriste una pregunta de sí o no: tus alumnos contestan con Alt 3 (sí) o Alt 4 (no)."
+                : "Cerraste la pregunta" + (final ? ": " + textoDelConteo(final) : "") + ".");
+        }
+        function pintarPregunta() {
+            if (!preguntaBtn) return;
+            preguntaBtn.setAttribute("aria-pressed", String(preguntaAbierta));
+            preguntaBtn.textContent = preguntaAbierta ? "Cerrar la pregunta de sí o no" : "❓ Preguntar sí o no";
+            preguntaEstado.textContent = preguntaAbierta ? "Respuestas: " + (textoDelConteo(respuestas) || "todavía ninguna") + "." : "";
+        }
+        // Alumno: su profe abrió o cerró una pregunta.
+        function ponerPregunta(abierta) {
+            if (esProfe) return;
+            const antes = preguntaAbierta;
+            preguntaAbierta = Boolean(abierta);
+            if (caja.hidden || preguntaAbierta === antes) { pintar(); return; }
+            if (preguntaAbierta) { sonido(SON.pregunta); vibrar(120); }
+            anunciar(preguntaAbierta ? "Tu profe hace una pregunta de sí o no: contesta con Alt 3 (sí) o Alt 4 (no)." : "Tu profe cerró la pregunta.");
+            pintar();
+        }
+        if (reaccionesCaja) reaccionesCaja.querySelectorAll("[data-reaccion]").forEach((b) => b.addEventListener("click", () => reaccionar(b.dataset.reaccion)));
+        if (preguntaBtn) preguntaBtn.addEventListener("click", alternarPregunta);
+
+        /* ---------- Solo oír al profe ----------
+           Para quien se distrae con las voces de los compañeros: los silencia
+           EN ESTE APARATO (nadie más se entera). Se recuerda. */
+        const CLAVE_SOLO_PROFE = "llamadaSoloProfe_v1";
+        let soloProfe = false;
+        try { soloProfe = localStorage.getItem(CLAVE_SOLO_PROFE) === "1"; } catch (e) { /* sin almacenamiento */ }
+        if (soloProfeIn) {
+            soloProfeIn.checked = soloProfe;
+            soloProfeIn.addEventListener("change", () => {
+                soloProfe = soloProfeIn.checked;
+                try { localStorage.setItem(CLAVE_SOLO_PROFE, soloProfe ? "1" : "0"); } catch (e) { /* sin almacenamiento */ }
+                aplicarVolumenDeLaLlamada();
+                anunciar(soloProfe ? "Ahora oyes solo a tu profe: tus compañeros quedan en silencio en tu aparato." : "Vuelves a oír a todos.");
+            });
+        }
+
+        /* ---------- Hablar con el micrófono apagado, y el eco ----------
+           Desde la primera vez que se enciende el micrófono en la llamada, la
+           página escucha una COPIA de esa pista (la de LiveKit se apaga al
+           callarse; la copia no) y mide el volumen, sin grabar ni mandar nada:
+           - si alguien habla un segundo y medio con el micrófono apagado, se le
+             dice (como Meet), una vez cada 30 segundos como mucho;
+           - si con el micrófono encendido LiveKit lo marca «hablando» casi
+             siempre que habla otro, es que su micrófono capta la llamada (sin
+             audífonos, el eco que oyen los demás): se le sugiere usarlos, una
+             vez por llamada. Es una sospecha, no una certeza, y así se dice. */
+        let monitor = null;   // { ctx, analizador, datos, pista, timer }
+        let callado = 0, avisoCallado = 0;
+        let ecoTotal = 0, ecoJuntos = 0, avisadoEco = false;
+        function escucharMiMicrofono() {
+            if (monitor || !sala) return;
+            const pub = [...sala.localParticipant.audioTrackPublications.values()].find((x) => x.track && x.track.mediaStreamTrack);
+            if (!pub) return;
+            try {
+                const pista = pub.track.mediaStreamTrack.clone();
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const analizador = ctx.createAnalyser();
+                analizador.fftSize = 1024;
+                ctx.createMediaStreamSource(new MediaStream([pista])).connect(analizador);
+                monitor = { ctx, analizador, datos: new Float32Array(analizador.fftSize), pista, timer: setInterval(revisarMiMicrofono, 250) };
+            } catch (e) { console.warn("No se pudo escuchar el micrófono para los avisos:", e); }
+        }
+        function revisarMiMicrofono() {
+            if (!monitor || !enLlamada()) return;
+            const encendido = micEncendido();
+            const fuerte = nivel(monitor.analizador, monitor.datos) > 0.04;
+            callado = !encendido && !apretado && fuerte ? callado + 1 : 0;
+            if (callado >= 6 && Date.now() - avisoCallado > 30000) {
+                avisoCallado = Date.now();
+                callado = 0;
+                sonido(SON.callado);
+                anunciar("Estás hablando con el micrófono apagado: nadie te oye. "
+                    + (ptt.checked ? "Mantén apretado Alt P mientras hablas." : puedoHablar() ? "Enciéndelo con Alt M." : "Para hablar, levanta la mano con Alt Y."));
+            }
+            if (!encendido || avisadoEco) return;
+            if ([...sala.remoteParticipants.values()].some((p) => p.isSpeaking)) {
+                ecoTotal++;
+                if (sala.localParticipant.isSpeaking) ecoJuntos++;
+            }
+            if (ecoTotal >= 80) {   // 20 segundos de voces de otros
+                if (ecoJuntos / ecoTotal > 0.6) {
+                    avisadoEco = true;
+                    sonido(SON.eco);
+                    anunciar("Parece que tu micrófono capta las voces de la llamada y los demás oyen eco. Usa audífonos o baja el volumen de tu aparato.");
+                }
+                ecoTotal = 0;
+                ecoJuntos = 0;
+            }
+        }
+        function dejarDeEscucharMiMicrofono() {
+            if (!monitor) return;
+            clearInterval(monitor.timer);
+            try { monitor.pista.stop(); } catch (e) { /* ya estaba */ }
+            monitor.ctx.close().catch(() => {});
+            monitor = null;
+            callado = 0;
+            ecoTotal = 0;
+            ecoJuntos = 0;
+        }
+
+        /* ---------- Marcar este momento ----------
+           Alt+K (o el botón): queda anotada la hora en la base, y en «Repasar
+           mis clases» la marca lleva la grabación a ese momento. */
+        async function marcarMomento() {
+            if (!enLlamada() || !op.marcarMomento) return;
+            const error = await op.marcarMomento();
+            if (error) { anunciar(error); return; }
+            sonido([988, 1175]);
+            anunciar("Marcaste este momento. Lo encuentras en «Repasar mis clases», con la grabación.");
+        }
+        if (marcarBtn) marcarBtn.addEventListener("click", marcarMomento);
+
+        /* ---------- Saltar entre la llamada y el tablero ----------
+           Alt+T: desde la llamada, al tablero (la casilla que tenía el foco);
+           desde cualquier otra parte, a la llamada (el micrófono, o «Entrar»).
+           Sin recorrer la página entera con el lector. */
+        function saltar() {
+            if (caja.hidden) return;
+            if (caja.contains(document.activeElement)) {
+                if (!op.enfocarTablero || !op.enfocarTablero()) anunciar("No encontré el tablero.");
+                return;
+            }
+            (enLlamada() ? mic : entrar).focus();
+        }
         async function pedir(accion, extra) {
             const body = Object.assign({ accion, profesor: profesorId }, extra || {});
             if (esProfe) { body.grupo = grupoDelProfe; body.viejos = [...gruposVistos]; }
@@ -1208,7 +1413,7 @@
                     }
                     pintar();
                 })
-                .on(E.LocalTrackPublished, () => { acomodarFuentes(); pintar(); })
+                .on(E.LocalTrackPublished, () => { acomodarFuentes(); escucharMiMicrofono(); pintar(); })
                 .on(E.LocalTrackUnpublished, () => { acomodarFuentes(); pintar(); })
                 .on(E.ConnectionQualityChanged, cambioDeCalidad)
                 .on(E.Reconnecting, () => anunciar("Se cortó la llamada. Reconectando…"))
@@ -1221,6 +1426,7 @@
                     sala = null;
                     paneos.clear();
                     calidad.clear();
+                    dejarDeEscucharMiMicrofono();
                     if (cerrandoPorElProfe) { cerrandoPorElProfe = false; mudandose = false; noVolver(); sonido(SON.sale); pintar(); return; }
                     /* Se muda de sala (otro grupo, la sala grande, las voces en su
                        lugar): entra enseguida a la que toca, sin decir «saliste».
@@ -1260,6 +1466,13 @@
             },
             KeyQ: quienEsta,
             KeyW: quienHabla,
+            KeyK: marcarMomento,
+            KeyT: saltar,
+            // Las reacciones del alumno (Sí y No contestan la pregunta del profe, si hay una).
+            Digit1: () => reaccionar("no_entendi"),
+            Digit2: () => reaccionar("lento"),
+            Digit3: () => reaccionar("si"),
+            Digit4: () => reaccionar("no"),
         };
         document.addEventListener("keydown", (e) => {
             if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
@@ -1282,10 +1495,12 @@
 
         const atajoMano = $("llamada-atajo-mano");
         if (atajoMano) atajoMano.hidden = esProfe;
+        const atajoReacciones = $("llamada-atajo-reacciones");
+        if (atajoReacciones) atajoReacciones.hidden = esProfe;
         // Al alumno la caja le sale cuando el profe abre la llamada (estado(true)).
         caja.hidden = !esProfe;
         pintar();
-        return { sincronizar, salir, anunciar, estado: ponerEstado };
+        return { sincronizar, salir, anunciar, estado: ponerEstado, reaccion: recibirReaccion, respuestas: ponerRespuestas, pregunta: ponerPregunta };
     }
 
     window.ClaseLlamada = { montar };

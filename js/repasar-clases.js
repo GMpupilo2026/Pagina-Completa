@@ -112,11 +112,12 @@ async function cargarGrabacion(claseId){
   caja.hidden = true;
   lista.textContent = '';
   pintarResumen([]);
+  pintarMarcas([]);
   if (!claseId) return;
   // Sin grabación (o si falla) el visor sigue igual: la grabación es un extra.
   let data, firmas;
   try {
-    const r = await sb.from('clase_grabaciones').select('id, ruta, parte, segundos, marcas, texto, profesor_id')
+    const r = await sb.from('clase_grabaciones').select('id, ruta, parte, segundos, marcas, texto, profesor_id, creado_en')
       .eq('class_session_id', claseId).order('parte', { ascending: true }).range(0, 199);
     if (pedido !== grabacionPedida || r.error || !r.data || !r.data.length) return;
     data = r.data;
@@ -161,6 +162,7 @@ async function cargarGrabacion(claseId){
   });
   caja.hidden = !lista.children.length;
   pintarResumen(data.filter((g) => url.has(g.ruta)));
+  cargarMarcas(claseId, data.filter((g) => url.has(g.ruta)), pedido).catch(() => {});
   const conMarcas = data.some((g) => Array.isArray(g.marcas) && g.marcas.length);
   document.getElementById('visor-grabacion-sigue').hidden = !conMarcas;
   document.getElementById('visor-grabacion-decir-caja').hidden = !conMarcas;
@@ -235,6 +237,69 @@ function pintarResumen(partes){
     frasesLista.appendChild(li);
   }
   frasesCaja.hidden = !frases.length;
+}
+
+/* ---------------- Mis marcas de la clase ----------------
+   Los momentos que marcó quien mira (Alt+K en la llamada; clase_marcas, la
+   RLS le da solo las suyas). Cada parte de la grabación se guardó al
+   terminarla (creado_en), así que empezó `segundos` antes: con eso se sabe en
+   qué parte y en qué minuto cae cada marca. Se lleva 5 segundos antes, para
+   oír la frase entera. Una marca de cuando no se estaba grabando no lleva a
+   ningún lado y lo dice. */
+function dondeCae(partes, t){
+  for (let i = 0; i < partes.length; i++) {
+    const fin = new Date(partes[i].creado_en).getTime();
+    const inicio = fin - (partes[i].segundos || 0) * 1000;
+    if (t >= inicio - 2000 && t <= fin + 10000) return { i, s: Math.max(0, Math.min((t - inicio) / 1000 - 5, (partes[i].segundos || 0))) };
+  }
+  return null;
+}
+function horaDeCR(fecha){
+  return new Date(fecha).toLocaleTimeString('es-CR', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Costa_Rica' });
+}
+async function cargarMarcas(claseId, partes, pedido){
+  const { data, error } = await sb.from('clase_marcas').select('id, marcada_en').eq('class_session_id', claseId).order('marcada_en', { ascending: true }).range(0, 199);
+  if (pedido !== grabacionPedida) return;
+  pintarMarcas(error ? [] : (data || []), partes);
+}
+function pintarMarcas(marcas, partes){
+  const caja = document.getElementById('visor-resumen-marcas');
+  const ul = document.getElementById('visor-resumen-marcas-lista');
+  if (!caja || !ul) return;
+  ul.textContent = '';
+  caja.hidden = !marcas.length;
+  marcas.forEach((m, k) => {
+    const li = document.createElement('li');
+    li.className = 'flex flex-wrap items-center gap-2';
+    const donde = dondeCae(partes || [], new Date(m.marcada_en).getTime());
+    const ir = document.createElement('button');
+    ir.type = 'button';
+    ir.className = 'text-left text-sm text-brand-800 dark:text-brand-100 underline-offset-2 hover:underline rounded px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
+    ir.textContent = 'Marca ' + (k + 1) + ', a las ' + horaDeCR(m.marcada_en)
+      + (donde ? ' (' + ((partes || []).length > 1 ? 'parte ' + (donde.i + 1) + ', ' : '') + minutoYSegundo(donde.s) + ')' : ' (no se estaba grabando)');
+    ir.disabled = !donde;
+    if (donde) ir.addEventListener('click', () => {
+      const audio = document.getElementById('grabacion-parte-' + donde.i);
+      if (!audio) return;
+      audio.currentTime = donde.s;
+      audio.play().catch(() => {});
+    });
+    const borrar = document.createElement('button');
+    borrar.type = 'button';
+    borrar.className = 'bctrl text-xs';
+    borrar.textContent = 'Borrar';
+    borrar.setAttribute('aria-label', 'Borrar la marca ' + (k + 1));
+    borrar.addEventListener('click', async () => {
+      const { error } = await sb.from('clase_marcas').delete().eq('id', m.id);
+      if (error) { anunciar('No se pudo borrar la marca.'); return; }
+      pintarMarcas(marcas.filter((x) => x.id !== m.id), partes);
+      anunciar('Borraste la marca.');
+    });
+    li.append(ir, borrar);
+    ul.appendChild(li);
+  });
+  // Las marcas también hacen visible el resumen (aunque no haya temas).
+  if (marcas.length) document.getElementById('visor-resumen').hidden = false;
 }
 
 /* Cuánto habló cada alumno en la llamada de la clase (lo midió la página del
