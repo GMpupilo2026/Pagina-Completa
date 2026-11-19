@@ -15999,7 +15999,7 @@ sus pts y su puesto actual».
   Con un recorte fijo desde arriba, una niña bajita salía con la cara chica
   abajo y mucho blanco encima. Se miraron los 46 recortes en una hoja: todos
   con la cabeza arriba y la cara del mismo tamaño. Una foto que ya viene de cabeza y
-  hombros (más ancha que 0,72, como la de Aaron González que mandó el dueño
+  hombros (más ancha que 0,72, como la de Aaron Barrantes que mandó el dueño
   por el chat) no se recorta de más: entra entera a lo alto.
 - **Hoja carta para imprimir en casa** (pedido del dueño: los imprime en
   una Brother T530, hojas carta, por ambos lados, «listos solo para
