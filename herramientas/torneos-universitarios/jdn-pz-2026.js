@@ -70,7 +70,7 @@ Pérez Zeledón» en docs/decisiones/juegos-y-torneos.md.`,
     pildora: "Juegos Deportivos Nacionales 2026",
     titulo: "Eliminatoria Cantonal de Ajedrez",
     subtitulo: "Pérez Zeledón 2026",
-    caja: ["U12 · U16 · U20", "Absoluto y Femenino"],
+    caja: ["U12 · U16 · U20", "Absoluto y Femenino", "¡Inscripción gratis!"],
     datos: [
       ["📅", "Fecha", "Domingo 22 de noviembre de 2026"],
       ["📍", "Sede", "Hotel del Sur, Pérez Zeledón"],
@@ -120,7 +120,7 @@ Pérez Zeledón» en docs/decisiones/juegos-y-torneos.md.`,
     { href: "#resultados-u12", id: "ficha-resultados-u12", color: "morado", icono: "♟️", titulo: "Resultados U12", texto: "El torneo U12: el pareo de la ronda mesa por mesa y la clasificación de U12 Absoluto y U12 Femenino.", accion: "Ver el torneo U12" },
     { href: "#resultados-u20", id: "ficha-resultados-u20", color: "azul", icono: "♞", titulo: "Resultados U20", texto: "El torneo U20 (con la U16): el pareo de la ronda mesa por mesa y la clasificación de cada categoría.", accion: "Ver el torneo U20" },
     { href: "#medallero", color: "naranja", icono: "🥇", titulo: "El podio de cada categoría", texto: "El 1.º, 2.º y 3.º lugar de cada categoría y rama, con sus puntos.", accion: "Ver el podio" },
-    { href: "#inscripciones", color: "rojo", icono: "✅", titulo: "Quién puede jugar", texto: "Quién puede inscribirse, cuánto cuesta y hasta cuándo hay tiempo.", accion: "Ver las condiciones" },
+    { href: "#inscripciones", color: "rojo", icono: "✅", titulo: "Quién puede jugar", texto: "Quién puede inscribirse, hasta cuándo hay tiempo y cuánto cuesta: es gratis.", accion: "Ver las condiciones" },
     { href: "#categorias", color: "naranja", icono: "🎂", titulo: "Categorías", texto: "U12, U16 y U20, en Absoluto y Femenino, con los años de nacimiento de cada una.", accion: "Ver las categorías" },
     { href: "#calendario", color: "naranja", icono: "🗓️", titulo: "Calendario de rondas", texto: "La hora de cada una de las cinco rondas, el almuerzo y la clausura.", accion: "Ver el calendario" },
     { href: "#reglamento", color: "azul", icono: "📋", titulo: "Reglamento", texto: "El sistema, el ritmo de juego, la tolerancia, los desempates y lo que dicen las bases al final.", accion: "Ver el reglamento" },
@@ -223,7 +223,7 @@ torneo. Los datos personales no se guardan en el navegador.`,
     </div>
     <div class="${tarjeta}">
         ${h3}Costo</h3>
-        <p class="${texto}">Sin costo para los afiliados a la ADAPZ que estén al día con la asociación.</p>
+        <p class="${texto}"><strong>Gratis.</strong> No se cobra la inscripción a los afiliados a la ADAPZ que estén al día con la asociación.</p>
     </div>
     <div class="${tarjeta} sm:col-span-2">
         ${h3}Hasta cuándo</h3>

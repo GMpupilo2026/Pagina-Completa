@@ -138,6 +138,12 @@
     const tolerancia = $$("#reglamento li").map(limpio).find((t) => /tolerancia/i.test(t)) || "";
     return (ritmo ? fin(ritmo) + " " : "") + tolerancia + " El resto está en el reglamento y en las bases.";
   }
+  // El costo, de su tarjeta en «Inscripciones» (dice «Gratis»).
+  function textoCosto() {
+    const h = $$("#inscripciones h3").find((x) => /Costo/i.test(x.textContent));
+    const costo = h ? limpio(h.nextElementSibling) : "";
+    return (costo || "Lo dicen las condiciones de la inscripción.") + " Para inscribirlo, usa el formulario «Inscribirme».";
+  }
   function quienDirige() {
     const p = $$(".cac-organiza p").find((x) => /Dirección del torneo/i.test(x.textContent));
     return p ? limpio(p).replace(/^Dirección del torneo:\s*/i, "") : "";
@@ -153,6 +159,7 @@
   const PREGUNTAS = [
     { k: "hora", icono: "🗓️", pregunta: "¿A qué hora es la próxima ronda?", texto: textoHora, pose: "reloj-de-ajedrez", acciones: [["Ver el calendario", () => tocar('a.cac-ficha[href="#calendario"]')]] },
     { k: "inscribir", icono: "📝", pregunta: "¿Cómo inscribo a mi hijo o hija?", texto: textoInscripcion, pose: "te-toca", acciones: [["Inscribirme", () => tocar("#ficha-inscribirme")]] },
+    { k: "costo", icono: "💰", pregunta: "¿Cuánto cuesta?", texto: textoCosto, pose: "te-toca", acciones: [["Inscribirme", () => tocar("#ficha-inscribirme")], ["Ver las condiciones", () => tocar('a.cac-ficha[href="#inscripciones"]')]] },
     { k: "categoria", icono: "🎂", pregunta: "¿En qué categoría juega?", texto: textoCategorias, pose: "presentando", acciones: [["Ver las categorías", () => tocar('a.cac-ficha[href="#categorias"]')]] },
     { k: "resultados", icono: "♟️", pregunta: "¿Contra quién juega y cómo va?", texto: textoResultados, pose: "tablero-italiana", acciones: [["Resultados U12", () => tocar("#ficha-resultados-u12")], ["Resultados U20", () => tocar("#ficha-resultados-u20")]] },
     { k: "congresillo", icono: "🗣️", pregunta: "¿Cuándo es el congresillo?", texto: textoCongresillo, pose: "atencion", acciones: [["Ver el calendario", () => tocar('a.cac-ficha[href="#calendario"]')]] },

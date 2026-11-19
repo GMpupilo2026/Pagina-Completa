@@ -350,4 +350,22 @@
 .jdn-inscrito-listo { justify-self: start; margin-top: 0.2rem; font-size: 0.75rem; font-weight: 800; padding: 0.1rem 0.55rem; border-radius: 999px; background: #dcfce7; color: #166534; }
 .dark .jdn-inscrito-listo { background: rgb(134 239 172 / 0.12); color: #86efac; }
 
+/* La profe Karina en la computadora (lo pidió el dueño el 18/11/2026: «que
+ * en compu se vea más grande»): el botón, el panel, el dibujo y la letra,
+ * más grandes desde 1024 px. En el celular queda como en el Centroamericano. */
+@media (min-width: 1024px) {
+  .pz .cac-profe-boton { right: 1.5rem; bottom: 1.5rem; }
+  .pz .cac-profe-cara { width: 6rem; height: 6rem; }
+  .pz .cac-profe-cara img { width: 5.25rem; transform: translateY(0.7rem); }
+  .pz .cac-profe-globo { font-size: 1.15rem; padding: 0.65rem 1rem; }
+  .pz .cac-profe-panel { right: 1.5rem; bottom: 8.5rem; width: min(32rem, calc(100vw - 3rem)); max-height: calc(100vh - 10rem); padding: 1.4rem; }
+  .pz .cac-profe-cabeza { grid-template-columns: 7.5rem minmax(0, 1fr); }
+  .pz .cac-profe-figura { width: 7.5rem; height: 12rem; }
+  .pz .cac-profe-titulo { font-size: 1.45rem; }
+  .pz .cac-profe-texto { font-size: 1.1rem; }
+  .pz .cac-profe-lista { gap: 0.6rem; margin-top: 1rem; }
+  .pz .cac-profe-pregunta { font-size: 1.125rem; min-height: 3.25rem; padding: 0.7rem 1rem; }
+  .pz .cac-profe-panel .cac-boton, .pz .cac-profe-panel .cac-jugador-boton { font-size: 1.05rem; }
+}
+
 /*! rev bfb5bbb0d2d82f9f */

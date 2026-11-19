@@ -108,6 +108,7 @@ const texto = (p, k) => p.evaluate((k) => window.JdnPzProfe.texto(k), k);
     ok("la próxima ronda es la 1, con su día y su hora del calendario", /próxima es la Ronda 1: domingo 22 de noviembre a las 8:00 a\.m\. Todas/.test(await texto(x.p, "hora")), await texto(x.p, "hora"));
     ok("la inscripción dice lo que dice su ventana", /Inscripción abierta hasta las 10:00 p\.m\./.test(await texto(x.p, "inscribir")), await texto(x.p, "inscribir"));
     ok("los resultados, en los dos torneos de Pareo", /están en «Resultados U12» y «Resultados U20»\./.test(await texto(x.p, "resultados")), await texto(x.p, "resultados"));
+    ok("el costo, de su tarjeta en «Inscripciones»: gratis", /^Gratis\. No se cobra la inscripción/.test(await texto(x.p, "costo")), await texto(x.p, "costo"));
     ok("las categorías, de su tabla", /U12: nacidos de 2015 a 2020; U16: nacidos de 2011 a 2014; U20: nacidos de 2007 a 2010/.test(await texto(x.p, "categoria")), await texto(x.p, "categoria"));
     ok("la sede, de la portada", /La sede: Hotel del Sur, Pérez Zeledón\./.test(await texto(x.p, "llegar")), await texto(x.p, "llegar"));
     ok("el ritmo y la tolerancia", /30 minutos \+ 30 segundos.*Tolerancia de 30 minutos/.test(await texto(x.p, "ritmo")), await texto(x.p, "ritmo"));
