@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261118214741
+# al-dia-con: 20261119014003
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -96,6 +96,7 @@ tabla  clase_elegidos  rls=true
 tabla  clase_enlaces  rls=true
 tabla  clase_espectadores  rls=true
 tabla  clase_grabaciones  rls=true
+tabla  clase_marcas  rls=true
 tabla  clase_plan_hecho  rls=true
 tabla  clase_sacados  rls=true
 tabla  class_attendance  rls=true
@@ -1205,6 +1206,10 @@ columna  clase_grabaciones.profesor_id  uuid
 columna  clase_grabaciones.ruta  text
 columna  clase_grabaciones.segundos  integer
 columna  clase_grabaciones.texto  text
+columna  clase_marcas.class_session_id  uuid
+columna  clase_marcas.id  uuid
+columna  clase_marcas.marcada_en  timestamp with time zone
+columna  clase_marcas.persona_id  uuid
 columna  clase_plan_hecho.class_session_id  uuid
 columna  clase_plan_hecho.created_at  timestamp with time zone
 columna  clase_plan_hecho.plan_item_id  uuid
@@ -3629,6 +3634,7 @@ funcion  marca_de_diagnostico(p_id uuid)  definer  anon=false  auth=true
 funcion  marcador_del_salon(p_periodo text)  definer  anon=false  auth=true
 funcion  marcar_aviso_leido(p_aviso uuid)  definer  anon=false  auth=true
 funcion  marcar_coordinador(p_profesor uuid, p_valor boolean)  definer  anon=false  auth=true
+funcion  marcar_momento_de_clase(p_clase uuid)  definer  anon=false  auth=true
 funcion  marcar_partida_revisada(p_room_id uuid)  definer  anon=false  auth=true
 funcion  marcar_supervisor(p_persona uuid, p_valor boolean)  definer  anon=false  auth=true
 funcion  marcar_vision(p_persona uuid, p_vision text)  definer  anon=false  auth=true
@@ -4069,6 +4075,9 @@ politica  clase_espectadores  clase_espectadores_select  SELECT
 politica  clase_espectadores  verificacion_en_dos_pasos  ALL  restrictiva
 politica  clase_grabaciones  clase_grabaciones_exige_acceso_sel  SELECT  restrictiva
 politica  clase_grabaciones  clase_grabaciones_select  SELECT
+politica  clase_marcas  clase_marcas_delete  DELETE
+politica  clase_marcas  clase_marcas_exige_acceso_sel  SELECT  restrictiva
+politica  clase_marcas  clase_marcas_select  SELECT
 politica  clase_plan_hecho  clase_plan_hecho_de_quien_da_la_clase  ALL
 politica  clase_sacados  clase_sacados_lee  SELECT
 politica  clase_sacados  verificacion_en_dos_pasos  ALL  restrictiva
@@ -4899,6 +4908,9 @@ indice  clase_grabaciones  clase_grabaciones_creado_idx
 indice  clase_grabaciones  clase_grabaciones_pkey
 indice  clase_grabaciones  clase_grabaciones_profesor_idx
 indice  clase_grabaciones  clase_grabaciones_ruta_key
+indice  clase_marcas  clase_marcas_clase_idx
+indice  clase_marcas  clase_marcas_persona_clase_idx
+indice  clase_marcas  clase_marcas_pkey
 indice  clase_plan_hecho  clase_plan_hecho_item_idx
 indice  clase_plan_hecho  clase_plan_hecho_pkey
 indice  clase_sacados  clase_sacados_alumno
@@ -5757,6 +5769,13 @@ grant  clase_grabaciones  authenticated  SELECT
 grant  clase_grabaciones  authenticated  TRIGGER
 grant  clase_grabaciones  authenticated  TRUNCATE
 grant  clase_grabaciones  authenticated  UPDATE
+grant  clase_marcas  authenticated  DELETE
+grant  clase_marcas  authenticated  INSERT
+grant  clase_marcas  authenticated  REFERENCES
+grant  clase_marcas  authenticated  SELECT
+grant  clase_marcas  authenticated  TRIGGER
+grant  clase_marcas  authenticated  TRUNCATE
+grant  clase_marcas  authenticated  UPDATE
 grant  clase_plan_hecho  authenticated  DELETE
 grant  clase_plan_hecho  authenticated  INSERT
 grant  clase_plan_hecho  authenticated  REFERENCES
