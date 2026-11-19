@@ -16075,9 +16075,9 @@ sus pts y su puesto actual».
   del dorso dice ORGANIZACIÓN, ARBITRAJE o ASISTENTE. Sebastián va como
   «Asistente» a secas, sin «árbitro». Su QR lleva a la página del torneo, y lo dice
   (`{Texto QR}`, un texto por fila); en el dorso va su avatar (`dorso.poseColumna`):
-  Karina la organizadora, y el profe Oscar (árbitro, presentando y te toca)
-  los árbitros principales Jean Quesada Arauz (AF) y Oscar Angulo Cubero (IA)
-  y el asistente Sebastián Mora Chavarría. Con una foto que no tiene fondo
+  Karina (la organizadora) y Oscar Angulo Cubero (IA), cada uno con su avatar
+  de árbitro (lo pidió el dueño); Jean Quesada Arauz (AF), el profe Oscar
+  presentando, y el asistente Sebastián Mora Chavarría, el profe Oscar «te toca». Con una foto que no tiene fondo
   blanco no se busca la cabeza (lo oscuro de una sala no es el pelo). Cada foto
   se guarda por el QR **y el nombre** (`claveFila`): el personal comparte el
   QR, y con el QR solo los tres árbitros quedaban con la misma foto. De lado

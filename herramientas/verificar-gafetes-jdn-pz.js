@@ -177,6 +177,10 @@ async function aceptar(page, boton) {
   const personal = await page.inputValue("#g-personal");
   igual("el personal del torneo viene en el diseño: la organizadora, dos árbitros principales y el asistente",
     personal.split(/\r?\n/).map((l) => l.split("|")[0].trim()), ["Organizadora", "Árbitro principal", "Árbitro principal", "Asistente"]);
+  igual("Karina y Oscar con su avatar de árbitro; las imágenes del dorso, cargadas",
+    [personal.split(/\r?\n/).map((l) => l.split("|")[4].trim()),
+      await page.evaluate(() => ["karina-arbitro", "oscar-arbitro", "oscar-presentando", "oscar-te-toca"].every((k) => (window.Gafetes._estado().diseno.imagenes[k] || {}).datos))],
+    [["karina-arbitro", "oscar-presentando", "oscar-arbitro", "oscar-te-toca"], true]);
   // Las pruebas de los jugadores, sin el personal; el personal se prueba al final.
   await page.fill("#g-personal", "");
 

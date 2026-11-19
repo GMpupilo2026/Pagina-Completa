@@ -91,11 +91,13 @@
   const POSES_OSCAR = ["arbitro", "presentando", "te-toca"];
   /* El personal del torneo (pedido del dueño): uno por renglón,
      «Rol | Apellidos | Nombre | Título | Avatar». El rol va en la franja, el
-     título debajo del nombre, y el avatar (karina u oscar-<pose>) en el dorso. */
+     título debajo del nombre, y el avatar en el dorso: karina (presentando),
+     karina-arbitro u oscar-<pose>. Karina y Oscar, cada uno con su avatar de
+     árbitro (lo pidió el dueño); Jean, el profe Oscar presentando. */
   const PERSONAL_PZ = [
-    "Organizadora | Rojas | Itzel Karina |  | karina",
-    "Árbitro principal | Quesada Arauz | Jean | Árbitro FIDE (AF) | oscar-arbitro",
-    "Árbitro principal | Angulo Cubero | Oscar | Árbitro Internacional (IA) | oscar-presentando",
+    "Organizadora | Rojas | Itzel Karina |  | karina-arbitro",
+    "Árbitro principal | Quesada Arauz | Jean | Árbitro FIDE (AF) | oscar-presentando",
+    "Árbitro principal | Angulo Cubero | Oscar | Árbitro Internacional (IA) | oscar-arbitro",
     "Asistente | Mora Chavarría | Sebastián |  | oscar-te-toca",
   ].join("\n");
   const POSES_KARINA = ["presentando", "te-toca", "reloj-de-ajedrez", "caballo", "muy-bien", "tu-puedes", "campeones", "hola"];
@@ -154,7 +156,7 @@
     d.codigo.plantilla = "{Grupo}";
     // Para la Brother T530 del dueño: hojas carta, frente y dorso, listas para cortar.
     d.salida = { separarPor: "", formato: "carta", dorsoX: 0, dorsoY: 0 };
-    for (const [id, ruta] of [["logoIzq", "img/adapz/logo.jpg"], ["logoDer", "img/adapz/ccdr-pz.jpg"], ["ilustracion", "img/avatar-profe-karina/bienvenidos.webp"], ["ilustracionDorso", "img/avatar-profe-karina/presentando.webp"], ...POSES_KARINA.slice(1).map((n, i) => ["karina" + (i + 2), "img/avatar-profe-karina/" + n + ".webp"]), ...POSES_OSCAR.map((n) => ["oscar-" + n, "img/avatar-profe-oscar/" + n + ".webp"])]) {
+    for (const [id, ruta] of [["logoIzq", "img/adapz/logo.jpg"], ["logoDer", "img/adapz/ccdr-pz.jpg"], ["ilustracion", "img/avatar-profe-karina/bienvenidos.webp"], ["ilustracionDorso", "img/avatar-profe-karina/presentando.webp"], ...POSES_KARINA.slice(1).map((n, i) => ["karina" + (i + 2), "img/avatar-profe-karina/" + n + ".webp"]), ...POSES_OSCAR.map((n) => ["oscar-" + n, "img/avatar-profe-oscar/" + n + ".webp"]), ["karina-arbitro", "img/avatar-profe-karina/arbitro.webp"]]) {
       try { d.imagenes[id] = { nombre: ruta.split("/").pop(), datos: await aDatos(await (await fetch(ruta)).blob()) }; } catch (e) { /* sin esa imagen */ }
     }
     return d;
