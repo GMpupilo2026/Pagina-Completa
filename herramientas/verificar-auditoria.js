@@ -31,6 +31,8 @@ const VIGILADAS = [
   "coordinador_profesores", "coordinador_funciones_quitadas", "supervisor_cuentas",
   "permisos_grabar_voz",
   "academias", "academia_miembros", "academia_ia", "arbitraje_consulta_config", "preparacion_rivales_profesores",
+  // A quién se le encendió el entrenador de IA (cada explicación cuesta dinero).
+  "entrenador_ia_personas",
   // El enlace secreto de la página de la familia: quien lo tiene ve a un alumno.
   "familia_enlaces",
   // A qué profesor se le asigna un grupo de un proyecto (y con eso, sus planes).

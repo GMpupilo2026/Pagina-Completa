@@ -146,6 +146,7 @@
             // Solo al profe: quién no tiene el permiso de su familia, y que mientras
             // se graba no puede hablar (así sabe por qué, y puede pausar la grabación).
             if (esProfe && !yo && sinPermiso.has(p.identity)) d.push(grabando ? "sin permiso de grabación: no puede hablar" : "sin permiso de grabación");
+            if (esProfe && !yo && !esElProfe(p)) { const m = textoDeMinutos(p.identity); if (m) d.push(m); }
             if (p.isSpeaking) d.push("hablando");
             return d;
         }
@@ -204,6 +205,7 @@
                 for (const c of ["bg-white", "hover:bg-brand-200", "dark:bg-brand-800", "dark:hover:bg-brand-700", "text-brand-800", "dark:text-white"]) b.classList.toggle(c, !elegido);
             });
             pttCaja.hidden = !dentro;
+            if (volumenes) volumenes.hidden = !dentro;
             const encendido = micEncendido();
             mic.setAttribute("aria-pressed", String(encendido));
             mic.textContent = ptt.checked
@@ -211,29 +213,72 @@
                 : (encendido ? "🎙️ Micrófono encendido" : "🔇 Micrófono apagado");
         }
 
-        /* La voz de la página («Activar voz», el recuadro adaptado) dice las
-           jugadas con speechSynthesis: mientras habla, la llamada baja, para que
-           la voz del profe no tape la jugada. */
-        function volumenDeLaLlamada(v) {
+        /* Dos volúmenes aparte, cada uno con su barra y recordados en este
+           aparato: el de la llamada (las voces de los demás) y el de la voz de
+           la página que dice las jugadas («Activar voz», el recuadro adaptado,
+           con speechSynthesis). El de la voz vale solo mientras se está en la
+           llamada: es donde está su barra.
+           Y mientras esa voz habla, la llamada baja (al 30 % de su volumen), para
+           que la voz del profe no tape la jugada. */
+        const volLlamadaIn = $("llamada-vol-llamada");
+        const volVozIn = $("llamada-vol-voz");
+        const volumenes = $("llamada-volumenes");
+        const CLAVE_VOL = "llamadaVolumenes_v1";
+        let volLlamada = 1;
+        let volVoz = 1;
+        let vozHablando = false;
+        try {
+            const v = JSON.parse(localStorage.getItem(CLAVE_VOL) || "null");
+            if (v && isFinite(v.llamada)) volLlamada = Math.min(1, Math.max(0, v.llamada));
+            if (v && isFinite(v.voz)) volVoz = Math.min(1, Math.max(0, v.voz));
+        } catch (e) { /* sin almacenamiento */ }
+        function pintarVolumenes() {
+            if (!volLlamadaIn) return;
+            for (const [input, v, salida] of [[volLlamadaIn, volLlamada, "llamada-vol-llamada-valor"], [volVozIn, volVoz, "llamada-vol-voz-valor"]]) {
+                const pct = Math.round(v * 100);
+                input.value = String(pct);
+                input.setAttribute("aria-valuetext", pct + " %");
+                $(salida).textContent = pct + " %";
+            }
+        }
+        function aplicarVolumenDeLaLlamada() {
             if (!sala) return;
+            const v = volLlamada * (vozHablando ? 0.3 : 1);
             for (const p of sala.remoteParticipants.values()) {
                 for (const pub of p.audioTrackPublications.values()) if (pub.track) pub.track.setVolume(v);
             }
+        }
+        function guardarVolumenes() {
+            try { localStorage.setItem(CLAVE_VOL, JSON.stringify({ llamada: volLlamada, voz: volVoz })); } catch (e) { /* sin almacenamiento */ }
+        }
+        if (volLlamadaIn) {
+            volLlamadaIn.addEventListener("input", () => { volLlamada = Number(volLlamadaIn.value) / 100; pintarVolumenes(); aplicarVolumenDeLaLlamada(); guardarVolumenes(); });
+            volVozIn.addEventListener("input", () => { volVoz = Number(volVozIn.value) / 100; pintarVolumenes(); guardarVolumenes(); });
+            pintarVolumenes();
         }
         if (window.speechSynthesis && !window.speechSynthesis.__llamada) {
             const original = window.speechSynthesis.speak.bind(window.speechSynthesis);
             window.speechSynthesis.speak = function (u) {
                 try {
-                    if (enLlamada() && u) {
-                        volumenDeLaLlamada(0.3);
-                        const volver = () => setTimeout(() => { if (!window.speechSynthesis.speaking) volumenDeLaLlamada(1); }, 150);
-                        u.addEventListener("end", volver);
-                        u.addEventListener("error", volver);
-                    }
+                    const ll = window.speechSynthesis.__llamada;
+                    if (u && ll && ll.enLlamada()) ll.alHablar(u);
                 } catch (e) { /* nunca romper la voz por la llamada */ }
                 return original(u);
             };
-            window.speechSynthesis.__llamada = true;
+        }
+        // Lo que hace la voz con ESTA llamada (el envoltorio se pone una sola vez).
+        if (window.speechSynthesis) {
+            window.speechSynthesis.__llamada = {
+                enLlamada,
+                alHablar(u) {
+                    u.volume = Math.min(1, Math.max(0, (typeof u.volume === "number" ? u.volume : 1) * volVoz));
+                    vozHablando = true;
+                    aplicarVolumenDeLaLlamada();
+                    const volver = () => setTimeout(() => { if (!window.speechSynthesis.speaking) { vozHablando = false; aplicarVolumenDeLaLlamada(); } }, 150);
+                    u.addEventListener("end", volver);
+                    u.addEventListener("error", volver);
+                },
+            };
         }
 
         async function pedir(accion) {
@@ -242,8 +287,9 @@
             return data;
         }
 
-        async function alEntrar() {
+        async function alEntrar(reconectando) {
             if (entrando || enLlamada()) return;
+            if (reconectando !== true) { quiereEstar = true; intentos = 0; }
             entrando = true;
             entrar.disabled = true;
             entrar.textContent = "Entrando…";
@@ -277,14 +323,17 @@
                         : pase.puede_hablar ? "Tienes la palabra: enciende el micrófono con Alt M."
                         : "Para hablar, levanta la mano con Alt Y."));
                 if (!esProfe && grabando) anunciar("Esta clase se está grabando." + (permisoVoz ? "" : " " + SIN_PERMISO));
-                if (esProfe) { sincronizar(); refrescarPermisos(); if (grabando) empezarAGrabar(); }
+                if (esProfe) { sincronizar(); refrescarPermisos(); empezarAContar(); if (grabando) empezarAGrabar(); }
                 pintar();
-                mic.focus();
+                // Al volver solo no se mueve el foco: puede estar en el tablero.
+                if (reconectando !== true) mic.focus();
             } catch (e) {
                 console.error(e);
                 anunciar(e.message || "No se pudo entrar a la llamada.");
-                if (sala) { try { await sala.disconnect(); } catch (_) { /* nada */ } }
+                // Primero se suelta: así su «Disconnected» llega como sala vieja y no corta los reintentos.
+                const fallida = sala;
                 sala = null;
+                if (fallida) { try { await fallida.disconnect(); } catch (_) { /* nada */ } }
                 pintar();
             } finally {
                 entrando = false;
@@ -374,12 +423,75 @@
         // Si la ventana pierde el foco con la tecla apretada, nunca llega el keyup: se calla.
         window.addEventListener("blur", () => { if (apretado) callarse(); });
 
+        /* ---------- Los minutos que habló cada alumno ----------
+           Los mide la página del profe mientras él está en la llamada: cada
+           segundo, a cada alumno que LiveKit marca «hablando» se le suma ese
+           segundo. Se ven en la lista y en Alt+Q («habló 3 minutos») y cada
+           minuto (y al salir) se mandan a la base (sumar_segundos_hablados:
+           solo el profe de la clase, solo a quienes tienen asistencia). Lo
+           que no se pudo mandar se vuelve a intentar en la tanda siguiente. */
+        const hablado = new Map();   // identidad → segundos en esta clase (los de esta página)
+        let porMandar = {};          // identidad → segundos todavía sin guardar
+        let contador = null;
+        let ultimoEnvio = 0;
+        let claseContada = null;     // la clase viaja con la tanda: la última se manda al cerrarla
+        function textoDeMinutos(id) {
+            const s = hablado.get(id) || 0;
+            if (s < 60) return "";
+            const m = Math.floor(s / 60);
+            return "habló " + m + (m === 1 ? " minuto" : " minutos");
+        }
+        async function mandarMinutos() {
+            if (!esProfe || !op.sumarHablado) return;
+            const tanda = porMandar;
+            if (!Object.keys(tanda).length) return;
+            porMandar = {};
+            ultimoEnvio = Date.now();
+            const ok = await op.sumarHablado(claseContada, tanda);
+            // No se pudo: vuelve a la cola, sumado a lo que se juntó mientras tanto.
+            if (!ok) for (const [id, s] of Object.entries(tanda)) porMandar[id] = (porMandar[id] || 0) + s;
+        }
+        function contarQuienHabla() {
+            if (!enLlamada()) return;
+            let cambioMinuto = false;
+            for (const p of sala.remoteParticipants.values()) {
+                if (!p.isSpeaking || esElProfe(p)) continue;
+                const antes = hablado.get(p.identity) || 0;
+                hablado.set(p.identity, antes + 1);
+                porMandar[p.identity] = (porMandar[p.identity] || 0) + 1;
+                if (Math.floor((antes + 1) / 60) !== Math.floor(antes / 60)) cambioMinuto = true;
+            }
+            if (cambioMinuto) pintarGente();
+            if (Date.now() - ultimoEnvio >= 60000) mandarMinutos();
+        }
+        async function empezarAContar() {
+            if (!esProfe || contador || !op.sumarHablado) return;
+            const clase = op.claseActual ? op.claseActual() : null;
+            if (!clase) return;
+            if (clase !== claseContada) { hablado.clear(); porMandar = {}; }
+            claseContada = clase;
+            ultimoEnvio = Date.now();
+            contador = setInterval(contarQuienHabla, 1000);
+            // Lo que ya se habló en esta clase (si el profe recargó la página o volvió a entrar).
+            const antes = op.hablaronAntes ? await op.hablaronAntes(clase) : null;
+            if (antes && claseContada === clase) {
+                for (const [id, s] of antes) hablado.set(id, Math.max(hablado.get(id) || 0, s + (porMandar[id] || 0)));
+                pintarGente();
+            }
+        }
+        function dejarDeContar() {
+            clearInterval(contador);
+            contador = null;
+            mandarMinutos();
+        }
+
         function quienEsta() {
             if (!enLlamada()) { anunciar("No estás en la llamada."); return; }
             const otros = enOrden().filter((f) => !f.yo).map((f) => f.p);
             if (!otros.length) { anunciar("Estás solo en la llamada."); return; }
             const partes = otros.map((p) => nombreDe(p) + (esElProfe(p) ? ", el profe" : tienePalabra(p) ? ", con la palabra" : "")
-                + (esProfe && sinPermiso.has(p.identity) ? ", sin permiso de grabación" : ""));
+                + (esProfe && sinPermiso.has(p.identity) ? ", sin permiso de grabación" : "")
+                + (esProfe && !esElProfe(p) && textoDeMinutos(p.identity) ? ", " + textoDeMinutos(p.identity) : ""));
             anunciar("En la llamada hay " + (otros.length + 1) + " contigo: " + partes.join("; ") + ".");
         }
 
@@ -391,7 +503,53 @@
         }
 
         async function salir() {
+            noVolver();
             if (sala) { try { await sala.disconnect(); } catch (e) { console.error(e); } }
+        }
+
+        /* ---------- Volver sola a la llamada ----------
+           LiveKit ya aguanta los cortes cortos («Reconectando…»). Si igual se cae
+           del todo (se fue la red un rato, el celular cambió de red), la página
+           vuelve a entrar sola: en 2, 4, 8, 16 y 30 segundos, y si el aparato
+           dice que no hay red, espera a que vuelva (evento «online»). No vuelve
+           si la persona salió, si el profe la sacó o terminó la llamada, ni si
+           entró con la misma cuenta en otra pestaña (se pelearían). Al volver no
+           mueve el foco; el profe, si estaba grabando, sigue en una parte nueva. */
+        let quiereEstar = false;   // entró y no salió por su cuenta
+        let intentos = 0;
+        let reintento = null;
+        let esperandoRed = false;
+        function noVolver() {
+            quiereEstar = false;
+            intentos = 0;
+            clearTimeout(reintento);
+            reintento = null;
+        }
+        function volverALaLlamada() {
+            if (!quiereEstar || !abierta || reintento || entrando || enLlamada()) return;
+            if (!navigator.onLine) {
+                anunciar("Se cayó la llamada y no hay conexión. La página vuelve a entrar en cuanto regrese la conexión.");
+                if (!esperandoRed) {
+                    esperandoRed = true;
+                    window.addEventListener("online", () => { esperandoRed = false; intentos = 0; volverALaLlamada(); }, { once: true });
+                }
+                return;
+            }
+            if (intentos >= 5) {
+                anunciar("No se pudo volver a la llamada. Entra con «Entrar a la llamada» cuando tengas buena conexión.");
+                noVolver();
+                return;
+            }
+            const espera = Math.min(30000, 2000 * 2 ** intentos);
+            intentos++;
+            anunciar("Se cayó la llamada. Volviendo a entrar en " + Math.round(espera / 1000) + " segundos…");
+            reintento = setTimeout(async () => {
+                reintento = null;
+                if (!quiereEstar || !abierta) return;
+                await alEntrar(true);
+                if (enLlamada()) intentos = 0;
+                else volverALaLlamada();
+            }, espera);
         }
 
         /* El profe termina la llamada: se cierra para todos. La base deja de dar
@@ -455,19 +613,36 @@
         /* La posición del tablero en cada momento de la parte: la clase no guarda
            la hora de cada jugada, así que la anota quien graba. Cada segundo se
            mira la posición que ve la clase y, si cambió, se anota {s, fen}. En
-           «Repasar mis clases» el tablero sigue la grabación con esto. */
+           «Repasar mis clases» el tablero sigue la grabación con esto.
+
+           Y los TEMAS, solos: el profe no marca nada. Cada segundo se mira
+           también de qué va la clase (`op.tema()`: la diapositiva, la práctica,
+           el calentamiento, el tiempo para pensar o una posición nueva) y, si
+           cambió, la marca lleva `tema` (el texto del capítulo). La primera marca
+           de cada parte lo lleva siempre: así cada parte dice dónde empieza. */
         const MARCAS_MAX = 3600;
         function anotarPosicion(parte) {
-            if (!op.posicion || !parte || parte.marcas.length >= MARCAS_MAX) return;
-            const fen = op.posicion();
-            if (!fen || fen === parte.ultimaFen) return;
-            parte.ultimaFen = fen;
-            parte.marcas.push({ s: Math.round((Date.now() - parte.desde) / 100) / 10, fen });
+            if (!parte || parte.marcas.length >= MARCAS_MAX) return;
+            const fen = op.posicion ? op.posicion() : null;
+            const t = op.tema ? op.tema() : null;
+            const clave = t && t.clave ? String(t.clave) : null;
+            const temaNuevo = clave && clave !== parte.ultimoTema;
+            if ((!fen || fen === parte.ultimaFen) && !temaNuevo) return;
+            const marca = { s: Math.round((Date.now() - parte.desde) / 100) / 10, fen: fen || parte.ultimaFen };
+            if (temaNuevo) {
+                // Volver a algo que ya se vio en la clase (la misma posición después de una diapositiva).
+                marca.tema = String(grab && grab.temasVistos.has(clave) && parte.ultimoTema ? "De vuelta a: " + t.texto : t.texto).slice(0, 160);
+                parte.ultimoTema = clave;
+                if (grab) grab.temasVistos.add(clave);
+            }
+            if (!marca.fen) delete marca.fen;
+            parte.ultimaFen = fen || parte.ultimaFen;
+            parte.marcas.push(marca);
         }
         function nuevaParte() {
             const rec = new MediaRecorder(grab.destino.stream, { mimeType: grab.tipo, audioBitsPerSecond: 32000 });
             const trozos = [];
-            const parte = { desde: Date.now(), marcas: [], ultimaFen: null };
+            const parte = { desde: Date.now(), marcas: [], ultimaFen: null, ultimoTema: null };
             const clase = grab.clase;
             anotarPosicion(parte);
             rec.ondataavailable = (e) => { if (e.data && e.data.size) trozos.push(e.data); };
@@ -494,7 +669,7 @@
                grabación (y el aviso para todos) y la clase sigue con voz. */
             try {
                 const Ctx = window.AudioContext || window.webkitAudioContext;
-                grab = { ctx: new Ctx(), fuentes: new Map(), rec: null, timer: null, clase, tipo };
+                grab = { ctx: new Ctx(), fuentes: new Map(), rec: null, timer: null, clase, tipo, temasVistos: new Set() };
                 grab.destino = grab.ctx.createMediaStreamDestination();
                 acomodarFuentes();
                 nuevaParte();
@@ -596,6 +771,7 @@
                 anunciar("Tu profe abrió la llamada de la clase: entra con «Entrar a la llamada».");
             } else if (!abierta && (antes || !caja.hidden)) {
                 const estabaDentro = Boolean(sala);
+                noVolver();
                 cerrandoPorElProfe = true;
                 salir();
                 caja.hidden = true;
@@ -618,7 +794,10 @@
                 .on(E.ParticipantDisconnected, (p) => { sonido(SON.sale); anunciar("Salió de la llamada " + nombreDe(p) + "."); pintarGente(); })
                 // Quién habla cambia a cada rato: solo se repinta la lista (no se anuncia).
                 .on(E.ActiveSpeakersChanged, pintarGente)
-                .on(E.TrackSubscribed, (track) => { if (track.kind === "audio") audios.appendChild(track.attach()); acomodarFuentes(); })
+                .on(E.TrackSubscribed, (track) => {
+                    if (track.kind === "audio") { audios.appendChild(track.attach()); aplicarVolumenDeLaLlamada(); }
+                    acomodarFuentes();
+                })
                 .on(E.TrackUnsubscribed, (track) => { track.detach().forEach((el) => el.remove()); acomodarFuentes(); })
                 .on(E.ParticipantPermissionsChanged, (antes, p) => {
                     pintarGente();   // «con la palabra» en la lista, también de los demás
@@ -640,12 +819,22 @@
                 .on(E.Reconnecting, () => anunciar("Se cortó la llamada. Reconectando…"))
                 .on(E.Reconnected, () => anunciar("Volviste a la llamada."))
                 .on(E.Disconnected, (motivo) => {
+                    if (room !== sala) return;   // una sala vieja (un intento que falló) que terminó de cerrarse
                     dejarDeGrabar();   // la última parte se sube igual
+                    dejarDeContar();   // y los últimos segundos hablados
                     sonido(SON.sale);
                     audios.textContent = "";
                     sala = null;
-                    if (cerrandoPorElProfe) { cerrandoPorElProfe = false; pintar(); return; }
-                    anunciar(LK && motivo === LK.DisconnectReason.PARTICIPANT_REMOVED ? "Tu profe te sacó de la llamada." : "Saliste de la llamada.");
+                    if (cerrandoPorElProfe) { cerrandoPorElProfe = false; noVolver(); pintar(); return; }
+                    const R = (LK && LK.DisconnectReason) || {};
+                    const sacado = motivo === R.PARTICIPANT_REMOVED;
+                    // Se cayó sin que nadie lo pidiera: vuelve sola.
+                    const porSuCuenta = [R.CLIENT_INITIATED, R.PARTICIPANT_REMOVED, R.ROOM_DELETED, R.DUPLICATE_IDENTITY].includes(motivo);
+                    if (quiereEstar && abierta && !porSuCuenta) { pintar(); volverALaLlamada(); return; }
+                    noVolver();
+                    anunciar(sacado ? "Tu profe te sacó de la llamada."
+                        : motivo === R.DUPLICATE_IDENTITY ? "Saliste de la llamada: entraste con tu cuenta en otra pestaña o aparato."
+                        : "Saliste de la llamada.");
                     pintar();
                     entrar.focus();
                 });
@@ -658,7 +847,8 @@
             KeyY: async () => {
                 if (esProfe || !op.alternarMano) return;
                 const arriba = await op.alternarMano();
-                anunciar(arriba ? "Levantaste la mano: tu profe la ve en su lista." : "Bajaste la mano.");
+                // El lugar en la fila lo dice sesion.js en cuanto llega la presencia.
+                anunciar(arriba ? "Levantaste la mano." : "Bajaste la mano.");
             },
             KeyQ: quienEsta,
             KeyW: quienHabla,
@@ -680,7 +870,7 @@
         habla.addEventListener("click", quienHabla);
         salirBtn.addEventListener("click", () => (esProfe ? terminar() : salir()));
         // Cerrar la pestaña también cuelga (si no, LiveKit tarda en notar que se fue).
-        window.addEventListener("pagehide", () => { if (sala) sala.disconnect(); });
+        window.addEventListener("pagehide", () => { noVolver(); if (sala) sala.disconnect(); });
 
         const atajoMano = $("llamada-atajo-mano");
         if (atajoMano) atajoMano.hidden = esProfe;

@@ -49,8 +49,39 @@ window.Certificado = (function () {
   const VALIDO = "border-green-700 bg-green-50 text-green-900 dark:border-green-400 dark:bg-brand-900 dark:text-green-200";
   const ANULADO = "border-red-700 bg-red-50 text-red-900 dark:border-red-300 dark:bg-brand-900 dark:text-red-200";
 
+  // El diploma de un rango (curso 'rango:<id>'): otro papel, sin profesor (el
+  // examen lo arma la base sola) y con la pieza del rango, de js/rangos.js.
+  function pintarDiploma(c, codigo, id) {
+    const R = window.Rangos;
+    const lista = R ? R.RANGOS : [];
+    const i = lista.findIndex((r) => r.id === id);
+    const papel = $("certificado");
+    papel.classList.add("es-diploma", "rango-" + id);
+    papel.querySelector(".certificado-marco").hidden = true;
+    $("diploma").hidden = false;
+    $("diploma-alumno").textContent = c.alumno_nombre;
+    $("diploma-rango").textContent = c.curso_titulo;
+    // La pieza va rellena (♞ y no ♘): el metal del rango se pinta adentro de la
+    // letra, y la blanca es solo el contorno. El dragón es un emoji y queda igual.
+    const pieza = i >= 0 ? lista[i].pieza : "♔";
+    const cp = pieza.codePointAt(0);
+    $("diploma-pieza").textContent = cp >= 0x2654 && cp <= 0x2659 ? String.fromCodePoint(cp + 6) : pieza;
+    $("diploma-nivel").textContent = i >= 0 ? `Nivel ${i + 1} de ${lista.length}` : "";
+    $("diploma-fecha").textContent = fecha(c.emitido_at);
+    $("diploma-codigo").textContent = codigo;
+    if (c.academia_nombre) {
+      $("diploma-academia").textContent = c.academia_nombre;
+      $("diploma-academia-fila").hidden = false;
+    }
+    const dibujo = qr(enlace(codigo));
+    if (dibujo) $("diploma-qr").replaceChildren(dibujo);
+  }
+
   function pintar(c, codigo) {
+    const rango = String(c.curso || "").startsWith("rango:") ? String(c.curso).slice(6) : null;
+    if (rango) pintarDiploma(c, codigo, rango);
     $("cert-alumno").textContent = c.alumno_nombre;
+    if (rango) $("cert-que").textContent = "aprobó el examen del";
     $("cert-curso").textContent = c.curso_titulo;
     $("cert-lecciones").textContent = c.lecciones ? `${c.lecciones} ${c.lecciones === 1 ? "lección" : "lecciones"}` : "";
     $("cert-fecha").textContent = fecha(c.emitido_at);
@@ -81,10 +112,10 @@ window.Certificado = (function () {
       $("imprimir").hidden = true;
     } else {
       caja.className += " " + VALIDO;
-      $("validez-texto").textContent = "✅ Certificado auténtico.";
+      $("validez-texto").textContent = rango ? "✅ Diploma auténtico." : "✅ Certificado auténtico.";
       $("validez-detalle").textContent = `Lo dio ${quien} el ${fecha(c.emitido_at)}. Cualquiera puede comprobarlo con este enlace o con el código QR.`;
     }
-    document.title = `Certificado: ${c.curso_titulo} — ${c.alumno_nombre}`;
+    document.title = `${rango ? "Diploma" : "Certificado"}: ${c.curso_titulo} — ${c.alumno_nombre}`;
     $("estado").hidden = true;
     $("app").hidden = false;
   }

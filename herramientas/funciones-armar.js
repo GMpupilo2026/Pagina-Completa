@@ -50,6 +50,7 @@ const FUNCIONES = {
   "informes-encargados": ["contacto-academia.ts", "remitente-academia.ts", "marca-correo.ts"],
   "cobros-recordatorios": ["usuario-alumno.ts", "contacto-academia.ts", "remitente-academia.ts", "marca-correo.ts", "hora-cr.ts"],
   "mejorar-informe": [],
+  "entrenador-ia": [],
   // La llamada de voz de la clase en vivo (LiveKit). Ver su cabecera.
   "clase-llamada": [],
   // Borra las grabaciones de más de 90 días (verify_jwt en false: la llama pg_cron con el secreto).
@@ -83,6 +84,10 @@ const FUNCIONES = {
   // cabecera.
   "desempates-chess-results": [],
   "explorador-maestros": [],
+  // Los mates básicos del examen de rango Caballo: arbitra la partida contra
+  // el rey solo. Su defensa (defensa-mate.js) la arma herramientas/defensa-mate-armar.js
+  // desde js/tipos-reglas.js y herramientas/lib/finales-dtm.js. Ver su cabecera.
+  "examen-mate": ["defensa-mate.js"],
   // La quiniela de la sala de cine. Ver su cabecera.
   "quiniela": [],
   // El correo al supervisor por un diagnóstico de su enlace (verify_jwt en

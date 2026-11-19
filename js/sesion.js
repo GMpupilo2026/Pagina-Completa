@@ -587,6 +587,39 @@
         });
 
         // ---------- Estado compartido del tablero (posición, flechas, control cedido) ----------
+        /* De qué va la clase ahora, para los capítulos de la grabación
+           (clase-llamada.js lo mira cada segundo mientras graba). Gana lo más
+           puntual: una diapositiva, la práctica, la tanda, el calentamiento o el
+           tiempo para pensar tapan al tablero mientras duran; sin nada de eso, el
+           tema es la posición de la que partió la partida (una posición nueva es
+           un capítulo; una jugada, no). `clave` decide si cambió; `texto` es el
+           nombre del capítulo. */
+        function temaDeLaClase() {
+            try {
+                if (typeof presentacionActual !== "undefined" && presentacionActual && presentacionActual.deck) {
+                    const n = presentacionActual.n;
+                    const d = presentacionDatos && Array.isArray(presentacionDatos.diapositivas) ? presentacionDatos.diapositivas[n - 1] : null;
+                    const titulo = d && d.titulo && !/^Diapositiva \d+$/.test(d.titulo) ? ": " + d.titulo : "";
+                    return { clave: "diapositiva:" + presentacionActual.deck + ":" + n, texto: "Diapositiva " + n + titulo };
+                }
+                if (typeof formacionActual !== "undefined" && formacionActual) {
+                    return { clave: "practica:" + (formacionActual.id || formacionActual.titulo), texto: "Práctica" + (formacionActual.titulo ? ": " + formacionActual.titulo : "") };
+                }
+                if (typeof tandaActual !== "undefined" && tandaActual) {
+                    return { clave: "tanda:" + tandaActual.at, texto: "Tanda de ejercicios" + (tandaActual.titulo ? ": " + tandaActual.titulo : "") };
+                }
+                if (typeof calentamientoActual !== "undefined" && calentamientoActual) {
+                    return { clave: "calentamiento:" + calentamientoActual.at, texto: "Calentamiento" + (calentamientoActual.titulo ? ": " + calentamientoActual.titulo : "") };
+                }
+                if (pensarActual && PreguntaClase.estadoPensar(pensarActual)) {
+                    const que = String(pensarActual.texto || "").trim();
+                    return { clave: "pensar:" + pensarActual.at, texto: "Tiempo para pensar" + (que ? ": " + que : "") };
+                }
+                const inicio = board.startFen || "";
+                return { clave: "posicion:" + inicio, texto: inicio ? "Posición nueva en el tablero" : "Partida desde la posición inicial" };
+            } catch (e) { return null; }
+        }
+
         function applyGameStateRow(row) {
             // Lo que había ANTES, leído del propio tablero: así la jugada que acaba de
             // hacer este mismo navegador vuelve como eco idéntico y no se anuncia dos veces.
@@ -3076,7 +3109,7 @@
         function updateRaiseHandBtn() {
             const btn = document.getElementById("raise-hand-btn");
             if (!btn) return;
-            btn.textContent = handRaised ? "✋ Bajar la mano" : "🖐️ Levantar la mano";
+            btn.textContent = handRaised ? "✋ Bajar la mano" + (lugarEnLaFila ? " (lugar " + lugarEnLaFila.lugar + " de " + lugarEnLaFila.total + ")" : "") : "🖐️ Levantar la mano";
             btn.setAttribute("aria-pressed", handRaised ? "true" : "false");
             btn.classList.toggle("bg-accent-500", handRaised);
             btn.classList.toggle("hover:bg-accent-600", handRaised);
@@ -3094,8 +3127,36 @@
         async function setHandRaised(value) {
             handRaised = !!value;
             handAt = handRaised ? (handAt || new Date().toISOString()) : null;
+            if (!handRaised) lugarEnLaFila = null;
             updateRaiseHandBtn();
             await anunciarPresencia();
+        }
+
+        /* El alumno sabe su lugar en la fila de manos. Sale de la misma
+           presencia y con el MISMO orden que ve el profe en su lista (primero
+           las manos, por hand_at: renderStudentsList), así que «lugar 2» es el
+           segundo que ve el profe. Se dice al levantarla y cada vez que avanza
+           (la región de #clase-voz, sin robar el foco), y va en el botón. */
+        let lugarEnLaFila = null;   // {lugar, total} o null
+        function lugarEnLaFilaDeManos(alumnos, yo) {
+            const llegada = (info) => (info.hand_at ? new Date(info.hand_at).getTime() : Infinity);
+            const fila = [...alumnos].filter(([, info]) => info && info.hand_raised)
+                .sort((a, b) => llegada(a[1]) - llegada(b[1]));
+            const i = fila.findIndex(([id]) => id === yo);
+            return i < 0 ? null : { lugar: i + 1, total: fila.length };
+        }
+        function avisarLugarEnLaFila() {
+            if (isTeacher || esObservador) return;
+            const antes = lugarEnLaFila;
+            lugarEnLaFila = handRaised ? lugarEnLaFilaDeManos(onlineStudents, profile.id) : null;
+            updateRaiseHandBtn();
+            const ahora = lugarEnLaFila;
+            if (!ahora || (antes && antes.lugar === ahora.lugar)) return;
+            const texto = ahora.lugar === 1
+                ? (ahora.total === 1 ? "Tu mano es la única levantada: tu profe la ve primero." : "Tu mano es la primera de la fila: sigues tú.")
+                : (antes && ahora.lugar < antes.lugar ? "Avanzaste: vas" : "Vas") + " en el lugar " + ahora.lugar + " de la fila de manos (hay " + ahora.total + " manos levantadas).";
+            const r = document.getElementById("clase-voz");
+            if (r) { r.textContent = ""; setTimeout(() => { r.textContent = texto; }, 60); }
         }
 
         /* Todo anuncio de la presencia sale por acá, nunca con track() suelto.
@@ -3268,7 +3329,7 @@
                 }
                 dictarFotografiaDeLaPresencia(state);
                 if (!isTeacher && !esObservador) pintarEntrenoDelProfe(state);
-                if (!isTeacher && !esObservador) { pintarMiFoto(); renderCompanerosList(); }
+                if (!isTeacher && !esObservador) { pintarMiFoto(); renderCompanerosList(); avisarLugarEnLaFila(); }
                 renderStudentsList();
                 pintarCuentaCalentamiento();
                 if (isTeacher && tandaActual) { anotarTandaDeLaPresencia(); pintarTandaProfe(); }
@@ -8104,6 +8165,21 @@
                     claseActual: () => currentOpenSessionId,
                     // La posición que está viendo la clase (la jugada que el profe muestra, o la última).
                     posicion: () => { try { return (board.viewGame || board.game).fen(); } catch (e) { return null; } },
+                    tema: temaDeLaClase,
+                    /* Los segundos que habló cada alumno (los cuenta clase-llamada.js).
+                       true si quedaron guardados o no tiene sentido reintentar (la
+                       clase ya no es suya o se cerró hace rato). */
+                    sumarHablado: async (clase, tanda) => {
+                        if (!clase) return true;
+                        const { error } = await sb.rpc("sumar_segundos_hablados", { p_clase: clase, p_segundos: tanda });
+                        if (error) console.error(error);
+                        return !error || error.code === "42501";
+                    },
+                    hablaronAntes: async (clase) => {
+                        const { data, error } = await sb.from("llamada_participacion").select("persona_id, segundos").eq("class_session_id", clase).range(0, 999);
+                        if (error) { console.error(error); return null; }
+                        return new Map((data || []).map((f) => [f.persona_id, f.segundos || 0]));
+                    },
                     /* Cuáles de estos alumnos tienen el permiso de su familia para grabar
                        su voz (permisos_grabar_voz; la RLS le deja ver el de SUS alumnos).
                        null si no se pudo saber: entonces no se marca a nadie. */

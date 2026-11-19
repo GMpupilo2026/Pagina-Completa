@@ -229,6 +229,12 @@
           <ol id="visor-grabacion-partes" class="list-none p-0 m-0 mt-2 space-y-2"></ol>
           <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Se borra sola a los 90 días de la clase.</p>
         </section>
+        <!-- Cuánto habló cada alumno en la llamada (llamada_participacion). Ver «Los minutos hablados». -->
+        <section id="visor-hablado" aria-labelledby="visor-hablado-titulo" hidden class="mb-3 rounded-xl px-4 py-3 bg-white dark:bg-brand-900 shadow-sm">
+          <h3 id="visor-hablado-titulo" class="text-sm font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🗣️ </span>Quién habló en la llamada</h3>
+          <ul id="visor-hablado-lista" class="list-none p-0 m-0 mt-1 text-sm text-brand-800 dark:text-brand-100 space-y-0.5"></ul>
+          <p id="visor-hablado-callados" hidden class="text-sm text-brand-800 dark:text-brand-100 mt-1"></p>
+        </section>
         <p id="visor-sin-datos" class="text-xs text-brand-500 dark:text-brand-300 mb-2" hidden>Esta partida se guardó antes de que las clases guardaran sus comentarios y variantes: solo trae las jugadas.</p>
         <!-- Sin role="img": los hijos de una imagen no le llegan al lector de pantalla, y el
              tablero se recorre casilla por casilla (js/tablero-accesible.js). -->

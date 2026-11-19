@@ -18,6 +18,10 @@
       se anuncia, el micrófono bloqueado sin la palabra, la palabra dada y
       quitada, los atajos y el aviso de cuando no está configurada. Se mide si
       un botón se ve con checkVisibility(), no por el atributo.
+   5. LO QUE SE AGREGÓ EL 18/11: los temas de la grabación (capítulos solos),
+      el lugar del alumno en la fila de manos, los minutos que habló cada uno
+      (y que la base no deje que un alumno se los ponga), los dos volúmenes
+      aparte y volver sola a la llamada si se cae.
 
    No necesita el sitio servido: la caja se arma con el HTML de sesion.html.
    Uso:  node herramientas/verificar-clase-llamada.js                           */
@@ -117,6 +121,8 @@ console.log("\n=== Las cabeceras y la privacidad ===");
     "privacidad.html dice que se graba, quién escucha, que se borra a los 90 días y que sin permiso no se habla");
   si(!/Grabación de la clase en vivo[^\n]*(Supabase|informe)/i.test(priv), "…sin nombrar el servicio de almacenamiento ni los informes (lo pidió el dueño)");
   si(/<strong>LiveKit no graba ni guarda la voz<\/strong>/.test(priv), "…y la línea de LiveKit ya no promete que la voz no se graba");
+  si(/<strong>Minutos hablados en la llamada:<\/strong>/.test(priv) && /Solo se guarda el tiempo, nunca lo que se dijo/.test(priv) && /junto con la asistencia/.test(priv),
+    "privacidad.html dice que se anotan los minutos hablados (solo el tiempo), quién los ve y que se guardan con la asistencia (lo aprobó el dueño)");
 
   console.log("\n=== La grabación: el permiso y escucharla ===");
   const conf = leer("js/configuracion.js");
@@ -140,6 +146,43 @@ console.log("\n=== Las cabeceras y la privacidad ===");
     "el borrado de los 90 días exige el secreto y borra primero el archivo y después la fila");
   si(/^clase-grabaciones-limpiar\s+false\s/m.test(leer("supabase/esquema/funciones-desplegadas.txt")) && /^limpiar-grabaciones\s+40 7 \* \* \*/m.test(leer("supabase/esquema/cron.txt")),
     "…está anotada (verify_jwt en false) y la tarea de pg_cron también");
+}
+
+console.log("\n=== Lo del 18/11: temas, fila de manos y minutos ===");
+{
+  const sesion = leer("js/sesion.js");
+  const montaje = (sesion.match(/if \(window\.ClaseLlamada[\s\S]*?\n            }\n/) || [""])[0];
+  si(/tema: temaDeLaClase,/.test(montaje), "la grabación pregunta de qué va la clase (temaDeLaClase)");
+  const tema = (sesion.match(/function temaDeLaClase\(\) \{[\s\S]*?\n        }\n/) || [""])[0];
+  si(["presentacionActual", "formacionActual", "tandaActual", "calentamientoActual", "estadoPensar", "board.startFen"].every((x) => tema.includes(x)),
+    "…y los temas salen solos de la diapositiva, la práctica, la tanda, el calentamiento, el tiempo para pensar y la posición nueva");
+  si(/rpc\("sumar_segundos_hablados", \{ p_clase: clase, p_segundos: tanda \}\)/.test(montaje) && /from\("llamada_participacion"\)/.test(montaje),
+    "los minutos hablados se guardan con sumar_segundos_hablados() y se leen de llamada_participacion");
+  // El lugar en la fila: la función tal cual está en sesion.js.
+  const fnFila = (sesion.match(/function lugarEnLaFilaDeManos\(alumnos, yo\) \{[\s\S]*?\n        }\n/) || [""])[0];
+  let lugar = null;
+  try { lugar = new Function(fnFila + "; return lugarEnLaFilaDeManos;")(); } catch (e) { lugar = null; }
+  if (lugar) {
+    const m = new Map([
+      ["ana", { hand_raised: true, hand_at: "2026-11-18T10:00:05Z" }],
+      ["yo", { hand_raised: true, hand_at: "2026-11-18T10:00:03Z" }],
+      ["beto", { hand_raised: false }],
+      ["cata", { hand_raised: true, hand_at: "2026-11-18T10:00:01Z" }],
+    ]);
+    si(JSON.stringify(lugar(m, "yo")) === '{"lugar":2,"total":3}', "el alumno sabe su lugar en la fila: el orden en que levantaron la mano (" + JSON.stringify(lugar(m, "yo")) + ")");
+    si(lugar(m, "beto") === null, "…y sin la mano levantada no tiene lugar");
+  } else mal("no encontré lugarEnLaFilaDeManos() en sesion.js");
+  si(/const llegada = \(info\) => \(info\.hand_at/.test(sesion) && /info\.hand_at/.test(fnFila), "…con el mismo hand_at con que el profe ordena su lista");
+  si(/renderCompanerosList\(\); avisarLugarEnLaFila\(\); \}/.test(sesion), "…y se le vuelve a decir cada vez que cambia la presencia (al avanzar)");
+  const mig = fs.readdirSync(path.join(RAIZ, "supabase/migraciones")).find((f) => /llamada_minutos_hablados/.test(f));
+  const sql = mig ? leer("supabase/migraciones/" + mig) : "";
+  si(/create table if not exists public\.llamada_participacion/.test(sql) && !/create policy [^\n]* for (insert|update|delete|all)/i.test(sql),
+    "llamada_participacion no tiene política de escritura (la escribe solo la función)");
+  si(/revoke execute on function public\.sumar_segundos_hablados\(uuid, jsonb\) from public, anon/.test(sql) && /coalesce\(yo is not null and exists/.test(sql),
+    "sumar_segundos_hablados() no es de public ni anon, y sin sesión rechaza (coalesce)");
+  si(/join public\.class_attendance a/.test(sql) && /least\(greatest\([^\n]*, 0\), 900\)/.test(sql), "…suma solo a quienes tienen asistencia en la clase, con un tope por tanda");
+  const rep = leer("js/repasar-clases.js");
+  si(/cargarHablado\(p\.class_session_id\)/.test(rep) && /const soyAlumno = nombre\.has\(yoId\)/.test(rep), "«Repasar mis clases» dice quién habló (al alumno, solo lo suyo)");
 }
 
 /* ------------------------------------------------------------------ 4 */
@@ -202,7 +245,8 @@ const LIVEKIT_FALSO = `
       this.emit("ParticipantPermissionsChanged", antes, this.localParticipant);
     }
   }
-  window.LivekitClient = { Room, RoomEvent, ConnectionQuality: { Poor: "poor" }, DisconnectReason: { PARTICIPANT_REMOVED: 4 } };
+  window.LivekitClient = { Room, RoomEvent, ConnectionQuality: { Poor: "poor" },
+    DisconnectReason: { CLIENT_INITIATED: 1, DUPLICATE_IDENTITY: 2, PARTICIPANT_REMOVED: 4, ROOM_DELETED: 5, SIGNAL_CLOSE: 9 } };
 })();`;
 
 function sbFalso(respuesta) {
@@ -233,6 +277,8 @@ async function abrir(browser, { esProfe = false, respuesta, abierta = true, grab
     window.__grabar = [];
     window.__partes = [];
     window.__fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    window.__tema = { clave: "posicion:", texto: "Partida desde la posición inicial" };
+    window.__hablado = [];
     let mano = false;
     window.__llamada = ClaseLlamada.montar({
       sb: window.__sb, profesorId: "u-profe", esProfe, miNombre: "Luis Pérez",
@@ -247,6 +293,10 @@ async function abrir(browser, { esProfe = false, respuesta, abierta = true, grab
       subirParte: async (blob, segundos, tipo, clase, marcas) => { window.__partes.push({ bytes: blob.size, tipo, clase, marcas }); return ""; },
       // La posición que ve la clase: la prueba la cambia mientras se graba.
       posicion: () => window.__fen,
+      tema: () => window.__tema,
+      sumarHablado: async (clase, tanda) => { window.__hablado.push({ clase, tanda }); return true; },
+      // Zoe ya había hablado casi dos minutos antes (el profe recargó la página).
+      hablaronAntes: async () => new Map([["u-zoe", 118]]),
       anunciarFuera: (t) => window.__fuera.push(t),
     });
     window.__llamada.estado(abierta, "turno", abierta && grabando);
@@ -467,6 +517,16 @@ async function pruebas(browser) {
   await r.page.click("#llamada-grabar");
   await r.page.waitForTimeout(300);
   si(JSON.stringify(await r.page.evaluate(() => window.__grabar)) === "[false,true]" && await visible(r.page, "#llamada-grabando"), "volver a grabar lo anota y vuelve el aviso");
+  // Los temas: el profe pasa a una diapositiva y vuelve al tablero, sin marcar nada.
+  await r.page.evaluate(() => {
+    window.__tema = { clave: "diapositiva:d1:3", texto: "Diapositiva 3: La oposición" };
+    const z = window.__sala.remoteParticipants.get("zoe"); z.isSpeaking = true;   // y Zoe habla
+  });
+  await r.page.waitForTimeout(1300);
+  await r.page.evaluate(() => { window.__tema = { clave: "posicion:", texto: "Partida desde la posición inicial" }; });
+  await r.page.waitForTimeout(1300);
+  si(/habló 2 minutos/.test(await r.page.$$eval("#llamada-lista li", (lis) => (lis.find((li) => /Zoe/.test(li.textContent)) || {}).textContent || "")),
+    "el profe ve cuánto habló cada alumno, sumando lo de antes de recargar («habló 2 minutos»)");
   si(await r.page.textContent("#llamada-salir") === "Terminar la llamada", "el profe no «sale»: «Terminar la llamada»");
   await r.page.keyboard.press("Alt+KeyY");
   await r.page.waitForTimeout(100);
@@ -490,8 +550,84 @@ async function pruebas(browser) {
   si(JSON.stringify(await r.page.evaluate(() => window.__abrir)) === "[true,false]" && await cuentaSinc() === antesSinc + 4,
     "«Terminar la llamada» la cierra para todos (llamada_sesion en null) y le pide al servidor que saque a los demás");
   si((await r.page.evaluate(() => window.__partes)).length === 2, "al terminar la llamada se sube la última parte");
+  const temas = ((await r.page.evaluate(() => window.__partes))[1].marcas || []).filter((m) => m.tema).map((m) => m.tema);
+  si(JSON.stringify(temas) === JSON.stringify(["Partida desde la posición inicial", "Diapositiva 3: La oposición", "De vuelta a: Partida desde la posición inicial"]),
+    "la grabación anota sola los temas de la clase: dónde empieza la parte, la diapositiva y la vuelta al tablero (" + temas.join(" | ") + ")");
+  const hablado = await r.page.evaluate(() => window.__hablado);
+  const deZoe = hablado.reduce((t, h) => t + (h.tanda["u-zoe"] || 0), 0);
+  si(deZoe >= 2 && hablado.every((h) => h.clase === "clase-1" && !h.tanda["u-karina"] && !h.tanda["u-ana2"]),
+    "al salir se mandan los segundos que habló cada alumno, de ESA clase y sin el profe (" + JSON.stringify(hablado) + ")");
   si(/Terminaste la llamada para toda la clase/.test(await anuncio(r.page)) && await r.page.evaluate(() => window.__sala.state) === "disconnected", "…sale de la sala y lo dice");
   await r.ctx.close();
+
+  // Los dos volúmenes y volver sola a la llamada.
+  r = await abrir(browser, { respuesta: PASE("pase-sin-palabra") });
+  si(!(await visible(r.page, "#llamada-volumenes")), "antes de entrar no se ven los volúmenes");
+  await r.page.click("#llamada-entrar");
+  await anuncio(r.page);
+  si(await visible(r.page, "#llamada-vol-llamada") && await visible(r.page, "#llamada-vol-voz"), "dentro de la llamada: el volumen de la llamada y el de la voz de las jugadas, aparte");
+  await r.page.evaluate(() => {
+    window.__vol = null;
+    window.__sala.remoteParticipants.get("ana").audioTrackPublications.set("a", { track: { setVolume: (v) => { window.__vol = v; } } });
+    const poner = (id, v) => { const el = document.getElementById(id); el.value = String(v); el.dispatchEvent(new Event("input", { bubbles: true })); };
+    poner("llamada-vol-llamada", 50);
+    poner("llamada-vol-voz", 40);
+  });
+  si(await r.page.evaluate(() => window.__vol) === 0.5 && await r.page.textContent("#llamada-vol-llamada-valor") === "50 %"
+    && await r.page.getAttribute("#llamada-vol-voz", "aria-valuetext") === "40 %", "bajar la llamada baja las voces, y cada barra dice su valor escrito");
+  // La página de prueba (about:blank) no tiene localStorage: se mira el código.
+  si(/localStorage\.setItem\(CLAVE_VOL, JSON\.stringify\(\{ llamada: volLlamada, voz: volVoz \}\)\)/.test(leer("js/clase-llamada.js")), "…y se recuerdan en el aparato");
+  const voz = await r.page.evaluate(() => {
+    const u = new SpeechSynthesisUtterance("e4");
+    try { window.speechSynthesis.speak(u); } catch (e) { /* sin voz en el navegador de prueba */ }
+    return { volumen: Math.round(u.volume * 100) / 100, llamada: window.__vol };
+  });
+  si(voz.volumen === 0.4 && voz.llamada === 0.15, "la voz de las jugadas suena con su volumen, y mientras habla la llamada baja al 30 % del suyo (" + JSON.stringify(voz) + ")");
+  // Se cae sin que nadie lo pida: vuelve sola, sin mover el foco.
+  await r.page.evaluate(() => { document.getElementById("llamada-quien").focus(); window.__sala.emit("Disconnected", 9); });
+  si(/Se cayó la llamada\. Volviendo a entrar en 2 segundos/.test(await anuncio(r.page)), "si la llamada se cae sola, lo dice y vuelve a entrar");
+  await r.page.waitForTimeout(2400);
+  si(await r.page.evaluate(() => window.__pedidos.filter((p) => p.body.accion === "pase").length) === 2 && await r.page.evaluate(() => window.__sala.state) === "connected",
+    "…pide otro pase y queda otra vez en la llamada");
+  si(await r.page.evaluate(() => document.activeElement.id) !== "llamada-mic", "…sin llevarse el foco al micrófono");
+  // Sin red: espera a que vuelva.
+  await r.ctx.setOffline(true);
+  await r.page.evaluate(() => window.__sala.emit("Disconnected", 9));
+  si(/no hay conexión/.test(await anuncio(r.page)), "sin red, dice que vuelve en cuanto regrese la conexión");
+  await r.page.waitForTimeout(2500);
+  si(await r.page.evaluate(() => window.__pedidos.filter((p) => p.body.accion === "pase").length) === 2, "…y mientras no hay red no lo intenta");
+  await r.ctx.setOffline(false);
+  await r.page.waitForTimeout(2600);
+  si(await r.page.evaluate(() => window.__sala.state) === "connected" && await r.page.evaluate(() => window.__pedidos.filter((p) => p.body.accion === "pase").length) === 3,
+    "…y cuando vuelve la red, entra sola");
+  // Si sale por su cuenta, no vuelve.
+  await r.page.click("#llamada-salir");
+  await r.page.waitForTimeout(2600);
+  si(await r.page.evaluate(() => window.__pedidos.filter((p) => p.body.accion === "pase").length) === 3 && /Saliste de la llamada/.test(await r.page.textContent("#llamada-estado")),
+    "quien sale por su cuenta no vuelve solo");
+  si(!r.errores.length, "sin errores en la página" + (r.errores.length ? ": " + r.errores.join(" | ") : ""));
+  await r.ctx.close();
+
+  // Los temas como capítulos en «Repasar mis clases»: las funciones tal cual están.
+  {
+    const rep = leer("js/repasar-clases.js");
+    const fn = (nombre) => (rep.match(new RegExp("function " + nombre + "\\([\\s\\S]*?\\n\\}\\n")) || [""])[0];
+    const ctx = await browser.newContext({ serviceWorkers: "block" });
+    const page = await ctx.newPage();
+    await page.setContent("<!doctype html><body><audio id='au'></audio><div id='aca'></div></body>");
+    const filas = await page.evaluate((codigo) => {
+      // eslint-disable-next-line no-new-func
+      const temasDeLaParte = new Function(codigo + "; return temasDeLaParte;")();
+      const caja = temasDeLaParte([{ s: 0, fen: "x", tema: "Partida desde la posición inicial" }, { s: 4, fen: "y" }, { s: 75.4, tema: "Diapositiva 2: <b>Clavada</b>" }], document.getElementById("au"), 0);
+      document.getElementById("aca").appendChild(caja);
+      return { botones: [...caja.querySelectorAll("button")].map((b) => b.textContent), resumen: caja.querySelector("summary").textContent, negrita: caja.querySelectorAll("b").length, sinTemas: temasDeLaParte([{ s: 0, fen: "x" }], document.getElementById("au"), 1) };
+    }, fn("minutoYSegundo") + fn("temasDeLaParte"));
+    si(JSON.stringify(filas.botones) === JSON.stringify(["0:00 · Partida desde la posición inicial", "1:15 · Diapositiva 2: <b>Clavada</b>"]) && filas.resumen === "Temas de esta parte (2)",
+      "«Repasar mis clases» muestra los temas como capítulos, con su minuto (" + filas.botones.join(" | ") + ")");
+    si(filas.negrita === 0, "…escritos como texto (un título con < > no se vuelve HTML)");
+    si(filas.sinTemas === null, "…y una parte sin temas (las de antes) no muestra nada");
+    await ctx.close();
+  }
 
   // Sin la llamada configurada.
   r = await abrir(browser, { respuesta: { status: 503, cuerpo: { error: "La llamada de la clase todavía no está disponible.", sin_configurar: true } } });

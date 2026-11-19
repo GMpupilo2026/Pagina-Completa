@@ -607,6 +607,17 @@
                             <input id="llamada-ptt" type="checkbox" class="mt-1 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                             <span>Mantener para hablar: el micrófono suena solo mientras mantienes apretado el botón del micrófono o <kbd>Alt</kbd>+<kbd>P</kbd>, y al soltar se apaga.</span>
                         </label>
+                        <!-- Dos volúmenes aparte: el de la llamada y el de la voz que dice las jugadas. -->
+                        <div id="llamada-volumenes" hidden class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm text-brand-800 dark:text-brand-100">
+                            <label class="flex flex-col gap-1">
+                                <span>Volumen de la llamada: <output id="llamada-vol-llamada-valor">100 %</output></span>
+                                <input id="llamada-vol-llamada" type="range" min="0" max="100" step="10" value="100" class="w-full accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </label>
+                            <label class="flex flex-col gap-1">
+                                <span>Volumen de la voz de las jugadas: <output id="llamada-vol-voz-valor">100 %</output></span>
+                                <input id="llamada-vol-voz" type="range" min="0" max="100" step="10" value="100" class="w-full accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </label>
+                        </div>
                         <p id="llamada-estado" role="status" aria-live="polite" class="mt-2 text-sm font-semibold text-brand-800 dark:text-brand-100"></p>
                         <!-- Quiénes están, un renglón por persona y siempre en el mismo orden (tú, el
                              profe, los demás por nombre). No es región viva: lo que cambia se anuncia

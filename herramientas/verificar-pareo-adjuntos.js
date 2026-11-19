@@ -256,6 +256,11 @@ async function pruebaCamaras(browser) {
   await page.waitForFunction(() => window.__enviados.some((x) => x.canal === "tablero-vivo-camprue2" && x.evento === "pedir"), null, { timeout: 8000 }).catch(() => {});
   ok(await page.evaluate(() => window.__enviados.some((x) => x.canal === "tablero-vivo-camprue2" && x.evento === "pedir")), "con el código del principal, escucha las cámaras y les pide lo que tienen");
   ok(/Sin noticias de la cámara/.test(await page.textContent('[data-cam="1"]')), "antes de que llegue algo, lo dice escrito");
+  // Un teléfono para esa mesa: el QR sale en el celular del adjunto.
+  await page.click('[data-cam="2"] [data-camara-poner] summary');
+  await page.waitForSelector('[data-cam="2"] [data-camara-poner] svg', { timeout: 8000 }).catch(() => {});
+  igual("«Poner un teléfono en esta mesa» muestra el QR de ESA mesa de su torneo, y el mismo enlace para abrirlo ahí", await page.$eval('[data-cam="2"] [data-camara-poner]', (n) => [n.dataset.camaraPoner, !!n.querySelector("svg"), /mesa 2/.test((n.querySelector("svg") || { getAttribute: () => "" }).getAttribute("aria-label")), n.querySelector("[data-camara-enlace]").href.replace(/^.*\//, "")]),
+    ["2", true, true, "camara-tablero.html#t=" + PUB + "&c=camprue2&m=2&r=0"]);
   const camara = (mesa, pgn, resultado, extra) => page.evaluate(([x]) => window.__llega("tablero-vivo-camprue2", "estado", x),
     [Object.assign({ v: 1, pgn, torneo: PUB, ronda: 2, mesa, t: Date.now(), resultado }, extra || {})]);
   // Lo de otro torneo y lo de otra ronda no entran.
@@ -265,6 +270,7 @@ async function pruebaCamaras(browser) {
   ok(/Sin noticias de la cámara/.test(await page.textContent('[data-cam="1"]')), "lo de otro torneo o de otra ronda no entra");
   await camara(1, "1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7#", "1-0");
   await page.waitForSelector('[data-cam="1"] [data-camara-dice]', { timeout: 8000 }).catch(() => {});
+  ok(!(await page.$('[data-cam="1"] [data-camara-poner]')), "una mesa que ya transmite no ofrece poner un teléfono");
   igual("el tablero de su mesa, con las jugadas y cómo va, escritas", await page.$eval('[data-cam="1"]', (n) => [n.querySelectorAll('[aria-hidden="true"] > div').length, /En vivo · 7 jugadas/.test(n.textContent), /Jaque mate/.test(n.textContent)]), [64, true, true]);
   ok(/La cámara dice: 1-0/.test(await page.textContent('[data-cam="1"]')), "y la propuesta de la cámara, escrita");
   await page.click('[data-cam="1"] [data-camara-confirmar]');

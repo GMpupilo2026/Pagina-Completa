@@ -1985,7 +1985,7 @@
      * y en un torneo por equipos también «&b=<tablero>».
      * Con el QR la cámara anda SIN CUENTA, en «modo mesa» (ver init). La hoja
      * sale solo al imprimir, con la marca de agua de Ajedrez Integral. */
-    const enlaceMesa = (m) => new URL("camara-tablero.html#t=" + torneo.id + "&c=" + torneo.codigo + "&m=" + m.mesa + (m.tablero ? "&b=" + m.tablero : "") + "&r=" + retraso, location.href).href;
+    const enlaceMesa = (m) => V.enlaceCamara({ torneo: torneo.id, codigo: torneo.codigo, mesa: m.mesa, tablero: m.tablero, retraso });
     function deLaDireccion() {
         const x = new URLSearchParams(location.hash.replace(/^#/, ""));
         const id = V.torneoDe(x.get("t")), c = (x.get("c") || "").toLowerCase(), m = Number(x.get("m")), r = Number(x.get("r")) || 0;
