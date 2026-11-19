@@ -48,6 +48,7 @@
         let llamadaSesion = null;
         let llamadaModo = "turno";   // game_state.llamada_modo: quién puede hablar (turno, libre, bloqueada)
         let llamadaGrabando = false; // game_state.llamada_grabando: el profe graba la llamada en su navegador
+        let llamadaGrupos = null;    // game_state.llamada_grupos: {alumno: n.º de grupo} o null
         const llamadaAbierta = () => Boolean(llamadaSesion && llamadaSesion === currentOpenSessionId);
         /* Las flechas y los círculos que el profe dibuja, dichos al alumno
            (ClaseAdaptada.vigiaDeMarcas, la misma que usan los invitados): antes se
@@ -636,7 +637,8 @@
             llamadaSesion = row.llamada_sesion || null;
             llamadaModo = row.llamada_modo || "turno";
             llamadaGrabando = Boolean(row.llamada_grabando);
-            if (llamada) llamada.estado(llamadaAbierta(), llamadaModo, llamadaGrabando);
+            llamadaGrupos = row.llamada_grupos || null;
+            if (llamada) llamada.estado(llamadaAbierta(), llamadaModo, llamadaGrabando, llamadaGrupos);
             if (!editando) board.loadMoves(row.moves || [], row.start_fen);
             /* Quien sigue la clase ve lo que mira el profe. El profe, en cambio, ya
                tiene su vista en el tablero: solo la retoma al cargar la página (la
@@ -3124,6 +3126,50 @@
 
         // Cuándo levantó la mano: el profe ve la cola en ese orden.
         let handAt = null;
+
+        /* Las reacciones de la llamada («No entendí», «Más lento», «Sí», «No»)
+           y la pregunta de sí o no del profe van por la MISMA presencia que la
+           mano: no se guardan en ningún lado y se van con la clase. Ver
+           «Reacciones y preguntas de sí o no» en docs/decisiones/clase-en-vivo.md.
+           Cada una lleva su hora, que es lo que hace que se note como nueva. */
+        let reaccionPresencia = null;    // alumno: { tipo, at }
+        let respuestaPresencia = null;   // alumno: { p: hora de la pregunta, v: "si" | "no" }
+        let preguntaPresencia = null;    // profe: { at } mientras la pregunta está abierta
+        let preguntaDelProfe = null;     // alumno: la pregunta abierta que anuncia su profe
+        const reaccionesVistas = new Map();   // profe: alumno → hora de la última reacción ya avisada
+        const respuestasVistas = new Map();   // profe: alumno → la respuesta ya contada
+        function revisarReaccionesYPregunta(state) {
+            if (!llamada || esObservador) return;
+            if (!isTeacher) {
+                const delProfe = ((state[boardOwnerId] || [])[0]) || null;
+                const p = delProfe && delProfe.pregunta_si_no && delProfe.pregunta_si_no.at ? delProfe.pregunta_si_no : null;
+                const antes = preguntaDelProfe;
+                preguntaDelProfe = p;
+                if ((p && p.at) !== (antes && antes.at)) llamada.pregunta(Boolean(p));
+                return;
+            }
+            const reciente = (at) => at && Date.now() - new Date(at).getTime() < 60000;
+            for (const [id, info] of onlineStudents) {
+                const r = info.reaccion;
+                if (r && r.at && reaccionesVistas.get(id) !== r.at) {
+                    const primeraVez = !reaccionesVistas.has(id);
+                    reaccionesVistas.set(id, r.at);
+                    // Al recargar la página no se vuelven a avisar las de antes.
+                    const esRespuesta = Boolean(preguntaPresencia && info.respuesta && info.respuesta.p === preguntaPresencia.at && (r.tipo === "si" || r.tipo === "no"));
+                    if (!primeraVez || reciente(r.at)) llamada.reaccion(id, nombreDeConectado(id), r.tipo, esRespuesta);
+                }
+            }
+            if (preguntaPresencia) llamada.respuestas(conteoDeLaPregunta());
+        }
+        function conteoDeLaPregunta() {
+            const c = { si: [], no: [], faltan: [] };
+            for (const [id, info] of onlineStudents) {
+                const r = info.respuesta;
+                const v = r && preguntaPresencia && r.p === preguntaPresencia.at ? r.v : null;
+                (v === "si" ? c.si : v === "no" ? c.no : c.faltan).push(nombreDeConectado(id));
+            }
+            return c;
+        }
         async function setHandRaised(value) {
             handRaised = !!value;
             handAt = handRaised ? (handAt || new Date().toISOString()) : null;
@@ -3238,6 +3284,11 @@
                 mirando_a: mirandoA,
                 hand_raised: handRaised,
                 hand_at: handAt,
+                // La llamada: la última reacción, la respuesta a la pregunta de sí o no
+                // (alumno) y la pregunta abierta (profe).
+                reaccion: reaccionPresencia || undefined,
+                respuesta: respuestaPresencia || undefined,
+                pregunta_si_no: preguntaPresencia || undefined,
                 calentamiento: calentamientoResuelto,
                 // Lo que lleva del calentamiento de 20 ejercicios (js/clase-tanda.js).
                 tanda: tandaPresencia || undefined,
@@ -3320,7 +3371,7 @@
                     }
                     if (meta && meta.role === "alumno") {
                         if (isTeacher && sacadosDeLaClase.has(key)) continue;
-                        onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised, hand_at: meta.hand_at || null, calentamiento: meta.calentamiento || null, tanda: meta.tanda || null, formacion: meta.formacion || null, entreno_hechos: meta.entreno_hechos || null });
+                        onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised, hand_at: meta.hand_at || null, reaccion: meta.reaccion || null, respuesta: meta.respuesta || null, calentamiento: meta.calentamiento || null, tanda: meta.tanda || null, formacion: meta.formacion || null, entreno_hechos: meta.entreno_hechos || null });
                     } else if (meta && meta.role === "supervision") {
                         // Si además está mirando la partida de un alumno, el profe lo sabe.
                         const suya = meta.mirando_a && practiceStudentBoards[meta.mirando_a];
@@ -3328,6 +3379,7 @@
                     }
                 }
                 dictarFotografiaDeLaPresencia(state);
+                revisarReaccionesYPregunta(state);
                 if (!isTeacher && !esObservador) pintarEntrenoDelProfe(state);
                 if (!isTeacher && !esObservador) { pintarMiFoto(); renderCompanerosList(); avisarLugarEnLaFila(); }
                 renderStudentsList();
@@ -4448,9 +4500,12 @@
             // El nombre viaja con la elección: los demás alumnos lo ven (y al
             // recargar no dependen de que la presencia ya haya llegado).
             const elegido = { id, at: new Date().toISOString(), nombre, motivo: origen };
+            // Con tiempo para cada turno (lo elige el profe en la llamada), hasta cuándo.
+            if (tiempoDeTurnoMs > 0) elegido.hasta = new Date(Date.now() + tiempoDeTurnoMs).toISOString();
             const { error } = await sb.from("game_state").update({ elegido }).eq("id", myGameStateId);
             if (error) { console.error(error); setStatus("No se pudo avisarle: " + error.message); return false; }
             elegidoActual = elegido;
+            programarFinDeTurno(elegido);
             document.getElementById("elegido-caja").hidden = false;
             document.getElementById("elegido-nombre").textContent = nombre;   // textContent: lo escribió una persona
             fotoDelElegido(id, nombre);
@@ -4503,6 +4558,73 @@
             if (await darTurno(id, "mano")) setStatus("🗣️ " + nombreDeConectado(id) + " tiene la palabra.");
         }
 
+        /* «Siguiente mano» (Alt+N en la llamada, o su botón): la palabra pasa a la
+           primera mano de la fila, en el mismo orden que ve el profe (hand_at),
+           sin buscarla en la lista. Darle la palabra a otro ya termina el turno
+           de antes. Sin manos levantadas, solo se termina el turno. Devuelve a
+           quién se la dio (o null). */
+        async function siguienteMano() {
+            const llegada = (info) => (info.hand_at ? new Date(info.hand_at).getTime() : Infinity);
+            const fila = [...onlineStudents].filter(([id, info]) => info && info.hand_raised && (!elegidoActual || id !== elegidoActual.id))
+                .sort((a, b) => llegada(a[1]) - llegada(b[1]));
+            if (!fila.length) {
+                if (elegidoActual) await terminarElegido(null);
+                return null;
+            }
+            await darLaPalabra(fila[0][0]);
+            return nombreDeConectado(fila[0][0]);
+        }
+
+        /* El tiempo de cada turno (opcional: «Tiempo para cada turno» en la
+           llamada). El turno lleva `hasta` (game_state.elegido, que escribe solo
+           el profe), así que el alumno sabe cuánto le queda sin otra señal:
+           a los 10 segundos del final, al alumno y al profe se les avisa con un
+           tono; al terminar, la página del PROFE pasa la palabra a la siguiente
+           mano (o termina el turno). Un turno nuevo deshace el reloj del anterior. */
+        let tiempoDeTurnoMs = 0;
+        let finDeTurno = { at: null, hasta: 0, aviso: null, fin: null };
+        function decirEnClaseVoz(texto) {
+            const r = document.getElementById("clase-voz");
+            if (r) { r.textContent = ""; setTimeout(() => { r.textContent = texto; }, 60); }
+        }
+        // Cuándo avisar y cuándo terminar (en ms desde ahora; null si no toca). Pura: la prueba el verificador.
+        function planDelTurno(e, ahora, esElProfe, yo) {
+            const hasta = e && e.hasta ? new Date(e.hasta).getTime() : 0;
+            if (!hasta) return { aviso: null, fin: null };
+            const falta = hasta - ahora;
+            return {
+                aviso: falta > 10000 && (esElProfe || e.id === yo) ? falta - 10000 : null,
+                fin: esElProfe ? Math.max(0, falta) : null,
+            };
+        }
+        function programarFinDeTurno(e) {
+            const hasta = e && e.hasta ? new Date(e.hasta).getTime() : 0;
+            if (finDeTurno.at === (e ? e.at : null) && finDeTurno.hasta === hasta) return;
+            clearTimeout(finDeTurno.aviso);
+            clearTimeout(finDeTurno.fin);
+            finDeTurno = { at: e ? e.at : null, hasta, aviso: null, fin: null };
+            if (!hasta || esObservador) return;
+            const plan = planDelTurno(e, Date.now(), isTeacher, profile.id);
+            if (plan.aviso !== null) {
+                finDeTurno.aviso = setTimeout(() => {
+                    if (llamada) llamada.tono("aviso");
+                    if (isTeacher) avisarAlProfe("A " + nombreDeConectado(e.id) + " le quedan 10 segundos.");
+                    else decirEnClaseVoz("Te quedan 10 segundos de tu turno.");
+                }, plan.aviso);
+            }
+            if (plan.fin !== null) finDeTurno.fin = setTimeout(() => terminoElTiempo(e), plan.fin);
+        }
+        async function terminoElTiempo(e) {
+            if (!elegidoActual || elegidoActual.at !== e.at) return;   // ya lo terminó o le dio la palabra a otro
+            const quien = nombreDeConectado(e.id);
+            const siguiente = await siguienteMano();
+            avisarAlProfe("Se acabó el tiempo de " + quien + (siguiente ? ": la palabra pasa a " + siguiente + "." : "."));
+        }
+        function avisarAlProfe(texto) {
+            if (llamada) llamada.anunciar(texto);
+            setStatus(texto);
+        }
+
         /* Terminar el turno, anotando cómo respondió ('bien', 'casi') o sin
            anotar (null). La nota va a la fila del turno; el aviso se quita. */
         async function terminarElegido(resultado) {
@@ -4519,6 +4641,7 @@
             if (error) { console.error(error); setStatus("No se pudo quitar el aviso: " + error.message); return; }
             const quien = elegidoActual ? nombreDeConectado(elegidoActual.id) : "";
             elegidoActual = null;
+            programarFinDeTurno(null);
             turnoActualId = null;
             document.getElementById("elegido-caja").hidden = true;
             pintarTurnos();
@@ -4778,6 +4901,7 @@
 
         function pintarElegido(elegido) {
             elegidoActual = elegido || null;
+            programarFinDeTurno(elegidoActual);
             if (isTeacher) {
                 // Al recargar, el profe vuelve a ver a quién había elegido.
                 const caja = document.getElementById("elegido-caja");
@@ -8139,7 +8263,53 @@
             if (window.ClaseLlamada && !esObservador && !vistaPrevia && !modoProyector && !modoControl
                 && (!isTeacher || profile.role === "profesor")) {
                 llamada = ClaseLlamada.montar({
-                    sb, profesorId: boardOwnerId, esProfe: isTeacher, miNombre: profile.full_name || "",
+                    sb, profesorId: boardOwnerId, esProfe: isTeacher, miNombre: profile.full_name || "", yo: profile.id,
+                    nombreDe: (id) => (onlineStudents.has(id) ? nombreDeConectado(id) : ""),
+                    // Los grupos se arman con los alumnos que están en la clase (los sacados no están en la lista).
+                    alumnosDeLaClase: () => [...onlineStudents.keys()],
+                    /* Una reacción del alumno. Un «Sí» o «No» con la pregunta del profe
+                       abierta es además su respuesta. Devuelve "respuesta" o "reaccion". */
+                    reaccionar: async (tipo) => {
+                        const at = new Date().toISOString();
+                        reaccionPresencia = { tipo, at };
+                        const contesta = (tipo === "si" || tipo === "no") && preguntaDelProfe;
+                        if (contesta) respuestaPresencia = { p: preguntaDelProfe.at, v: tipo };
+                        await anunciarPresencia();
+                        return contesta ? "respuesta" : "reaccion";
+                    },
+                    // El profe abre o cierra la pregunta de sí o no. Al cerrar devuelve el conteo final.
+                    preguntarSiNo: async (abrir) => {
+                        const final = !abrir && preguntaPresencia ? conteoDeLaPregunta() : null;
+                        preguntaPresencia = abrir ? { at: new Date().toISOString() } : null;
+                        await anunciarPresencia();
+                        return final;
+                    },
+                    // «Marcar este momento»: la hora la pone la base (marcar_momento_de_clase).
+                    marcarMomento: async () => {
+                        if (!currentOpenSessionId) return "La clase no está abierta: no hay momento que marcar.";
+                        const { error } = await sb.rpc("marcar_momento_de_clase", { p_clase: currentOpenSessionId });
+                        if (error) { console.error(error); return error.code === "23514" ? error.message : "No se pudo marcar este momento."; }
+                        return "";
+                    },
+                    siguienteMano: async () => {
+                        if (!currentOpenSessionId) return { error: "Abre la clase primero: cada turno queda en su registro." };
+                        return { nombre: await siguienteMano() };
+                    },
+                    // El tiempo de cada turno, en milisegundos (0: sin límite). Vale para los turnos que se den desde ahora.
+                    tiempoDeTurno: (ms) => { tiempoDeTurnoMs = Math.max(0, Number(ms) || 0); },
+                    // Saltar de la llamada al tablero: la casilla que tiene el foco del tablero.
+                    enfocarTablero: () => {
+                        const c = document.querySelector('#tablero-y-planilla [tabindex="0"]');
+                        if (!c) return false;
+                        c.focus();
+                        return true;
+                    },
+                    grupos: async (valor) => {
+                        const { error } = await sb.from("game_state").update({ llamada_grupos: valor }).eq("id", myGameStateId);
+                        if (error) { console.error(error); return "No se pudo: " + error.message; }
+                        llamadaGrupos = valor;
+                        return "";
+                    },
                     alternarMano: async () => { await setHandRaised(!handRaised); return handRaised; },
                     /* El profe abre la llamada (en ESTA clase) o la termina para todos.
                        Solo él puede escribirla: protect_game_state_teacher_columns. */
@@ -8148,10 +8318,12 @@
                         const valor = abrirla ? currentOpenSessionId : null;
                         // Una llamada nueva (o terminada) vuelve al turno: nunca arranca con todos hablando ni bloqueada.
                         // Y se graba sola al abrirla (el profe la puede pausar); terminada, ya no.
-                        const { error } = await sb.from("game_state").update({ llamada_sesion: valor, llamada_modo: "turno", llamada_grabando: Boolean(abrirla) }).eq("id", myGameStateId);
+                        // Y sin grupos: una llamada nueva arranca con toda la clase junta.
+                        const { error } = await sb.from("game_state").update({ llamada_sesion: valor, llamada_modo: "turno", llamada_grabando: Boolean(abrirla), llamada_grupos: null }).eq("id", myGameStateId);
                         if (error) { console.error(error); return "No se pudo: " + error.message; }
                         llamadaSesion = valor;
                         llamadaModo = "turno";
+                        llamadaGrupos = null;
                         llamadaGrabando = Boolean(abrirla);
                         return "";
                     },
@@ -8216,7 +8388,7 @@
                         if (r) { r.textContent = ""; setTimeout(() => { r.textContent = texto; }, 60); }
                     },
                 });
-                llamada.estado(llamadaAbierta(), llamadaModo, llamadaGrabando);
+                llamada.estado(llamadaAbierta(), llamadaModo, llamadaGrabando, llamadaGrupos);
             }
             await loadVariantTree();
             subscribeVariants();

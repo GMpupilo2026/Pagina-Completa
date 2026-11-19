@@ -463,6 +463,140 @@ profe: lo pidió así).
   volver no mueve el foco (puede estar en el tablero); el profe, si estaba
   grabando, sigue en una parte nueva. El «Disconnected» de un intento fallido
   llega con la sala vieja y no corta los reintentos (`room !== sala`).
+- **El micrófono, la señal y las voces** (pedido del 18/11, «hacerlas
+  todas»). Antes de entrar se elige el micrófono (se recuerda en el aparato;
+  dentro de la llamada se cambia con `switchActiveDevice`) y «Probar el
+  micrófono» graba 3 segundos, dice si se oyó bien, bajo o nada, y los hace
+  sonar: sin ver la pantalla cuesta darse cuenta de que el navegador tomó el
+  micrófono equivocado. La prueba no sale del aparato. Dentro de la llamada se
+  esconde (dos capturas del mismo micrófono hacen eco). El ruido de la casa lo
+  quita el navegador: supresión de ruido, cancelación de eco y aislar la voz
+  (`voiceIsolation`, donde el navegador lo sepa hacer). El filtro Krisp de
+  LiveKit no se usó: es de pago. Lo que sí: **el profe apaga el micrófono de
+  quien mete ruido** («Apagar su micrófono» junto a su nombre, solo si lo tiene
+  encendido). Lo hace el servidor (`MutePublishedTrack` en «silenciar» de
+  `clase-llamada`, solo el profe), y al alumno se le dice con su tono. No le
+  quita la palabra (eso es el turno): si la tiene, lo vuelve a encender. Para no
+  confundir el apagado del profe con el propio, la página anota cuándo lo
+  apagó uno mismo (`yoApague`).
+  **La señal:** a uno mismo se le dice cuando se pone débil (una vez por minuto
+  como mucho, con tono grave) y cuando mejora; el profe ve «señal débil» en la
+  lista y en Alt+Q.
+  **Los tonos:** recibir la palabra ya sonaba; ahora perderla tiene el suyo
+  (baja, distinto del de «alguien salió»), y en el celular vibra.
+  **Quién habló último:** si nadie habla, Alt+W dice quién habló último y hace
+  cuánto.
+  **Cada voz en su lugar** (casilla, con audífonos): el profe al centro y los
+  alumnos repartidos de izquierda a derecha, por nombre, para que cada uno
+  suene siempre en el mismo lugar. Va por WebAudio (`webAudioMix` de LiveKit y
+  un `StereoPannerNode` por voz), que se pide al entrar. Por eso cambiar la
+  casilla dentro de la llamada vuelve a entrar sola (se muda, como con los
+  grupos). Sin la casilla, la llamada no pasa por WebAudio, como antes, que es
+  lo más probado en Safari.
+- **Grupos en la llamada.** El profe parte la clase en grupos de voz («De a
+  2/3/4» y «Armar grupos», sorteados entre los alumnos que están en la clase;
+  si sobra uno, se suma al último grupo y nadie queda hablando solo). Cada
+  grupo habla en su propia sala de LiveKit (`clase-<sesión>-g<n>`), y dentro
+  de un grupo hablan todos, con la misma regla de la grabación. Quién va en qué
+  grupo lo guarda `game_state.llamada_grupos` (migración `llamada_grupos`), y
+  solo el profe la escribe (`protect_game_state_teacher_columns`). **La sala
+  del alumno la decide la base** (`llamada_de_la_clase` le da la de su grupo, y
+  la Edge Function firma el pase con esa): la página solo se muda cuando ve el
+  cambio, sin decir «saliste». El profe pasa de un grupo a otro con un botón
+  por sala, y la suya dice «✓ … (estás aquí)» con `aria-pressed`. Si está
+  grabando, graba el grupo donde está, en una parte nueva. Los minutos
+  hablados cuentan solo lo que él oyó. «Terminar los grupos» devuelve a todos
+  a la sala grande. «Sincronizar» recorre la sala grande y las de los grupos
+  (también las de grupos que ya terminaron: la página del profe se las manda en
+  `viejos`) y saca de cada una a quien no es de ella. Abrir o terminar la
+  llamada borra los grupos. El tablero sigue siendo uno solo para toda la
+  clase: los grupos son de voz (para comentar en pareja la posición que muestra
+  el profe).
+- **El resumen de la clase** (en «Repasar mis clases», arriba de la
+  grabación): cuánto dura, los temas en orden (cada uno lleva a su parte y
+  minuto; sin los «De vuelta a») y, si las partes ya se pasaron a texto, las
+  cinco frases principales. Las elige la página, sin mandar el texto a ningún
+  lado y sin un modelo que escriba: son las frases que más repiten las
+  palabras más dichas en la clase, sin contar las vacías («el», «que», «de»…),
+  tal como se dijeron y en su orden. Así no inventa nada: lo peor que puede
+  pasar es que elija una frase poco útil, nunca una que nadie dijo.
+- **Reacciones y preguntas de sí o no** (pedido del 19/11, «agrega
+  todas»). El alumno le dice algo al profe sin interrumpir ni esperar el
+  turno: «No entendí», «Más lento», «Sí» y «No» (botones, o Alt+1 a Alt+4).
+  Al profe le suena un tono corto, se le dice quién y qué, y la lista lo
+  muestra un minuto. El profe puede abrir una pregunta de sí o no: cada alumno
+  contesta con Sí o No (los botones dicen «(contestar)»), y el profe ve el
+  conteo y quién falta («1 sí, 0 no; falta Zoe»). No es región viva: se le
+  anuncia cuando contestaron todos y al cerrarla. Las respuestas no se dicen
+  de a una, porque taparían la clase. **Va por la presencia de la clase**
+  (`reaccion`, `respuesta` y `pregunta_si_no` en `metaDePresencia`), como la
+  mano. No se guarda en ningún lado, y respeta el tope de anuncios de la
+  presencia (`anunciarPresencia`). La encuesta que ya existía es otra cosa: es
+  el mapa de jugadas, no sirve para un sí o no. Al recargar la página, el
+  profe no vuelve a oír las reacciones de hace más de un minuto.
+- **Solo oír al profe** (casilla del alumno): los compañeros quedan en
+  silencio en ese aparato (`setVolume(0)`), nadie más se entera. Se recuerda.
+- **«Estás hablando con el micrófono apagado»**, como Meet. Desde la primera
+  vez que se enciende el micrófono en la llamada, la página escucha una COPIA
+  de la pista (`mediaStreamTrack.clone()`: la de LiveKit se apaga al callarse,
+  la copia no) y mide el volumen, sin grabar ni mandar nada. Un segundo y
+  medio de voz con el micrófono apagado se avisa (una vez cada 30 s como
+  mucho), diciendo qué hacer: Alt+M, mantener Alt+P o levantar la mano. Antes
+  de encenderlo por primera vez no avisa: abrir el micrófono solo para eso
+  sería abrirlo sin que la persona lo pidiera. La copia se suelta al salir.
+  **El eco**, con la misma copia: si con el micrófono encendido LiveKit marca a
+  la persona «hablando» en más del 60 % del tiempo en que habla otro (en
+  ventanas de 20 s), es que su micrófono capta la llamada. Se le sugiere usar
+  audífonos, una vez por llamada. Es una sospecha y así se dice («Parece
+  que…»): la cancelación de eco del navegador casi siempre basta, y esto es
+  para cuando no.
+- **Marcar este momento** (Alt+K o el botón, en la llamada). Queda anotada la
+  hora en `clase_marcas` (migración `clase_marcas`). La hora la pone la base
+  (`marcar_momento_de_clase`), nunca la página, y solo puede marcar quien está
+  en una clase abierta (su asistencia, o el profe que la abrió), con un tope de
+  200 por persona y clase. Cada uno ve y borra solo las suyas. En «Repasar mis
+  clases», «Tus marcas» lleva la grabación a ese momento, 5 segundos antes para
+  oír la frase entera. Cada parte se guardó al terminarla (`creado_en`) y
+  empezó `segundos` antes, y con eso se sabe dónde cae cada marca. Una marca de
+  cuando no se grababa lo dice. La hora va en hora de Costa Rica. Está en
+  privacidad.html («Marcas de la clase»).
+- **Decir quién empieza a hablar** (casilla opcional, se recuerda). Cuando
+  la voz pasa a otra persona, se dice su nombre («Habla Zoe Álvarez»; el profe,
+  «…, el profe»). Para no hablar encima a cada rato, la persona tiene que
+  seguir hablando 700 ms, y a quien ya se nombró no se lo vuelve a nombrar
+  hasta que pasen 15 s sin que hable. A uno mismo no se lo nombra.
+- **Siguiente mano y el tiempo de cada turno** (el profe, en «Turnos»).
+  «Siguiente mano» (Alt+N) le da la palabra a la primera mano de la fila, en
+  el orden que ve el profe (`hand_at`), sin la de quien ya la tenía. Sin manos
+  levantadas, solo se termina el turno. «Tiempo para cada turno» (sin límite,
+  30 s, 1, 2 o 3 min, recordado en el aparato) va con el turno:
+  `game_state.elegido.hasta`, que solo escribe el profe. Así el alumno sabe
+  cuánto le queda sin ninguna otra señal. A los 10 s del final suena un aviso
+  al profe y al alumno del turno (a los demás no). Al terminar, la página del
+  PROFE pasa la palabra a la siguiente mano o termina el turno: si la tiene
+  cerrada, el turno no se termina solo, y está bien así. El cálculo es
+  `planDelTurno` (pura, la prueba el verificador). Un turno nuevo deshace el
+  reloj del anterior, y al recargar se vuelve a armar desde `hasta`.
+- **Sala de espera**: el alumno que está en la sala grande sin el profe lo
+  sabe («Tu profe todavía no está en la llamada: te aviso cuando entre», y
+  si el profe sale, «… te aviso cuando vuelva»). Que entre ya se anunciaba. En
+  un grupo no se dice: ahí lo normal es estar sin el profe.
+- **La batería**: donde el navegador lo deja saber (`navigator.getBattery`:
+  Chrome y Edge; Safari y Firefox no), si el aparato no está cargando, se avisa
+  una vez al 15 % y otra al 5 %, para que lo conecte antes de que se corte la
+  llamada.
+- **La participación del mes** (informes.html, «Participación en la
+  llamada»; js/participacion-llamada.js, una sola copia para la vista del
+  profe y la del alumno). Para los últimos tres meses: cuántos minutos habló,
+  en cuántas clases habló y en cuántas estuvo, y clase por clase. Una clase
+  sin minutos puede haber sido una en la que no habló o una sin llamada (eso
+  no se guarda). Por eso no se dice «no habló en 2 clases»: el profe sabe
+  cuáles tuvieron llamada. Junta `llamada_participacion` y `class_attendance`
+  (de a mil, con `range`), por mes en hora de Costa Rica, y la RLS decide qué
+  ve cada uno. Sin minutos hablados, el bloque no se destapa.
+- **Saltar entre la llamada y el tablero** (Alt+T): desde la llamada, a la
+  casilla del tablero que tenía el foco; desde cualquier otra parte, a la
+  llamada (el micrófono, o «Entrar»). Sin recorrer la página con el lector.
 - **Se borra sola a los 90 días**: pg_cron `limpiar-grabaciones` (1:40 a.m.
   CR) llama a `clase-grabaciones-limpiar` con el secreto de la bóveda, que
   borra primero el archivo y después la fila (la base no puede borrar archivos
