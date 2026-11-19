@@ -10,7 +10,7 @@ Santiago, varios Samuel, dos Sofía) NO se adivina por la cara: se deja sin
 foto hasta que alguien diga cuál es cuál, y la página pone sus iniciales.
 Ponerle a un niño la cara de otro en una página pública es peor que no
 ponerle ninguna. (Los de la primera vuelta los aclaró el dueño el 19/11/2026,
-poniéndoles el apellido en Drive: hoy están los 34.)
+poniéndoles el apellido en Drive. Un inscrito nuevo suma su línea.)
 
 Se usa la versión «MEDIOS DIGITALES» (la liviana; la marca del fotógrafo va
 abajo a la derecha y queda fuera del recorte). Cada foto se recorta cuadrada
@@ -77,6 +77,10 @@ MAPA = [
     ("1p6cSCAYhWrFcU7DWy8NPRob17DpNrZC7", "Cordero Sánchez, Santiago", "25 Santiago Cordero"),
     ("1n1AzOY3oTryDPOZIrAOKC8-6RcsmxGH8", "Cordova elizondo, Sofia", "20 SOFIA Cordova Elizondo"),
     ("1sDaNzVoDTlfbZC9ZD1ASL2q17cikPSIw", "Badilla Mena, Elizabeth", "23 Elizabeth SOFIA BADILLA Mena"),
+    # Aprobados después (19/11/2026): una sola foto con su nombre en la carpeta
+    # («BYRON» es como lo anotó el fotógrafo; en Pareo, «Bairon»).
+    ("1H8zWj4XHnddiHMCz7mDEw48RAF9nT9h8", "Aguilar Flores, Bairon Matías", "29 BYRON"),
+    ("1sw7ShDKNroMXxkoG0S1sIOZbJ4zbqw1D", "Salas Rojas, José Pablo", "15 JOSE PABLO"),
 ]
 
 

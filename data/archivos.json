@@ -19239,7 +19239,7 @@
   ]
  },
  "imagenes": {
-  "total": 1327,
+  "total": 1329,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -27134,6 +27134,12 @@
       "kb": 16
      },
      {
+      "ruta": "img/jdn-pz-2026/jugadores/aguilar-flores-bairon-matias.jpg",
+      "titulo": "Aguilar flores bairon matias",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
       "ruta": "img/jdn-pz-2026/jugadores/alpizar-hernandez-ethan-bary.jpg",
       "titulo": "Alpizar hernandez ethan bary",
       "tipo": "otro",
@@ -27252,6 +27258,12 @@
       "titulo": "Rodriguez quesada keithy",
       "tipo": "otro",
       "kb": 20
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/salas-rojas-jose-pablo.jpg",
+      "titulo": "Salas rojas jose pablo",
+      "tipo": "otro",
+      "kb": 15
      },
      {
       "ruta": "img/jdn-pz-2026/jugadores/segura-cespedes-santiago.jpg",
