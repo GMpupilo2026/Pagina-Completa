@@ -28,8 +28,9 @@
   /* Los trazos de una cara (milímetros, y hacia abajo) en el lenguaje del PDF
      (puntos, y hacia arriba). Las curvas cuadráticas de las letras TrueType
      pasan a cúbicas, que es la única que el PDF conoce. */
-  function trazos(textos, altoPt) {
-    const p = (x, y) => num(x * MM) + " " + num(altoPt - y * MM);
+  function trazos(textos, altoPt, dx, dy) {
+    const ox = dx || 0, oy = dy || 0;   // dónde va la cara en la hoja (mm)
+    const p = (x, y) => num((x + ox) * MM) + " " + num(altoPt - (y + oy) * MM);
     const partes = [];
     let colorActual = null;
     for (const t of textos) {
@@ -88,6 +89,39 @@
       paginas.push(pg);
     }
 
+    /* Una hoja con varias caras (la hoja carta para imprimir en casa): cada
+       cara con su fondo y sus letras en su lugar (`x`, `y`, `w`, `h` en mm,
+       desde arriba a la izquierda), y las marcas de corte como líneas finas
+       (`lineas`: [x1, y1, x2, y2] en mm). Los fondos iguales se comparten
+       igual que en las páginas sueltas. */
+    async function agregarHoja(caras, lineas) {
+      const recursos = [];
+      const partes = [];
+      for (const [k, cara] of caras.entries()) {
+        let im = imagenes.get(cara.clave);
+        if (!im) {
+          im = reservar();
+          poner(im, `<< /Type /XObject /Subtype /Image /Width ${cara.anchoPx} /Height ${cara.altoPx} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${cara.jpeg.length} >>`, cara.jpeg);
+          imagenes.set(cara.clave, im);
+        }
+        recursos.push(`/F${k} ${im} 0 R`);
+        partes.push(`q ${num(cara.w * MM)} 0 0 ${num(cara.h * MM)} ${num(cara.x * MM)} ${num(H - (cara.y + cara.h) * MM)} cm /F${k} Do Q`);
+        const t = trazos(cara.textos, H, cara.x, cara.y);
+        if (t) partes.push(t);
+      }
+      if (lineas && lineas.length) {
+        partes.push("0 0 0 RG 0.25 w");
+        for (const [x1, y1, x2, y2] of lineas) partes.push(`${num(x1 * MM)} ${num(H - y1 * MM)} m ${num(x2 * MM)} ${num(H - y2 * MM)} l S`);
+      }
+      const flujo = await comprimir(partes.join("\n"));
+      const c = reservar();
+      poner(c, `<< /Length ${flujo.length} /Filter /FlateDecode >>`, flujo);
+      const pg = reservar();
+      const caja = `[0 0 ${num(W)} ${num(H)}]`;
+      poner(pg, `<< /Type /Page /Parent ${arbol} 0 R /MediaBox ${caja} /Resources << /XObject << ${recursos.join(" ")} >> >> /Contents ${c} 0 R >>`);
+      paginas.push(pg);
+    }
+
     function cerrar() {
       poner(catalogo, `<< /Type /Catalog /Pages ${arbol} 0 R >>`);
       poner(arbol, `<< /Type /Pages /Kids [${paginas.map((p) => p + " 0 R").join(" ")}] /Count ${paginas.length} >>`);
@@ -103,7 +137,7 @@
       return concatenar(partes);
     }
 
-    return { agregar, cerrar, cuantasImagenes: () => imagenes.size, cuantasPaginas: () => paginas.length };
+    return { agregar, agregarHoja, cerrar, cuantasImagenes: () => imagenes.size, cuantasPaginas: () => paginas.length };
   }
 
   // Un texto del PDF entre paréntesis, en UTF-16 para que no se coma las tildes.

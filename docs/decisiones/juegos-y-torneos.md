@@ -5619,6 +5619,17 @@ Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
   sin adivinar. Un correo que no sale no deshace la marca. Volver a
   «pendiente» borra el comentario. Lo prueba
   `herramientas/verificar-pareo-inscripcion-comentario.js`.
+- **Una decisión ya tomada se puede cambiar.** Lo pidió el dueño (18/11): a
+  un jugador lo rechazaron por un atraso en la mensualidad y, ya al día,
+  no había cómo aceptarlo. La tarjeta marcada trae «Cambiar a aceptada» o
+  «Cambiar a rechazada», que abre el mismo cuadro de siempre (comentario y
+  aviso por correo con el estado nuevo); `marcar` ya aceptaba cualquier
+  paso, así que la función no cambió. De rechazada a aceptada entra a la
+  lista con `agregarJugadores`. De aceptada a rechazada **sale de la lista
+  solo si todavía no hay rondas** (el último con ese nombre): con rondas
+  jugadas sigue ahí, el cuadro lo dice y el árbitro lo retira en
+  «Jugadores», para no tocar emparejamientos ya hechos. Lo prueba el mismo
+  verificador.
 - **Las partidas en PGN.** En cada mesa de una ronda, «Partida (PGN)» abre
   un cuadro para pegarla. `js/pareo/partida.js` la lee jugada por jugada con
   chess.js (cargado solo la primera vez: Pareo no lo necesita para nada
@@ -16014,7 +16025,15 @@ sus pts y su puesto actual».
   aceptados del 18/11 se emparejaron solas 24: lo demás era de verdad
   dudoso (dos Aaron y una foto, dos Santiago con «SANTIAGO» y «SANTI», los
   Samuel, «MATEW» por Matthew) y se elige a mano en la lista, que dice
-  cuántos tienen foto y qué fotos sobraron. **Las fotos no salen de la
+  cuántos tienen foto y qué fotos sobraron. Después la organización les puso apellidos,
+  casi siempre a la versión de «MEDIOS DIGITALES» («10 SAMUEL Quesada Aguero
+  MEDIOS DIGITALES.jpg» junto a «10 SAMUEL.jpg»), y a una le sobró un nombre
+  («23 Elizabeth SOFIA BADILLA Mena»). Por eso de cada número se usa la foto
+  limpia pero se busca con el nombre más completo de las dos (`busca`), y una
+  foto le sirve a un jugador si todas sus palabras están en su nombre o si
+  coinciden al menos dos (`puntaje`); un archivo que quedó para dos es del que
+  mejor calza. Con la carpeta así, el 19/11 se emparejaron solas 31 de 32: la
+  que falta es «12 MATEW» (Matthew), que se elige a mano. **Las fotos no salen de la
   computadora ni se guardan**, como el Excel: se achican en el navegador y se
   pierden al cerrar la página.
 - **El recorte**: son de medio cuerpo frente al tablero, así que se
@@ -16024,8 +16043,23 @@ sus pts y su puesto actual».
   Con un recorte fijo desde arriba, una niña bajita salía con la cara chica
   abajo y mucho blanco encima. Se miraron los 46 recortes en una hoja: todos
   con la cabeza arriba y la cara del mismo tamaño. Una foto que ya viene de cabeza y
-  hombros (más ancha que 0,72, como la de Aaron González que mandó el dueño
+  hombros (más ancha que 0,72, como la de Aaron Barrantes que mandó el dueño
   por el chat) no se recorta de más: entra entera a lo alto.
+- **Hoja carta para imprimir en casa** (pedido del dueño: los imprime en
+  una Brother T530, hojas carta, por ambos lados, «listos solo para
+  cortar»). En «Cómo salen» (`salida.formato`: «imprenta», un gafete por
+  página, o «carta»; el diseño de la PZ viene en «carta»). Caben **9 por
+  hoja** (3 × 3, derechos; acostados, 8): con 5 mm de margen para lo que una
+  impresora de casa no imprime, pegados entre sí (cada corte sirve para dos)
+  y centrados, con 25,45 mm de margen a los lados y 12,2 mm arriba y abajo.
+  Cada hoja son dos páginas: los frentes, con marcas de corte en el margen
+  (nunca encima de un gafete), y los dorsos **en espejo por columnas**, que
+  al voltear por el borde largo caen cada uno detrás de su frente
+  (`hojaCarta` en `js/gafetes.js`; `agregarHoja` en `js/gafetes-pdf.js`).
+  Si la impresora no calza exacto, «córrelo» (`salida.dorsoX`/`dorsoY`, en
+  mm) mueve solo los dorsos. El verificador mira en el PDF que cada dorso
+  esté en el espejo de su frente, que las marcas vayan solo en los frentes y
+  sin pisar un gafete, y que el corrimiento mueva solo los dorsos.
 - **Los dos logos, del mismo alto** (lo preguntó el dueño): los archivos son
   cuadrados pero traen márgenes blancos distintos (el de la ADAPZ ocupa el
   73 % del alto de su archivo; el del CCDR, el 65 %), así que en la misma
@@ -16033,6 +16067,26 @@ sus pts y su puesto actual».
   (`sinMargen` en `js/gafetes-dibujo.js`) se les quita el margen al
   cargarlos y los dos llenan su caja; el verificador mide el alto dibujado de
   cada uno en el píxel.
+- **19/11, a pedido del dueño con el borrador en la mano:** (1) **el QR es
+  cuadrado** siempre: su caja se escalaba distinto a lo ancho y a lo alto (en
+  5,5 × 8,5, 0,55 contra 0,61) y quedaba más alta que ancha, con blanco de
+  más abajo; ahora usa el lado chico de la escala, pegado a la misma esquina.
+  (2) **Las fotos centradas**: a lo ancho, la cabeza va al medio del marco
+  (`cabezaDeLaPersona`: el medio de lo oscuro en la franja de la cabeza, en
+  toda la foto), y el recorte es más cerca (el 44 % del alto, desde un poco
+  arriba del pelo), con menos tablero. (3) **La profe Karina cambia de pose en
+  cada dorso**, por turno (`dorso.ilustraciones`): presentando, te toca, con
+  el reloj, con el caballo, pulgar arriba, tú puedes, con el trofeo y
+  saludando (de cuerpo entero y sin nada ancho al lado). (4) **El ID FIDE en
+  el frente**, en lugar del Elo: Pareo no lo publica y la lista de FIDE no
+  contestaba, así que sale del que se puso al inscribirse, con
+  `public.pareo_fide_de_aceptados` (solo administración, solo aceptadas, el
+  nombre y el ID; un «0» no cuenta), emparejado por el nombre sin tildes;
+  sin ID, la línea no sale. Del 19/11: 13 de 34 con ID. La función es la
+  migración `20261119050629_pareo_fide_de_aceptados.sql`, aplicada con
+  permiso del dueño y comprobada impersonando: anon no la puede ejecutar,
+  una cuenta que no administra recibe el rechazo y quien administra recibe
+  los ID (10 en el torneo U20; el «0» no cuenta).
 - **La franja del frente dice el club** («ADAPZ»; pedido del dueño), y
   debajo del nombre solo va «Juega el torneo U…»: la categoría y el Elo
   salieron del frente (también lo pidió el dueño). La categoría sigue de lado
@@ -16133,7 +16187,45 @@ Google Drive).
   «SOFIA» y «SOFIA BADILLA») y Elizabeth Badilla quedaron con sus
   iniciales hasta que alguien diga cuál foto es de quién. Ponerle a un niño
   la cara de otro en una página pública es peor que no ponerle ninguna.
-  Para agregar una: su línea en `MAPA` y correr el script.
+  El 19/11/2026 el dueño les puso el apellido a esos archivos en Drive (y
+  subió la de Aaron Barrantes, que no estaba): hoy están los 34. Para
+  agregar una: su línea en `MAPA`, correr el script y poner al día el grupo
+  de las fotos en `data/archivos.json` (`herramientas/archivos-catalogo.js`;
+  en Windows cambia los kb de los archivos de texto por los saltos de línea,
+  así que de lo que arma se toma solo ese grupo).
+
+### Lo del Tacho, también en la Eliminatoria JDN de PZ
+
+El dueño preguntó el 18/11/2026, cuatro días antes del torneo: «el torneo de
+pareo integral de JDN CCDRPZ ya tiene las actualizaciones que se hicieron al
+tacho?». Se compararon las dos páginas en `main`: los resultados, los pareos
+que se ponen al día solos y los inscritos ya estaban; faltaban tres cosas, y
+se pasaron:
+
+- **Los textos y el certificado propios.** `torneoPagina.textos` y
+  `torneoPagina.diploma` (ver «El certificado y las imágenes del Tacho, sin el
+  Centroamericano»): sin ellos, el certificado salía con el morado, el pizote,
+  «XXI Festival Centroamericano…» y el Gimnasio Nacional, y la tarjeta de un
+  jugador antes de la ronda 1 decía «El torneo empieza el 2 de noviembre». El
+  certificado de PZ lleva el azul marino de ADAPZ, la píldora en `#1D64B0`
+  (blanco encima 6,00), el marco celeste y blanco de sus franjas, el logo de
+  ADAPZ arriba a la izquierda y el del CCDR arriba a la derecha
+  (`escudoDerecha`, nuevo en `diploma()`; sin él no cambia nada). Al podio no
+  se le dice oro, plata o bronce: la eliminatoria clasifica a los Juegos
+  Nacionales.
+- **«En vivo» con la cámara de Notara** (ver «La partida en vivo de Notara en
+  la página del Tacho»). El código salió de `js/tacho-chess-resultados.js` a
+  `js/torneo-en-vivo.js`, una sola copia para las dos páginas; toma los
+  torneos de lo que ya leyó `js/centroamericano-vivo.js` (`tnr`, el id de
+  Pareo), sin pedir nada aparte, y el botón lleva la clase de cada página
+  (`botonVivo`: `.tacho-boton` o `.pz-boton`, el azul de ADAPZ).
+- **No se pasó «La sala de juego» con la mesa iluminada** (ver «La mesa
+  iluminada en la foto»): pide una foto de la sala del Hotel del Sur y que el
+  dueño marque dónde queda cada mesa; no se adivina.
+
+Lo revisan `verificar-tacho-chess.js` (el «En vivo» del Tacho, ya desde el
+módulo compartido) y `verificar-jdn-pz-resultados.js` (el «En vivo» y el
+certificado de PZ).
 
 ### La del Tacho Chess 2
 
@@ -16533,7 +16625,8 @@ nada más pone la que está en ese momento en vivo».
   cámara»; Pareo vuelve a jugar lo que llega con chess.js, nunca pisa una
   partida escrita a mano y el resultado no se anota sin confirmarlo.
 - **«En vivo» siempre está en «El torneo»** (`#hoy-vivo`, lo pone
-  `js/tacho-chess-resultados.js`, que ya encuentra los torneos del Tacho):
+  `js/torneo-en-vivo.js`, desde el 18/11/2026 la misma copia de la
+  Eliminatoria JDN de PZ; antes vivía en `js/tacho-chess-resultados.js`):
   «En vivo: próximamente» mientras ninguna cámara transmite; apenas una
   transmite, «En vivo ahora», su mesa, quién juega y «Ver la partida en
   vivo», que abre `tablero-vivo.html#<código>&t=<id>&m=<mesa>` encima de la
