@@ -1,9 +1,10 @@
 /* La portada de «Mis mesas» (centroamericano-arbitro.html) según de quién es el torneo:
-   - con el enlace del Centroamericano (chess-results): la píldora «XXI Campeonato» y el pizote;
+   - con el enlace del Centroamericano (chess-results): la píldora «XXI Campeonato» y el logo de Ajedrez Integral;
    - con un torneo de Pareo Integral de Tacho Chess: SIN la píldora y con Tacho, su mascota
      (img/tacho-chess-2/mascota.png), medida por el alto para no estirar la franja;
-   - con otro torneo de Pareo Integral: sin la píldora, y el pizote de siempre;
-   - en los tres, «Todas las mesas» sigue siendo el botón de la mascota.
+   - con otro torneo de Pareo Integral: sin la píldora, y el logo de Ajedrez Integral;
+   - en los tres, «Todas las mesas» sigue siendo el botón de la imagen de la derecha,
+     y el nombre del torneo va en el medio de la franja (#torneo-centro).
    Se mide lo que se ve (checkVisibility y la imagen cargada), no la clase. Deja capturas en
    la carpeta temporal del sistema.
 
@@ -54,6 +55,8 @@ const portada = (p) => p.evaluate(() => {
         seVe: i.checkVisibility() && i.naturalWidth > 0,
         enBoton: !!i.closest("#ver-todas-mesas"),
         alto: Math.round(r.height),
+        torneo: document.getElementById("torneo-centro").checkVisibility() ? document.getElementById("torneo-centro").textContent : null,
+        logoClase: i.classList.contains("cam-mascota-logo"),
     };
 });
 
@@ -61,9 +64,9 @@ const portada = (p) => p.evaluate(() => {
     const browser = await chromium.launch();
     try {
         const casos = [
-            ["el Centroamericano", null, true, "img/centroamericano-2026/mascota-tablero.png"],
+            ["el Centroamericano", null, true, "img/logo-marca.png"],
             ["Tacho Chess (Pareo)", "Tacho Chess 2 (1er Ciclo) (Rápido)", false, "img/tacho-chess-2/mascota.png"],
-            ["otro torneo de Pareo", "Abierto de Pérez Zeledón", false, "img/centroamericano-2026/mascota-tablero.png"],
+            ["otro torneo de Pareo", "Abierto de Pérez Zeledón", false, "img/logo-marca.png"],
         ];
         for (const [nombre, pareo, pildora, mascota] of casos) {
             console.log("\n" + nombre + ":");
@@ -71,6 +74,8 @@ const portada = (p) => p.evaluate(() => {
             const v = await portada(p);
             igual("la píldora «XXI Campeonato» " + (pildora ? "se ve" : "no se ve"), v.pildora, pildora);
             igual("la mascota es " + mascota + ", se ve y es el botón de «Todas las mesas»", [v.mascota, v.seVe, v.enBoton], [mascota, true, true]);
+            igual("en el medio, el nombre del torneo", v.torneo, pareo || "Sub-10 Femenino");
+            igual("el tamaño del logo solo cuando es el logo", v.logoClase, mascota === "img/logo-marca.png");
             if (pareo && /tacho/i.test(pareo)) igual("Tacho, de pie, no estira la franja (170 px de alto o menos)", v.alto > 0 && v.alto <= 170, true);
             igual("sin errores de la página", errores, []);
             await p.screenshot({ path: path.join(os.tmpdir(), "arbitro-marca-" + (pareo ? (/tacho/i.test(pareo) ? "tacho" : "pareo") : "centroamericano") + ".png"), clip: { x: 0, y: 0, width: 1280, height: 460 } });
