@@ -60,6 +60,9 @@ const PUBLICADOS = [
   { id: U20, nombre: "Eliminatoria Cantonal JDN CCDRPZ – U20-U16", organizador_id: "org-ai", creado: "2026-11-12T04:32:06Z",
     datos: { inscripcion: { abierta: true, hasta: "2026-11-20" }, rondas: [], jugadores: [
       jug("j-u20", "Vargas Solís, Daniel", "U20 Absoluto", { elo: 1694 }),
+      // La misma persona otra vez (una inscripción repetida que se aceptó, con
+      // la tilde al revés): sale una sola vez.
+      jug("j-dup", "Vargas Solìs, Daniel", "U20 Absoluto"),
       jug("j-u16", "Mora Céspedes, Ana Lucía", "U16 Femenino", { elo: 1431 }),
     ] } },
   // Otra «ADAPZ», sin el sello: nunca cuenta, aunque sea más nueva.
@@ -188,7 +191,7 @@ async function aceptar(page, boton) {
   await page.click("#g-pareo-pz");
   await page.waitForFunction(() => window.Gafetes._estado().datos);
   const filas = await page.evaluate(() => window.Gafetes._estado().datos.filas.map((f) => [f.Apellidos, f.Nombre, f.Categoría, f.Edad, f.Torneo, f.Club, f.Elo, f.QR]));
-  igual("solo los dos torneos con el sello, sin el retirado, por torneo y por nombre",
+  igual("solo los dos torneos con el sello, sin el retirado ni el repetido (otra tilde), por torneo y por nombre",
     filas.map((f) => f[0] + "|" + f[1]), ["Arias Mora|Sofía", "ZÚÑIGA ROJAS|MATEO", "Mora Céspedes|Ana Lucía", "Vargas Solís|Daniel"]);
   igual("la U16 juega el torneo U20", filas[2].slice(2, 5), ["U16 Femenino", "U16", "U20"]);
   igual("el QR de cada uno lleva a su ficha en su torneo", filas.map((f) => f[7]), [
@@ -222,17 +225,26 @@ async function aceptar(page, boton) {
   await page.waitForTimeout(700);
   const franja = await page.evaluate(() => {
     const c = document.getElementById("g-lienzo-frente");
-    const px = c.getContext("2d").getImageData(Math.round(c.width * 0.5), Math.round(c.height * 0.83), 1, 1).data;
+    const px = c.getContext("2d").getImageData(Math.round(c.width * 0.5), Math.round(c.height * 0.95), 1, 1).data;
     return "#" + [px[0], px[1], px[2]].map((v) => v.toString(16).padStart(2, "0")).join("");
   });
   igual("la franja de la U16 se pinta de su color (celeste oscuro)", franja, "#1873b4");
+  // El frente aprovecha el espacio: la franja del club llega al borde de
+  // abajo, el título va entre los logos y el lugar pasa al dorso.
+  const espacio = await page.evaluate(() => {
+    const c = document.getElementById("g-lienzo-frente");
+    const d = c.getContext("2d").getImageData(Math.round(c.width * 0.5), c.height - 2, 1, 1).data;
+    const x = window.Gafetes._estado().diseno;
+    return ["#" + [d[0], d[1], d[2]].map((v) => v.toString(16).padStart(2, "0")).join(""), x.tituloEntreLogos, x.titulo.texto.split(/\n/).length, x.dorso.lineaArriba];
+  });
+  igual("la franja llega abajo; el título, entre los logos, en dos renglones; el lugar, arriba del horario del dorso", espacio, ["#1873b4", true, 2, "HOTEL DEL SUR, PÉREZ ZELEDÓN"]);
   // Para imprimir en casa: la franja de guía arriba en las dos caras, y el
-  // dorso con blanco abajo (su franja subió), medido en el píxel.
+  // dorso con su franja hasta el borde de abajo (como el frente), en el píxel.
   const guia = await page.evaluate(() => {
     const px = (id, fx, fy) => { const c = document.getElementById(id); const d = c.getContext("2d").getImageData(Math.round(c.width * fx), Math.round(c.height * fy), 1, 1).data; return "#" + [d[0], d[1], d[2]].map((v) => v.toString(16).padStart(2, "0")).join(""); };
     return [px("g-lienzo-frente", 0.5, 0.005), px("g-lienzo-dorso", 0.5, 0.005), px("g-lienzo-dorso", 0.3, 0.992), px("g-lienzo-dorso", 0.3, 0.9)];
   });
-  igual("arriba, en las dos caras, la franja de guía del color; abajo del dorso, blanco; su franja, más arriba", guia, ["#1873b4", "#1873b4", "#ffffff", "#1873b4"]);
+  igual("arriba, en las dos caras, la franja de guía del color; abajo del dorso, su franja llega al borde, como la del frente", guia, ["#1873b4", "#1873b4", "#1873b4", "#1873b4"]);
   igual("la vista previa dice a quién muestra", await page.textContent("#g-fila"), "3 de 4: Mora Céspedes Ana Lucía");
   igual("sin avisos en la vista previa", await page.locator("#g-avisos li").allInnerTexts(), []);
 
