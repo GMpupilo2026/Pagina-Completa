@@ -45,7 +45,9 @@
         "session-status-card": "inicio clases",
         "pendientes-aviso": "inicio",
         "seguir-curso": "inicio",
-        "progreso-alumno": "inicio",
+        // «Hoy te toca» completo va en Entrenar: en Inicio lo resume su sala.
+        "progreso-alumno": "entrenar",
+        "jornada-inicio": "inicio",
         "favoritas": "inicio",
         "mas-usado": "inicio",
         "calendario-taller": "clases",
@@ -278,9 +280,11 @@
         app.insertBefore(marco, contenedor);
         marco.append(armarNav(), contenedor);
 
-        // Las filas de secciones del celular, justo debajo del buscador.
+        // Las filas de secciones del celular, justo debajo del buscador, y el Inicio nuevo.
         const buscador = document.getElementById("buscar-panel");
-        armarFilas(contenedor, buscador ? buscador.nextSibling : titulo.nextSibling);
+        const ancla = buscador ? buscador.nextSibling : titulo.nextSibling;
+        armarFilas(contenedor, ancla);
+        armarInicio(contenedor, ancla);
 
         document.body.classList.add("jornada");
         activo = true;
@@ -300,6 +304,226 @@
         const campo = document.getElementById("buscar-panel-campo");
         if (campo) campo.addEventListener("input", aplicar);
         window.addEventListener("hashchange", irAlHash);
+    }
+
+    /* ---------- El Inicio nuevo: la clase, las salas y lo que viene ----------
+       Como el de Chessgora: arriba la clase en una tarjeta azul, debajo seis
+       «salas» con un número grande que llevan a su lugar, y al lado (abajo en
+       el celular) lo que viene. Todo sale de funciones que el panel del alumno
+       ya usa y que la RLS acota a lo suyo: mi_proxima_clase(), mis_clases(),
+       mis_clases_proximas(), tareas_con_avance(), entreno_mi_semana(),
+       mi_rango(), informes_diagnosticos_alumnos() y Puntos.saldo(). Cada sala
+       arranca con «—» y, si su consulta falla, se queda así y lo dice: un
+       número inventado se creería. Horas y días en hora de Costa Rica. */
+    const ZONA = "America/Costa_Rica";
+    const F_DIA = new Intl.DateTimeFormat("en-CA", { timeZone: ZONA });
+    const F_HORA = new Intl.DateTimeFormat("es-CR", { timeZone: ZONA, hour: "numeric", minute: "2-digit" });
+    const F_SEMANA = new Intl.DateTimeFormat("es-CR", { timeZone: ZONA, weekday: "long" });
+    const F_FECHA = new Intl.DateTimeFormat("es-CR", { timeZone: ZONA, weekday: "long", day: "numeric", month: "long" });
+    const fmtN = (n) => new Intl.NumberFormat("es-CR").format(n);
+    function cuandoEs(fecha) {
+        const ahora = new Date();
+        const dia = F_DIA.format(fecha);
+        if (dia === F_DIA.format(ahora)) return "hoy";
+        if (dia === F_DIA.format(new Date(ahora.getTime() + 86400000))) return "mañana";
+        return "el " + F_SEMANA.format(fecha);
+    }
+    function el(tag, clase, texto) {
+        const e = document.createElement(tag);
+        if (clase) e.className = clase;
+        if (texto != null) e.textContent = texto;
+        return e;
+    }
+
+    const SALAS = [
+        { id: "hoy", icono: "⚡", nombre: "Hoy entrenaste", ir: "entrenar" },
+        { id: "tareas", icono: "📋", nombre: "Tareas por hacer", href: "tareas.html" },
+        { id: "puntos", icono: "🪙", nombre: "Puntos Ajedrez", href: "puntos-tienda.html" },
+        { id: "rango", icono: "♗", nombre: "Tu rango", href: "puntos-tienda.html" },
+        { id: "diagnostico", icono: "📈", nombre: "Tu nivel", href: "entreno/diagnostico.html" },
+        { id: "clases", icono: "🗓️", nombre: "Clases esta semana", ir: "clases" }
+    ];
+
+    function armarInicio(contenedor, antes) {
+        const caja = el("section", "jornada-inicio");
+        caja.id = "jornada-inicio";
+        caja.setAttribute("aria-label", "Tu jornada");
+        const izq = el("div", "jornada-inicio-principal");
+        const der = el("aside", "jornada-inicio-lado");
+        der.setAttribute("aria-labelledby", "jornada-viene-titulo");
+
+        // La clase: se llena cuando contestan mi_proxima_clase() y mis_clases().
+        const clase = el("div", "jornada-clase");
+        clase.id = "jornada-clase";
+        clase.hidden = true;
+        izq.appendChild(clase);
+
+        const tituloSalas = el("h2", "jornada-titulo-sec", "Tus salas");
+        tituloSalas.id = "jornada-salas-titulo";
+        const salas = el("ul", "jornada-salas");
+        salas.setAttribute("aria-labelledby", "jornada-salas-titulo");
+        SALAS.forEach((s) => {
+            const li = el("li");
+            const a = s.href ? el("a", "jornada-sala") : el("button", "jornada-sala");
+            if (s.href) a.href = s.href; else { a.type = "button"; a.addEventListener("click", () => ir(s.ir, true)); }
+            a.dataset.sala = s.id;
+            a.appendChild(el("span", "jornada-sala-icono", s.icono)).setAttribute("aria-hidden", "true");
+            a.appendChild(el("span", "jornada-sala-nombre", s.nombre));
+            a.appendChild(el("span", "jornada-sala-grande", "—"));
+            a.appendChild(el("span", "jornada-sala-det", "Cargando…"));
+            li.appendChild(a);
+            salas.appendChild(li);
+        });
+        izq.append(tituloSalas, salas);
+
+        const tituloViene = el("h2", "jornada-titulo-sec", "Lo que viene");
+        tituloViene.id = "jornada-viene-titulo";
+        const viene = el("ul", "jornada-viene");
+        viene.id = "jornada-viene";
+        viene.appendChild(el("li", "jornada-viene-vacio", "Cargando…"));
+        der.append(tituloViene, viene);
+
+        caja.append(izq, der);
+        contenedor.insertBefore(caja, antes);
+        llenarInicio();
+    }
+
+    function sala(id, grande, det) {
+        const a = document.querySelector('.jornada-sala[data-sala="' + id + '"]');
+        if (!a) return;
+        a.querySelector(".jornada-sala-grande").textContent = grande;
+        a.querySelector(".jornada-sala-det").textContent = det;
+    }
+
+    async function llenarInicio() {
+        const sb = window.sb;
+        if (!sb) return;
+        const { data: ses } = await sb.auth.getSession();
+        const uid = ses && ses.session && ses.session.user && ses.session.user.id;
+        // Cada consulta aparte: una que revienta (aun antes de salir) no arrastra a las demás.
+        const pedir = (fn) => { try { return Promise.resolve(fn()).then((r) => r, (e) => ({ error: e })); } catch (e) { return Promise.resolve({ error: e }); } };
+        const [proxima, misClases, semanaClases, tareas, entreno, rango, diag, saldo] = await Promise.all([
+            pedir(() => sb.rpc("mi_proxima_clase")),
+            pedir(() => sb.rpc("mis_clases")),
+            pedir(() => sb.rpc("mis_clases_proximas", { p_dias: 14 })),
+            pedir(() => sb.rpc("tareas_con_avance", { p_alumno: uid, p_pendientes: true, p_limite: 50 })),
+            pedir(() => sb.rpc("entreno_mi_semana", { alumno: uid })),
+            pedir(() => sb.rpc("mi_rango", { p_alumno: uid })),
+            pedir(() => sb.rpc("informes_diagnosticos_alumnos")),
+            pedir(() => window.Puntos.saldo(sb, uid).then((n) => ({ data: n })))
+        ]);
+        const sinDato = "No se pudo cargar";
+
+        // La clase.
+        const abierta = !misClases.error && Array.isArray(misClases.data) && misClases.data.find((c) => c.clase_abierta);
+        const prox = !proxima.error && Array.isArray(proxima.data) && proxima.data[0] && proxima.data[0].inicio ? proxima.data[0] : null;
+        pintarClase(abierta, prox);
+
+        // Hoy entrenaste (y la semana): los días de entreno_mi_semana(), el último es hoy.
+        if (entreno.error || !entreno.data) sala("hoy", "—", sinDato);
+        else {
+            const dias = Array.isArray(entreno.data.dias) ? entreno.data.dias : [];
+            const hoy = dias.length ? Number(dias[dias.length - 1].n) || 0 : 0;
+            const semana = dias.reduce((s, d) => s + (Number(d.n) || 0), 0);
+            sala("hoy", fmtN(hoy) + (hoy === 1 ? " ejercicio" : " ejercicios"), "Esta semana: " + fmtN(semana));
+        }
+
+        // Tareas por hacer: las pendientes que no vencieron.
+        const ahora = Date.now();
+        const porHacer = tareas.error || !Array.isArray(tareas.data) ? null
+            : tareas.data.filter((t) => !t.vence_at || Date.parse(t.vence_at) > ahora)
+                .sort((a, b) => (Date.parse(a.vence_at || "9999") - Date.parse(b.vence_at || "9999")));
+        if (!porHacer) sala("tareas", "—", sinDato);
+        else if (!porHacer.length) sala("tareas", "0", "Estás al día");
+        else {
+            const t = porHacer[0];
+            sala("tareas", fmtN(porHacer.length), "«" + String(t.titulo || "Tarea").slice(0, 40) + "»" + (t.vence_at ? ", vence " + cuandoEs(new Date(t.vence_at)) : ""));
+        }
+
+        // Puntos y rango.
+        if (saldo.error || saldo.data == null) sala("puntos", "—", sinDato);
+        else sala("puntos", fmtN(saldo.data), "Canjéalos en la tienda");
+        const r = !rango.error && Array.isArray(rango.data) ? rango.data[0] : (!rango.error ? rango.data : null);
+        if (!r) sala("rango", "—", sinDato);
+        else {
+            const nombre = r.nombre || r.rango || "Peón";
+            const sig = r.siguiente_nombre && r.umbral_siguiente ? "Para " + r.siguiente_nombre + ": " + fmtN(Math.max(0, r.umbral_siguiente - (r.puntos || 0))) + " puntos" : fmtN(r.puntos || 0) + " puntos ganados";
+            sala("rango", nombre.charAt(0).toUpperCase() + nombre.slice(1), sig);
+        }
+
+        // Tu nivel: el último diagnóstico propio.
+        if (diag.error) sala("diagnostico", "—", sinDato);
+        else {
+            const mio = (diag.data || []).find((f) => f.student_id === uid);
+            const nivel = mio && mio.detalle && (mio.detalle.nivel_etiqueta || mio.detalle.nivel);
+            if (!mio) sala("diagnostico", "Sin hacer", "Haz el diagnóstico: ubica tu nivel");
+            else sala("diagnostico", nivel ? String(nivel).charAt(0).toUpperCase() + String(nivel).slice(1) : "Hecho",
+                mio.fecha ? "El " + F_FECHA.format(new Date(mio.fecha)) : "Tu último diagnóstico");
+        }
+
+        // Clases esta semana y lo que viene.
+        const clases = semanaClases.error || !Array.isArray(semanaClases.data) ? null : semanaClases.data;
+        if (!clases) sala("clases", "—", sinDato);
+        else {
+            const enSiete = clases.filter((c) => Date.parse(c.inicio) - ahora < 7 * 86400000 && Date.parse(c.fin || c.inicio) > ahora);
+            sala("clases", fmtN(enSiete.length), enSiete.length ? "La próxima, " + cuandoEs(new Date(enSiete[0].inicio)) + " a las " + F_HORA.format(new Date(enSiete[0].inicio)) : "Sin clases en los próximos 7 días");
+        }
+        pintarLoQueViene(clases || [], porHacer || [], !clases && !porHacer);
+    }
+
+    function pintarClase(abierta, prox) {
+        const caja = document.getElementById("jornada-clase");
+        if (!caja || (!abierta && !prox)) return;
+        caja.textContent = "";
+        const chip = el("span", "jornada-clase-chip");
+        const titulo = el("h3", "jornada-clase-titulo");
+        const linea = el("p", "jornada-clase-linea");
+        const boton = el("a", "jornada-clase-boton");
+        if (abierta) {
+            chip.textContent = "Tu clase está abierta";
+            titulo.textContent = abierta.titulo_clase || "Clase en vivo";
+            linea.textContent = "Con " + (abierta.profesor || "tu profe");
+            boton.href = "sesion.html";
+            boton.textContent = "Entrar a la clase";
+        } else {
+            const inicio = new Date(prox.inicio);
+            chip.textContent = "Tu próxima clase: " + cuandoEs(inicio) + " a las " + F_HORA.format(inicio);
+            titulo.textContent = prox.titulo || "Tu próxima clase";
+            linea.textContent = [prox.profesor ? "Con " + prox.profesor : "", prox.modalidad === "en_linea" ? "en línea" : "presencial"].filter(Boolean).join(" · ");
+            boton.href = "#";
+            boton.textContent = "Ver tus clases";
+            boton.addEventListener("click", (e) => { e.preventDefault(); ir("clases", true); });
+        }
+        caja.append(chip, titulo, linea, boton);
+        caja.hidden = false;
+    }
+
+    function pintarLoQueViene(clases, tareas, fallo) {
+        const lista = document.getElementById("jornada-viene");
+        if (!lista) return;
+        lista.textContent = "";
+        const ahora = Date.now();
+        const cosas = []
+            .concat(clases.filter((c) => Date.parse(c.fin || c.inicio) > ahora).slice(0, 3).map((c) => ({
+                cuando: new Date(c.inicio), que: c.titulo || "Clase", det: (c.modalidad === "en_linea" ? "En línea" : "Presencial") + (c.profesor ? " · " + c.profesor : ""), tipo: "clase"
+            })))
+            .concat(tareas.filter((t) => t.vence_at).slice(0, 3).map((t) => ({
+                cuando: new Date(t.vence_at), que: "Vence «" + String(t.titulo || "Tarea").slice(0, 40) + "»", det: (t.cumplidos || 0) + " de " + (t.renglones || 0) + " hechos", tipo: "tarea"
+            })))
+            .sort((a, b) => a.cuando - b.cuando)
+            .slice(0, 5);
+        if (!cosas.length) {
+            lista.appendChild(el("li", "jornada-viene-vacio", fallo ? "No se pudo cargar lo que viene." : "Nada en los próximos días."));
+            return;
+        }
+        cosas.forEach((c) => {
+            const li = el("li", "jornada-viene-item" + (c.tipo === "clase" ? " es-clase" : ""));
+            const cuando = cuandoEs(c.cuando);
+            li.appendChild(el("span", "jornada-viene-cuando", cuando.charAt(0).toUpperCase() + cuando.slice(1) + " · " + F_HORA.format(c.cuando)));
+            li.appendChild(el("b", null, c.que));
+            li.appendChild(el("span", "jornada-viene-det", c.det));
+            lista.appendChild(li);
+        });
     }
 
     // clases.html#entrenar y compañía: abre la pestaña donde vive lo que se pide.
@@ -324,7 +548,42 @@
             sb.from("vistas_en_prueba").select("vista").eq("profile_id", uid).eq("vista", "panel_jornada").maybeSingle(),
             sb.from("profiles").select("role").eq("id", uid).maybeSingle()
         ]);
-        return !!(vista && vista.data && perfil && perfil.data && perfil.data.role === "alumno");
+        // Si la base no contestó, no se sabe: null (y el tema no se toca).
+        if (!vista || vista.error || !perfil || perfil.error) return null;
+        return !!(vista.data && perfil.data && perfil.data.role === "alumno");
+    }
+
+    /* El aspecto de Chessgora en TODO el sitio: el tema «jornada» de
+       js/temas-plataforma.js (oculto en Configuración). Los temas son una
+       preferencia de este navegador (localStorage) que el <head> de cada página
+       pone antes de pintar, sin parpadeo; así que basta con dejarlo puesto
+       aquí, en el panel, que es a donde se llega al entrar. Se guarda el tema
+       que había para devolverlo si la cuenta deja la prueba o si entra otra
+       cuenta en este navegador. Solo con respuesta de la base: un error de red
+       no le cambia el tema a nadie. */
+    const CLAVE_TEMA = "plataforma_tema_v1";
+    const CLAVE_PREVIO = "panel_jornada_tema_previo_v1";
+    function temaDeLaPrueba(enPrueba) {
+        try {
+            const html = document.documentElement;
+            const actualTema = localStorage.getItem(CLAVE_TEMA);
+            if (enPrueba) {
+                if (actualTema === "jornada") return;
+                localStorage.setItem(CLAVE_PREVIO, actualTema || "");
+                localStorage.setItem(CLAVE_TEMA, "jornada");
+                html.setAttribute("data-tema", "jornada");
+            } else if (actualTema === "jornada") {
+                const previo = localStorage.getItem(CLAVE_PREVIO) || "";
+                localStorage.removeItem(CLAVE_PREVIO);
+                if (previo && previo !== "jornada" && previo !== "clasico") {
+                    localStorage.setItem(CLAVE_TEMA, previo);
+                    html.setAttribute("data-tema", previo);
+                } else {
+                    localStorage.removeItem(CLAVE_TEMA);
+                    html.removeAttribute("data-tema");
+                }
+            }
+        } catch (e) { /* sin almacenamiento: el sitio se queda como está */ }
     }
 
     function cuandoSeVeaElPanel(fn) {
@@ -336,15 +595,18 @@
         obs.observe(app, { attributes: true, attributeFilter: ["class"] });
     }
 
-    const pedido = corresponde().catch(() => false);
+    const pedido = corresponde().catch(() => null);
     cuandoSeVeaElPanel(async () => {
-        if (!(await pedido)) return;
+        const enPrueba = await pedido;
+        if (enPrueba === null) return;
         // El panel adaptado (alumno ciego) y el panel docente se quedan como están.
-        if (document.getElementById("panel-adaptado-nota")) return;
+        const adaptado = !!document.getElementById("panel-adaptado-nota");
+        temaDeLaPrueba(enPrueba && !adaptado);
+        if (!enPrueba || adaptado) return;
         armar();
     });
 
-    window.PanelJornada = { ir, PESTANAS, SECCIONES, GRUPOS, SUBSECCIONES };
+    window.PanelJornada = { ir, PESTANAS, SECCIONES, GRUPOS, SUBSECCIONES, temaDeLaPrueba };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

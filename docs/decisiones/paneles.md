@@ -5213,7 +5213,48 @@ el sitio, con una sola cuenta.
   auditoría. Para sumar a alguien:
   `insert into public.vistas_en_prueba (profile_id, vista) values ('<id>', 'panel_jornada');`
   y para sacarlo, borrar su fila.
+- **El aspecto de Chessgora, en todo el sitio** (pedido del dueño el
+  19/11/2026). Es un tema más de `js/temas-plataforma.js`, «jornada», con
+  `oculto: true` (Configuración no lo ofrece) y `estilo: "jornada"`:
+  - **Colores**: crema en brand-50 y 100 (el fondo y los bordes), azul marino
+    del 200 en adelante y dorado de acento. Cada tono tiene la misma
+    luminancia que el Clásico, así que los 49 pares del sitio dan el mismo
+    contraste (`verificar-temas-plataforma.js`). Por eso el dorado es
+    `#c69b38` y no el de Chessgora: el de ellos no da la luminancia.
+  - **Formas** (`estiloDeTema()` en `herramientas/css-construir.js`): el
+    encabezado blanco con borde fino (solo en modo claro), el logo crema
+    pintado de azul marino con una máscara de su misma forma, las sombras
+    cambiadas por un anillo de 1 px, las esquinas algo más redondas, los
+    botones de fondo dorado en píldora y los títulos en Inter, como el texto.
+    No se toca ninguna página: todo va por las utilidades que ya usan.
+  - **Cómo llega a todo el sitio**: los temas son una preferencia del
+    navegador que el `<head>` de cada página pone antes de pintar, sin
+    parpadeo. `js/panel-jornada.js` lo deja puesto al entrar al panel si la
+    cuenta está anotada (y es alumno, y no es el panel adaptado), guardando
+    el tema que había en `panel_jornada_tema_previo_v1`. Si entra una cuenta
+    que no está anotada y el tema es «jornada», devuelve el de antes (o el
+    Clásico). Si la base no contesta, no se toca nada: un error de red no le
+    cambia el tema a nadie. A quien tenía otro tema y no está en la prueba no
+    se le toca. Mientras dure la prueba, si Oscarov elige otro tema en
+    Configuración, el panel le vuelve a poner «jornada».
+- **El Inicio nuevo**, como el de Chessgora: arriba la clase en una tarjeta
+  azul («Tu clase está abierta» con «Entrar a la clase», o «Tu próxima
+  clase: mañana a las 5:00 p. m.»), debajo seis «salas» con un número grande
+  (hoy entrenaste, tareas por hacer, Puntos Ajedrez, tu rango, tu nivel y
+  clases de la semana) que llevan a su lugar, y «Lo que viene» (las próximas
+  clases y lo que vence, por fecha) a la derecha en la computadora y debajo
+  en el celular. Todo sale de funciones que el panel del alumno ya usa
+  (`mi_proxima_clase`, `mis_clases`, `mis_clases_proximas`,
+  `tareas_con_avance`, `entreno_mi_semana`, `mi_rango`,
+  `informes_diagnosticos_alumnos`, `saldo_de_puntos`): ninguna consulta
+  nueva a la base. Cada consulta va aparte, y una sala cuya consulta falla
+  queda en «—» con «No se pudo cargar»: un número inventado se creería.
+  «Hoy te toca» completo pasó a Entrenar, porque en Inicio ya lo resume su
+  sala.
 - Lo revisa `verificar-panel-jornada.js`: sin la fila, el panel no cambia;
   con ella, cinco pestañas, cada sección en la suya, buscar destapa todo, los
   puntos en Perfil y la barra abajo en el celular y a la izquierda en la
-  computadora.
+  computadora. También que el tema se pone y se devuelve, el aspecto (el
+  encabezado blanco, el fondo crema, el borde fino, los títulos en Inter y
+  el logo con su máscara) y que cada sala diga exactamente lo que contesta
+  la base, también cuando una consulta falla.

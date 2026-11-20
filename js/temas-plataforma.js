@@ -126,6 +126,23 @@
       decorado: "lunas",
       vuelan: "magos",
     },
+    /* El aspecto de Chessgora (fondo crema, azul marino y dorado, encabezado
+     * blanco, tarjetas con borde fino, botones de píldora y todo en Inter).
+     * NO se ofrece en Configuración (`oculto`): es de la prueba del panel
+     * jornada y lo enciende js/panel-jornada.js solo a las cuentas de
+     * vistas_en_prueba. Los tonos tienen la misma luminancia que el Clásico,
+     * como todos: crema en 50 y 100, azul marino del 200 en adelante. Las
+     * formas (`estilo`) las escribe herramientas/css-construir.js. */
+    jornada: {
+      label: "Jornada",
+      icono: "🏛️",
+      descripcion: "Crema, azul marino y dorado, con tarjetas de borde fino.",
+      brand: { 50: "#f8f3e9", 100: "#e7e0d5", 200: "#c4cadf", 300: "#a7b0d0", 350: "#919dc6", 400: "#6678b4", 450: "#546ab2", 500: "#475dae", 600: "#35468e", 700: "#263473", 800: "#1c2551", 900: "#141b3e", 950: "#0e122f" },
+      accent: { 50: "#fdfbf4", 100: "#f9f2e1", 300: "#e4cd8d", 400: "#d9bb6f", 500: "#c69b38", 600: "#ac7e2e", 700: "#99621b", 900: "#744211" },
+      casillas: "azul",
+      estilo: "jornada",
+      oculto: true,
+    },
   };
 
   /* La LETRA es una preferencia aparte del tema: quien quiere los colores de

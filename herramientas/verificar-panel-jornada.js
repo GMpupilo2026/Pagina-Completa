@@ -36,8 +36,10 @@ function igual(t, hallado, esperado) {
   if (a === b) bien(t + ": " + a); else mal(t + "\n      esperaba: " + b + "\n      salió:    " + a);
 }
 
-async function abrir(browser, perfil, datos, opciones, hash) {
+async function abrir(browser, perfil, datos, opciones, hash, local) {
   const ctx = await browser.newContext(Object.assign({ serviceWorkers: "block" }, opciones || {}));
+  // Lo que ya estaba guardado en este navegador (el tema de antes, por ejemplo).
+  if (local) await ctx.addInitScript((l) => { Object.entries(l).forEach(([k, v]) => localStorage.setItem(k, v)); }, local);
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
@@ -92,7 +94,7 @@ async function pruebaPestanas(browser) {
   igual("abre en Inicio", await page.$eval(".jornada-nav button[aria-current='page']", (b) => b.textContent.trim()), "Inicio");
 
   let v = await page.evaluate(QUE_SE_VE);
-  igual("«Hoy te toca» es de Inicio", v.ids["progreso-alumno"].split(":")[0], "inicio");
+  igual("«Hoy te toca» es de Entrenar (en Inicio lo resume su sala)", v.ids["progreso-alumno"].split(":")[0], "entrenar");
   igual("«Tus clases» es de Clases y no se ve en Inicio", v.ids["tus-clases"].startsWith("clases:") && v.ids["tus-clases"].endsWith(":no"), true);
   igual("«Jugar y competir» no se ve en Inicio", v.grupos["Jugar y competir"], "jugar:no");
   igual("el buscador (sin pestaña) se ve", v.ids["buscar-panel"], "-:ve");
@@ -200,6 +202,115 @@ async function pruebaSecciones(browser) {
   await c.ctx.close();
 }
 
+async function pruebaAspecto(browser) {
+  console.log("\nEl aspecto de Chessgora: el tema «jornada» para la cuenta anotada");
+  const { ctx, page, errores } = await abrir(browser, ALUMNO, ANOTADO(ALUMNO.id), { viewport: { width: 1280, height: 900 } }, "", { plataforma_tema_v1: "bosque" });
+  await page.waitForTimeout(300);
+  const a = await page.evaluate(() => {
+    const css = (sel, prop) => { const el = document.querySelector(sel); return el ? getComputedStyle(el)[prop] : "falta"; };
+    return {
+      tema: document.documentElement.getAttribute("data-tema"),
+      guardado: localStorage.getItem("plataforma_tema_v1"),
+      previo: localStorage.getItem("panel_jornada_tema_previo_v1"),
+      encabezado: css("#header", "backgroundColor"),
+      fondo: getComputedStyle(document.body).backgroundColor,
+      tarjeta: css("#progreso-alumno", "boxShadow"),
+      titulo: css(".font-serif", "fontFamily"),
+      logo: css("#header img[src$='logo-marca.png']", "objectPosition"),
+    };
+  });
+  igual("queda puesto el tema jornada", [a.tema, a.guardado], ["jornada", "jornada"]);
+  igual("y se guarda el que había, para devolverlo", a.previo, "bosque");
+  igual("el encabezado es blanco", a.encabezado, "rgb(255, 255, 255)");
+  igual("el fondo es crema (brand-50 del tema)", a.fondo, "rgb(248, 243, 233)");
+  cierto("las tarjetas llevan borde fino en vez de sombra", /0px 0px 0px 1px/.test(a.tarjeta), a.tarjeta);
+  cierto("los títulos van en Inter", /^"?Inter/.test(a.titulo), a.titulo);
+  cierto("el logo crema se pinta con su máscara (la imagen sale de la vista)", /-9999px/.test(a.logo), a.logo);
+  igual("sin errores", errores, []);
+  await ctx.close();
+
+  console.log("\nUna cuenta que no está en la prueba recupera su tema");
+  const b = await abrir(browser, ALUMNO, {}, { viewport: { width: 1280, height: 900 } }, "",
+    { plataforma_tema_v1: "jornada", panel_jornada_tema_previo_v1: "bosque" });
+  await b.page.waitForTimeout(300);
+  igual("vuelve el tema de antes", await b.page.evaluate(() => [document.documentElement.getAttribute("data-tema"), localStorage.getItem("plataforma_tema_v1"), localStorage.getItem("panel_jornada_tema_previo_v1")]),
+    ["bosque", "bosque", null]);
+  await b.ctx.close();
+
+  const c = await abrir(browser, ALUMNO, {}, {}, "", { plataforma_tema_v1: "jornada" });
+  await c.page.waitForTimeout(300);
+  igual("sin tema guardado de antes, vuelve el Clásico", await c.page.evaluate(() => [document.documentElement.getAttribute("data-tema"), localStorage.getItem("plataforma_tema_v1")]), [null, null]);
+  await c.ctx.close();
+
+  const d = await abrir(browser, ALUMNO, {}, {}, "", { plataforma_tema_v1: "princesas" });
+  await d.page.waitForTimeout(300);
+  igual("y a quien tenía otro tema no se lo toca", await d.page.evaluate(() => document.documentElement.getAttribute("data-tema")), "princesas");
+  await d.ctx.close();
+}
+
+async function pruebaInicio(browser) {
+  console.log("\nEl Inicio nuevo: la clase, las salas y lo que viene, con lo que dice la base");
+  const dia = 86400000, ahora = Date.now();
+  const manana = new Date(ahora + dia), pasado = new Date(ahora + 2 * dia);
+  const datos = Object.assign(ANOTADO(ALUMNO.id), { rpc: {
+    mi_proxima_clase: [{ inicio: manana.toISOString(), fin: new Date(manana.getTime() + 3600000).toISOString(), titulo: "Clavadas y enfiladas", modalidad: "en_linea", profesor: "Óscar Angulo" }],
+    mis_clases_proximas: [
+      { inicio: manana.toISOString(), fin: new Date(manana.getTime() + 3600000).toISOString(), titulo: "Clavadas y enfiladas", modalidad: "en_linea", profesor: "Óscar Angulo" },
+      { inicio: new Date(ahora + 4 * dia).toISOString(), fin: new Date(ahora + 4 * dia + 3600000).toISOString(), titulo: "Mates del pasillo", modalidad: "en_linea", profesor: "Óscar Angulo" },
+    ],
+    tareas_con_avance: [
+      { id: "t1", titulo: "Mates en una jugada", vence_at: pasado.toISOString(), renglones: 10, cumplidos: 9 },
+      { id: "t2", titulo: "Finales de peones", vence_at: new Date(ahora + 5 * dia).toISOString(), renglones: 5, cumplidos: 0 },
+      { id: "t3", titulo: "Una que ya venció", vence_at: new Date(ahora - dia).toISOString(), renglones: 3, cumplidos: 0 },
+    ],
+    entreno_mi_semana: { dias: [{ dia: "a", n: 4 }, { dia: "b", n: 0 }, { dia: "c", n: 6 }, { dia: "d", n: 2 }, { dia: "e", n: 5 }, { dia: "f", n: 1 }, { dia: "hoy", n: 3 }] },
+    mi_rango: [{ rango: "alfil", nombre: "Alfil", puntos: 3200, siguiente: "torre", siguiente_nombre: "Torre", umbral_siguiente: 7000 }],
+    informes_diagnosticos_alumnos: [{ student_id: ALUMNO.id, fecha: "2026-10-26T16:00:00Z", detalle: { nivel: "intermedio", nivel_etiqueta: "intermedio" } }],
+    saldo_de_puntos: 1250,
+  } });
+  const { ctx, page, errores } = await abrir(browser, ALUMNO, datos, { viewport: { width: 1366, height: 900 } });
+  await page.waitForFunction(() => {
+    const s = document.querySelector('.jornada-sala[data-sala="tareas"] .jornada-sala-grande');
+    return s && s.textContent !== "—";
+  }, null, { timeout: 15000 }).catch(() => {});
+  const salas = await page.$$eval(".jornada-sala", (as) => as.map((a) => [a.dataset.sala, a.querySelector(".jornada-sala-grande").textContent, a.querySelector(".jornada-sala-det").textContent]));
+  const de = (id) => (salas.find((s) => s[0] === id) || [id, "falta", "falta"]);
+  igual("las seis salas, en orden", salas.map((s) => s[0]), ["hoy", "tareas", "puntos", "rango", "diagnostico", "clases"]);
+  igual("hoy entrenaste: el último día de la semana", de("hoy").slice(1), ["3 ejercicios", "Esta semana: 21"]);
+  igual("tareas por hacer: las que no vencieron, la más cercana primero", de("tareas").slice(1), ["2", "«Mates en una jugada», vence pasado ".replace("pasado ", "") + "el " + new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", weekday: "long" }).format(pasado)]);
+  igual("los Puntos Ajedrez", de("puntos").slice(1), ["1250".replace(/\B(?=(\d{3})+(?!\d))/g, " "), "Canjéalos en la tienda"].map((x, i) => i === 0 ? new Intl.NumberFormat("es-CR").format(1250) : x));
+  igual("el rango y cuánto falta para el siguiente", de("rango").slice(1), ["Alfil", "Para Torre: " + new Intl.NumberFormat("es-CR").format(3800) + " puntos"]);
+  igual("el nivel del último diagnóstico", de("diagnostico")[1], "Intermedio");
+  igual("clases en los próximos 7 días", de("clases")[1], "2");
+  const clase = await page.evaluate(() => {
+    const c = document.getElementById("jornada-clase");
+    return c && c.checkVisibility() ? [c.querySelector(".jornada-clase-chip").textContent, c.querySelector(".jornada-clase-titulo").textContent, c.querySelector(".jornada-clase-boton").textContent] : "no se ve";
+  });
+  igual("la tarjeta de la clase dice cuándo es la próxima", clase[0].startsWith("Tu próxima clase: mañana a las"), true);
+  igual("y su título y su botón", clase.slice(1), ["Clavadas y enfiladas", "Ver tus clases"]);
+  const viene = await page.$$eval(".jornada-viene-item b", (b) => b.map((x) => x.textContent));
+  igual("lo que viene, por fecha", viene, ["Clavadas y enfiladas", "Vence «Mates en una jugada»", "Mates del pasillo", "Vence «Finales de peones»"]);
+  const lado = await page.evaluate(() => {
+    const p = document.querySelector(".jornada-inicio-principal").getBoundingClientRect();
+    const l = document.querySelector(".jornada-inicio-lado").getBoundingClientRect();
+    return l.left >= p.right - 1;
+  });
+  igual("en la computadora, lo que viene va a la derecha", lado, true);
+  igual("«Hoy te toca» completo pasó a Entrenar", await page.$eval("#progreso-alumno", (s) => s.dataset.jornada), "entrenar");
+  await page.click('.jornada-sala[data-sala="hoy"]');
+  igual("la sala de hoy lleva a Entrenar", await page.$eval(".jornada-nav button[aria-current='page']", (b) => b.dataset.pestana), "entrenar");
+  igual("sin errores", errores, []);
+  await ctx.close();
+
+  console.log("\nSi una consulta falla, la sala lo dice y no inventa un número");
+  const datos2 = Object.assign(ANOTADO(ALUMNO.id), { lanzar: ["tareas_con_avance", "mi_rango"] });
+  const c = await abrir(browser, ALUMNO, datos2, { viewport: { width: 1366, height: 900 } });
+  await c.page.waitForTimeout(800);
+  const malas = await c.page.$$eval(".jornada-sala", (as) => as.filter((a) => ["tareas", "rango"].includes(a.dataset.sala)).map((a) => [a.querySelector(".jornada-sala-grande").textContent, a.querySelector(".jornada-sala-det").textContent]));
+  igual("tareas y rango quedan en «—» y lo dicen", malas, [["—", "No se pudo cargar"], ["—", "No se pudo cargar"]]);
+  await c.ctx.close();
+}
+
 async function pruebaHash(browser) {
   console.log("\nclases.html#tus-clases abre la pestaña donde vive");
   const { ctx, page } = await abrir(browser, ALUMNO, ANOTADO(ALUMNO.id), { viewport: { width: 1280, height: 900 } }, "#tus-clases");
@@ -210,7 +321,7 @@ async function pruebaHash(browser) {
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
-    for (const p of [pruebaSinAnotar, pruebaProfesoraAnotada, pruebaPestanas, pruebaCelular, pruebaSecciones, pruebaHash]) await p(browser);
+    for (const p of [pruebaSinAnotar, pruebaProfesoraAnotada, pruebaPestanas, pruebaCelular, pruebaSecciones, pruebaAspecto, pruebaInicio, pruebaHash]) await p(browser);
   } finally {
     await browser.close();
   }
