@@ -94,7 +94,7 @@
        desde arriba a la izquierda), y las marcas de corte como líneas finas
        (`lineas`: [x1, y1, x2, y2] en mm). Los fondos iguales se comparten
        igual que en las páginas sueltas. */
-    async function agregarHoja(caras, lineas) {
+    async function agregarHoja(caras, lineas, finas) {
       const recursos = [];
       const partes = [];
       for (const [k, cara] of caras.entries()) {
@@ -110,7 +110,8 @@
         if (t) partes.push(t);
       }
       if (lineas && lineas.length) {
-        partes.push("0 0 0 RG 0.25 w");
+        // Las de lado a lado (`finas`), en gris y más delgadas: pasan sobre el corte.
+        partes.push(finas ? "0.5 0.5 0.5 RG 0.3 w" : "0 0 0 RG 0.25 w");
         for (const [x1, y1, x2, y2] of lineas) partes.push(`${num(x1 * MM)} ${num(H - y1 * MM)} m ${num(x2 * MM)} ${num(H - y2 * MM)} l S`);
       }
       const flujo = await comprimir(partes.join("\n"));

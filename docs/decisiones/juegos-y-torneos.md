@@ -16466,6 +16466,14 @@ sus pts y su puesto actual».
   (`sinMargen` en `js/gafetes-dibujo.js`) se les quita el margen al
   cargarlos y los dos llenan su caja; el verificador mide el alto dibujado de
   cada uno en el píxel.
+- **Para cortar con guillotina** (pedido del dueño): con `salida.cortesCompletos`
+  (el diseño de la PZ lo trae), las líneas de corte van de lado a lado de la
+  hoja en las dos caras, una por cada borde de cada gafete (4 a lo ancho y 4 a
+  lo largo con 3 × 3), en gris fino y justo sobre el corte: lo que queda en el
+  borde casi no se ve. Las del dorso se corren con el ajuste del dorso. El
+  verificador las cuenta en el PDF y comprueba que ninguna pase por dentro de
+  un gafete. Sebastián lleva «Gracias por su colaboración» debajo del nombre
+  (el título de su renglón del personal).
 - **20/11, con los gafetes cortados en la mano: aprovechar todo el espacio.**
   En el frente, el título va **entre los dos logos** (`tituloEntreLogos`), la
   franja del club **justo en el borde de abajo** (`franjaAbajo`) y con eso la

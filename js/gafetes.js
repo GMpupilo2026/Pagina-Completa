@@ -42,7 +42,7 @@
       },
       codigo: { plantilla: "", sinCodigoSi: "" },
       fuentes: { titulo: { id: "league-spartan" }, texto: { id: "quicksand" } },
-      salida: { separarPor: "", formato: "imprenta", dorsoX: 0, dorsoY: 0 },
+      salida: { separarPor: "", formato: "imprenta", dorsoX: 0, dorsoY: 0, cortesCompletos: false },
       fotoRecorte: null,     // { arriba, alto, cabeza }: qué parte de cada foto va al marco
       fotoCentro: false,     // con foto: la foto en el medio y el nombre debajo
       franjaArriba: 0,       // una franja delgada arriba, del color, de guía para cortar
@@ -99,7 +99,7 @@
     "Organizadora | Rojas | Itzel Karina |  | karina-arbitro",
     "Árbitro principal | Quesada Arauz | Jean | Árbitro FIDE (AF) | oscar-presentando",
     "Árbitro principal | Angulo Cubero | Oscar | Árbitro Internacional (IA) | oscar-arbitro",
-    "Asistente | Mora Chavarría | Sebastián |  | oscar-te-toca",
+    "Asistente | Mora Chavarría | Sebastián | Gracias por su colaboración | oscar-te-toca",
   ].join("\n");
   const POSES_KARINA = ["presentando", "te-toca", "reloj-de-ajedrez", "caballo", "muy-bien", "tu-puedes", "campeones", "hola"];
   async function disenoJdnPz() {
@@ -172,7 +172,7 @@
     // Abajo del dorso, la categoría sola: el número (U12 01…) no hace falta.
     d.codigo.plantilla = "{Grupo}";
     // Para la Brother T530 del dueño: hojas carta, frente y dorso, listas para cortar.
-    d.salida = { separarPor: "", formato: "carta", dorsoX: 0, dorsoY: 0 };
+    d.salida = { separarPor: "", formato: "carta", dorsoX: 0, dorsoY: 0, cortesCompletos: true };
     for (const [id, ruta] of [["logoIzq", "img/adapz/logo.jpg"], ["logoDer", "img/adapz/ccdr-pz.jpg"], ["ilustracion", "img/avatar-profe-karina/bienvenidos.webp"], ["ilustracionDorso", "img/avatar-profe-karina/presentando.webp"], ...POSES_KARINA.slice(1).map((n, i) => ["karina" + (i + 2), "img/avatar-profe-karina/" + n + ".webp"]), ...POSES_OSCAR.map((n) => ["oscar-" + n, "img/avatar-profe-oscar/" + n + ".webp"]), ["karina-arbitro", "img/avatar-profe-karina/arbitro.webp"]]) {
       try { d.imagenes[id] = { nombre: ruta.split("/").pop(), datos: await aDatos(await (await fetch(ruta)).blob()) }; } catch (e) { /* sin esa imagen */ }
     }
@@ -868,8 +868,22 @@
     const marcas = [];
     for (let c = 0; c <= cols; c++) { const x = x0 + c * w; marcas.push([x, 3, x, y0 - 2], [x, y1 + 2, x, CARTA.h - 3]); }
     for (let f = 0; f <= filas; f++) { const y = y0 + f * h; marcas.push([3, y, x0 - 2, y], [x1 + 2, y, CARTA.w - 3, y]); }
+    // `salida.cortesCompletos`: las líneas de corte de lado a lado de la hoja,
+    // en las dos caras, una por cada borde de cada gafete (para cortar con
+    // guillotina; lo pidió el dueño). Van justo sobre el corte, en gris fino:
+    // lo que queda en el borde casi no se ve. Las del dorso se corren con el
+    // dorso (el ajuste en mm), para seguir encima de su corte.
+    const completas = !!d.salida.cortesCompletos;
+    const lineas = (ox, oy) => {
+      const l = [];
+      for (let c = 0; c <= cols; c++) { const x = x0 + c * w + ox; l.push([x, 2, x, CARTA.h - 2]); }
+      for (let f = 0; f <= filas; f++) { const y = y0 + f * h + oy; l.push([2, y, CARTA.w - 2, y]); }
+      return l;
+    };
     return {
-      hoja: CARTA, cols, filas, porHoja: cols * filas, marcas,
+      hoja: CARTA, cols, filas, porHoja: cols * filas, completas,
+      marcas: completas ? lineas(0, 0) : marcas,
+      marcasDorso: completas ? lineas(dx, dy) : [],
       frente: (k) => ({ x: x0 + (k % cols) * w, y: y0 + Math.floor(k / cols) * h, w, h }),
       dorso: (k) => ({ x: x0 + (cols - 1 - (k % cols)) * w + dx, y: y0 + Math.floor(k / cols) * h + dy, w, h }),
     };
@@ -929,8 +943,8 @@
               frentes.push({ ...(await caraLista(g, "frente")), ...H.frente(k) });
               dorsos.push({ ...(await caraLista(g, "dorso")), ...H.dorso(k) });
             }
-            await pdf.agregarHoja(frentes, H.marcas);
-            await pdf.agregarHoja(dorsos, []);
+            await pdf.agregarHoja(frentes, H.marcas, H.completas);
+            await pdf.agregarHoja(dorsos, H.marcasDorso, H.completas);
             hojas++;
           }
           archivos.push({ nombre: nombreSeguro(titulo) + ".pdf", bytes: pdf.cerrar() });

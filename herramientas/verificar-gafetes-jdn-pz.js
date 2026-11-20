@@ -371,10 +371,14 @@ async function aceptar(page, boton) {
   igual("cada dorso queda detrás de su frente al voltear por el borde largo", fr.every((f, k) => Math.abs(f[2] + ds[k][2] - (215.9 - 55)) < 0.05 && Math.abs(f[3] - ds[k][3]) < 0.05), true);
   // Tres columnas centradas: (215,9 − 3 × 55) / 2 = 25,45 mm de margen a cada lado.
   igual("los primeros tres, en la primera fila de izquierda a derecha", fr.slice(0, 3).every((f, k) => Math.abs(f[2] - (25.45 + 55 * k)) < 0.05), true);
-  igual("las marcas de corte, solo en la página de los frentes", [/ RG 0\.25 w/.test(cf), / RG 0\.25 w/.test(cd)], [true, false]);
+  // Para la guillotina: las líneas de corte de lado a lado, en gris fino, en
+  // las dos caras; una por cada borde de cada gafete (4 a lo ancho y 4 a lo
+  // largo con 3 × 3), siempre sobre un borde, nunca por dentro de un gafete.
+  igual("las líneas de corte, en gris fino, en las dos caras", [/0\.5 0\.5 0\.5 RG 0\.3 w/.test(cf), /0\.5 0\.5 0\.5 RG 0\.3 w/.test(cd)], [true, true]);
   const lineas = [...cf.matchAll(/([\d.]+) ([\d.]+) m ([\d.]+) ([\d.]+) l S/g)].map((m) => m.slice(1).map((v) => Number(v) * 25.4 / 72));
+  igual("de lado a lado de la hoja: 4 verticales y 4 horizontales", [lineas.filter(([x1, y1, x2, y2]) => x1 === x2 && Math.abs(y2 - y1) > 270).length, lineas.filter(([x1, y1, x2, y2]) => y1 === y2 && Math.abs(x2 - x1) > 205).length], [4, 4]);
   const enGafete = (x, y) => fr.some((f) => x > f[2] + 0.1 && x < f[2] + 54.9 && y > f[3] + 0.1 && y < f[3] + 84.9);
-  igual("ninguna marca pisa un gafete", lineas.some(([x1, y1, x2, y2]) => [0, 0.25, 0.5, 0.75, 1].some((t) => enGafete(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t))), false);
+  igual("ninguna línea pasa por dentro de un gafete", lineas.some(([x1, y1, x2, y2]) => [0, 0.1, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9, 1].some((t) => enGafete(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t))), false);
   // El corrimiento del dorso, por si la impresora no calza exacto.
   await page.click("#g-aprobar");
   await aceptar(page, "Cambiar el diseño");
