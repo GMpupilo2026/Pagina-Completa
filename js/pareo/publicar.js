@@ -82,6 +82,16 @@
     });
   }
 
+  // Lo que viaja de la configuración de la inscripción: solo sus claves
+  // conocidas (sin la configuración, nada: lo publicado queda como antes).
+  const CLAVES_INSCRIPCION = ["cierre", "categorias", "ramaEnCategoria", "campos", "declaraciones", "notaFija", "idioma", "textos"];
+  function configInscripcion(c) {
+    const x = {};
+    if (!c || typeof c !== "object") return x;
+    for (const k of CLAVES_INSCRIPCION) if (c[k] !== undefined) x[k] = JSON.parse(JSON.stringify(c[k]));
+    return x;
+  }
+
   // `extra.codigoEvento`: el código del enlace en vivo del evento (vive en el
   // navegador, no en el torneo).
   function datosPublicos(t, extra) {
@@ -98,7 +108,11 @@
       desempateCorte: t.desempateCorte ? { formato: t.desempateCorte.formato || "", orden: (t.desempateCorte.orden || []).slice() } : undefined,
       // El anuncio (un torneo que todavía no empieza) y la inscripción previa.
       anuncio: t.anuncio ? { hora: t.anuncio.hora || "", contacto: t.anuncio.contacto || "", texto: t.anuncio.texto || "" } : undefined,
-      inscripcion: t.inscripcion ? { abierta: !!t.inscripcion.abierta, hasta: t.inscripcion.hasta || "" } : undefined,
+      // Con la configuración del evento (`t.inscripcionEvento`, aparte de
+      // `t.inscripcion` para que abrirla o cerrarla no la borre): el cierre
+      // con hora, las categorías por año, los campos y los textos del
+      // formulario de js/inscripcion-evento.js. La función la vuelve a limpiar.
+      inscripcion: t.inscripcion ? Object.assign({ abierta: !!t.inscripcion.abierta, hasta: t.inscripcion.hasta || "" }, configInscripcion(t.inscripcionEvento)) : undefined,
       // Los códigos de los enlaces en vivo: un enlace que ya nadie transmite
       // lleva desde ellos al torneo publicado (js/pareo/ver.js).
       vivo: t.liveCodigo || undefined, codigoEvento: e.codigoEvento || undefined,

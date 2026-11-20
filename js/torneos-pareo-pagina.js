@@ -221,7 +221,7 @@
   const esProximo = (x) => !x.jugadores || (x.fecha && x.fecha > hoy());
   // En curso: ya empezó, le faltan rondas y no pasó de su último día.
   const enCurso = (x) => !esProximo(x) && x.rondas_total > 0 && x.rondas < x.rondas_total && (x.fin || x.fecha || "") >= HoraCR.sumarDias(hoy(), -1);
-  const inscribe = (x) => !!(x.inscripcion && x.inscripcion.abierta && (!x.inscripcion.hasta || x.inscripcion.hasta >= hoy()));
+  const inscribe = (x) => !!(x.inscripcion && window.InscripcionEvento && InscripcionEvento.estado(InscripcionEvento.desdePublicado(x.inscripcion)).abierta);
   const RITMO = { clasico: "Clásico", rapido: "Rápido", blitz: "Relámpago" };
   const ritmoDe = (x) => RITMO[x.ritmo_tipo || (window.RitmoControl ? RitmoControl.deducir(x.ritmo || "", x.nombre) : "")] || "";
   const SISTEMA = { suizo: "Suizo", todos: "Todos contra todos", scheveningen: "Scheveningen", eliminacion: "Eliminación directa", keizer: "Keizer" };
@@ -1037,52 +1037,18 @@
       el("dl", { class: "grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm" }, filas.map(([k, v]) => el("div", {}, el("dt", { class: "inline font-semibold", texto: k + ": " }), el("dd", { class: "inline", texto: v })))),
       an.texto ? el("p", { class: "text-sm mt-3 whitespace-pre-line", texto: an.texto }) : null);
   }
-  const inscripcionAbierta = (t) => !!(t.inscripcion && t.inscripcion.abierta && (!t.inscripcion.hasta || t.inscripcion.hasta >= hoy()));
+  // La inscripción la arma js/inscripcion-evento.js, el mismo módulo que usan
+  // las páginas de los eventos: con la configuración que trae el torneo
+  // publicado (`datos.inscripcion`: cierre con hora, categorías por año,
+  // campos, textos) o, sin ella, el formulario de siempre. Ver «La
+  // inscripción configurable por evento» en docs/decisiones/cuentas-y-formularios.md.
+  const inscripcionAbierta = (t) => !!(t.inscripcion && window.InscripcionEvento && InscripcionEvento.estado(InscripcionEvento.desdePublicado(t.inscripcion)).abierta);
   function formularioInscripcion(t, fila) {
-    const caja = el("section", { id: "tp-inscribir", class: C.tarjeta + " mb-6", "aria-labelledby": "tp-inscribir-titulo" },
-      el("h2", { id: "tp-inscribir-titulo", class: "font-serif text-xl font-bold mb-1", texto: "Inscribir a un jugador" }),
-      el("p", { class: C.nota + " mb-3", texto: (t.inscripcion.hasta ? "Hasta el " + fechaTexto(t.inscripcion.hasta) + ". " : "") + "Quien organiza revisa cada inscripción y te contacta si falta algo. Tu contacto lo ve solo quien organiza." }));
-    const campo = (id, etiqueta, control, obligatorio) => el("div", {},
-      el("label", { for: id, class: "block text-sm font-semibold mb-1" }, etiqueta, obligatorio ? el("span", { "aria-hidden": "true", texto: " *" }) : null), control);
-    const entrada = (id, extra) => el("input", Object.assign({ id, type: "text", autocomplete: "off", class: C.campo + " w-full" }, extra || {}));
+    // Sin categorías por año, las que ya traen sus jugadores, para elegir.
     const cats = [...new Set(t.jugadores.map((j) => String(j.categoria || "").trim()).filter(Boolean))];
-    const categoria = cats.length ? el("select", { id: "tp-i-categoria", class: C.campo + " w-full" }, el("option", { value: "", texto: "—" }), cats.map((c) => el("option", { value: c, texto: c }))) : entrada("tp-i-categoria", { maxlength: "30" });
-    const permiso = el("input", { type: "checkbox", id: "tp-i-permiso", class: "mt-1", required: true });
-    const estadoTxt = el("p", { id: "tp-i-estado", class: "text-sm font-semibold mt-3", role: "status" });
-    const enviar = el("button", { type: "submit", id: "tp-i-enviar", class: "bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-5 py-2.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-800 focus-visible:ring-offset-2 disabled:opacity-50" }, "Mandar la inscripción");
-    const form = el("form", { id: "tp-i-form", novalidate: true },
-      el("div", { class: "grid sm:grid-cols-2 gap-3" },
-        campo("tp-i-nombre", "Nombre de quien juega", entrada("tp-i-nombre", { maxlength: "100", required: true, "aria-required": "true" }), true),
-        campo("tp-i-institucion", "Colegio, escuela o club", entrada("tp-i-institucion", { maxlength: "100" })),
-        campo("tp-i-categoria", "Categoría", categoria),
-        campo("tp-i-elo", "Elo (si tiene)", entrada("tp-i-elo", { inputmode: "numeric", maxlength: "4" })),
-        campo("tp-i-fide", "ID FIDE (si tiene)", entrada("tp-i-fide", { inputmode: "numeric", maxlength: "12" })),
-        campo("tp-i-responsable", "Quién lo inscribe", entrada("tp-i-responsable", { maxlength: "100", required: true, "aria-required": "true" }), true),
-        campo("tp-i-contacto", "Correo o teléfono de quien inscribe", entrada("tp-i-contacto", { maxlength: "120", required: true, "aria-required": "true" }), true),
-        campo("tp-i-nota", "Algo que deba saber quien organiza", entrada("tp-i-nota", { maxlength: "300" }))),
-      el("div", { class: "flex items-start gap-2 text-sm mt-3" }, permiso,
-        el("label", { for: "tp-i-permiso" }, "Acepto que mis datos y los de quien juega se usen para esta inscripción, como dice la ",
-          el("a", { href: "privacidad.html#torneos", target: "_blank", rel: "noopener", class: C.enlace, texto: "Política de privacidad" }), ". Si quien juega es menor de edad, soy su encargado o tengo su permiso.")),
-      el("div", { class: "mt-3" }, enviar), estadoTxt);
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const v = (id) => ($(id).value || "").trim();
-      const falta = [["tp-i-nombre", 2], ["tp-i-responsable", 2], ["tp-i-contacto", 5]].find(([id, n]) => v(id).length < n);
-      if (falta) { estadoTxt.textContent = "Falta un dato obligatorio (los que llevan *)."; $(falta[0]).focus(); return; }
-      if (!permiso.checked) { estadoTxt.textContent = "Marca que aceptas la política de privacidad."; permiso.focus(); return; }
-      enviar.disabled = true;
-      estadoTxt.textContent = "Mandando…";
-      const r = await PareoPublicar.inscribir(fila.id, { nombre: v("tp-i-nombre"), institucion: v("tp-i-institucion"), categoria: v("tp-i-categoria"),
-        elo: v("tp-i-elo"), fideId: v("tp-i-fide"), responsable: v("tp-i-responsable"), contacto: v("tp-i-contacto"), nota: v("tp-i-nota") });
-      enviar.disabled = false;
-      if (!r.ok) { estadoTxt.textContent = r.error || "No se pudo mandar. Revisa la conexión e intenta de nuevo."; return; }
-      const nombre = v("tp-i-nombre");
-      form.reset();
-      estadoTxt.textContent = "✓ Inscripción de " + nombre + " enviada. Quien organiza la revisa; si quieres, inscribe a otra persona.";
-      $("tp-i-nombre").focus();
-    });
-    caja.append(form);
-    return caja;
+    return InscripcionEvento.caja(InscripcionEvento.desdePublicado(t.inscripcion, {
+      torneo: fila.id, prefijo: "tp-i", idCaja: "tp-inscribir", clase: C.tarjeta + " mb-6", categoriasLibres: cats,
+    }));
   }
 
   // La ficha del jugador entre torneos: los otros torneos publicados donde
