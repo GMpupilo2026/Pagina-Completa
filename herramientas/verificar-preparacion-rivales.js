@@ -2322,6 +2322,75 @@ async function pruebaMotorDeVerdad(browser) {
   await ctx2.close();
 }
 
+/* La preparación desbloqueada con 15 000 puntos (ver «Desbloquearla con 15 000
+   puntos» en paneles.md). Sin navegador, la migración: el canje da el
+   permiso, quien ya la tiene no la compra y a quien administra le llega el
+   aviso. En la página, un alumno: sin el canje ve cómo se desbloquea; con él,
+   la herramienta sin lo de dar clase y el cruce con SUS partidas. */
+function pruebaMigracionPuntos() {
+  console.log("\n=== Desbloquearla con 15 000 puntos: la migración ===");
+  const fs = require("fs");
+  const path = require("path");
+  const dir = path.join(__dirname, "..", "supabase", "migraciones");
+  const archivo = fs.readdirSync(dir).find((f) => /_preparacion_rivales_con_puntos\.sql$/.test(f));
+  cierto("está la migración del desbloqueo", !!archivo);
+  if (!archivo) return;
+  const sql = fs.readFileSync(path.join(dir, archivo), "utf8");
+  cierto("el premio cuesta 15 000 y se canjea una sola vez",
+    /'herramienta_preparacion_rivales'[\s\S]*?'herramienta',\s*15000,\s*'\{"herramienta": "preparacion_rivales"\}'::jsonb,\s*1,\s*\d+,\s*true\)/.test(sql));
+  const funcion = sql.slice(sql.indexOf("create or replace function public.puedo_preparar_rivales"), sql.indexOf("$function$;", sql.indexOf("create or replace function public.puedo_preparar_rivales")));
+  cierto("puedo_preparar_rivales() mira el canje de quien llama, con auth.uid() envuelto",
+    /premios_canjeados[\s\S]*pc\.student_id = \(select auth\.uid\(\)\)[\s\S]*'preparacion_rivales'/.test(funcion));
+  cierto("y sigue diciendo que sí a quien administra y al profesor activado",
+    /soy_admin\(\)/.test(funcion) && /preparacion_rivales_profesores/.test(funcion));
+  cierto("el trigger rechaza el canje de quien ya la tiene", /raise exception 'Ya tienes la preparación de rivales/.test(sql));
+  cierto("y le avisa a cada cuenta que administra", /where p\.is_admin;[\s\S]*avisar_push\(v_admins/.test(sql));
+  cierto("un aviso que no sale no deshace el canje", /exception when others then null;/.test(sql));
+  cierto("la función del trigger no la ejecuta nadie desde afuera",
+    /revoke execute on function interno\.al_desbloquear_herramienta\(\) from public, anon, authenticated;/.test(sql));
+  cierto("se dispara después de cada canje", /after insert on public\.premios_canjeados/.test(sql));
+}
+
+async function pruebaAlumnoConPuntos(browser) {
+  console.log("\n=== Un alumno que la desbloqueó con puntos ===");
+  const alumno = { profiles: [{ id: "u-profe", role: "alumno", is_admin: false, full_name: "Ana Alumna" }] };
+  {
+    const { page, ctx, errores } = await abrir(browser, false, [], false, alumno);
+    igual("sin el canje, ve cómo se desbloquea (y no el «pídesela» del profesor)", await page.evaluate(() =>
+      [SE_VE("denegado"), SE_VE("app"), SE_VE("denegado-alumno"), SE_VE("denegado-profe"),
+       !!document.querySelector('#denegado-alumno a[href="puntos-tienda.html"]'), /15\s000 Puntos Ajedrez/.test(document.getElementById("denegado-alumno").textContent)]),
+      [true, false, true, false, true, true]);
+    igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+    await ctx.close();
+  }
+  const { page, ctx, errores } = await abrir(browser, true, [], false, alumno);
+  igual("con el canje, ve la herramienta", await page.evaluate(() => SE_VE("app") && !SE_VE("denegado")), true);
+  await page.setInputFiles("#pgn-archivo", { name: "rival.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(pgnDePrueba(), "utf8") });
+  await page.click("#leer");
+  await page.waitForFunction(() => /Se leyeron/.test(document.getElementById("leido").textContent), null, { timeout: 10000 });
+  await page.click("#analizar");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
+  igual("el plan se baja y se juega, pero no se manda a un alumno ni va a Archivos", await page.evaluate(() =>
+    [!!document.querySelector("[data-pgn]"), document.querySelectorAll("[data-mandar], [data-archivar]").length]), [true, 0]);
+  igual("el cruce es con sus partidas", await page.evaluate(() =>
+    [document.getElementById("alumno-titulo").textContent, document.getElementById("alumno-usuario-rotulo").textContent, document.getElementById("alumno-archivo-rotulo").textContent]),
+    ["Cruzarlo con tus partidas", "Tu usuario", "O un PGN con tus partidas"]);
+  await page.setInputFiles("#alumno-archivo", { name: "mias.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(pgnDePrueba(), "utf8") });
+  await page.click("#alumno-leer");
+  await page.waitForFunction(() => !document.getElementById("alumno-elegir").hidden, null, { timeout: 10000 });
+  await page.click("#alumno-cruzar");
+  await page.waitForFunction(() => /^Listo: /.test(document.getElementById("alumno-estado").textContent), null, { timeout: 15000 });
+  igual("y la tarjeta del cruce le habla a él", await page.evaluate(() => {
+    const t = document.querySelector("[aria-labelledby='cruce-titulo']");
+    return [document.getElementById("cruce-titulo").textContent, /tu alumno/i.test(t.textContent), /llevas blancas/.test(t.textContent)];
+  }), ["Tú contra él", false, true]);
+  await page.click("#guardar");
+  await page.waitForFunction(() => window.__insertados.some((i) => i.tabla === "preparaciones_rival"), null, { timeout: 5000 });
+  cierto("guarda su análisis (la RLS lo deja por puedo_preparar_rivales)", true);
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 (async () => {
   const conMotor = pruebaAnalisis();
   pruebaPosiciones();
@@ -2348,10 +2417,12 @@ async function pruebaMotorDeVerdad(browser) {
   const conCerteza = pruebaCerteza();
   pruebaCsp();
   pruebaArchivosDelMotor();
+  pruebaMigracionPuntos();
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaSinPermiso(browser);
     await pruebaConPermiso(browser);
+    await pruebaAlumnoConPuntos(browser);
     await pruebaDescarga(browser);
     await pruebaEtapa1(browser, analisisVersion1());
     await pruebaEtapa3(browser);

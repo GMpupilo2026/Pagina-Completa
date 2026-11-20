@@ -391,6 +391,9 @@ window.Puntos = (function () {
   // Lo que se le puede comprar a otro además de a uno mismo.
   const SE_REGALA = { cosmetico: true, entrenamiento: true };
 
+  // La página de cada premio «herramienta» (premios_catalogo.parametros.herramienta).
+  const HERRAMIENTAS = { preparacion_rivales: "preparacion-rivales.html" };
+
   function seccion(titulo, ayuda) {
     const sec = document.createElement("section");
     const h = document.createElement("h3");
@@ -777,6 +780,22 @@ window.Puntos = (function () {
           });
           info.appendChild(enlaces);
         }
+      }
+      // Una herramienta desbloqueada (la preparación de rivales, con 15 000
+      // puntos): la puerta para abrirla, como el material de arriba.
+      const paginaHerramienta = p.tipo_efecto === "herramienta" && p.parametros
+        ? HERRAMIENTAS[p.parametros.herramienta] : null;
+      if (paginaHerramienta) {
+        const enlaces = document.createElement("p");
+        enlaces.className = "text-xs mt-0.5";
+        const a = document.createElement("a");
+        a.href = paginaHerramienta;
+        a.setAttribute("data-herramienta", p.parametros.herramienta);
+        a.className = "font-semibold underline text-accent-700 dark:text-accent-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+        a.textContent = "Abrir la herramienta";
+        a.setAttribute("aria-label", "Abrir " + p.nombre);
+        enlaces.appendChild(a);
+        info.appendChild(enlaces);
       }
       if (p.tipo_efecto === "titulo" || p.tipo_efecto === "marco_perfil" || p.tipo_efecto === "accesorio_avatar") {
         const btn = boton(p.activo ? "Quitar" : "Mostrar", (p.activo ? "Quitar" : "Mostrar") + " " + p.nombre);
