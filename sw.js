@@ -51,7 +51,7 @@ const NUNCA = [
   // El código de las herramientas con licencia (CODIGO_CON_LICENCIA en
   // worker.js): a quien no la tiene el worker le manda un aviso en su lugar, y
   // ni el aviso ni el código se guardan en el teléfono.
-  /^\/js\/(bases-torneo|bases-torneo-pagina|inscripcion-jde|inscripcion-jde-reglas|normas-titulo)\.js$/,
+  /^\/js\/(bases-torneo|bases-torneo-pagina|inscripcion-jde|inscripcion-jde-reglas|normas-titulo|ajedrez-estudiantil|estadisticas-colegios|historial-jugador|ranking-estudiantil|ranking-estudiantil-pagina)\.js$/,
   // Los archivos que se bajan con la licencia (ARCHIVOS_CON_LICENCIA en worker.js).
   /^\/descargas\//,
   /^\/api\//,
