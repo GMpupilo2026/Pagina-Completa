@@ -39,6 +39,7 @@
  *       onEnviar: function (texto, api) { ... api.decir('…'); }
  *     });
  *     cmd.posicion(game);          // la posición en palabras, encima del cuadro
+ *                                  // (con la cuenta ciega, encima del TABLERO)
  *     cmd.etiqueta('Escribe la letra de la opción');
  *
  * Y aparte, las tres lecturas que necesita quien reciba ese texto:
@@ -170,6 +171,10 @@ window.CuadroComandos = (function () {
     ".cc-pos .bn-piezas-color { margin: .4rem 0 .1rem; font-size: 1rem; font-weight: 700; }",
     ".cc-pos .bn-piezas-lista { margin: 0 0 .3rem; padding-left: 1.2rem; list-style: disc; }",
     ".cc-pos { margin: 0 0 .6rem; font-size: 1rem; line-height: 1.6; }",
+    /* Fuera del recuadro cae a veces en una grilla o una fila flex (el visor
+       de los cursos): ocupa el renglón entero, para no correr al tablero de
+       su columna. */
+    ".cc-piezas-fuera { grid-column: 1 / -1; flex: 1 1 100%; }",
     ".cc-form { display: flex; flex-wrap: wrap; gap: .5rem; align-items: flex-end; }",
     ".cc-campo { flex: 1 1 12rem; }",
     ".cc-etiqueta { display: block; font-size: .9rem; margin-bottom: .25rem; }",
@@ -243,8 +248,13 @@ window.CuadroComandos = (function () {
     tit.className = "cc-pos-titulo bn-piezas-titulo";
     tit.textContent = cfg.encabezadoPosicion || "Piezas";
     tit.hidden = true;
-    caja.appendChild(tit);
-    caja.appendChild(pos);
+    /* El encabezado y la lista van juntos en un bloque, que con la cuenta ciega
+       se muda ANTES del tablero (ver `colocar()`, más abajo). */
+    var bloque = document.createElement("div");
+    bloque.className = "cc-piezas";
+    bloque.appendChild(tit);
+    bloque.appendChild(pos);
+    caja.appendChild(bloque);
 
     var form = document.createElement("form");
     form.className = "cc-form";
@@ -317,6 +327,46 @@ window.CuadroComandos = (function () {
 
     destino.appendChild(caja);
 
+    /* Las piezas, ARRIBA del tablero. Con la cuenta ciega, el bloque «Piezas»
+       no se queda en el recuadro —que va DEBAJO del tablero— sino que se muda
+       justo antes del tablero: primero se lee la posición y después se
+       resuelve (ver «Las piezas, arriba del tablero» en
+       docs/decisiones/accesibilidad.md). Lo hace el recuadro y no cada página
+       para que haya una sola copia: el tablero lo da `tablero().el` (el de
+       js/tablero-accesible.js) o, donde no hay ese, `tableroEl`.
+       Se pone delante del pedazo de página que contiene al tablero y no al
+       recuadro (el hijo del ancestro común que lleva el tablero): así no se
+       mete dentro del envoltorio del tablero, que suele tener las coordenadas
+       en posición absoluta (si cae en una grilla, ocupa el renglón entero:
+       ver `.cc-piezas-fuera` en el estilo). Si el recuadro deja la página
+       (un visor que se vuelve a armar), el bloque vuelve a él y se va con él;
+       y si el recuadro no se ve, el bloque tampoco. */
+    function elTablero() {
+      var t = cfg.tablero, e = cfg.tableroEl;
+      try { if (typeof t === "function") t = t(); } catch (x) { t = null; }
+      if (t && t.el && t.el.nodeType === 1) return t.el;
+      try { if (typeof e === "function") e = e(); } catch (x) { e = null; }
+      return e && e.nodeType === 1 ? e : null;
+    }
+    function colocar() {
+      var tab = cuentaCiega() && caja.isConnected ? elTablero() : null;
+      var ancla = null;
+      if (tab && tab.isConnected && !tab.contains(caja)) {
+        ancla = tab;
+        while (ancla.parentNode && !ancla.parentNode.contains(caja)) ancla = ancla.parentNode;
+        if (!ancla.parentNode) ancla = null;
+      }
+      if (ancla) {
+        if (bloque.parentNode !== ancla.parentNode || bloque.nextSibling !== ancla) ancla.parentNode.insertBefore(bloque, ancla);
+        bloque.classList.add("cc-piezas-fuera");
+        bloque.hidden = !seVe(caja);
+      } else if (bloque.parentNode !== caja) {
+        caja.insertBefore(bloque, caja.firstChild);
+        bloque.classList.remove("cc-piezas-fuera");
+        bloque.hidden = false;
+      }
+    }
+
     var api = {
       el: caja,
       input: input,
@@ -346,6 +396,7 @@ window.CuadroComandos = (function () {
     };
 
     function escribir(juegoOTexto) {
+      colocar();
       if (porColor() && juegoOTexto && typeof juegoOTexto !== "string") {
         pintarPorColor(pos, juegoOTexto);
         tit.hidden = false;
@@ -369,6 +420,7 @@ window.CuadroComandos = (function () {
        esta se calla: dos encabezados iguales seguidos son una parada de más. */
     var manual = false, ultima = null;
     function lecturaSola() {
+      colocar();
       if (manual || !cuentaCiega()) return;
       var g = null;
       try { g = cfg.juego(); } catch (e) { g = null; }

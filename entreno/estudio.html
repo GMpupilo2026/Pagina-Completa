@@ -201,7 +201,9 @@
   .jugada.actual{background:var(--brass); color:#102a43; font-weight:700;}
   .en-palabras{max-width:520px; margin:12px auto 0; border:1px solid var(--line); background:var(--bg-panel); padding:10px 14px;}
   .en-palabras p{color:var(--text-cuerpo); font-size:0.9rem; line-height:1.55; margin:0;}
+  .en-palabras.pos-arriba{margin:0 auto 12px;}
   .pos-completa{margin-top:8px;}
+  .pos-arriba .pos-completa{margin-top:0;}
   .pos-completa summary{cursor:pointer; font-size:0.85rem; color:var(--text-muted);}
   .pos-completa p, .pos-completa #posicion-completa{margin-top:6px; color:var(--text-muted);}
 
@@ -431,6 +433,16 @@
              puede preguntar (js/tablero-accesible.js). Es el mismo teclado que
              el resto de Entrenamiento: una ficha se estudia igual que se
              resuelve un ejercicio. -->
+        <!-- La posición pieza por pieza va ARRIBA del tablero: primero se lee y
+             después se recorre (ver «Las piezas, arriba del tablero» en
+             docs/decisiones/accesibilidad.md). La jugada contada, que es la
+             región viva, se queda junto a los botones que la cambian. -->
+        <div class="en-palabras pos-arriba">
+          <details class="pos-completa">
+            <summary>Toda la posición, pieza por pieza</summary>
+            <div id="posicion-completa"></div>
+          </details>
+        </div>
         <div class="diagrama">
           <div class="board8" id="tablero"></div>
         </div>
@@ -449,13 +461,9 @@
           <!-- Lo que se lee SOLO en cada jugada: la jugada, contada. La posición
                entera no —una apertura son doce jugadas y treinta y dos piezas, o
                sea casi cuatrocientas casillas dictadas para ver una línea que
-               dura medio minuto— así que va debajo, escrita, para leerla cuando
-               se quiera o pedirla con "posición". -->
+               dura medio minuto— así que va escrita, arriba del tablero, para
+               leerla cuando se quiera o pedirla con "posición". -->
           <p id="posicion-escrita" role="status"></p>
-          <details class="pos-completa">
-            <summary>Toda la posición, pieza por pieza</summary>
-            <div id="posicion-completa"></div>
-          </details>
         </div>
         <!-- Donde se le pregunta a la posición y se recorre la línea escribiendo
              (js/cuadro-comandos.js): "siguiente", "jugada 5", "caballos". -->

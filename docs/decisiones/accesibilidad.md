@@ -1376,10 +1376,55 @@ Lo revisa `verificar-piezas-arriba.js`, sin navegador: en cada página con
 `id="position-readout"` e `id="board"`, la lista tiene que venir antes en el
 HTML. Probado que falla con la de Mates devuelta a su lugar viejo.
 
-El recuadro de comandos (`js/cuadro-comandos.js`) sigue con su propia lista
-encima del campo de escribir, debajo del tablero: es la que usan, con la
-cuenta ciega, las páginas sin lectura propia (Aperturas, Mis estudios, Sin
-internet, los cursos).
+### La lista del recuadro de comandos también sube
+
+Las páginas sin lectura propia (Aperturas, Ejercicios por tema, Estudio, Sin
+internet, Precisión posicional, los visores de los cursos, la clase en vivo…)
+usan, con la cuenta ciega, la lista que escribe el recuadro de comandos
+(`js/cuadro-comandos.js`), y el recuadro va **debajo** del tablero. Había dos
+caminos: que cada página pusiera su `#position-readout` arriba (el recuadro ya
+se calla si ve otra «Piezas» a la vista), o que el recuadro llevara su lista
+arriba. Se eligió lo segundo, porque son más de veinte páginas y así queda una
+sola copia: **con la cuenta ciega, el bloque «Piezas» (el `h2` y su lista,
+`.cc-piezas`) se muda justo antes del tablero**; sin ella se queda en el
+recuadro, como siempre.
+
+- El tablero lo da `tablero().el` —el de `js/tablero-accesible.js`, que ya
+  pasaban casi todas para «ir a e4»—; la clase en vivo le agregó `el` a su
+  `tableroApi`, y los visores de los cursos, que no pasan `tablero`, pasan
+  `tableroEl: boardEl`. **Una página nueva que monte el recuadro con `juego`
+  tiene que darle uno de los dos**: sin tablero, la lista se queda abajo y no
+  falla nada.
+- No se mete dentro del envoltorio del tablero (las coordenadas van en
+  posición absoluta): va delante del hijo del ancestro común —el del tablero y
+  el recuadro— que lleva al tablero. En el visor de los cursos eso cae en una
+  grilla de dos columnas y corría al tablero a la otra; por eso
+  `.cc-piezas-fuera` ocupa el renglón entero (`grid-column: 1 / -1`).
+- Si el recuadro sale de la página (un visor que se vuelve a armar), el bloque
+  vuelve a él y se va con él; si el recuadro no se ve, el bloque tampoco.
+- Mis estudios no carga el recuadro, así que ahí no hay lista que subir.
+
+Dos páginas tenían su propia lectura, sin `#position-readout`, y también
+debajo del tablero (las encontró el verificador en el CI):
+
+- **Estudio** (`entreno/estudio.html`): «Toda la posición, pieza por pieza»
+  sube antes del diagrama, en su propio `.en-palabras.pos-arriba`. La jugada
+  contada (`#posicion-escrita`, la región viva) se queda pegada a los
+  controles, que es lo que mide `verificar-entreno-accesible.js`.
+- **Habilidades** (`entreno/tipos.html`): `#lectura` iba en la columna de la
+  derecha, después del enunciado y las opciones, para que «leer» no dejara el
+  enunciado al final. Con la regla nueva va justo antes de `#tablero`, y la de
+  Siete diferencias (`#lectura-a`) antes de `#tablero-a`.
+
+Esto no lo puede ver `verificar-piezas-arriba.js` (la lista se arma con
+JavaScript): lo mide `verificar-piezas-ciego.js`, que ya entraba a cada
+ejercicio con la cuenta ciega, y ahora además exige que cada tablero a la
+vista tenga antes su «Piezas» (si hay más listas que tableros, alcanza con
+que cada tablero tenga una antes). Sumó Sin internet y el visor de un curso.
+`verificar-cuadro-comandos.js` y `verificar-entreno-escribiendo.js` buscaban
+la lista dentro del recuadro (`#q-comandos .cc-pos`); ahora la buscan donde
+esté (`.cc-piezas`).
+Probado que salta con `colocar()` sin efecto en Ejercicios por tema.
 
 ## Lo que no se puede hacer sin ver, no se ofrece
 
