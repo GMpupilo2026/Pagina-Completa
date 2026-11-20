@@ -70,6 +70,56 @@ final.
   tiene otra forma de saber dónde está, y los tableros pintan las casillas con su
   propio color de fondo.
 
+### La jugada se entiende escrita como se dice
+
+Pedido del dueño: que el recuadro reconozca **de distintas formas** lo que
+escriben. Quien no ve el tablero casi nunca escribe «Cf3»: escribe la jugada
+como la piensa o como la acaba de oír. Todo esto contestaba «no es una jugada
+legal», y no era cierto — la jugada era legal, lo que no se entendía era la
+forma:
+
+    caballo f3 · caballo a felix 3 · caballo de g1 a f3 · de g1 a f3 · g1-f3
+    cf3 · juego cf3 · peón e4 · eva 4 · e 4 · muevo el peón a e4
+    peón toma d4 · e por d4 · caballo captura peón · dama toma dama
+    e8 corona torre · peón e8 dama · eva 8 y pide caballo
+    enroque corto · me enroco largo · torre a d1 · torre h d1
+
+Está en `ComandosTablero.jugadaEscrita()`, que es el intérprete de casi todos
+los recuadros; primero prueba la notación de siempre y, si no hay jugada, lo
+escrito con palabras (`enPalabras`): se arma con lo que **se reconoce** —la
+pieza, las casillas, una columna de pista, la coronación— y con eso se filtran
+las jugadas legales. `js/chess-move-parser.js` (Juegos, Niebla) y la copia de
+`js/tablero-board.js` caen en él cuando no entienden.
+
+- **Una palabra que no se conoce anula todo**: «hola e4» no es e4. Aflojar el
+  intérprete no puede terminar en una jugada que nadie escribió.
+- **Si cabe en más de una jugada, no elige: dice cuáles.** «torre d1» con dos
+  torres contesta «hay 2 torres que pueden ir a david 1, desde anna 1 y
+  hector 1. Di de cuál, por ejemplo «a1 d1»»; «enroque» con los dos posibles,
+  «escribe «enroque corto» o «enroque largo»». Antes era «no es una jugada
+  legal». Lo dice `noSePudoJugar()`, que ya llaman todos los recuadros: la
+  última ambigüedad queda anotada en el módulo, y así ninguno tuvo que cambiar.
+- **La «a» suelta casi siempre es la preposición** («caballo a f3»): solo
+  cuenta como columna si sin ella no alcanza («torre a d1» con dos torres).
+- **La inicial en minúscula** («cf3», «txa1») se lee primero como peón —«bxc3»
+  es una captura de peón de lo más normal— y solo si así no hay jugada, como
+  pieza. Y «rb1» sigue sin ser la torre: R es el rey.
+- Sin nombrar la pieza, una casilla sola es de peón («e4»); con «toma», de
+  cualquiera, si es una sola. Una coronación sin decir a qué, dama.
+
+- **Tipos y Visualización** interpretan con `ChessMoveParser.tryParseMove()`,
+  así que lo reciben por ahí. **Los 4×4** tienen su recuadro y su tablero
+  propios (4×4, sin bandos, toda jugada es una captura): después de lo que ya
+  entendían («a1 b2», «Ta3»), le pasan lo escrito al mismo intérprete con
+  `juegoParaPalabras()`, que le dice qué hay en cada casilla y qué capturas se
+  pueden hacer — «torre toma dama», «de anna 1 a bella 2». La página carga
+  ahora `js/comandos-tablero.js`.
+
+`verificar-entreno-accesible.js` prueba las treinta y tantas formas contra la
+jugada esperada, las que NO deben dar jugada, las dos frases de ambigüedad y
+que `ChessMoveParser` caiga en él; `verificar-cuadro-comandos.js`, una captura
+de los 4×4 escrita con palabras.
+
 ### Al tablero ahora se le puede PREGUNTAR
 
 El recuadro de los ejercicios solo aceptaba jugadas, y eso alcanza para
@@ -137,7 +187,8 @@ jugada. Hoy en todo Entrenamiento se escribe igual.
 - **Coordenadas es la excepción, a propósito**: su Modo Adaptado cambia el
   ejercicio entero —en vez de «toca e4» pregunta «¿e4 es blanca o negra?»— así
   que ahí no hay tablero que recorrer. Lo que sí se le arregló es lo de siempre:
-  sus 64 casillas decían «Casilla», todas igual.
+  sus 64 casillas decían «Casilla», todas igual. (Ver también «Coordenadas
+  volvió a las cuentas ciegas».)
 - **Visualización también**: su tablero se queda quieto en la posición de salida
   porque el ejercicio consiste en NO mirarlo moverse. Ahí las preguntas se
   contestan contra la posición **de salida** —la que el tablero enseña—, nunca
@@ -280,6 +331,28 @@ queda escrita ahí para leerla cuando se quiera, se pide con "posición" en el
 recuadro o con la tecla `z` sobre el tablero. **En `tablero.html` ese bloque sí
 sigue siendo región viva, y está bien**: ahí solo se rellena cuando se pide con
 el comando "T", nunca solo.
+
+#### Quién jugó y qué jugó, dicho como en la sala de arena
+
+`js/juegos-blind.js` decía la jugada propia como «eva 4» a secas —sin
+«Jugaste» y sin la pieza: sonaba igual que cualquier otro aviso— y la del
+rival como «El rival jugó: eva 4», sin su nombre. En Niebla de Guerra no
+decía nada, y con la voz del sitio (que en estas páginas es la del botón
+propio, así que `js/voz-pagina.js` no lee el `#status-banner`) quien no ve no
+se enteraba de que el rival ya había jugado.
+
+- Ahora, igual que la sala de arena: «Jugaste peón eva 4.», «Bruno Mena jugó
+  caballo felix 6.», «Jugaste enroque corto.» (en minúscula: va a media
+  frase). El nombre lo da la página con `quienJugo()`, por el largo de la
+  lista de jugadas, así que quien solo mira la partida oye quién movió.
+- En la niebla: «Bruno Mena jugó. Con la niebla no se ve qué jugada hizo.»
+  Se dice QUE jugó, nunca qué.
+- La jugada escrita en el recuadro se dice al jugarla; cuando la base la
+  confirma (`announceOwnMove`) no se repite.
+
+Lo mide `verificar-juegos-accesible.js` («se dice quién jugó y qué jugó»):
+la jugada del rival llega por el canal del doble, que ahora guarda sus
+oyentes, y se mira el recuadro.
 
 #### La niebla no se puede escapar por el modo adaptado
 
@@ -548,6 +621,69 @@ es la misma piedra que ya documentó `verificar-reportes.js`— y las páginas
 contrarreloj se miran **por la posición del tablero y no por el renglón de
 resultado**, que al acertar lo borra el ejercicio siguiente a los 350 ms.
 
+### El dictado: la posición pieza por pieza, y la voz más lenta
+
+La queja de los alumnos ciegos: **la posición se lee muy rápido, y si hay que
+ponerla en el tablero no da tiempo**. Muchos estudian con un tablero de verdad
+al lado, y «posición» la dice de corrido («Blancas: rey en eva 1; torres en
+anna 1 y hector 1…»): mientras se busca la torre ya van por los peones, y
+volver a pedirla la empieza de nuevo. No falla nada: se oye, y no alcanza.
+
+**«dictar»** (o «dictado», «pieza por pieza»), en cualquier recuadro común
+(`js/cuadro-comandos.js`), la dice de a UNA pieza: «Blancas, pieza 2 de 5:
+torre en anna 1.». Manda quien escucha. Con el recuadro vacío:
+
+    Intro o →   la pieza siguiente        ↑   la repite
+    ←           la anterior               Escape   termina
+
+- **Cada paso dice el color y cuántas faltan**, así se puede parar en
+  cualquiera y saber dónde se quedó; el último cierra con la cuenta y quién
+  juega («Fin del dictado: 5 piezas blancas y 3 negras. Juegan blancas.»), que
+  es la forma de comprobar que no faltó ninguna.
+- **«dictar solo»** las dice sola, con una pausa entre una y otra (5 segundos;
+  «dictar solo 8» deja ocho y se guarda en `oscarDictadoPausa_v1`), para quien
+  tiene las dos manos en el tablero. La pausa empieza cuando la voz termina de
+  decir la pieza; con lector de pantalla no se puede saber cuándo terminó, y se
+  le da lo que mide la frase. Lleva un plazo por si la voz no avisa nunca (sin
+  voces instaladas no avisa): el dictado no se queda esperando. Cualquier tecla
+  del dictado la detiene y se sigue a mano.
+- **Mientras se dicta, Intro es del dictado y no de `recorrer`**: no avanza la
+  partida a mitad de armar la posición. Y nadie queda encerrado: se termina
+  solo si la posición cambia o si se escribe otra cosa (una jugada,
+  «diagrama siguiente»), que sigue su camino. «siguiente», «repetir», «atrás»
+  y «salir» escritos también valen; **nunca una letra sola**: «a» es la opción
+  A de una pregunta.
+- **La capa de la cuenta ciega se aparta** (`js/vision-cuenta.js` mira
+  `data-dictando` en el recuadro): sin eso, «siguiente» apretaba el botón
+  «Siguiente ejercicio» de la página en vez de decir la pieza.
+- Los pasos los arma `BlindNotation.pasosDeDictado()`, con el mismo agrupado y
+  las mismas palabras que las otras lecturas; `ComandosTablero.interpretar()`
+  los devuelve (`tipo: "dictado"`) **sin guardar nada**: quien los recorre es
+  el recuadro. Un recuadro propio que no sepa dictar recibe en `respuesta` las
+  piezas seguidas, cada una en su frase.
+- **El recuadro lo dice**: debajo de la ayuda va «Para poner la posición en tu
+  tablero, escribe «dictar»…» (`.cc-dictar-pista`). Un comando que no se conoce
+  no se usa. Va debajo y no entre la posición y el recuadro, que siguen
+  pegados.
+
+**La velocidad de la voz del navegador** iba siempre a la de fábrica. Ahora se
+guarda en este navegador (`oscarSpeechRate_v1`, de 0,5 a 1,5;
+`BlindNotation.setSpeechRate()`), `speak()` la pone en cada frase y se cambia
+de dos formas: en Configuración («Velocidad de la voz», junto a la voz) o sin
+salir del ejercicio, escribiendo «voz más lenta», «voz más rápida» o «voz
+normal». La respuesta aclara que vale para la voz del navegador: la de un
+lector de pantalla se cambia en el lector. `interpretar()` acepta
+`sinEfecto: true` para quien solo pregunta si lo escrito es un comando del
+recuadro (la capa de la cuenta ciega): sin eso, cada «voz más lenta» bajaba
+dos escalones.
+
+`verificar-cuadro-comandos.js` («El dictado, pieza por pieza») lo recorre en
+Ejercicios por tema: que dicte TODAS las piezas del tablero dibujado, cada una
+en su casilla y una sola vez; que Intro no juegue ni cambie el ejercicio; ↑, ←
+y Escape; que «dictar solo» avance sin tocar nada y una tecla lo detenga; y que
+la voz salga a la velocidad pedida (se mira el `rate` de lo que se manda a
+decir). Probado que falla: sin los peones en `pasosDeDictado()` saltan dos.
+
 ## «Activar voz» en todo el sitio
 
 Quien ve poco muchas veces **no usa lector de pantalla**: agranda la letra y se
@@ -671,6 +807,25 @@ de verdad: sin mirar el botón propio, sin mirar lo que llega entero, sin la
 regla de los números y con el tablero callado salta cada uno.
 
 
+### La jugada del motor en la práctica de la clase va en el aviso de turno
+
+En la práctica contra el motor (`sesion.html`), quien no ve ni quien ve poco
+**no se enteraba de qué había jugado el motor**, y no fallaba nada. La jugada
+se decía en el recuadro de comandos y, medio segundo después —cuando terminaba
+de guardarse en la base—, «Es tu turno.» se escribía en `#practice-card-status`.
+El lector de pantalla cortaba la jugada para decir solo eso, y la voz del
+navegador, con cuatro avisos en fila («pensando», las dos jugadas del tablero,
+la del motor), pasaba el tope de `MAX_EN_FILA`, vaciaba la fila y decía solo
+«Es tu turno.». Con los dobles de Supabase, que guardan al instante, el orden
+salía al revés y todo parecía andar.
+
+Ahora la jugada va **dentro** del aviso de turno —«El motor jugó e5. Es tu
+turno.»— o del resultado, si con ella terminó la partida
+(`practiceJugadaDelMotorDicha` en `js/sesion.js`): un solo aviso, el último, no
+se pisa con nada. El recuadro ya no la repite. `verificar-clase-voz-motor.js`
+lo revisa con el guardado tardando y una voz de mentira que tarda lo que una
+de verdad, en Modo Adaptado y sin él.
+
 ## La visión de la persona la marca administración
 
 Hasta acá todo dependía de que la persona **encontrara el botón**: el 🦯 del
@@ -758,6 +913,16 @@ plataforma se acomoda sola en todas las páginas de esa persona.
   Sonar, 4×4, Visualización, Tipos y los cursos), primero el de un diálogo
   abierto. La nota del panel adaptado va en su propio párrafo
   (`#panel-adaptado-nota`): el subtítulo lo reescribe después la racha del día.
+- **El panel adaptado no lleva «Hoy te toca»** (17/11/2026, a pedido del
+  dueño). La tarjeta `#progreso-alumno` —la meta del día, la racha, los
+  repasos que vencen, «Entrenar 10 minutos» y «Tus números»— es un montón de
+  texto que el lector de pantalla lee de arriba abajo antes de llegar a lo que
+  se usa, y a quien no ve no le sirve. En el panel adaptado la tarjeta queda
+  escondida y ni se piden sus datos (`cargarHoyTeToca`, `loadEntrenoProgress`,
+  `loadTacticsRecord`): son diez scripts y tres consultas para nada. Lo que
+  vence (la franja de pendientes), «Continúa donde ibas» y «Tus clases» sí
+  siguen. `verificar-vision-cuenta.js` lo mide, y que sin la marca la tarjeta
+  vuelve.
 - **Competir** a quien no ve le ofrece retar solo en Estándar y Niebla (las que
   se juegan escribiendo); un reto que le llega en otra modalidad no trae
   «Aceptar»: dice que no está adaptada. Los retos que llegan están en una
@@ -861,6 +1026,26 @@ quedó:
   girar); cada paso dice la jugada contada, el comentario del profe y si hay
   pregunta. Las flechas globales del visor no roban las teclas con el foco en
   un tablero, un recuadro o un `[role=application]`.
+  **Volver a la lista de clases** (17/11/2026): con la cuenta ciega, abrir una
+  clase deja el foco en el recuadro, y la lista «Tus clases» queda ANTES en la
+  página, detrás de los botones y el tablero: los alumnos ciegos no llegaban a
+  ella para elegir otra clase. Ahora el recuadro entiende «clases» (y «lista»,
+  «otra clase», «volver a la lista»…): lleva el foco a la clase abierta en la
+  lista y dice cuántas hay; ahí flecha arriba y abajo pasan de clase en clase
+  (Inicio y Fin, a las puntas) y Enter abre la elegida, con el foco de vuelta
+  en el recuadro. El aviso al abrir una clase y la ayuda del recuadro lo dicen.
+  No se usa «volver» solo: es una acción conocida de `js/comandos-tablero.js`.
+  `verificar-repasar-clases.js` lo mide.
+  **Avanzar sin escribir** (17/11/2026): los alumnos ciegos tenían que
+  escribir «siguiente» en cada jugada, y los botones ⏮ ◀ ▶ ⏭ quedan ARRIBA
+  del recuadro, a varios Tab. Ahora `CuadroComandos.montar(…, { recorrer })`:
+  con el recuadro VACÍO, Enter o → avanzan, ← retrocede, Inicio y Fin van a
+  las puntas, y en la punta lo dice («Ya estás en…») en vez de callar. Solo
+  vacío: con texto escrito las flechas mueven el cursor, que es lo que espera
+  el lector de pantalla. El recuadro lleva `aria-keyshortcuts` y su ayuda como
+  `aria-describedby`, para que al llegar se oiga cómo se avanza. Lo usan
+  Repasar mis clases y `js/visor-linea.js` (Estudio, cursos, preparación de
+  rivales); `verificar-repasar-clases.js` lo mide.
 - **Los diagramas de los artículos**: el contenedor era `role="img"`, y los
   hijos de una imagen no llegan al lector: las 64 casillas rotuladas no se oían.
   Sin ese rol, con `TableroAccesible` para mirar, y el Modo Adaptado leído de la
@@ -1183,7 +1368,8 @@ ciegas en vez de dejarlos a medias:
 
 - **Memoria**, la **Fotografía** de Habilidades y la apertura **sin tablero**
   (nivel 3 de «¿Qué apertura es?»): la posición es justamente la respuesta.
-- **Coordenadas**: no hay piezas.
+- ~~**Coordenadas**: no hay piezas.~~ Volvió (ver «Coordenadas volvió a las
+  cuentas ciegas», abajo).
 - **El Sonar** y **la Batalla naval**: lo escondido es el juego. Estaban hechos
   para jugar sin ver, pero igual se esconden: lo pidió la Academia.
 - **El curso de Fundamentos**, que sigue en notación inglesa (ya estaba
@@ -1208,6 +1394,43 @@ sin la Fotografía ni el nivel 3, la guía sin esas secciones). Probado que
 falla: sin `escondido()` saltan tres comprobaciones, y sin Memoria en la lista
 o sin la regla de `data-oculto-ciego`, una cada una.
 
+### Coordenadas volvió a las cuentas ciegas
+
+Se había escondido con las demás porque «no hay piezas», pero eso no era un
+hueco: **para quien no ve, el juego ES decir de qué color es la casilla**
+(lo confirmó el dueño). No hay posición que poner bajo «Piezas» porque el
+ejercicio no la tiene, y no le falta nada. Salió de `NO_ADAPTADAS`, va primera
+en «Entrenar» de `PANEL_ADAPTADO` (con su descripción en `DESC_ADAPTADO`) y su
+sección de `ciegos.html` ya no lleva `data-oculto-ciego`.
+
+Lo que le faltaba para estar entera, y se le puso:
+
+- **El modo elegido no se oía.** Los botones de Clásico, 10 s y 3 s (y los de
+  orientación) marcaban el elegido solo con la clase `active`, un color: con
+  lector de pantalla sonaban los tres iguales. Ahora llevan `aria-pressed`
+  (`marcarOpcion()`).
+- **La orientación, en Modo Adaptado, se esconde**: de qué lado se mire el
+  tablero no cambia el color de ninguna casilla, así que eran tres botones que
+  no hacían nada.
+- **«empezar» se pedía y no se entendía**: fuera de la ronda, «repetir»
+  contestaba «escribe «empezar»» y el recuadro decía «No entendí». Ahora
+  arranca la ronda; durante la ronda no la reinicia (una palabra no puede tirar
+  los puntos), dice que ya está en curso y repite la casilla.
+- **«ayuda» y «puntos»**: «ayuda» dice todo lo que se puede escribir y
+  «puntos» (o «cómo voy») los aciertos, los errores y el tiempo. El «No
+  entendí» manda a «ayuda» en vez de recitar la lista entera.
+
+**Sigue con su propio recuadro y no con `js/cuadro-comandos.js`, a
+propósito**: ese recuadro está hecho para tableros con piezas (dice «escribe tu
+jugada», pone «Piezas», contesta preguntas sobre la posición) y acá no hay
+posición ni tablero a la vista. El tablero tampoco se deja en Modo Adaptado:
+con la casilla iluminada a la vista, el color se lee en vez de pensarse.
+
+Lo miden `verificar-entreno-escribiendo.js` (`aria-pressed`, la orientación
+escondida, «ayuda», «puntos» y «empezar» a media ronda),
+`verificar-piezas-ciego.js` (la página ya no avisa que no está adaptada y la
+guía la muestra) y `verificar-vision-cuenta.js` (está en el panel adaptado).
+
 ## Juega contra Oscar, como Entrenamiento
 
 La revisión de lo que les sigue costando a las cuentas ciegas encontró que
@@ -1227,3 +1450,364 @@ casillas entre los botones de arriba y los de abajo.
 
 Lo mide `verificar-piezas-ciego.js` (con la marca y sin ella). Probado que
 falla con el `tablero-board.js` de antes: saltan las dos comprobaciones.
+
+## Los audios de las clases
+
+El dueño pidió que cada clase del grupo de ADAES (alumnos ciegos) quedara
+para volver a escucharla, «ordenada en la página, porque al ser ciegos les
+cuesta más entrar». Las clases se graban en Meet; en la computadora del dueño
+el audio se saca a MP3 y Whisper lo transcribe. Acá se suben y se oyen en
+**`audios-clases.html`** («🎧 Audios de las clases»), una tarjeta en
+«Estudiar» del panel, en «Aprender y estudiar» del panel adaptado y en «Tus
+clases» del de quien da clase.
+
+**Un audio es de una academia y de un día, no del horario.** ADAES no tenía
+ninguna fila en `horario_clases` y son clases pasadas: la fecha y la hora
+salen del nombre del archivo como lo deja Meet («Clase Selección ADAES -
+2026_11_10 19_25 CST - Recording.mp3»; también acepta 2026-11-10 y 19:25), y
+el título es lo que va antes de la fecha. Sin fecha en el nombre no se sube.
+Por eso no se reusa `grabaciones_clase`, que es de YouTube y de una fila del
+horario. Dos audios de la misma clase (academia, día y hora) no entran: lo
+garantiza un índice único.
+
+**Cómo se oye, pensado para el lector de pantalla:**
+
+- Cada clase es un `<h3>` con el día dicho completo («Martes 10 de noviembre
+  de 2026», sin la coma que pone el navegador después del día: se lee como
+  pausa), así que se pasa de una a otra con la H. El `<article>` se nombra por
+  ese encabezado. Debajo: el título, la hora y la duración dicha («1 hora y 15
+  minutos»), no «1:15:27».
+- El reproductor es el del navegador (`<audio controls>`), que el lector
+  conoce y se maneja con el teclado, con `aria-label` «Audio de la clase del…».
+  `preload="none"`: no se baja nada hasta que se da play.
+- **La velocidad** se elige en una lista con su `<label>` («Velocidad»:
+  Normal, 1,25 veces…), porque el menú del reproductor no es igual en todos los
+  navegadores; se recuerda para todos los audios.
+- **Sigue donde quedó**: la posición se guarda en el navegador cada 5 segundos
+  y al volver arranca ahí (salvo en el primer o el último medio minuto), y lo
+  dice en un `role="status"` («Sigue donde lo dejaste: minuto 23»). Una clase
+  dura más de una hora; empezar de cero cada vez la hacía inútil.
+- **Lo que se dijo, escrito**: la transcripción de Whisper va en un
+  `<details>` («Leer lo que se dijo en la clase») y se pide al abrirlo (unos 35
+  KB por clase: la lista pide solo `con_transcripcion`). Los renglones
+  repetidos seguidos se juntan (Whisper escribe «no», «no», «no»… en el
+  ruido), y avisa que la escribió una computadora y puede equivocarse en las
+  jugadas.
+- «Descargar el audio (32 MB)», para oírlo sin conexión.
+
+**Quién ve y quién sube lo decide la base** (migración `20261111195552`):
+
+- `audios_clase` y el bucket privado `audios-clase` (solo MP3, hasta 50 MB,
+  en `<academia>/<archivo>.mp3`) los lee la gente de la academia
+  (`interno.academias_de`: miembros y su supervisor) y quien administra. Las
+  academias son privadas: otra academia no ve nada. El navegador pide enlaces
+  firmados de 6 horas.
+- Los sube, cambia o quita quien administra, el supervisor de la academia o un
+  profesor miembro de ella: `interno.puedo_poner_audios(academia)`, la misma
+  regla para la tabla y el bucket. En el bucket la carpeta se convierte a uuid
+  dentro de un `CASE`, no con `AND`: Postgres no promete el orden de un `AND` y
+  una carpeta que no es uuid daría un error en vez de un no.
+- La página pide `mis_academias_audios()` (solo sobre quien pregunta): si
+  devuelve alguna, sale «Subir audios» con su selector y «Quitar este audio»
+  en cada tarjeta. Si el archivo sube y la fila no entra (repetida), el archivo
+  se borra.
+- No reparte permisos, accesos ni dinero: no lleva bitácora.
+
+**El tamaño**: el MP3 que deja la computadora (calidad alta, ~190 kbps) pesa
+unos 100 MB por clase y no entra. Para voz alcanza con 48 kbps mono, unos
+27 MB por hora y cuarto:
+`ffmpeg -i clase.mp4 -vn -ac 1 -b:a 48k clase.mp3`.
+
+`verificar-audios-clases.js` lo prueba con el doble (el almacenamiento
+contesta un WAV de silencio por tramos, para poder saltar dentro): el nombre
+del archivo (Meet, solo la fecha, sin fecha, fecha imposible), los encabezados
+con el día, el detalle, el título como texto, el nombre del reproductor y del
+artículo, la descarga, la velocidad que cambia y se recuerda, que arranque en
+el segundo guardado y lo diga, la transcripción sin repetidos, que el alumno no
+vea subir ni quitar y quien puede sí, y la lista vacía.
+
+## La guía de estudio de cada clase
+
+Después de subir los audios, el dueño pidió mejorar el repaso de ADAES y
+aceptó las siete ideas juntas («hacer todas»). El problema de fondo: una
+clase de hora y media no se repasa escuchándola entera, y quien no ve no
+puede ojear. Hay que poder **moverse dentro de la clase**. Cada tarjeta de la
+lista lleva «Estudiar esta clase» (`audios-clases.html?clase=<id>`), y esa
+vista arma la guía con `js/audios-clase-guia.js` (`AudiosGuia`). Las columnas
+y tablas nuevas, sus permisos y `responder_repaso()` están en la migración
+`20261112060425_audios_clase_guia`:
+
+- **Saltar**: «Atrás 1 min», «Atrás 15 s», «Adelante 15 s», «Adelante 1 min»
+  y «¿En qué minuto voy?», que dice el minuto y el tema que va sonando. Van
+  debajo de cada reproductor, también en la lista. El reproductor del
+  navegador es incómodo con lector de pantalla y no deja saltar una cantidad
+  fija. Los atajos son con **Alt+Mayúscula** (flechas: 15 s, con Control 1
+  min; flecha abajo: pausa; T: dónde voy; M: marcar), porque el lector en
+  modo exploración se come las letras sueltas (la K de NVDA es «siguiente
+  enlace»). Cada salto se anuncia en un `aria-live` oculto (`#anuncio`), que
+  se vacía antes de escribir para que el mismo aviso dos veces se repita.
+- **De qué se trató y los temas**: un resumen y de 6 a 12 temas con su
+  segundo (`audios_clase.resumen` e `indice`). Cada tema es un botón que lleva
+  el audio ahí. Cada sección es un `<h3>` bajo el `<h2>` del día, así que con
+  la H se salta entre «Temas», «Partidas», «Preguntas»…
+- **Buscar en lo que se dijo**: la transcripción con el segundo de cada frase
+  (`audios_clase.segmentos`, `[[segundo, "texto"], …]`). La búsqueda no mira
+  tildes ni mayúsculas, dice cuántas frases encontró y cada una lleva al audio
+  3 segundos antes. «Todo lo que se dijo, minuto a minuto» la deja leer
+  entera, con un botón por minuto.
+- **Las partidas**: las que se dictaron desde la posición inicial
+  (`audios_clase_partidas`), para recorrerlas con «Siguiente» / «Anterior»,
+  la jugada dicha como en el resto del sitio («Jugada 1, negras: peón eva
+  5», `BlindNotation.sanSpoken`) y «Leer la posición». **Ninguna posición se
+  inventa**: las jugadas se comprueban con chess.js al armar la guía, otra vez
+  al subirla y otra al mostrarla, y se cortan en la primera ilegal. Además
+  llegan **sin publicar** (`revisada = false`): Whisper confunde la notación
+  dicha («al fin» por «alfil»), así que el profe las oye y las publica. La RLS
+  se las esconde a los alumnos hasta entonces, no la pantalla.
+- **Preguntas de repaso** (`audios_clase_preguntas`), de opción múltiple con
+  radios. **La respuesta buena no se puede leer desde afuera**: el permiso de
+  lectura es por columna (`grant select (audio_id, n, pregunta, opciones)`).
+  La da `responder_repaso()` después de contestar, con la explicación. Paga
+  **2 Puntos Ajedrez solo si se acierta en la primera respuesta**: si pagara
+  cualquier acierto, bastaría con fallar a propósito para ver la buena y
+  cobrarla. La primera respuesta queda en `audios_clase_repasos` (también dice
+  cuáles ya se contestaron), y la referencia `repaso:<audio>:<n>` de
+  `otorgar_puntos` impide cobrar dos veces. Va con origen `entrenamiento`:
+  repasar es entrenar, y así no hubo que cambiar el `check` de orígenes. Solo
+  cobra quien es `alumno`.
+- **Mis marcas** (`audios_clase_marcas`): «Marcar este momento» guarda el
+  segundo con una nota corta. Cada quien ve y toca solo las suyas.
+
+**Cómo se arma una guía** (en la computadora del dueño, no en el sitio):
+
+1. Whisper vuelve a transcribir con `--output_format json` (los segmentos
+   traen su segundo), `--condition_on_previous_text False` (sin arrastrar el
+   texto anterior: muchos menos bucles de «no», «no», «no») y un
+   `--initial_prompt` con vocabulario de ajedrez (alfil, enroque, Caro-Kann,
+   tenedor…), que corrige los nombres de piezas y aperturas.
+2. Claude lee cada transcripción y escribe el resumen, los temas, las
+   preguntas y las partidas. Se revisan las partidas con chess.js, los minutos
+   (dentro de la clase), el voseo y «horquilla».
+3. Queda un `.json` por clase con el mismo nombre que su MP3, y se sube en
+   «Subir audios» junto con los MP3 o solo. La página saca la fecha y la hora
+   del nombre, busca la clase ya subida, guarda el texto (y reemplaza la
+   transcripción por la nueva) y cambia sus preguntas y partidas. Las partidas
+   quedan sin publicar.
+
+Lo prueba `verificar-audios-clases.js`: las piezas sueltas (frases sin
+repetidas, búsqueda, minuto escrito y dicho, jugada en español, el corte en la
+primera ilegal, qué entra de una guía), la vista de estudio como alumno (los
+encabezados, los temas que llevan al minuto, los saltos con botón y con atajo
+y su aviso, la búsqueda, la partida recorrida y leída, la pregunta contestada
+en la base con sus puntos, la ya contestada, la marca guardada y borrada) y
+como profe (la partida sin revisar, avisada y publicada), y la subida de una
+guía (lo que se guarda, que la partida imposible no entre y que ninguna llegue
+publicada).
+
+## Las guías armadas sin los minutos de Whisper
+
+Las 19 clases de ADAES se subieron con su transcripción en `.txt`: texto
+corrido, sin el segundo de cada frase. El dueño pidió las guías ya, sin esperar
+a volver a transcribir, y dejar lista la segunda pasada con los minutos
+exactos. Por eso hay **minutos aproximados** (`audios_clase.minutos_aproximados`,
+migración `20261112181030_audios_clase_repaso_espaciado`):
+
+- `segmentos` se armó en la base desde la transcripción: cada renglón (un
+  segmento de Whisper) recibe el segundo proporcional a cuánto texto va antes
+  (`duración × caracteres antes / caracteres totales`). Los silencios con
+  «no», «no», «no» se dejan a propósito: también es tiempo que pasó. El error
+  esperable es de uno o dos minutos, y la página lo avisa en «Temas» y en
+  «Buscar» («Los minutos son aproximados…»), y en los conceptos.
+- Cada tema de la guía guarda, además de su título, **su concepto** (para el
+  índice de todas las clases) y **su cita**: lo que se dijo justo ahí, copiado
+  literal de la transcripción. La cita es lo que permite la segunda pasada.
+- **La segunda pasada**: `herramientas/whisper-minutos.py`, en la computadora
+  donde están las grabaciones, deja un `.json` de Whisper por MP3 (si Whisper
+  ya lo había dejado al lado del `.txt`, lo copia sin transcribir). Esos
+  `.json` se suben en «Subir audios» como una guía; la página los reconoce por
+  `segments` (`AudiosGuia.deWhisper`), cambia el texto y los minutos,
+  **vuelve a encontrar el minuto de cada tema por su cita**
+  (`AudiosGuia.reanclar`: ventanas de cuatro frases a no más de 10 minutos o
+  un 20 % de la clase del minuto viejo, con al menos 6 de cada 10 palabras de
+  la cita; si no la halla, el tema se queda donde estaba) y mueve cada partida
+  lo mismo que el tema encontrado más cercano. No toca el resumen, las
+  preguntas ni las partidas, y pone `minutos_aproximados = false`.
+- Las guías las escribió Claude leyendo cada transcripción entera, con
+  `herramientas/audios-guia-sql.js` como revisor antes de cargar: el mismo
+  `leerGuia` de la página, más que ningún minuto caiga fuera de la clase, que
+  cada tema traiga concepto y cita, que ninguna partida se corte (si chess.js
+  no acepta una jugada, se rechaza la guía entera, no se corta callada), sin
+  voseo (`verificar-voseo.py`) y sin «horquilla». El SQL que escribe **no
+  lleva `delete`**: la herramienta de Supabase pide confirmar cada `delete` y
+  una carga desatendida se queda esperando. Reemplaza por número
+  (`on conflict`).
+- **Las partidas, casi ninguna**: en estas clases el profe dicta posiciones
+  sueltas (finales, ejercicios) o revisa partidas de la propia selección, que
+  no tienen PGN publicado. Una partida entra solo si se identificó y su PGN
+  real coincide con lo dictado; si no, no se inventa.
+
+## El repaso de hoy
+
+«Repaso de hoy» va arriba de la lista de `audios-clases.html` cuando hay algo
+que contestar: **la misma pregunta de repaso vuelve a los 2 días, luego a los 7
+y luego a los 21** (contados desde la vuelta anterior; si se falla, vuelve al
+día siguiente), y las preguntas todavía sin contestar de las clases de las
+últimas dos semanas entran como «nuevas». Lo pidió el dueño para que lo de una
+clase no se olvide a la semana.
+
+- Lo decide la base, no la pantalla: `repaso_de_hoy()` arma la lista (hasta
+  15, primero las vueltas) con `interno.vuelta_que_toca()`, que mira la
+  primera respuesta (`audios_clase_repasos`, vuelta 0) y las vueltas
+  (`audios_clase_vueltas`). Los días se cuentan en hora de Costa Rica.
+- Una nueva se contesta con `responder_repaso()` (paga 2 la primera vez, como
+  en la guía); una vuelta con `responder_vuelta()`, que **rechaza la que
+  todavía no toca** (si no, se podrían hacer las tres vueltas el mismo día y
+  cobrarlas), paga **1 Punto Ajedrez** por acierto (referencia
+  `repaso:<audio>:<n>:v<vuelta>`, una vez) y dice cuándo vuelve. La respuesta
+  buena sigue sin poder leerse desde afuera.
+- Contestar en la guía de la clase también arranca las vueltas, y la página lo
+  dice («Vuelve dentro de dos días…»).
+
+## Los conceptos de todas las clases
+
+`audios-clases.html?conceptos` («Conceptos de todas las clases», enlace arriba
+de la lista) junta los temas de todas las guías por su concepto
+(`AudiosGuia.conceptos`: sin mirar mayúsculas ni tildes, por orden
+alfabético, cada concepto de la clase más vieja a la más reciente). Cada
+concepto es un `<h3>` y cada tema un enlace a `?clase=<id>&t=<segundo>`, que
+abre la clase **lista en ese minuto** (sin el «sigue donde quedó», que lo
+pisaría) y lo dice. Sirve para estudiar un tema a lo largo del curso: la
+oposición se vio en tres clases distintas. Los conceptos salen de una lista
+cerrada que se les dio a quienes escribieron las guías, para que el mismo
+concepto no aparezca con dos nombres.
+
+## Los ejercicios de las posiciones de la clase
+
+En las clases de ADAES el profe dicta posiciones pieza por pieza («blancas: rey
+Félix 4, peones Gustavo 4…») y explica la jugada buena. El dueño pidió poder
+resolverlas después. Van en la guía, en «Ejercicios de la clase»
+(`audios_clase_ejercicios`, migración `20261112182804_audios_clase_ejercicios`):
+el enunciado, la posición en palabras (`BlindNotation.positionSentence`),
+«Escucharlo en la clase» y un campo para **escribir la jugada** («Cf3», «Txe6»,
+«e4»), que entiende `ComandosTablero.jugadaEscrita` entre las legales de la
+posición, igual que en todo Entrenamiento.
+
+- **Ninguna posición se inventa, y aquí el riesgo es real**: la posición sale
+  de lo que Whisper oyó, y una pieza mal oída da otra posición, legal y todo.
+  `herramientas/audios-ejercicios-revisar.js` deja entrar un ejercicio solo si
+  chess.js acepta el FEN (con los dos reyes: el `validate_fen` de chess.js
+  0.10.3 no los pide), la jugada que explicó el profe es legal y **Stockfish
+  (profundidad 22) la da como la única**: su primera opción, con la segunda al
+  menos 1,5 peones por debajo, o la única que da mate, o la única que gana. Si
+  la posición quedó mal dictada, casi nunca la jugada del profe sale única: se
+  rechaza sola. De 35 posiciones encontradas en las 19 clases pasaron 24. Las
+  que cayeron: jugadas que no eran únicas (Kg3 y Kh3 dan lo mismo), una donde
+  Stockfish halló un mate más rápido que la jugada del profe, y posiciones que
+  la transcripción no dejaba armar con certeza. Varias se corrigieron con lo
+  que se jugó después («Ana por Bela 3» decía que el peón estaba en a2).
+- Aun así **llegan sin publicar** (`revisado = false`, la RLS se los esconde a
+  los alumnos): el profe ve «Para revisar: la buena es…»
+  (`ejercicios_para_revisar()`, solo a quien puede poner audios) y los publica.
+- **La jugada buena no se puede leer desde afuera** (permiso por columna, como
+  las preguntas). `responder_ejercicio()` compara la jugada en SAN sin `+#!?`,
+  guarda el primer intento (`audios_clase_ejercicio_intentos`), paga **2 Puntos
+  Ajedrez solo si se acierta al primer intento** (referencia `ejercicio:<id>`)
+  y devuelve la buena con su explicación. Una jugada que no se entiende o no es
+  legal no llega a la base: la página lo dice y deja volver a escribir.
+- Las posiciones de partidas reales (la de Turín 2006 del 3 de julio) salen del
+  PGN verificado con chess.js en el ply del momento, no del dictado.
+
+## Las posiciones de las clases, para practicarlas contra el motor
+
+El dueño pidió todas las posiciones que el profe **armó** en las clases de ADAES
+(finales, medio juego, tareas; **no** las partidas completas que se siguieron
+jugada a jugada) para usarlas como práctica contra el motor. Van a sus
+«Archivos» (`archivos_pgn`, carpeta «ADAES · posiciones de las clases»): en la
+clase en vivo cada una trae «Practicar» (cada alumno la juega contra el motor,
+`crearPractica()`), «Preguntar» y «Cargar». También quedan en un PGN para bajar.
+
+- Las arma `herramientas/audios-posiciones-pgn.js`, una partida PGN por
+  posición (`[SetUp "1"]`, `[FEN …]`, sin jugadas, con un comentario: quién
+  juega, qué se busca y qué enseñó el profe). Como con los ejercicios, la
+  posición sale del dictado y Whisper confunde piezas, así que entra solo si
+  chess.js la acepta (un rey por bando, sin jaque al que no juega, la partida
+  no terminada) y **Stockfish confirma lo que el profe dijo de ella**: «ganar»
+  al menos +1,5 para el que juega, «tablas» entre −1 y +1, «perder» −1,5 o
+  menos; «jugar» (medio juego sin promesa) solo pide que sea legal. A
+  diferencia de los ejercicios, aquí no hace falta una única jugada buena:
+  para jugarla contra el motor no importa.
+- **Un PGN sin jugadas ahora se puede subir** si trae `[FEN]`: es una posición
+  armada (`parsePgnChunk` de `js/partidas.js` lo rechazaba siempre, con razón
+  para las partidas). La lista y el visor dicen «Posición» en vez de
+  «0 jugadas».
+
+### Y para jugarlas en casa, de tarea
+
+El dueño pidió además poder mandarlas de tarea, para que el alumno las juegue
+solo contra el motor. Ya existía la página para eso, «Finales contra la
+máquina» (`entreno/finales.html`: contra Stockfish a toda su fuerza, con
+tablero por teclado, cuadro de comandos y voz, y juzga ganar o salvar), así
+que no se hizo otra: **con `?banco=clases` carga las posiciones de las clases**
+(`entreno/data/finales-clases.json`, que arma
+`herramientas/finales-clases-generar.js` desde
+`herramientas/datos/posiciones-clases/`).
+
+- Entran las de «ganar» y «tablas» (30); la de «jugar» no tiene resultado que
+  juzgar y queda solo en Archivos. Los umbrales son los del dictado (+1,5 y
+  ±1), no los de los finales de libro (+4 y ±0,5): son las posiciones como el
+  profe las enseñó. `verificar-finales.js` revisa los dos bancos, cada uno
+  con los suyos, y que los ids no choquen (comparten lo logrado).
+- **Su propia actividad**, `finales_clases` (migración
+  `20261112201131_training_progress_finales_clases`), con la posición en
+  `detail.theme`: así Tareas («Posiciones de las clases» en
+  `js/material-plataforma.js`) manda una posición puntual —cada una es un
+  recorte de `metas.json`— y no se cuenta junto con los finales de libro.
+  Solo meta de cantidad: los minutos de la página se apuntan como `finales`.
+- Sin pista escrita: la pista va directo a «¿Qué jugaría la máquina?».
+- Se llega desde Tareas, desde la portada de Entrenamiento y con «Jugar las
+  posiciones contra el motor» en `audios-clases.html`.
+- **También en la clase en vivo**: Entrenamientos → «🏫 Posiciones de las
+  clases», un grupo por día con el más reciente arriba, y en cada posición
+  «🤖 Que lo jueguen contra la máquina» (la práctica de la clase, con el reloj
+  elegido en Practicar). Ver «Las posiciones de las clases, en la clase» en
+  clase-en-vivo.md.
+- **Un entrenamiento del día también entra por aquí.** El 12/11 el profe pidió
+  uno armado (3 de ventaja de al menos 2 puntos, 5 que se ganan por oposición,
+  5 que se empatan por oposición y los mates de dama, de torre y de alfil y
+  caballo, 3 posiciones de cada uno): va como
+  `herramientas/datos/posiciones-clases/2026-11-12.json`, escrito a mano, con
+  `origen` diciendo que no sale de una transcripción, y pasa por el mismo
+  generador y los mismos umbrales. Las de oposición no se eligieron a ojo:
+  salen de la tabla exacta de rey y peón contra rey (`herramientas/lib/kpk.js`)
+  con una sola jugada buena —la que toma la oposición— y todas las demás
+  pierden el resultado (o lo dejan escapar), y Stockfish lo confirma.
+
+## El diagnóstico con lector y sin el cuadro
+
+El cuadro de comandos resolvía el diagnóstico para quien contesta escribiendo,
+pero **con lector de pantalla y SIN el cuadro** —VoiceOver en el celular, donde
+no hay Tab que encienda el Modo Adaptado, o quien prefiere los botones— la
+prueba se contestaba a ciegas, y nada daba error:
+
+- **El foco se quedaba en el botón que traía la pregunta**: «Empezar», que se
+  escondía, o «Siguiente», que quedaba deshabilitado. El lector no decía la
+  pregunta nueva. Ahora `enfocarPregunta()` lleva el foco al título de la
+  pregunta (`#q-text`, `tabindex="-1"`). **Con el cuadro a la vista, va al
+  cuadro**: ahí se contesta y su región viva ya dice la pregunta, así que ir al
+  título la diría dos veces. Contestar POR el cuadro no pasa por ahí (el foco
+  sigue en el cuadro, como antes).
+- **La pista (`#q-hint`) es región viva**: «Elegiste eva 4», «Anotado: no lo
+  sabías» y «No se pudo enviar tu respuesta» cambiaban en silencio.
+- **«No lo sé todavía» lleva `aria-pressed`**, como las opciones, y se desmarca
+  también para el lector al elegir una opción, una casilla o una jugada.
+- **La corrección dice la jugada como todo el sitio**: el banco guarda solo
+  salida y llegada, y se mostraba «e1–g1». `jugadaDeLaSolucion()` la saca de
+  la posición con chess.js: «O-O», o «enroque corto» en Modo Adaptado.
+- **Los emojis y las barras no se leen**: ✅/❌/🤔 del repaso van con
+  «Correcta.», «Incorrecta.» o «No la sabías.» para el lector; las ★ de los
+  escalones, con «Escalón 3 de 5»; «7/10 · 70%», con «7 de 10 correctas,
+  70 %»; los emojis de área, escondidos. Las barras de color son
+  `aria-hidden`: el dato ya va escrito al lado.
+
+Lo revisa `pruebaLectorSinCuadro` en `verificar-cuadro-comandos.js` (se rompió
+a propósito el foco y el `aria-pressed`, y saltó).

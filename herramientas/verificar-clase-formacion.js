@@ -233,6 +233,11 @@ function FPura() {
   return _F;
 }
 
+// Cuál lámina se ve: las del curso llegan como blob: y lo dice data-archivo.
+const laminaQueSeVe = (page) => page.evaluate(() => {
+  const img = document.getElementById("formacion-img");
+  return img.dataset.archivo || img.getAttribute("src") || "";
+});
 const esperarImagen = (page) => page.waitForFunction(() => {
   const img = document.getElementById("formacion-img");
   return img && img.complete && img.naturalWidth > 0;
@@ -245,7 +250,7 @@ async function pruebaDelAlumno(browser) {
   await esperarImagen(page);
   igual("se ve la tarjeta, con la primera lámina y cuántas lleva", [await page.textContent("#formacion-titulo"), await page.textContent("#formacion-cuenta")],
     ["📝 Práctica: Sesión 2: Reglas de competición", "Lámina 1 de 7 · 0 de 7 completadas"]);
-  igual("la imagen es la lámina 24 de la sesión 2", /clase-02\/24\.webp$/.test(await page.getAttribute("#formacion-img", "src")), true);
+  igual("la imagen es la lámina 24 de la sesión 2", /clase-02\/24\.webp$/.test(await laminaQueSeVe(page)), true);
   igual("no se pide ninguna otra que la que se ve (ni respuestas): solo la 24 y la siguiente, de adelanto",
     await page.evaluate(() => performance.getEntriesByType("resource").map((e) => e.name.match(/clase-\d+\/(\d+)\.webp/)).filter(Boolean).map((m) => +m[1]).sort((a, b) => a - b)), [24, 25]);
   igual("◀ apagado en la primera; ▶ prendido", [await page.isDisabled("#formacion-anterior"), await page.isDisabled("#formacion-siguiente")], [true, false]);
@@ -259,13 +264,15 @@ async function pruebaDelAlumno(browser) {
   await page.click("#formacion-siguiente");
   await page.waitForFunction(() => /Lámina 2 de 7/.test(document.getElementById("formacion-cuenta").textContent));
   await esperarImagen(page);
-  igual("▶ pasa a la 25; no la da por completada", [/clase-02\/25\.webp$/.test(await page.getAttribute("#formacion-img", "src")), await page.getAttribute("#formacion-hecha", "aria-pressed")], [true, "false"]);
+  igual("▶ pasa a la 25; no la da por completada", [/clase-02\/25\.webp$/.test(await laminaQueSeVe(page)), await page.getAttribute("#formacion-hecha", "aria-pressed")], [true, "false"]);
   await page.click("#formacion-anterior");
   await page.waitForFunction(() => /Lámina 1 de 7/.test(document.getElementById("formacion-cuenta").textContent));
   igual("◀ vuelve a la 24, que sigue marcada", await page.getAttribute("#formacion-hecha", "aria-pressed"), "true");
   await page.click("#formacion-pasos button:nth-child(4)");
   await page.waitForFunction(() => /Lámina 4 de 7/.test(document.getElementById("formacion-cuenta").textContent));
-  igual("un número salta a esa lámina", /clase-02\/27\.webp$/.test(await page.getAttribute("#formacion-img", "src")) || await page.evaluate(() => formacionMia.i), true);
+  // La imagen llega después del número: se baja aparte (con la sesión en el encabezado).
+  await page.waitForFunction(() => /clase-02\/27\.webp$/.test(document.getElementById("formacion-img").dataset.archivo || ""), null, { timeout: 8000 }).catch(() => {});
+  igual("un número salta a esa lámina", /clase-02\/27\.webp$/.test(await laminaQueSeVe(page)) || await page.evaluate(() => formacionMia.i), true);
   igual("los números dicen cuáles están hechas, con palabras", await page.evaluate(() => [...document.querySelectorAll("#formacion-pasos button")].slice(0, 2).map((b) => b.getAttribute("aria-label"))),
     ["Lámina 1, completada", "Lámina 2, sin completar"]);
   await page.keyboard.press("Tab");

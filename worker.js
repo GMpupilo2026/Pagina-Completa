@@ -21,8 +21,11 @@
 // Tres reglas, y el porqué de cada una:
 //   · Si Supabase NO CONTESTA (caído, lento, un 5xx), se deja pasar. Es la
 //     regla de js/acceso-vigente.js: una red caída no puede dejar sin su
-//     material a todos los que sí pagaron. Solo pasa un token que dice ser
-//     de este proyecto y no venció: una cookie cualquiera no se cuela.
+//     material a todos los que sí pagaron. Solo pasa un token de este
+//     proyecto, sin vencer y CON SU FIRMA COMPROBADA acá mismo con la clave
+//     pública de Supabase (CLAVES_PUBLICAS, abajo): una cookie inventada no se
+//     cuela. Hasta el 10/11/2026 solo se miraba lo que el token decía de sí
+//     mismo, y con Supabase caído un JSON escrito a mano abría todo.
 //   · Sin cookie, o con un token que Supabase rechaza: 401. Si era una página
 //     (abrir un PDF, un enlace), se explica y se ofrece iniciar sesión.
 //   · Con sesión pero sin acceso vigente: 403, y se dice por qué.
@@ -58,6 +61,51 @@ const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJndGlqcGltcGNva3hhdHh4YmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5ODczMjksImV4cCI6MjEwNDU2MzMyOX0.h-AcAEQNaYMVo5UVtdWqUCTYgiSLFKDgXsn3lnbAhmQ";
 const COOKIE = "ai_sesion_cursos";
 const PROTEGIDO = /^\/(cursos\/(protegido|recursos)|material)\//;
+
+// ---- El código de las herramientas con licencia que no tienen nada público ----
+//
+// Lo que corre en el navegador, quien lo recibe lo lee: el candado de
+// js/candado-herramienta.js tapa la pantalla, pero el código de la herramienta
+// lo bajaba cualquiera (ver «El código de las herramientas con licencia, solo
+// con la licencia» en docs/decisiones/juegos-y-torneos.md). Estos archivos los
+// entrega el worker solo a quien tiene la licencia: tengo_herramienta(), la
+// misma pregunta del candado. Son los de las herramientas SIN nada público;
+// Pareo Integral y Notara usan el mismo código para lo que ve el público (el
+// enlace de solo lectura, el QR de una mesa) y quedan abiertos.
+//
+// A quien no la tiene no le contesta un 401 sino un aviso en JavaScript (200,
+// sin caché): un <script> con error no corre y la página no se enteraría. El
+// aviso anota el archivo en window.__codigoNegado, y la página, cuando confirma
+// la licencia, renueva la cookie y recarga una vez (SesionCursos.recuperarCodigo
+// en js/supabase-client.js): pasa cuando la cookie venció, porque el navegador
+// pide los <script> antes de que supabase-js renueve el token.
+//
+// Esta lista va también, igual, en run_worker_first (wrangler.jsonc) y en NUNCA
+// de sw.js (que no se guarde en el teléfono el aviso ni el código):
+// verificar-worker.js comprueba que no se separen.
+//
+// Un archivo puede ir con una LISTA de herramientas: basta con cualquiera de
+// sus licencias. Así va el cálculo de normas, que usan normas-titulo.html y el
+// Aula de Arbitraje (sus casos y su calculadora de normas).
+const CODIGO_CON_LICENCIA = {
+  "/js/bases-torneo.js": "bases-torneo",
+  "/js/bases-torneo-pagina.js": "bases-torneo",
+  "/js/inscripcion-jde.js": "inscripcion-jde",
+  "/js/inscripcion-jde-reglas.js": "inscripcion-jde",
+  "/js/normas-titulo.js": ["normas-titulo", "aula-arbitraje"],
+};
+
+// ---- Los archivos que se bajan con la licencia de una herramienta ----
+//
+// Los PDF de la revista «Arbitraje de Ajedrez» del Aula de Arbitraje: la
+// página habilita el botón cuando la persona completa todo lo de ese número,
+// pero el archivo en sí lo entrega el worker solo a quien tiene la licencia
+// del Aula (la misma pregunta del candado, tengo_herramienta()). Sin la
+// licencia contesta 403 y el navegador no guarda nada. Esta carpeta va
+// también en run_worker_first (wrangler.jsonc) y en NUNCA de sw.js.
+const ARCHIVOS_CON_LICENCIA = [
+  { prefijo: "/descargas/aula-arbitraje/", herramienta: "aula-arbitraje" },
+];
 
 // Los cursos escondidos a alumnos y profesores (ver «Los cursos escondidos» en
 // docs/decisiones/cursos-y-material.md). Es la misma lista de
@@ -148,10 +196,16 @@ export default {
     const incrustar = url.pathname.match(INCRUSTAR);
     if (incrustar) return incrustarTorneo(incrustar[1].toLowerCase(), url.searchParams.get("tema") === "oscuro");
 
+    // ---- El código de las herramientas con licencia ----
+    const herramienta = Object.prototype.hasOwnProperty.call(CODIGO_CON_LICENCIA, url.pathname) ? CODIGO_CON_LICENCIA[url.pathname] : "";
+    if (herramienta) return codigoConLicencia(request, env, url.pathname, herramienta);
+    const descarga = ARCHIVOS_CON_LICENCIA.find((a) => url.pathname.startsWith(a.prefijo));
+    if (descarga) return archivoConLicencia(request, env, descarga.herramienta);
+
     if (!PROTEGIDO.test(url.pathname)) return env.ASSETS.fetch(request);
 
     // ---- El contenido de los cursos ----
-    const veredicto = await preguntar(leerCookie(request, COOKIE), Date.now(), queSePregunta(url.pathname));
+    const veredicto = await preguntar(tokenDe(request), Date.now(), queSePregunta(url.pathname));
     if (veredicto !== "pasa") return negar(request, url, veredicto);
 
     const res = await env.ASSETS.fetch(request);
@@ -164,6 +218,68 @@ export default {
   },
 };
 
+// Con una lista de herramientas, pasa con cualquiera de sus licencias.
+async function conAlgunaLicencia(request, herramientas) {
+  let veredicto = "sin_sesion";
+  for (const herramienta of [].concat(herramientas)) {
+    veredicto = await preguntar(tokenDe(request), Date.now(), { herramienta });
+    if (veredicto !== "sin_acceso") break; // pasa, o no hay sesión: no tiene sentido seguir preguntando
+  }
+  return veredicto;
+}
+
+async function archivoConLicencia(request, env, herramienta) {
+  const veredicto = await conAlgunaLicencia(request, herramienta);
+  if (veredicto === "pasa") {
+    const res = await env.ASSETS.fetch(request);
+    const copia = new Response(res.body, res);
+    copia.headers.set("Cache-Control", "private, no-cache");
+    copia.headers.append("Vary", "Cookie");
+    return copia;
+  }
+  const texto = veredicto === "sin_acceso" ? "Hace falta la licencia de la herramienta para bajar este archivo." : "Hace falta iniciar sesión para bajar este archivo.";
+  return new Response(texto, {
+    status: 403,
+    headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", Vary: "Cookie", "X-Content-Type-Options": "nosniff", "X-Archivo-Con-Licencia": veredicto },
+  });
+}
+
+async function codigoConLicencia(request, env, ruta, herramienta) {
+  const veredicto = await conAlgunaLicencia(request, herramienta);
+  if (veredicto === "pasa") {
+    const res = await env.ASSETS.fetch(request);
+    const copia = new Response(res.body, res);
+    copia.headers.set("Cache-Control", "private, no-cache");
+    copia.headers.append("Vary", "Cookie");
+    return copia;
+  }
+  const aviso = "/* " + (veredicto === "sin_acceso" ? "Hace falta la licencia" : "Hace falta iniciar sesión") +
+    " para usar esta herramienta. */\nwindow.__codigoNegado = (window.__codigoNegado || []).concat(" + JSON.stringify(ruta) + ");\n";
+  return new Response(aviso, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Cache-Control": "no-store",
+      Vary: "Cookie",
+      "X-Content-Type-Options": "nosniff",
+      "X-Codigo-Con-Licencia": veredicto,
+    },
+  });
+}
+
+/* La sesión, de la cookie que escribe js/supabase-client.js o, si no llegó, del
+   encabezado Authorization: Bearer que manda la página (js/clase-presentacion.js).
+   El 10/11, en un perfil de Chrome la cookie no llegaba nunca —ni recargando,
+   ni abriendo la dirección a mano— y la presentación de la clase quedaba en
+   blanco para un profe con el acceso vigente. Es el MISMO token y pasa por las
+   MISMAS preguntas: no abre nada que la cookie no abriera. Si vienen los dos,
+   gana el encabezado: la página lo acaba de leer de la sesión, y una cookie
+   vieja que quedó por ahí no puede dejarla afuera. */
+function tokenDe(request) {
+  const m = (request.headers.get("Authorization") || "").match(/^Bearer\s+(\S+)$/i);
+  return m ? m[1] : leerCookie(request, COOKIE);
+}
+
 function leerCookie(request, nombre) {
   const todas = request.headers.get("Cookie") || "";
   for (const parte of todas.split(";")) {
@@ -171,6 +287,53 @@ function leerCookie(request, nombre) {
     if (i > 0 && parte.slice(0, i).trim() === nombre) return parte.slice(i + 1).trim();
   }
   return "";
+}
+
+// ---- La firma, comprobada acá, para cuando Supabase no contesta ----
+//
+// Supabase firma los tokens con ES256 (clave asimétrica): la clave PÚBLICA
+// la publica en /auth/v1/.well-known/jwks.json y alcanza para comprobar una
+// firma sin preguntarle nada. Va escrita acá porque el caso que importa es
+// justamente Supabase caído, y ahí tampoco contestaría el jwks.json.
+//
+// SI SUPABASE ROTA LA CLAVE, esto se actualiza (copiar las claves de ese
+// jwks.json, por su "kid"). Mientras no se haga, con Supabase ARRIBA no cambia
+// nada (decide Supabase); solo con Supabase caído un token firmado con la
+// clave nueva no pasaría, y queda anotado en el registro del worker.
+const CLAVES_PUBLICAS = {
+  "31c4acf3-cac0-42b3-89ac-2f0701023673": { kty: "EC", crv: "P-256", x: "XoxM5SLmcDoMneyCtksROdfDre9sTGxvI9bJSlm5d6o", y: "tZ3XGEd_o2RLjb3BuTH4rURK1v2uJjL9eLHzbWal6Pg" },
+};
+const clavesImportadas = new Map();
+
+function bytesDe(b64url) {
+  const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
+  const bin = atob(b64 + "=".repeat((4 - (b64.length % 4)) % 4));
+  return Uint8Array.from(bin, (c) => c.charCodeAt(0));
+}
+
+// ¿La firma del token es de verdad de Supabase? Cualquier cosa rara: no.
+async function firmaValida(token) {
+  try {
+    const [cab, cuerpo, firma] = token.split(".");
+    const h = JSON.parse(new TextDecoder().decode(bytesDe(cab)));
+    if (h.alg !== "ES256") return false;
+    const jwk = CLAVES_PUBLICAS[h.kid];
+    if (!jwk) {
+      console.error("cursos: token con una clave que el worker no conoce (kid " + h.kid + "): ¿rotó la clave de Supabase?");
+      return false;
+    }
+    let clave = clavesImportadas.get(h.kid);
+    if (!clave) {
+      clave = await crypto.subtle.importKey("jwk", jwk, { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"]);
+      clavesImportadas.set(h.kid, clave);
+    }
+    // La firma de un JWT ES256 son r y s pegados (64 bytes): el formato que
+    // espera WebCrypto, sin convertir.
+    return await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, clave,
+      bytesDe(firma), new TextEncoder().encode(cab + "." + cuerpo));
+  } catch {
+    return false;
+  }
 }
 
 // Lo que dice el token de sí mismo. NO prueba nada (cualquiera escribe un
@@ -199,32 +362,36 @@ async function preguntar(token, ahora = Date.now(), que = null) {
   // más — si el formato de "iss" cambiara algún día, este chequeo no puede
   // dejar afuera a todo el mundo, que es lo que hizo el candado anterior.
   const esDeEsteProyecto = c.iss === SUPABASE_URL + "/auth/v1";
+  // Lo único que se mira cuando Supabase no contesta: que sea de este
+  // proyecto Y que la firma sea de verdad.
+  const siNoContesta = async () => (esDeEsteProyecto && await firmaValida(token)) ? "pasa" : "sin_sesion";
 
   // material/ sin carpeta de producto no es nada que se venda: no se sirve.
-  if (que && !que.producto) return "sin_acceso";
-  const clave = que ? token + "|" + que.producto : token;
+  if (que && !que.producto && !que.herramienta) return "sin_acceso";
+  const clave = que ? token + "|" + (que.herramienta ? "herramienta:" + que.herramienta : que.producto) : token;
   const visto = yaVisto.get(clave);
   if (visto && visto > ahora) return "pasa";
 
   let res;
   try {
-    res = await fetch(SUPABASE_URL + "/rest/v1/rpc/" + (que ? "puede_bajar" : "acceso_vigente"), {
+    res = await fetch(SUPABASE_URL + "/rest/v1/rpc/" + (que && que.herramienta ? "tengo_herramienta" : que ? "puede_bajar" : "acceso_vigente"), {
       method: "POST",
       headers: {
         apikey: SUPABASE_ANON_KEY,
         Authorization: "Bearer " + token,
         "Content-Type": "application/json",
       },
-      body: que ? JSON.stringify({ p_producto: que.producto, p_basta_acceso: que.bastaAcceso }) : "{}",
+      body: que && que.herramienta ? JSON.stringify({ p_herramienta: que.herramienta })
+        : que ? JSON.stringify({ p_producto: que.producto, p_basta_acceso: que.bastaAcceso }) : "{}",
       signal: AbortSignal.timeout(4000),
     });
   } catch (e) {
     console.error("cursos: Supabase no contestó", String(e));
-    return esDeEsteProyecto ? "pasa" : "sin_sesion";
+    return siNoContesta();
   }
   if (res.status >= 500) {
     console.error("cursos: Supabase respondió " + res.status);
-    return esDeEsteProyecto ? "pasa" : "sin_sesion";
+    return siNoContesta();
   }
   // PostgREST contesta 401 a un token vencido, mal firmado o de otro proyecto.
   if (!res.ok) return "sin_sesion";
@@ -233,7 +400,7 @@ async function preguntar(token, ahora = Date.now(), que = null) {
   if (vigente === false) return "sin_acceso";
   // Un 200 que no es ni true ni false no debería pasar nunca; si pasa, es
   // Supabase contestando algo raro, y vale la misma regla que si no contesta.
-  if (vigente !== true) return esDeEsteProyecto ? "pasa" : "sin_sesion";
+  if (vigente !== true) return siNoContesta();
 
   if (yaVisto.size > 2000) yaVisto.clear();
   yaVisto.set(clave, Math.min(ahora + VALE_MS, c.exp * 1000));
@@ -489,6 +656,10 @@ function diaSiguienteCal(dia) {
   return x.getUTCFullYear() + "-" + dos(x.getUTCMonth() + 1) + "-" + dos(x.getUTCDate());
 }
 const DIA_CAL = /^\d{4}-\d{2}-\d{2}$/;
+// Fuentes de afuera apagadas por ahora (la misma lista que en
+// js/torneos-pareo-pagina.js): desde el 12/11/2026, los de
+// ajedrezcostarica.com no entran al calendario hasta nuevo aviso.
+const FUENTES_OCULTAS = ["ajedrezcostarica"];
 function armarCalendario(nombre, eventos, ahora) {
   const stamp = (ahora || new Date()).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
   const l = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Ajedrez Integral//Mi calendario//ES", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
@@ -543,7 +714,7 @@ async function eventosCalendario(org, ahora) {
     // Solo direcciones de las dos fuentes, nunca otra que llegue en la fila.
     const fuente = /^https:\/\/ajedrezcostarica\.com\/es\/tournaments\/\d+$/.test(x.url || "") ? "ajedrezcostarica"
       : /^https:\/\/chess-results\.com\/tnr\d+\.aspx\?lan=2$/.test(x.url || "") ? "chess-results" : "";
-    if (!fuente) continue;
+    if (!fuente || FUENTES_OCULTAS.includes(fuente)) continue;
     eventos.push({ uid: fuente + "-" + x.id_externo + "@ajedrez-integral.com", desde, hasta, resumen: x.titulo,
       lugar: [x.lugar, x.provincia].filter(Boolean).join(", "),
       descripcion: [x.organizador ? "Organiza: " + x.organizador + "." : "", ELO_LARGO_CAL[x.elo] ? ELO_LARGO_CAL[x.elo] + "." : "", "Inscripción y detalles: " + x.url].filter(Boolean).join(" "),

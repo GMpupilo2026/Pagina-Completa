@@ -64,7 +64,7 @@
           <div class="cam-ventana">
             <div class="cam-titulo-ventana">
                 <img src="img/app/icon-192.png" width="22" height="22" alt="" aria-hidden="true">
-                <span class="cam-titulo-texto">Mesa del árbitro — Centroamericano 2026</span>
+                <span id="titulo-ventana" class="cam-titulo-texto">Mesa del árbitro — Centroamericano 2026</span>
                 <span id="eg-reloj" class="cam-titulo-reloj" aria-hidden="true"></span>
             </div>
 
@@ -74,11 +74,12 @@
                 <button type="button" role="tab" class="cam-pestana" id="pest-arbitros" data-panel="arbitros" aria-controls="panel-arbitros" aria-selected="false" tabindex="-1">Árbitros y mesas</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-tiempos" data-panel="tiempos" aria-controls="panel-tiempos" aria-selected="false" tabindex="-1">Control de tiempos</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-planillas" data-panel="planillas" aria-controls="panel-planillas" aria-selected="false" tabindex="-1">Planillas y Drive</button>
-                <button type="button" role="tab" class="cam-pestana" id="pest-claves" data-panel="claves" aria-controls="panel-claves" aria-selected="false" tabindex="-1">Clave de chess-results</button>
+                <button type="button" role="tab" class="cam-pestana" id="pest-claves" data-panel="claves" aria-controls="panel-claves" aria-selected="false" tabindex="-1">Torneos</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-respaldo" data-panel="respaldo" aria-controls="panel-respaldo" aria-selected="false" tabindex="-1">Respaldo</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-registro" data-panel="registro" aria-controls="panel-registro" aria-selected="false" tabindex="-1">Lo que anotan</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-fairplay" data-panel="fairplay" aria-controls="panel-fairplay" aria-selected="false" tabindex="-1"><span aria-hidden="true">🛡</span> Fair Play</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-transmision" data-panel="transmision" aria-controls="panel-transmision" aria-selected="false" tabindex="-1"><span aria-hidden="true">📡</span> Transmisión <span id="contador-tx" class="cam-contador" hidden>0</span></button>
+                <button type="button" role="tab" class="cam-pestana" id="pest-plano" data-panel="plano" aria-controls="panel-plano" aria-selected="false" tabindex="-1"><span aria-hidden="true">🗺️</span> Plano de la sala</button>
             </div>
 
             <div class="cam-contenido">
@@ -92,7 +93,7 @@
                     <ul id="ir-lista" class="cam-inicio-lista"></ul>
                 </div>
                 <div class="cam-herramientas" role="toolbar" aria-label="Ronda en curso">
-                    <button type="button" id="resumen-actualizar" class="cam-btn cam-btn-chico"><span aria-hidden="true">🔄</span> Actualizar desde chess-results</button>
+                    <button type="button" id="resumen-actualizar" class="cam-btn cam-btn-chico"><span aria-hidden="true">🔄</span> Actualizar desde <span data-fuente-nombre>chess-results</span></button>
                     <button type="button" id="resumen-pdf" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">📄</span> Reporte de la ronda (PDF)</button>
                     <button type="button" id="resumen-hojas" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">🖨️</span> Hojas en papel (plan B)</button>
                     <span id="resumen-total" class="cam-herramientas-nota" role="status"></span>
@@ -106,7 +107,7 @@
                     </table>
                 </div>
                 <p id="resumen-vacio" class="cam-nota-vacia">Todavía no hay enlaces activos. Créalos en «Árbitros y mesas».</p>
-                <p class="cam-herramientas-nota mt-2">El avance se pone al día solo cuando cada árbitro abre o guarda en su tablet; «Actualizar desde chess-results» lo lee de todos los torneos de una vez.</p>
+                <p class="cam-herramientas-nota mt-2">El avance se pone al día solo cuando cada árbitro abre o guarda en su tablet; «Actualizar desde <span data-fuente-nombre>chess-results</span>» lo lee de todos los torneos de una vez.</p>
 
                 <h2 id="t-faltan" class="cam-subtitulo mt-6">Jugadores que no han llegado<span id="faltan-nota" class="cam-subtitulo-nota"></span></h2>
                 <p class="cam-herramientas-nota">Cada árbitro marca en su tablet, mesa por mesa, si el jugador llegó. Aquí salen los que marcó «No ha llegado»; si el jugador llega, el árbitro lo cambia y desaparece de la lista.</p>
@@ -173,7 +174,8 @@
                             <div><label for="a-desde" class="block text-sm font-bold">Mesa desde</label><input id="a-desde" type="number" min="1" max="9999" inputmode="numeric" class="cam-campo"></div>
                             <div><label for="a-hasta" class="block text-sm font-bold">Mesa hasta</label><input id="a-hasta" type="number" min="1" max="9999" inputmode="numeric" class="cam-campo"></div>
                             <div class="lg:col-span-2"><label for="a-vence" class="block text-sm font-bold">El enlace vence</label>
-                                <select id="a-vence" class="cam-select"><option value="torneo">Al terminar el torneo (9 de noviembre)</option><option value="hoy">Esta noche (11:59 p. m.)</option><option value="12h">Dentro de 12 horas</option></select></div>
+                                <select id="a-vence" class="cam-select" aria-describedby="a-vence-fecha-ayuda"><option value="fecha">Hasta el día que elijas</option><option value="torneo" data-solo-marca="centroamericano">Al terminar el torneo (9 de noviembre)</option><option value="hoy">Esta noche (11:59 p. m.)</option><option value="12h">Dentro de 12 horas</option></select>
+                                <label for="a-vence-fecha" class="block text-sm font-bold mt-2">Día en que vence (a las 11:59 p. m.)</label><input id="a-vence-fecha" type="date" class="cam-campo"><p id="a-vence-fecha-ayuda" class="text-sm mt-1">Con «Hasta el día que elijas», el enlace sirve hasta ese día. Ponle el último día del torneo.</p></div>
                         </div>
                         <p id="a-aviso" class="cam-aviso-suave mt-3" hidden></p>
                         <div class="cam-acciones"><button type="submit" id="a-crear" class="cam-btn">Crear el enlace y el QR</button></div>
@@ -288,7 +290,9 @@
 
             <!-- 5. La clave -->
             <section id="panel-claves" role="tabpanel" aria-labelledby="pest-claves" class="cam-no-qr" hidden>
-                <h2 id="t-claves" class="cam-subtitulo">Una sola clave para todo el torneo</h2>
+                <!-- Los torneos de Pareo Integral de este navegador: «Vincular» los lleva al evento (js/mesa-pareo-vincular.js). Ver «La Mesa del árbitro con torneos de Pareo Integral». -->
+                <div id="pareo-vincular" class="cam-clave-grupo" role="region" aria-labelledby="t-pareo-vincular"></div>
+                <h2 id="t-claves" class="cam-subtitulo mt-6">Torneos de chess-results: una sola clave para todo el torneo</h2>
                 <div class="cam-clave-grupo mt-3" id="clave-grupo">
                     <p>Los torneos del Centroamericano están <strong>ligados en un grupo</strong> de chess-results: no hace falta una clave por torneo. Pon aquí el <strong>código del grupo</strong> y su <strong>clave (SID)</strong>, la de «Internet / Customize lists on chess-results.com» en Swiss-Manager. Se prueba contra chess-results antes de guardarla y queda <strong>cifrada</strong>: nadie la vuelve a ver, ni tú ni los árbitros.</p>
                     <div class="grid sm:grid-cols-2 gap-3 mt-3">
@@ -431,6 +435,74 @@
                 <!-- La arma js/centroamericano-fair-play.js: es la misma pantalla del encargado de Fair Play (centroamericano-fair-play.html). -->
                 <div id="fp-app" class="cam-fp-app"></div>
             </section>
+            <section id="panel-plano" role="tabpanel" aria-labelledby="pest-plano" class="cam-no-qr" hidden>
+                <h3 class="cam-subtitulo"><span aria-hidden="true">🗺️</span> Plano de la sala de juego</h3>
+                <p class="cam-herramientas-nota">Es el plano que ven las familias en la página del torneo, y cada jugador ve su mesa marcada en su tarjeta. Las mesas con borde punteado y «?» las dedujo el sistema: tócalas, corrige los números si hace falta y márcalas como revisadas. Nada se publica hasta «Guardar el plano».</p>
+                <!-- Lo arma js/centroamericano-plano-editor.js con el dibujo de js/centroamericano-plano.js. -->
+                <div class="mt-3 flex flex-wrap items-center gap-2">
+                    <button id="pl-guardar" type="button" class="cam-btn" disabled>Guardar el plano</button>
+                    <button id="pl-borrador" type="button" class="cam-btn cam-btn-claro">Armar el borrador con los torneos</button>
+                    <p id="pl-estado" class="cam-herramientas-nota" role="status" aria-live="polite"></p>
+                </div>
+                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div><label for="pl-frente" class="block text-sm font-bold">Adelante (la fila 1) está…</label><input id="pl-frente" type="text" maxlength="80" class="cam-campo" autocomplete="off"></div>
+                    <div><label for="pl-fondo" class="block text-sm font-bold">Al fondo está…</label><input id="pl-fondo" type="text" maxlength="80" class="cam-campo" autocomplete="off"></div>
+                </div>
+                <details id="pl-salon-caja" class="mt-4">
+                    <summary class="font-bold cursor-pointer"><span aria-hidden="true">📐</span> Medidas del salón y material</summary>
+                    <!-- La cuenta está en js/plano-logistica.js; los campos los lee js/centroamericano-plano-editor.js y se guardan con el plano. -->
+                    <p class="cam-herramientas-nota mt-2">La mesa de la casa es la plegable de 180 × 74 cm: dos tableros y cuatro sillas, dos de cada lado. Con el largo y el ancho del salón, el borrador parte las filas donde se acaba el ancho y abajo se ve si el plano cabe y qué material hay que llevar.</p>
+                    <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                        <div><label for="pl-s-largo" class="block text-sm font-bold">Largo del salón, del frente al fondo (m)</label><input id="pl-s-largo" data-salon="largo" type="number" inputmode="decimal" min="0" step="0.5" value="" class="cam-campo"></div>
+                        <div><label for="pl-s-ancho" class="block text-sm font-bold">Ancho del salón, de lado a lado (m)</label><input id="pl-s-ancho" data-salon="ancho" type="number" inputmode="decimal" min="0" step="0.5" value="" class="cam-campo"></div>
+                        <div><label for="pl-s-mesaLargo" class="block text-sm font-bold">Largo de la mesa (m)</label><input id="pl-s-mesaLargo" data-salon="mesaLargo" type="number" inputmode="decimal" min="0.5" step="0.01" value="1.8" class="cam-campo"></div>
+                        <div><label for="pl-s-mesaFondo" class="block text-sm font-bold">Fondo de la mesa (m)</label><input id="pl-s-mesaFondo" data-salon="mesaFondo" type="number" inputmode="decimal" min="0.3" step="0.01" value="0.74" class="cam-campo"></div>
+                        <div><label for="pl-s-silla" class="block text-sm font-bold">Espacio de cada silla (m)</label><input id="pl-s-silla" data-salon="silla" type="number" inputmode="decimal" min="0.2" step="0.05" value="0.6" class="cam-campo"></div>
+                        <div><label for="pl-s-pasilloFila" class="block text-sm font-bold">Pasillo entre filas (m)</label><input id="pl-s-pasilloFila" data-salon="pasilloFila" type="number" inputmode="decimal" min="0.3" step="0.1" value="1" class="cam-campo"></div>
+                        <div><label for="pl-s-mesasPorTramo" class="block text-sm font-bold">Mesas pegadas por tramo</label><input id="pl-s-mesasPorTramo" data-salon="mesasPorTramo" type="number" inputmode="decimal" min="1" step="1" value="5" class="cam-campo"></div>
+                        <div><label for="pl-s-pasilloTramo" class="block text-sm font-bold">Pasillo entre tramos (m)</label><input id="pl-s-pasilloTramo" data-salon="pasilloTramo" type="number" inputmode="decimal" min="0.3" step="0.1" value="1.5" class="cam-campo"></div>
+                        <div><label for="pl-s-margen" class="block text-sm font-bold">Libre contra las paredes (m)</label><input id="pl-s-margen" data-salon="margen" type="number" inputmode="decimal" min="0" step="0.1" value="1.5" class="cam-campo"></div>
+                        <div><label for="pl-s-frente" class="block text-sm font-bold">Zona de la mesa principal, adelante (m)</label><input id="pl-s-frente" data-salon="frente" type="number" inputmode="decimal" min="0" step="0.5" value="4" class="cam-campo"></div>
+                    </div>
+                    <h4 class="font-bold mt-4">Material y árbitros</h4>
+                    <div class="mt-2 grid gap-3 sm:grid-cols-3">
+                        <div><label for="pl-s-rondas" class="block text-sm font-bold">Rondas</label><input id="pl-s-rondas" data-salon="rondas" type="number" inputmode="decimal" min="1" step="1" value="7" class="cam-campo"></div>
+                        <div><label for="pl-s-porArbitro" class="block text-sm font-bold">Partidas por árbitro de sector</label><input id="pl-s-porArbitro" data-salon="porArbitro" type="number" inputmode="decimal" min="1" step="1" value="25" class="cam-campo"></div>
+                        <div><label for="pl-s-reserva" class="block text-sm font-bold">Material de reserva (%)</label><input id="pl-s-reserva" data-salon="reserva" type="number" inputmode="decimal" min="0" step="1" value="10" class="cam-campo"></div>
+                        <div><label for="pl-s-sillasExtra" class="block text-sm font-bold">Sillas de más</label><input id="pl-s-sillasExtra" data-salon="sillasExtra" type="number" inputmode="decimal" min="0" step="1" value="10" class="cam-campo"></div>
+                    </div>
+                    <h4 class="font-bold mt-4">Jugadores con discapacidad visual</h4>
+                    <p class="cam-herramientas-nota">Cada uno juega en una mesa propia, con un tablero adaptado de más y un reloj parlante. Sus mesas van al final de su torneo. En el plano público no se marcan: solo se guarda cuántos hay en cada torneo.</p>
+                    <div id="pl-s-dv" class="mt-2 grid gap-3 sm:grid-cols-3"></div>
+                    <div class="mt-3 flex flex-col gap-2">
+                        <label class="flex items-center gap-2 font-semibold"><input id="pl-s-separar" type="checkbox" checked> Cada torneo empieza en una fila nueva</label>
+                        <label class="flex items-center gap-2 font-semibold"><input id="pl-s-usar" type="checkbox"> Armar el borrador con estas medidas</label>
+                    </div>
+                </details>
+                <div id="pl-dibujo" class="mt-4 overflow-x-auto"></div>
+                <div id="pl-mesa" class="mt-4"></div>
+                <section id="pl-logistica" class="mt-6" aria-labelledby="pl-log-titulo">
+                    <h3 id="pl-log-titulo" class="cam-subtitulo"><span aria-hidden="true">📦</span> Material y árbitros para este plano</h3>
+                    <div id="pl-log-contenido"></div>
+                </section>
+                <section id="rs-sala" class="mt-6" aria-labelledby="rs-titulo">
+                    <h3 id="rs-titulo" class="cam-subtitulo"><span aria-hidden="true">👥</span> Los árbitros en la sala</h3>
+                    <p class="cam-herramientas-nota">Con el plano de arriba, el sistema reparte la sala en zonas seguidas que se caminan sin cruzar (fila por fila, entrando a cada una por el lado más cercano a donde terminó la anterior), con la misma carga de trabajo para cada árbitro. La carga cuenta las partidas en juego y las incidencias de cada torneo, y la zona con más incidencias va al árbitro de más experiencia. Revisa la sugerencia, cambia lo que quieras y, al aprobarla, cada árbitro ve sus mesas nuevas en su tablet en unos segundos, sin otro QR.</p>
+                    <!-- Lo arma js/centroamericano-reparto-pagina.js con la cuenta de js/centroamericano-reparto.js. -->
+                    <div id="rs-arbitros" class="mt-3"></div>
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <button id="rs-sugerir" type="button" class="cam-btn"><span aria-hidden="true">🧭</span> Analizar la sala y sugerir el reparto</button>
+                        <label class="flex items-center gap-2 font-semibold"><input id="rs-seguir" type="checkbox" checked> Dejar a cada uno cerca de donde ya estaba, si da igual</label>
+                    </div>
+                    <p id="rs-estado" class="cam-herramientas-nota mt-2" role="status" aria-live="polite"></p>
+                    <div id="rs-analisis" class="mt-3"></div>
+                    <div id="rs-dibujo" class="mt-3 overflow-x-auto"></div>
+                    <div id="rs-zonas" class="mt-3"></div>
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <button id="rs-aprobar" type="button" class="cam-btn" disabled><span aria-hidden="true">✅</span> Aprobar y cambiar las mesas de los árbitros</button>
+                    </div>
+                </section>
+            </section>
             <section id="panel-transmision" role="tabpanel" aria-labelledby="pest-transmision" class="cam-no-qr" hidden>
                 <h3 class="cam-subtitulo"><span aria-hidden="true">📡</span> Transmisión: todos los tableros electrónicos en vivo</h3>
                 <p class="cam-herramientas-nota">Los tableros de LiveChess sin atraso, con un aviso que brilla cuando uno tiene un problema. Lo mismo ve el encargado de transmisión con su QR (abajo).</p>
@@ -494,6 +566,13 @@
     <script src="js/planilla-ocr.js"></script>
     <script src="js/planilla-reconstruir.js"></script>
     <script src="js/centroamericano-leer-partida.js"></script>
+    <script src="js/plano-logistica.js"></script>
+    <script src="js/centroamericano-plano.js"></script>
+    <script src="js/centroamericano-plano-editor.js"></script>
+    <script src="js/centroamericano-reparto.js"></script>
+    <script src="js/centroamericano-reparto-pagina.js"></script>
+    <script src="js/ritmo-control.js"></script>
+    <script src="js/mesa-pareo-vincular.js"></script>
     <script src="js/centroamericano-mesas-pagina.js"></script>
     <script src="js/centroamericano-vivo-conectar.js"></script>
 </body>

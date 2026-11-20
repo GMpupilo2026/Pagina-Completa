@@ -67,6 +67,8 @@ function torneo() {
   await page.click('[data-ficha="rondas"]');
   await page.click("#pi-camaras");
   await page.waitForSelector(dialogo);
+  ok(/^[a-hjkmnp-z2-9]{8}$/.test(await page.inputValue(dialogo + ' [name="codigo"]')), "el código ya viene puesto (uno nuevo): no hace falta ir a Notara a buscarlo", await page.inputValue(dialogo + ' [name="codigo"]'));
+  igual("y se elige el retraso de la transmisión pública", await page.$$eval(dialogo + ' [name="retraso"] option', (l) => l.map((x) => x.value)), ["0", "5", "10", "15", "30"]);
   await page.fill(dialogo + ' [name="codigo"]', "abc");
   await page.click(dialogo + " [data-avisos-aceptar]");
   await page.waitForFunction(() => /Ese código no es válido/.test(document.body.textContent)).catch(() => {});
@@ -79,6 +81,34 @@ function torneo() {
   ok(await page.evaluate((c) => window.__enviados.some((x) => x.canal === c && x.evento === "pedir"), CANAL), "escucha el canal de las cámaras y les pide lo que ya tienen");
   igual("queda guardado en el torneo", (await guardado()).camaras, { codigo: CODIGO, activo: true });
   ok(await P.vis(page, "#pi-camaras-caja"), "arriba de la ronda dice que está recibiendo");
+
+  console.log("\n=== Un teléfono para cada mesa: el QR sale de Pareo Integral ===");
+  await page.evaluate(() => { window.print = () => { window.__imprimio = (window.__imprimio || 0) + 1; }; });
+  await page.click("#pi-camaras-qr");
+  await page.waitForSelector("[data-rotulo-camara] .pi-rotulo-qr svg", { state: "attached" });
+  igual("un QR por mesa de la sala, para todo el torneo, y manda a imprimir", [await page.$$eval("[data-rotulo-camara]", (l) => l.map((x) => x.dataset.rotuloCamara)), await page.evaluate(() => window.__imprimio)], [["1", "2", "3"], 1]);
+  igual("cada QR abre Notara en ESA mesa de ESTE torneo, con el código (después del #)", await page.$$eval("[data-rotulo-camara]", (l) => l.map((x) => x.dataset.enlace.replace(/^.*\//, ""))),
+    [1, 2, 3].map((m) => "camara-tablero.html#t=" + ID + "&c=" + CODIGO + "&m=" + m + "&r=0"));
+  igual("es el mismo enlace que arma la cámara (una sola copia)", await page.evaluate(([id, c]) => window.PartidaEnVivo.enlaceCamara({ torneo: id, codigo: c, mesa: 2, retraso: 0 }) === document.querySelector('[data-rotulo-camara="2"]').dataset.enlace, [ID, CODIGO]), true);
+  ok(/Cámara de Notara/.test(await page.textContent('[data-rotulo-camara="2"]')) && /PRUEBA CÁMARAS/.test(await page.textContent('[data-rotulo-camara="2"]')), "con el torneo y para qué es, escritos");
+  await page.evaluate(() => document.body.classList.remove("pi-imprimiendo-firmas"));
+  // Con retraso: va en el QR, y queda guardado.
+  await page.click("#pi-camaras");
+  await page.waitForSelector(dialogo);
+  igual("al volver a abrirlo, el código es el del torneo", await page.inputValue(dialogo + ' [name="codigo"]'), CODIGO);
+  await page.selectOption(dialogo + ' [name="retraso"]', "15");
+  await page.click(dialogo + " [data-avisos-aceptar]");
+  await P.esperarGuardado(page, (l) => (l[0].camaras || {}).retraso === 15);
+  await page.waitForSelector("#pi-camaras-qr");
+  await page.click("#pi-camaras-qr");
+  await page.waitForFunction(() => /&r=15$/.test((document.querySelector('[data-rotulo-camara="1"]') || { dataset: {} }).dataset.enlace || ""), null, { timeout: 5000 }).catch(() => {});
+  ok(/&m=1&r=15$/.test(await page.getAttribute('[data-rotulo-camara="1"]', "data-enlace")), "el retraso elegido viaja en el QR de cada mesa");
+  await page.evaluate(() => document.body.classList.remove("pi-imprimiendo-firmas"));
+  await page.click("#pi-camaras");
+  await page.waitForSelector(dialogo);
+  await page.selectOption(dialogo + ' [name="retraso"]', "0");
+  await page.click(dialogo + " [data-avisos-aceptar]");
+  await P.esperarGuardado(page, (l) => l[0].camaras && l[0].camaras.retraso === undefined);
 
   // Lo que manda una cámara: lo arma la misma PartidaEnVivo de la cámara.
   const manda = (o) => page.evaluate(([c, o]) => {

@@ -346,6 +346,93 @@ que el alumno de 1800 vuelve a empezar en los de 1000.
   nivel estaba incompleto y ahora no): repasar un nivel ya completo no vuelve
   a festejar.
 
+## El rating táctico
+
+Un número propio de cada alumno que **sube al resolver limpio y baja cuando
+cuesta** (18/11/2026). La idea salió del «Coliseo de táctica» de Chessgora.
+Se ve en Ejercicios por tema (en la portada, con su detalle, y en la barra del
+ejercicio, corto) y en el informe de cada alumno («Rating táctico: 1871 (+12
+hoy) · 1540 ejercicios · su mejor: 2001»).
+
+- **No se guarda: se calcula** (`public.rating_tactico(p_alumno)`, migración
+  `20261118131646_rating_tactico.sql`) desde lo que Ejercicios por tema ya
+  anota en `training_progress`: la actividad `temas`, con el rating del
+  ejercicio y si salió limpio. Lo que se deriva no se guarda: así no hay un
+  número que se desfase de su historia ni una tabla más que proteger.
+- **La cuenta es Elo, ejercicio por ejercicio y en orden**: arranca en 1200,
+  K = 40 los primeros 20 ejercicios (para que llegue rápido a su nivel), 24
+  hasta los 60 y 16 después; se queda entre 400 y 3000. Limpio cuenta como
+  ganar; con error o con pista, como perder. Las filas viejas sin `limpio` no
+  cuentan (no se sabe cómo salieron). Solo se anota la PRIMERA vez que se
+  resuelve un ejercicio (el repaso no anota): el rating no se infla
+  repitiendo el mismo.
+- **SECURITY INVOKER**: la RLS de `training_progress` decide quién ve el de
+  quién (el alumno, el suyo; su profe y quien administra, el de sus alumnos).
+  Otra alumna recibe 1200 y 0 ejercicios; anon no la puede llamar. Probado
+  impersonando roles en SQL.
+- Con los datos de noviembre de 2026, los alumnos que más resuelven quedan
+  entre 1000 y 2100, en orden con cuánto resuelven limpio y qué tan difícil.
+  **No es el Elo** y la pantalla lo dice: no se compara con el del diagnóstico
+  ni con el de la federación.
+- **Se refresca solo**: `EntrenoProgress.log` dispara el evento
+  `entreno:anotado` cuando la base ACEPTÓ la fila, y `js/rating-tactico.js`
+  lo vuelve a pedir si fue de `temas`. Así `entreno-temas.js` no se tocó y la
+  página no tiene que acordarse de llamar a nada.
+- Los primeros 20 ejercicios dice que se está acomodando; sin ejercicios no
+  inventa un «1200»: dice cuándo aparece. Una baja se escribe con el signo
+  menos de verdad («−8»), y sin cambio no dice «+0».
+
+Lo prueba `verificar-rating-tactico.js`: las frases en Node; la página con el
+marcado de `entreno/temas.html` (se pide al cargar, se vuelve a pedir con un
+ejercicio anotado, no con uno rechazado ni con otra actividad); y el
+cableado (el orden de los scripts, el informe con el id del alumno, la
+función INVOKER y sin anon). Con el evento disparado también en el rechazo,
+salta.
+
+## El puzzle del día
+
+`entreno/temas.html?del-dia=1`, con su caja «🌟 Puzzle del día» en la lista de
+Ejercicios por tema, debajo de «Repasar fallados»: **un ejercicio, el mismo para
+todos durante el día de Costa Rica**. La idea salió de Chessgora. Es un modo más de Ejercicios por tema, como
+«Repasar fallados» y el reto (`abrirDelDia()` en `js/entreno-temas.js`).
+
+- **Sale del banco de siempre** (`temas.json`), así que ninguna posición se
+  inventa, y **se anota bajo su tema de origen** (`temaDeOrigen`): suma Puntos
+  Ajedrez como cualquier ejercicio (una vez: si ya lo había resuelto en su
+  tema, no vuelve a sumar), cuenta para las tareas de ese tema, y si costó
+  entra a «Repasar fallados». **No hay nada nuevo en la base**; el detalle lleva
+  además `del_dia: "AAAA-MM-DD"`, por si un día se quiere contar quién lo hizo.
+- **La elección es una cuenta, no una tabla**: los ejercicios con rating entre
+  1100 y 1700 de los temas de un motivo concreto (`GRUPOS_DE_MOTIVO`:
+  clavada, desviación, mate del pasillo…), sin repetir id, y la fecha de Costa
+  Rica pasada por un hash. Todas las computadoras sacan el mismo. No de
+  «Mezcla equilibrada», las fases o el largo: no dicen de dónde viene ni a qué
+  tema sumarlo (la primera versión decía «Viene del tema «Mezcla
+  equilibrada»»). Si el banco cambia, puede cambiar el de ese día.
+- **El día es el de Costa Rica**, con `Intl` y su `timeZone`: a las 23:30 de
+  allá (05:30 UTC del día siguiente) sigue siendo el mismo.
+- Sin «Saltar» ni selector de dificultad, y no mueve la dificultad que se
+  ajusta sola. Al terminar, «Terminar el puzzle del día →» (el cierre de
+  `EjercicioTablero.fin` ahora acepta `textoSiguiente`) y «Mañana hay otro»;
+  queda anotado en `entreno_del_dia_v1` de ese aparato.
+- **No va en «Hoy te toca»**: ahí siempre habría un renglón más, taparía la
+  sugerencia del panel y rompería el orden que esa lista ya tiene. **Tampoco es
+  una tarjeta del hub**: cada tarjeta del hub es una herramienta de
+  `MaterialPlataforma.HERRAMIENTAS` (lo exigen `verificar-entreno.js` y
+  `verificar-clase-entrenamientos.js`), y la primera versión, con tarjeta, los
+  rompió. La caja dice «Ya resolviste el de hoy» cuando corresponde.
+- **La anotación sigue siendo `log(actividad, { puzzle_id: … })`**, con el
+  `del_dia` adentro: `verificar-premio-temas.js` busca esa forma, la que lee
+  `premio_item()` para el premio de tema terminado (con `Object.assign`, la
+  primera versión lo rompió).
+
+**Al tocarlo, `node herramientas/verificar-todo.js puzzle-del-dia`** (sin
+navegador): misma fecha, mismo ejercicio; treinta días, casi siempre distintos;
+del banco, en la banda y de un tema de motivo que lo contiene; el día de Costa
+Rica; anotado con el tema de origen y en la forma que lee `premio_item()`; la
+caja en Ejercicios por tema y ninguna tarjeta en el hub. Está probado que salta
+con la zona horaria cambiada a UTC.
+
 ## Entender el error y ver la línea (Temas y Mates)
 
 `verificar-entreno-arreglos.js` («La refutación del error» y «Mates: Siguiente
@@ -462,6 +549,23 @@ logros, no salían en «Cómo viene» y no se podían pedir como tarea. Todo eso
   se mirara «¿ya tenía estrellas?», eso quedaría fuera para siempre, y una
   tarea de «10 de Detective» podía quedar imposible para quien ya lo había
   hecho todo.
+- **La marca se pone cuando la base dijo que sí, y la verdad es la base.**
+  Hasta el 11/11 `registrar()` ponía la marca ANTES de mandar el ejercicio y
+  sin mirar lo que contestaba `EntrenoProgress.log`. Un alumno terminó los 69
+  de Con lo justo (los cinco niveles «completo ✓») y su tarea decía 51/69: en
+  los niveles 4 y 5, 18 ejercicios tenían estrellas y la marca, pero nunca
+  llegaron a `training_progress`. En los registros del servidor no había ni un
+  POST rechazado: los pedidos no salieron del aparato (la red), y con la marca
+  ya puesta no se volvían a mandar nunca. Ahora la marca se pone solo con
+  `{ ok: true }`, y al abrir `tipos.html` `ponerAlDiaRegistros()` compara lo
+  que tiene estrellas (lo que cuenta para tareas: dos con `pistaNoCuenta`)
+  contra lo que la base de verdad tiene (`detail->>puzzle_id`, de mil en mil)
+  y manda lo que falta con `recuperado: true`, uno por uno, parando al primer
+  fallo. No mira `tipos_registrados_v1` para decidir: era justo la marca que
+  mentía. Si la lista no se puede leer, no manda nada (repetir daría puntos
+  dos veces). Así se reparan solas las tareas que ya quedaron cortas, la
+  próxima vez que el alumno abre Habilidades. Los tipos cuyos datos se cargan
+  aparte (Maestro) no están en `DATOS` al abrir: se recuperan al resolverlos.
 - **Tareas**: «Tipos de entrenamiento» está en `js/material-plataforma.js`, con
   cantidad y minutos, y un recorte por tipo (`metas.json` → `tipos`, que arma
   `herramientas/metas-indice.py` leyendo `tipos.json` y el catálogo). El
@@ -1219,6 +1323,51 @@ Está probado que fallan: una FEN inventada en el banco hace saltar 2
 comprobaciones; dejar la lectura escrita al reconstruir, o guardar el récord
 de una con errores, las que corresponden.
 
+## De oído
+
+`entreno/oido.html` (tarjeta **«👂 De oído»** en Entreno y en el panel,
+Entrenamiento básico), pedida el 19/11 para los alumnos ciegos: es la
+visualización que más necesita quien no ve el tablero, y le sirve a todos.
+No hay tablero a la vista, porque eso es lo que se entrena. Todo se contesta
+escribiendo («e4», «eva 4», «efe tres», «sí», «3»). La pregunta se escribe, se
+dice en una región viva (`#oido-voz`) y, con «Activar voz», también en voz
+alta. Tres ejercicios, cada uno con nivel fácil, medio y difícil:
+
+- **¿A dónde llega?** Una pieza sola en el tablero vacío. En fácil se dicen
+  todas las casillas a las que llega un rey o un caballo del centro; en medio,
+  un caballo de cualquier lado o «¿llega a…?» con alfil o torre; en difícil,
+  sobre todo «¿llega?» con dama, caballo y alfil. En el «¿llega?» la mitad de
+  las veces sí llega: si no, casi siempre sería «no». Si a la lista le falta
+  una casilla o le sobra otra, se dice cuál.
+- **El camino del caballo:** de una casilla a otra, ¿en cuántas jugadas como
+  mínimo? Se calcula con una búsqueda a lo ancho, así que la respuesta es
+  exacta. Fácil 1-2, medio 3-4, difícil 5-6. La corrección da además un camino.
+- **La partida dictada:** se dictan las primeras jugadas de una apertura REAL
+  del banco de Aperturas (`js/aperturas-lineas.js`): 4 en fácil, 8 en medio,
+  12 en difícil. Después se pregunta dónde quedó una pieza que se movió («el
+  caballo negro que empezó en g8»). La posición la arma chess.js jugando esas
+  jugadas: «ninguna posición se inventa». `seguirPiezas` sigue cada pieza
+  desde su casilla de salida, con capturas, enroques (la torre también se
+  mueve) y capturas al paso. El dictado nombra al peón («peón eva 4»), porque
+  `sanSpoken` lo dice solo con la casilla y para seguir la partida de oído hay
+  que saber qué se movió.
+
+La lógica es pura y está aparte (`js/oido-ejercicios.js`, con el azar que le
+pasan): la prueba `verificar-oido.js` sin navegador, con el alcance de cada
+pieza contado a mano, los caminos, la lectura de lo escrito o dicho, el
+seguimiento con enroque y captura al paso, 180 dictados de los tres niveles
+contra el banco y 600 preguntas de alcance y camino. Con navegador prueba los
+tres ejercicios de punta a punta. Lo que no se entiende («ni idea») no cuenta
+como respuesta: se dice cómo escribirla.
+
+**Cada respuesta cuenta en Entrenamiento**: `training_progress` con la
+actividad `oido` (meta del día, racha, tareas). La base solo acepta las
+actividades de su lista, así que va con su migración
+(`training_progress_oido`); sin ella las filas se rechazarían sin avisar.
+Está en las tareas (`material-plataforma.js`, «preguntas»), en el plan
+(`plan-entrenamiento.js`) y cuenta como entrenamiento de visión
+(`direcciones-entrenamiento.js`).
+
 ## Aperturas y celadas: memorizar jugando, con repaso espaciado
 
 `entreno/aperturas.html` es un banco de 40 líneas —12 celadas y 28 aperturas—
@@ -1483,7 +1632,7 @@ atrás se respeta, 30 días atrás y el futuro pasan a «ahora», y un
 ## Estudio: una ficha por idea, con su mapa y su posición
 
 `entreno/estudio.html` (tarjeta **"📚 Estudio"** en `clases.html` → grupo
-"Aprender") son 198 fichas de estudio: 29 aperturas, 35 defensas, 29 temas
+"Aprender") son 199 fichas de estudio: 30 aperturas, 35 defensas, 29 temas
 tácticos, 27 mates, 52 conceptos y 26 finales. Cada una es **una sola pantalla**: la idea principal
 arriba, cuatro bloques alrededor de un nodo con la pieza, y abajo la posición
 que lo explica, recorrible jugada por jugada.
@@ -1771,7 +1920,7 @@ primero de los tres).
   (`fichas-estudio-pdf.js`; `--solo-accesible` la rehace sin sitio ni PDF), así
   que dice lo mismo que el papel. `verificar-fichas-pdf.py` comprueba que esté al
   día, sin imágenes ni scripts, con un solo h1 y sin saltos de nivel, con todos
-  los enlaces internos llevando a algo que existe y las 198 fichas en orden, en
+  los enlaces internos llevando a algo que existe y las 199 fichas en orden, en
   los dos índices, numeradas, con su posición y su «Volver al índice». Se rompió
   a propósito (una imagen, un h6, un enlace roto) y salta.
 - Los colores están medidos: texto 16,6:1 y enlaces 8,4:1 en claro; 14,8:1 y
@@ -1800,6 +1949,37 @@ nuevas, 76 en total).
 - **La portadilla de Conceptos (52) se iba a una segunda hoja**: con más de 44
   fichas, la lista de la portadilla va con la letra más chica. El libro tiene
   210 páginas y las cartas, 22 hojas.
+
+### La ficha 199: el Colle-Zukertort
+
+El dueño la pidió para una alumna ciega que está estudiando el Colle con b3:
+la ficha «Sistema Colle» que ya existía es la del Colle clásico (c3 y e4), y
+el plan con b3 es otro (Ab2, Ce5, f4 y la torre por f3). Entró con su línea
+`colle-zukertort` (77 en total), y la respuesta a 3…Af5 —el alfil negro sale
+antes de e6 y se ofrece a cambiar el de d3— va escrita en los bloques, sin
+posición propia: una segunda línea para eso habría entrado a la prueba de
+estilo como si fuera otra apertura para recomendar.
+
+- **Una línea nueva mueve la medición de su vecina.** La posición propia del
+  Colle pasó de 3.e3 a 5.c3 (hasta c5 la comparte con el Zukertort), y con las
+  partidas que había no llegaba al mínimo de 15: el Colle quedó sin medir, sin
+  dar ningún error en la ficha. Se completó como dice «Las 7 que faltaban, de
+  KingBase», con `KingBase2017-D00-D29_part_01.pgn`: 109 partidas para el
+  Colle y 292 para el Zukertort, y las 65 aperturas quedaron medidas. Su
+  partida modelo también cambió: la del curso ya no llega a 5.c3, y la nueva
+  sale de KingBase.
+- **`estilo-modelos.js` leía mal las partidas guardadas**: las pasaba por
+  `.map(leerPgn)`, y `map` le da el índice como segundo argumento, que es
+  `hasta`. La partida número *i* se leía solo hasta la media jugada *i*, y
+  casi ninguna llegaba a su apertura: correrlo de nuevo dejaba 42 partidas
+  modelo de 64 sin avisar. El verificador las leía bien (`(t) =>
+  Gen.leerPgn(t)`), por eso `main` estaba en verde. Ahora es
+  `.map((t) => leerPgn(t))`.
+- **En Windows, los generadores de KingBase se corren con LF.** Con
+  `core.autocrlf=true`, el `.pgn` guardado sale con CRLF y la separación por
+  `\n\n` no encuentra ninguna partida. En el CI (Linux) no pasa, pero lo que se
+  genera en la máquina tiene que dar lo mismo que allá.
+- El libro tiene 211 páginas y las cartas, 23 hojas.
 
 ### Los mates, en una pestaña propia
 
@@ -3608,20 +3788,23 @@ esa sola con el motor, como «Revisa esta partida» (`?revisar=torneo:<id>`).
   120 letras, Elo 0–3500): las jugadas las escribe el navegador y se pueden
   tocar desde la consola, así que quien las lee (Informes) vuelve a filtrar
   lo que no tenga forma de jugada.
-- **O con una foto de la planilla** («📷 Leer la foto»). Usa el mismo lector
-  que `lector-planilla.html`, que pasó de la página a `js/planilla-ocr.js`
-  para que haya una sola copia: la foto va a la Edge Function
-  `ocr-scoresheet` (Google Vision, con el tope diario de 30 fotos por persona;
-  ver «El lector de planilla tiene tope diario» en cuentas-y-formularios.md),
-  las palabras se ordenan por filas y cada una se lee como jugada o se
-  cambia por la legal más parecida, comparada también en español («Ac9» es
-  `Bc4`, no `Qc4`). **No se guarda sola**: las jugadas caen en el cuadro, en
-  español, y las adivinadas llevan «?» (que `leerJugadas` salta como una
-  anotación), con un aviso de cuáles son, para que el alumno las compare con
-  su planilla antes de «Guardar y revisar». Lo que dice el servidor (el tope
-  del día, la foto muy grande) se dice tal cual y el cuadro no se toca. Lo
-  prueban `verificar-planilla-ocr.js` (sin navegador) y
-  `verificar-tipos-pagina.js` (con un Vision de mentira).
+- **O con una foto de la planilla** («📷 Leer la foto»). La foto va a la Edge
+  Function `ocr-scoresheet` (Google Vision, con el tope diario de 30 fotos por
+  persona; ver «El lector de planilla tiene tope diario» en
+  cuentas-y-formularios.md) y la partida se arma con el mismo lector del Lector
+  de planilla y del Centroamericano (`js/planilla-reconstruir.js`, en su hilo:
+  ver «El Lector de planilla lee por columnas» en juegos-y-torneos.md). Hasta
+  el 17/11 se ordenaba por filas y cada texto se cambiaba por la jugada legal
+  más parecida: con una planilla en columnas (1-20, 21-40, 41-60) eso daba
+  una partida inventada. **No se guarda sola**: las jugadas caen en el cuadro,
+  en español, y las que no se leyeron tal cual (corregidas o dudosas) llevan
+  «?» (que `leerJugadas` salta como una anotación), con un aviso de cuáles
+  son. Si desde algún punto la planilla no se entiende, el cuadro llega hasta
+  ahí y el aviso dice desde qué jugada y lo que está escrito, para completarlo
+  a mano: no se inventan jugadas. Lo que dice el servidor (el tope del día, la
+  foto muy grande) se dice tal cual y el cuadro no se toca. Lo prueba
+  `verificar-tipos-pagina.js` (con un Vision de mentira: una planilla de
+  una columna, una de tres columnas y una manchada).
 - **El nombre del rival no se guarda.** Es de otra persona, que no tiene
   cuenta ni dio su consentimiento, y para revisar la partida no hace falta. El
   formulario lo dice.
@@ -4524,7 +4707,7 @@ a +1, contra las demás aperturas del mismo color.
   cada medida sin necesidad), hasta 300 por apertura, las que llegan a su
   posición propia, también por transposición, y lo mismo que se guarda de
   las de torneos (40 medias jugadas en UCI, sin nombres). Quedan en
-  `herramientas/datos/estilo-aperturas-kingbase.txt`. Hoy: **64 de 64
+  `herramientas/datos/estilo-aperturas-kingbase.txt`. Hoy: **65 de 65
   medidas**, y `verificar-estilo-aperturas.js` falla si una queda sin medir.
 - La primera versión del extractor miraba, como la medición, si la partida
   pasaba por la posición en sus primeras 30 medias jugadas, y a los 45
@@ -4782,4 +4965,67 @@ estilo-pagina informes`:
 Rompiéndolo a propósito saltaron: el tope de las partidas en 10, quitar el
 ensanche de los controles, medir una apertura quitando una jugada propia,
 editar a mano una medida y la calibración sin el paso de gradiente.
+
+
+## Finales contra la máquina con las posiciones de las clases
+
+`entreno/finales.html?banco=clases` juega las posiciones que el profe armó en
+las clases de ADAES, con su propia actividad (`finales_clases`) y la posición
+en `detail.theme` para mandarla de tarea una por una. Ver «Y para jugarlas en
+casa, de tarea» en `docs/decisiones/accesibilidad.md`.
+
+## El entrenador de IA
+
+Salió de comparar la Academia con otras plataformas (18/11/2026): varias
+tienen un «entrenador» que explica por qué una jugada pierde. El dueño pidió
+construirlo con una condición: **«yo decido a quién se le activa»**.
+
+- **Dónde aparece**: un botón «¿Por qué?» debajo del aviso de «Respuesta
+  incorrecta», en Táctica por tema (`entreno/temas.html`) y en Mates
+  (`entreno/mates.html`). No es un chat: una pregunta, una respuesta. En el
+  reto contra un compañero no aparece.
+- **Quién lo tiene**: nadie, hasta que quien administra lo enciende persona
+  por persona en la ficha de `admin.html` («Entrenador de IA», un
+  `role="switch"` que se pinta con lo que devuelve la base). Tabla
+  `entrenador_ia_personas`, sin política de escritura y con auditoría;
+  `activar_entrenador_ia()` exige `soy_admin()`. Ni un profesor ni quien
+  coordina lo pueden encender: cada explicación cuesta dinero. El navegador
+  pregunta `tengo_entrenador_ia()` (quien administra lo ve siempre, para
+  probarlo). No es la casilla `academia_ia.alumnos` de «Explícame esta
+  posición», que abre a toda una academia.
+- **Quien decide qué era mejor es Stockfish, no la IA.** `js/entrenador-ia.js`
+  analiza en el navegador (el motor compartido, profundidad 14) la mejor línea
+  desde la posición y cómo sigue el motor después de la jugada del alumno. La
+  Edge Function `entrenador-ia` vuelve a jugar todo con chess.js y le pasa al
+  modelo solo eso, con la lista de piezas escrita.
+- **Una jugada que el motor ve casi igual de buena no se «explica»**: el
+  ejercicio guarda UNA solución, y si la del alumno vale menos de 0,6 peones
+  de diferencia la función contesta, sin llamar al modelo y sin gastar, que su
+  jugada también sirve. Pedirle a la IA que explique por qué está mal una
+  jugada buena es pedirle que invente.
+- **Ninguna jugada inventada llega al alumno**: si la explicación nombra una
+  jugada de pieza, una captura o un enroque que no está en las líneas, se
+  descarta entera (422) y se anota por qué. Es el molde de «Explícame esta
+  posición», que corre en Supabase desde el 9/11 y cuyo código nunca entró al
+  repositorio; el entrenador es una función aparte y no la toca.
+- **Lo que viaja al modelo**: la posición y las jugadas. Nada de la persona
+  (ni nombre, ni edad, ni grupo, ni de qué ejercicio viene). `profiles` no
+  guarda la edad, así que el tono «para un niño o un joven» va fijo en las
+  instrucciones.
+- **El gasto**: el mismo `academia_ia` e `ia_uso` de «Mejorar informe», con
+  `que = 'entrenador'`, y un tope por persona y por día en hora de Costa Rica:
+  15 (50 para quien da clase). Todo lo contesta `ia_para_entrenador()`, que es
+  solo de la service role. Lo peor que puede costar la llamada se calcula
+  antes, como en «Mejorar informe».
+- **Los colores del botón son los del texto de la página** (hereda): no se
+  eligió ninguno, y por eso no hay contraste nuevo que medir.
+- **Hace falta la clave**: sin el secreto `ANTHROPIC_API_KEY` en las Edge
+  Functions de Supabase la función contesta «todavía no está configurado». Al
+  18/11/2026 ese secreto nunca se había puesto en el proyecto (`ia_uso`
+  vacío), y solo una academia tenía presupuesto de IA; para quien no tiene
+  academia hace falta la fila general en Academias.
+
+Al tocar esto, `node herramientas/verificar-todo.js entrenador-ia`. Rompiendo
+a propósito el permiso (`tengo_entrenador_ia` siempre true en el doble) o la
+conversión del puntaje a «desde las blancas», salta.
 

@@ -143,7 +143,8 @@ const respuestas = fn.match(/json\(\{[^;]*\}/g) || [];
 const sinTextos = (x) => x.replace(/"(?:[^"\\]|\\.)*"/g, '""');
 ok("nunca devuelve el id de LiveChess ni un token", respuestas.length > 5 && respuestas.every((x) => !/torneo_id|\btoken\b/.test(sinTextos(x))) && !/\.\.\.lc\b/.test(fn));
 ok("un enlace apagado o vencido no lee nada", /e\.revocada\) return json/.test(fn) && /new Date\(e\.vence\)\.getTime\(\) <= Date\.now\(\)/.test(fn));
-ok("sin enlace, hace falta la herramienta «mesa-arbitro»", /tengo_herramienta", \{ p_herramienta: "mesa-arbitro" \}/.test(fn));
+// La transmisión es una sola para todo el sitio: de la casa, no basta la licencia (ver «Cada evento de la Mesa del árbitro tiene dueño»).
+ok("sin enlace, hace falta ser de la casa (centroamericano_soy_casa)", /comoQuienLlama\.rpc\("centroamericano_soy_casa"\)/.test(fn) && !/rpc\("tengo_herramienta"/.test(fn));
 ok("los nombres del cambio salen de los emparejamientos de chess-results, no del navegador", /const m = mesas\.find\(\(x\) => Number\(x\.mesa\) === mesa\)/.test(fn) && !/cuerpo\.blancas|cuerpo\.negras/.test(fn));
 ok("las mesas son todas: la lectura compartida y los emparejamientos completos", /centroamericano_fp_partidas/.test(fn) && /unirMesas\(/.test(fn));
 const desplegadas = leer("supabase/esquema/funciones-desplegadas.txt");
@@ -162,7 +163,7 @@ const pag = leer("centroamericano-transmision.html"), pagJs = leer("js/centroame
 ok("la página del encargado: noindex, chess.js y el módulo", /name="robots" content="noindex"/.test(pag) && /js\/vendor\/chess\.js/.test(pag) && /js\/centroamericano-transmision\.js/.test(pag) && /id="tx-app"/.test(pag));
 ok("el token va después del «#» y no se guarda en el navegador", /location\.hash/.test(pagJs) && !/localStorage|sessionStorage/.test(pagJs));
 const org = leer("centroamericano-mesas.html"), orgJs = leer("js/centroamericano-mesas-pagina.js");
-ok("la pestaña «Transmisión» de la organización", /id="pest-transmision"/.test(org) && /id="panel-transmision"/.test(org) && /"transmision"\]/.test(orgJs) && /CentroamericanoTransmision\.iniciar\(\{ raiz: \$\("tx-app"\), principal: true/.test(orgJs));
+ok("la pestaña «Transmisión» de la organización", /id="pest-transmision"/.test(org) && /id="panel-transmision"/.test(org) && /PANELES = \[[^\]]*"transmision"/.test(orgJs) && /CentroamericanoTransmision\.iniciar\(\{ raiz: \$\("tx-app"\), principal: true/.test(orgJs));
 const mod = leer("js/centroamericano-transmision.js");
 ok("sin sonido (en la sala no hay ruido): ni Audio ni AudioContext", !/new Audio|AudioContext|\.play\(/.test(mod));
 ok("el brillo con «reducir movimiento» queda quieto", /prefers-reduced-motion: reduce\)[\s\S]*tx-tarjeta\[data-brilla="urgente"\][^}]*animation: none/.test(leer("css/centroamericano-mesas.css")));

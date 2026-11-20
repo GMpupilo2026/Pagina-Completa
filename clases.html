@@ -12,6 +12,7 @@
          dentro del navegador en cada visita. -->
     <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/panel-jornada.css">
     <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
     <script src="js/clases-invitacion.js"></script>
     <script src="js/adaptive-mode.js"></script>
@@ -266,6 +267,14 @@
                  js/calendario-taller.js. Ver «El panel de taller» en
                  docs/decisiones/paneles.md. -->
             <section id="calendario-taller" hidden aria-labelledby="calendario-taller-titulo" class="mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6"></section>
+
+            <!-- ===== Tus horas del taller (panel de taller) =====
+                 La barra de lo que lleva de las horas del taller y lo que le
+                 falta, sesión por sesión; ahí mismo sube la práctica de la
+                 sesión presencial. Las cuentas son de la base
+                 (taller_horas); la pinta js/horas-taller.js. Ver «Las horas
+                 del taller» en docs/decisiones/paneles.md. -->
+            <section id="horas-taller" hidden aria-labelledby="horas-taller-titulo" class="mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6"></section>
 
             <!-- ===== Hoy te toca (solo alumno) =====
                  UNA tarjeta con lo que da ganas de volver: la meta del día y la
@@ -594,7 +603,14 @@
     <script src="js/cursos-ocultos.js"></script>
     <script src="js/hora-cr.js"></script>
     <script src="js/calendario-ics.js"></script>
+    <script src="js/avatar-profe-oscar.js"></script>
+    <script src="js/profe-ayuda.js"></script>
+    <script src="js/pieza-preferida.js"></script>
+    <script src="js/tablero-fen.js"></script>
     <script src="js/calendario-taller.js"></script>
+    <script src="js/adjuntos.js"></script>
+    <script src="js/horas-taller.js"></script>
+    <script src="js/vista-previa.js"></script>
     <script src="js/reto-ejercicios.js"></script>
     <script src="js/busqueda-base.js"></script>
     <script src="js/cupo-invitaciones.js"></script>
@@ -602,6 +618,7 @@
     <script src="js/paginas-admin.js"></script>
     <script src="js/paginas-supervisor.js"></script>
     <script src="js/clases.js"></script>
+    <script src="js/panel-jornada.js"></script>
     <script src="js/fondo-region.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- bromas: inicio --><script src="js/bromas.js" defer></script><!-- bromas: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
 </html>

@@ -20,6 +20,8 @@
         { title: "Administración", tiles: [
             { emoji: "👑", label: "Administración", desc: "Lo urgente, las cuentas, supervisores, profesores, coordinadores y equipos", href: "admin.html" },
             { emoji: "🏫", label: "Academias", desc: "Crea las academias, ponles supervisor y reparte a su gente", href: "academias.html", zona: "organizacion" },
+            { emoji: "🌱", label: "Interesados", desc: "Quién preguntó por clases, en qué va cada uno y a quién toca llamar hoy", href: "prospectos.html", zona: "personas" },
+            { emoji: "🎁", label: "Premios de las academias", desc: "Lo que cada academia ofrece por Puntos Ajedrez y lo que hay por entregar", href: "premios-academia.html", zona: "organizacion" },
             { emoji: "🏅", label: "Ficha JDN 2027", desc: "La inscripción a los Juegos Deportivos Nacionales: la ficha lista para firmar y su carpeta en el Drive", href: "jdn.html", zona: "personas" },
         ] },
         { title: "Supervisión y coordinación", tiles: [
@@ -40,9 +42,10 @@
             { emoji: "📝", label: "Solicitudes de la Academia", desc: "Quien pidió unirse: aprobar crea la cuenta, rechazar invita a un plan pago", href: "solicitudes.html", zona: "personas" },
         ] },
         { title: "Cobros y accesos", tiles: [
-            { emoji: "💳", label: "Cobros de la Academia", desc: "Mensualidades, pagos y morosidad. Los recordatorios salen solos", href: "cobros.html", zona: "cobros" },
+            { emoji: "💳", label: "Cobros", desc: "Mensualidades: quién está al día, registrar pagos y activar o apagar cuentas", href: "mensualidades.html", zona: "cobros" },
             { emoji: "🎟️", label: "Accesos y cupos", desc: "Los paquetes de acceso y los cupos de cada academia", href: "accesos.html", zona: "cobros" },
             { emoji: "🔑", label: "Licencias de herramientas", desc: "Genera y controla las licencias de las herramientas", href: "licencias.html", zona: "cobros" },
+            { emoji: "🧑‍⚖️", label: "Mis árbitros", desc: "Crea las cuentas de tus árbitros y elige qué herramientas puede usar cada uno", href: "mis-arbitros.html", zona: "cobros" },
             { emoji: "🏷️", label: "Precios", desc: "La tabla para enseñar a una academia o un colegio", href: "precios.html", zona: "cobros" },
             { emoji: "🎁", label: "Prueba gratis", desc: "Crear los 3 días de prueba de quien la pidió por WhatsApp", href: "prueba-gratis.html", zona: "cobros" },
             { emoji: "🛒", label: "Tienda de materiales", desc: "El catálogo de venta: todavía no está abierta al público", href: "tienda.html", zona: "cobros" },

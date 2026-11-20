@@ -274,7 +274,8 @@ Deno.serve(async (req) => {
     const autorizacion = req.headers.get("Authorization") ?? "";
     if (!/^Bearer\s+\S+/i.test(autorizacion)) return json({ error: "Falta la sesión." }, 401);
     const comoQuienLlama = createClient(SUPABASE_URL, ANON_KEY, { auth: { persistSession: false }, global: { headers: { Authorization: autorizacion } } });
-    const { data: puede, error: ePuede } = await comoQuienLlama.rpc("tengo_herramienta", { p_herramienta: "mesa-arbitro" });
+    // La conexión a LiveChess es una sola para todo el sitio: de la casa (ver «Cada evento de la Mesa del árbitro tiene dueño»).
+    const { data: puede, error: ePuede } = await comoQuienLlama.rpc("centroamericano_soy_casa");
     if (ePuede || puede !== true) return json({ error: "Solo la organización (herramienta «Mesa del árbitro»)." }, 403);
 
     if (accion === "estado") {

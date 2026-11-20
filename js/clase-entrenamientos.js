@@ -33,7 +33,7 @@ window.EntrenosClase = (function () {
     const QUEDA_AFUERA = new Set(["temas", "diagnostico", "arbitraje", "cuestionario", "plan-rival"]);
     const EMOJI = {
         mates: "♛", "aprende-a-jugar": "⭐", aprender: "🎓", desafios: "🏆", estudio: "📖", aperturas: "📚", "4x4": "🔲",
-        visualizacion: "👁️", "precision-posicional": "🎯", finales: "🤖", memoria: "🧠", tipos: "🧩",
+        visualizacion: "👁️", "precision-posicional": "🎯", finales: "🤖", "finales-clases": "🏫", memoria: "🧠", tipos: "🧩",
         coordenadas: "🧭", practicas: "✍️", sonar: "📡", "batalla-naval": "🚢", concentracion: "🃏",
         ilumina: "💡", confites: "🍬", estilo: "🎭",
     };
@@ -56,10 +56,13 @@ window.EntrenosClase = (function () {
 
     /* El enlace que se le abre a cada alumno con «🪟 Abrirlo a todos en una ventana». No
        viaja una dirección: viaja el slug (y el recorte), y la dirección sale
-       de la lista. Así nadie puede mandar a la clase a cualquier lado. */
+       de la lista. Así nadie puede mandar a la clase a cualquier lado. La
+       dirección de la lista puede traer una consulta fija (las Posiciones de
+       las clases son finales.html?banco=clases), pero solo de letras, números,
+       «=», «&», «_» y «-». */
     function enlaceDe(herramientas, slug, recorte) {
         const h = (herramientas || []).find((x) => x.slug === slug);
-        if (!h || QUEDA_AFUERA.has(slug) || !/^[a-z0-9/._-]+\.html$/.test(h.href)) return null;
+        if (!h || QUEDA_AFUERA.has(slug) || !/^[a-z0-9/._-]+\.html(\?[a-z0-9=&_-]+)?$/.test(h.href)) return null;
         if (recorte && typeof h.hrefRecorte === "function") return { href: h.hrefRecorte(String(recorte)), label: h.label };
         return { href: h.href, label: h.label };
     }
@@ -121,6 +124,23 @@ function cargarScriptEntreno(src, global) {
 function temasParaEntrenos() {
     if (typeof tacticsData !== "undefined" && tacticsData && tacticsData.puzzles) return Promise.resolve(tacticsData);
     return bajarJsonEntreno("entreno/data/temas.json");
+}
+
+/* Un final (de finales.json o de finales-clases.json) como fila de la clase.
+   La práctica de la clase le da al alumno el color que mueve en la posición
+   (practice_sessions no guarda otro). En los finales que empieza la máquina
+   —el alumno defiende y el rival juega primero— eso le daba el bando
+   equivocado: el que tenía que hacer tablas con negras jugaba con la dama
+   blanca. Esos van solo a su página, que sí hace mover primero a la máquina. */
+function filaDeFinal(f, titulo) {
+    const empiezaLaMaquina = f.fen.split(" ")[1] !== f.alumno;
+    return {
+        id: f.id, titulo: titulo + " (" + (f.meta === "tablas" ? "hacer tablas" : "ganar") + " con " + (f.alumno === "w" ? "blancas" : "negras") + ")",
+        fen: f.fen, final: !empiezaLaMaquina, guion: [f.idea, f.pista ? "Pista: " + f.pista : null].filter(Boolean),
+        // «🪟 Que lo practiquen»: ese final en su página, con su meta y sus pistas.
+        practica: { enlace: f.id },
+        nota: empiezaLaMaquina ? "Aquí empieza la máquina: se juega en su página, con «Que la practiquen»." : undefined,
+    };
 }
 
 const ADAPTADORES_ENTRENO = {
@@ -315,23 +335,32 @@ const ADAPTADORES_ENTRENO = {
         desc: "Los finales que hay que saber ganar o hacer tablas. En la clase: explicarlo y que cada uno lo juegue contra la máquina.",
         async cargar() {
             const d = await bajarJsonEntreno("entreno/data/finales.json");
-            const items = (d.finales || []).map((f, i) => {
-                /* La práctica de la clase le da al alumno el color que mueve en la
-                   posición (practice_sessions no guarda otro). En los finales que
-                   empieza la máquina —el alumno defiende y el rival juega primero—
-                   eso le daba el bando equivocado: el que tenía que hacer tablas con
-                   negras jugaba con la dama blanca. Esos van solo a su página, que
-                   sí hace mover primero a la máquina. */
-                const empiezaLaMaquina = f.fen.split(" ")[1] !== f.alumno;
-                return {
-                    id: f.id, titulo: (i + 1) + ". " + f.titulo + " (" + (f.meta === "tablas" ? "hacer tablas" : "ganar") + " con " + (f.alumno === "w" ? "blancas" : "negras") + ")",
-                    fen: f.fen, final: !empiezaLaMaquina, guion: [f.idea, f.pista ? "Pista: " + f.pista : null].filter(Boolean),
-                    // «🪟 Que lo practiquen»: ese final en su página, con su meta y sus pistas.
-                    practica: { enlace: f.id },
-                    nota: empiezaLaMaquina ? "Aquí empieza la máquina: se juega en su página, con «Que la practiquen»." : undefined,
-                };
-            });
+            const items = (d.finales || []).map((f, i) => filaDeFinal(f, (i + 1) + ". " + f.titulo));
             return [{ id: "finales", titulo: "Finales contra la máquina", desc: items.length + " finales", items, practica: { enlace: null } }];
+        },
+    },
+    /* Las posiciones de las clases (entreno/data/finales-clases.json, que arma
+       herramientas/finales-clases-generar.js), un grupo por día y el más
+       reciente arriba: así el entrenamiento que se preparó para hoy es lo
+       primero que aparece. Cada una va contra la máquina de la clase, con el
+       reloj que esté elegido en Practicar. */
+    "finales-clases": {
+        corto: "Contra la máquina, por día",
+        desc: "Las posiciones preparadas para cada clase, un grupo por día (el más reciente arriba). En la clase: explicarla y que cada uno la juegue contra la máquina, con el reloj que elijas en Practicar.",
+        async cargar() {
+            const d = await bajarJsonEntreno("entreno/data/finales-clases.json");
+            const porDia = new Map();
+            (d.finales || []).forEach((f) => {
+                const dia = (f.clase && f.clase.fecha) || "";
+                if (!porDia.has(dia)) porDia.set(dia, []);
+                porDia.get(dia).push(f);
+            });
+            // El día es «AAAA-MM-DD» escrito: se da vuelta como texto, sin pasar por Date.
+            return [...porDia.entries()].sort((a, b) => b[0].localeCompare(a[0])).map(([dia, lista]) => {
+                const [aa, mm, dd] = dia.split("-");
+                const items = lista.map((f, i) => filaDeFinal(f, (i + 1) + ". " + String(f.titulo).replace(/^\d\d\/\d\d · /, "")));
+                return { id: "clase-" + dia, titulo: dia ? "Clase del " + dd + "/" + mm + "/" + aa : "Sin fecha", desc: items.length + " posiciones", items, practica: { enlace: null } };
+            });
         },
     },
     memoria: {

@@ -235,9 +235,12 @@ async function pruebaArmador(browser) {
   igual("el título y el equipo", [insercion.fila.titulo, insercion.fila.grupo], ["Torneo Nacional Sub-16", "7B"]);
   igual("el slug es legible y lleva algo al azar",
     /^torneo-nacional-sub-16-[a-z0-9]{4}$/.test(insercion.fila.slug), "true");
-  igual("«cierra el 20» deja contestar todo el día 20",
-    insercion.fila.cierra_el.slice(0, 10) + " " + (new Date(insercion.fila.cierra_el).getHours() >= 23 ? "de noche" : "temprano"),
-    "2026-10-20 de noche");
+  // El final del 20 en hora de Costa Rica (UTC−6), sea cual sea la zona de la
+  // computadora: antes se leía en la del navegador, y la prueba en la del
+  // verificador; las dos coincidían en UTC y fallaban en una máquina en hora
+  // de Costa Rica.
+  igual("«cierra el 20» deja contestar todo el día 20, en hora de Costa Rica",
+    insercion.fila.cierra_el, "2026-10-21T05:59:59.000Z");
   igual("cada pregunta lleva su id, y no se repiten",
     (() => {
       const ids = insercion.fila.campos.map((c) => c.id);
@@ -248,6 +251,13 @@ async function pruebaArmador(browser) {
   igual("se guarda quién lo creó", insercion.fila.creado_por, "u-karina");
 
   // Al guardar ya vuelve solo a la lista; desde ahí, las respuestas.
+  await page.waitForSelector("#vista-lista:not(.hidden)");
+  // Y al volver a abrirlo dice el 20, no el 21 (el final del 20 en Costa Rica
+  // ya es el 21 en UTC: leer la fecha cortando el texto la corría un día).
+  await page.evaluate((f) => abrirEditor(f), insercion.fila);
+  await page.waitForSelector("#vista-editor:not(.hidden)");
+  igual("al volver a abrirlo, el cierre sigue siendo el 20", await page.inputValue("#f-cierra"), "2026-10-20");
+  await page.click("#volver-btn");
   await page.waitForSelector("#vista-lista:not(.hidden)");
   await page.evaluate(() => [...document.querySelectorAll("#lista button")].find((b) => b.textContent === "Respuestas").click());
   await page.waitForSelector("#vista-respuestas:not(.hidden)");

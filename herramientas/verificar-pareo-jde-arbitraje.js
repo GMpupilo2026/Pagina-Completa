@@ -248,6 +248,8 @@ async function pruebaPagina(browser) {
   igual("solo sus mesas", await page.$$eval("#pi-ver [data-mesa]", (l) => l.map((x) => x.dataset.mesa)), ["2", "3"]);
   ok(/Anotada: 1-0/.test(await page.textContent('#pi-ver [data-mesa="2"]')) && !(await page.$('#pi-ver [data-mesa="2"] select')), "la que ya está anotada no se toca");
   await page.selectOption("#pi-adj-3", "=");
+  // Primero prueba la base (en las pruebas no contesta) y después va por el canal.
+  await page.waitForFunction(() => window.__enviados.some((x) => x.evento === "resultado"), null, { timeout: 5000 }).catch(() => {});
   const mandado = await page.evaluate(() => window.__enviados.filter((x) => x.evento === "resultado").pop());
   igual("al elegir, manda el resultado de su mesa", mandado && mandado.payload, { ronda: 1, mesa: 3, r: "=" });
   ok(/Enviando/.test(await page.textContent('#pi-ver [data-mesa="3"]')), "y dice que está enviando hasta que el principal confirma");

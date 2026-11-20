@@ -1,0 +1,78 @@
+{
+  "numero": 17,
+  "fecha_original": "junio de 2014 (la portada original indica «octubre de 2013»)",
+  "temas": [
+    {
+      "titulo": "¿Qué hábitos has desarrollado como árbitro?",
+      "desc": "Psicología del deporte · Paula Man Reich"
+    },
+    {
+      "titulo": "De las Leyes 2014 a las Leyes 2023",
+      "desc": "Qué cambió y qué dicen hoy · Leyes del Ajedrez FIDE (desde 1-ene-2023)"
+    },
+    {
+      "titulo": "Rating performance (segunda parte)",
+      "desc": "Reglamento de Títulos arts. 1.4.6-1.4.9 · C.07 (2026) art. 10"
+    },
+    {
+      "titulo": "Jurisprudencia del ajedrez",
+      "desc": "Prólogo de las Leyes (art. 0.2) y las versiones históricas"
+    }
+  ],
+  "presentacion": "<div class=\"cols\"><p>Estimados amigos:</p><p>Pese a las dificultades —en estos días tiembla casi a diario en mi ciudad y mi salud no ha sido la mejor—, seguimos trabajando y escribiendo sobre arbitraje, y seguimos luchando por sostener esta revista, labor que no ha sido fácil. Agradezco a todos su apoyo y comprensión, que trataré de corresponder con artículos que les sean útiles para su capacitación y que, además, los entretengan.</p><p>Por fin se publicaron las Leyes del Ajedrez 2014, que entrarán en vigor en julio. Continuamos el estudio del <b>rating performance</b> con la solución de la tarea del número anterior: ¿coincidirán con sus resultados?</p><p>Abrimos un tema nuevo que creo será de su interés y que, como árbitros, es obligatorio conocer: la <b>jurisprudencia del ajedrez</b>. ¿Qué es? Lo verán en estas páginas.</p><p>Incluimos también un artículo de nuestra colaboradora, la psicóloga deportiva Paula Man Reich: ¿qué tipo de hábitos has desarrollado en tu rol profesional?</p><p>Espero que todos los temas sean de su agrado.</p><p style=\"text-align:left\"><b>Santiago García Ramos</b><br>Árbitro Internacional</p></div><p class=\"small\">En esta edición revisada, la traducción íntegra de las Leyes 2014 que acompañaba al número original se sustituye por una guía de lo que cambió desde entonces y de lo que dicen las Leyes vigentes (2023). Se eliminaron las referencias de calendario ya vencidas, el sorteo de licencias de programas y las direcciones de correo personales.</p>",
+  "cambios": [
+    [
+      "Leyes del Ajedrez",
+      "Traducción completa de las Leyes 2014 (vigentes del 1-jul-2014 al 30-jun-2017).",
+      "Ya no rigen. Se reemplaza por una guía de los cambios 2014 → 2023 con el artículo vigente de cada tema, y se remite al FIDE Handbook."
+    ],
+    [
+      "Jugada ilegal en rápidas",
+      "Art. A.4.2 (2014): se perdía a la primera.",
+      "Arts. A.3, A.5.2 y 7.5.5: la primera da 1 minuto al rival y la segunda pierde; pulsar sin mover o usar dos manos cuenta como ilegal (7.5.3, 7.5.4)."
+    ],
+    [
+      "Dispositivos electrónicos",
+      "Art. 11.3.b: prohibido el teléfono móvil en el recinto.",
+      "Art. 11.3.2: cualquier dispositivo no aprobado; las bases pueden permitirlo apagado en el bolso (11.3.2.1); la inspección puede incluir el cuerpo (11.3.3)."
+    ],
+    [
+      "Rating performance (fe de erratas)",
+      "El cuadro de la tarea no coincidía con el de la solución (5 o 5½ puntos del primero, resultados 6-7 invertidos, un rating y una federación distintos) y había erratas en sumas y redondeos.",
+      "Un solo cuadro, recalculado y comprobado (28 puntos, resultados simétricos), con jugadores ficticios. Las ocho performances finales eran correctas."
+    ],
+    [
+      "Rating performance (norma vigente)",
+      "Solo Ra + dp, con una regla de redondeo propia.",
+      "Redondeo del Reglamento de Títulos (1.4.7 y 1.4.9), piso ajustado para normas (1.4.6), ejemplo de norma de MI y desempate TPR del C.07 (2026), art. 10.2."
+    ],
+    [
+      "Jurisprudencia",
+      "Prometía publicar leyes antiguas conseguidas en papel.",
+      "Se añade que el FIDE Handbook publica en línea las Leyes de 2014, 2017, 2018 y anteriores; el Prólogo citado es hoy el art. 0.2."
+    ],
+    [
+      "Psicología",
+      "Texto en «usted», con erratas y el correo de la autora.",
+      "Corregido, en tuteo y condensado; sin correos personales."
+    ]
+  ],
+  "directorio": [
+    [
+      "Director (edición original)",
+      "Santiago García Ramos · Árbitro Internacional"
+    ],
+    [
+      "Revisión (edición original)",
+      "Ignacio Córdoba Navarro · Periodista"
+    ],
+    [
+      "Diseño (edición original)",
+      "Ángel Antonio Espino · Diseñador gráfico"
+    ],
+    [
+      "Colaboradores (edición original)",
+      "Paula Man Reich · Psicóloga del deporte; Carlos Calleros · Árbitro Internacional (Brasil)"
+    ]
+  ]
+}

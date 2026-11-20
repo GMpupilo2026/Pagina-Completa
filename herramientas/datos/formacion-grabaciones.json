@@ -1,0 +1,1220 @@
+{
+ "_comentario": "Fuente de herramientas/formacion-grabaciones.js (no se publica). Minutos sacados de los subtítulos de cada grabación, leídos de punta a punta (11/11/2026). youtube_id y preguntas NO van al archivo publicado: las preguntas son para la segunda parte (pausar el video con una pregunta), y avisos son lo que se notó en el video.",
+ "sesiones": [
+  {
+   "presentacion": "clase-01",
+   "youtube_id": "3FzX3ksWwro",
+   "duracion": 11508,
+   "capitulos": [
+    {
+     "t": 0,
+     "titulo": "Bienvenida, objetivos y mapa del curso"
+    },
+    {
+     "t": 687,
+     "titulo": "Las Leyes del Ajedrez: prólogo y sus partes"
+    },
+    {
+     "t": 959,
+     "titulo": "Deberes y roles de la persona árbitra"
+    },
+    {
+     "t": 1444,
+     "titulo": "Estructura del equipo arbitral e imparcialidad"
+    },
+    {
+     "t": 2031,
+     "titulo": "Preguntas: el público y la gradería"
+    },
+    {
+     "t": 2781,
+     "titulo": "Límites de la intervención y sanciones (art. 12)"
+    },
+    {
+     "t": 3418,
+     "titulo": "Pruebas, asistentes, prohibiciones y derechos"
+    },
+    {
+     "t": 4239,
+     "titulo": "El tablero y el movimiento de las piezas"
+    },
+    {
+     "t": 5508,
+     "titulo": "El peón: captura al paso y coronación"
+    },
+    {
+     "t": 6567,
+     "titulo": "El enroque y sus condiciones"
+    },
+    {
+     "t": 7247,
+     "titulo": "¿Cuándo cuenta una jugada? Pieza tocada"
+    },
+    {
+     "t": 7913,
+     "titulo": "Receso"
+    },
+    {
+     "t": 8861,
+     "titulo": "Jugadas ilegales, irregularidades y «compongo»"
+    },
+    {
+     "t": 9341,
+     "titulo": "Laboratorio de casos con los participantes"
+    },
+    {
+     "t": 10323,
+     "titulo": "¿Cómo termina una partida?"
+    },
+    {
+     "t": 10981,
+     "titulo": "Cierre, asistencia y preguntas finales"
+    }
+   ],
+   "laminas": [
+    {
+     "t": 0,
+     "lamina": 1
+    },
+    {
+     "t": 237,
+     "lamina": 2
+    },
+    {
+     "t": 313,
+     "lamina": 3
+    },
+    {
+     "t": 396,
+     "lamina": 4
+    },
+    {
+     "t": 506,
+     "lamina": 5
+    },
+    {
+     "t": 687,
+     "lamina": 6
+    },
+    {
+     "t": 779,
+     "lamina": 7
+    },
+    {
+     "t": 959,
+     "lamina": 8
+    },
+    {
+     "t": 1350,
+     "lamina": 9
+    },
+    {
+     "t": 1444,
+     "lamina": 10
+    },
+    {
+     "t": 1935,
+     "lamina": 11
+    },
+    {
+     "t": 2781,
+     "lamina": 12
+    },
+    {
+     "t": 2925,
+     "lamina": 13
+    },
+    {
+     "t": 3418,
+     "lamina": 14
+    },
+    {
+     "t": 3635,
+     "lamina": 15
+    },
+    {
+     "t": 3706,
+     "lamina": 16
+    },
+    {
+     "t": 3849,
+     "lamina": 17
+    },
+    {
+     "t": 4345,
+     "lamina": 18
+    },
+    {
+     "t": 4387,
+     "lamina": 19
+    },
+    {
+     "t": 5671,
+     "lamina": 21
+    },
+    {
+     "t": 6278,
+     "lamina": 22
+    },
+    {
+     "t": 6567,
+     "lamina": 20
+    },
+    {
+     "t": 7247,
+     "lamina": 21
+    },
+    {
+     "t": 7255,
+     "lamina": 22
+    },
+    {
+     "t": 7326,
+     "lamina": 23
+    },
+    {
+     "t": 7511,
+     "lamina": 24
+    },
+    {
+     "t": 7913,
+     "lamina": 28
+    },
+    {
+     "t": 8861,
+     "lamina": 24
+    },
+    {
+     "t": 9149,
+     "lamina": 25
+    },
+    {
+     "t": 9341,
+     "lamina": 26
+    },
+    {
+     "t": 10231,
+     "lamina": 27
+    },
+    {
+     "t": 10323,
+     "lamina": 28
+    },
+    {
+     "t": 10329,
+     "lamina": 29
+    },
+    {
+     "t": 10792,
+     "lamina": 30
+    },
+    {
+     "t": 10829,
+     "lamina": 31
+    },
+    {
+     "t": 10885,
+     "lamina": 32
+    },
+    {
+     "t": 10946,
+     "lamina": 33
+    },
+    {
+     "t": 10981,
+     "lamina": 51
+    }
+   ],
+   "preguntas": [
+    {
+     "t": 2922,
+     "banco": "sesiones",
+     "k": 0,
+     "i": 16,
+     "por_que": "En 0:47:30-0:48:20 (lámina 12) se explicó que la persona árbitra no debe avisar que el rival ya jugó ni dar ningún tipo de ayuda."
+    },
+    {
+     "t": 3848,
+     "banco": "sesiones",
+     "k": 0,
+     "i": 15,
+     "por_que": "En 0:51:30 y 1:02:00-1:02:30 se explicó que tener un teléfono o reloj inteligente encima hace perder la partida directamente."
+    },
+    {
+     "t": 4385,
+     "banco": "tareas",
+     "k": 0,
+     "i": 1,
+     "por_que": "En 1:12:42-1:13:03 se explicó que la casilla de la derecha de cada jugador debe ser blanca para que el tablero esté bien colocado."
+    },
+    {
+     "t": 6278,
+     "banco": "tareas",
+     "k": 0,
+     "i": 12,
+     "por_que": "En 1:34:31-1:39:00 se explicó la captura al paso, que solo vale en la jugada inmediatamente siguiente al avance doble."
+    },
+    {
+     "t": 6565,
+     "banco": "tareas",
+     "k": 0,
+     "i": 3,
+     "por_que": "En 1:44:45-1:46:00 se explicó que el peón que llega a la octava se cambia por dama, torre, alfil o caballo a elección, aunque esa pieza no se haya capturado."
+    },
+    {
+     "t": 6870,
+     "banco": "tareas",
+     "k": 0,
+     "i": 13,
+     "por_que": "En 1:53:20-1:54:30 se explicó que el rey no puede pasar por una casilla atacada (el alfil) al enrocar; solo la torre puede pasar por peligro."
+    },
+    {
+     "t": 9146,
+     "banco": "sesiones",
+     "k": 0,
+     "i": 1,
+     "por_que": "En 2:29:30-2:30:30 se explicó que en el ritmo de las regionales e interregionales (rápidas) la primera ilegal se corrige y el rival recibe 1 minuto, no 2."
+    },
+    {
+     "t": 9527,
+     "banco": "sesiones",
+     "k": 0,
+     "i": 17,
+     "por_que": "En 2:33:30-2:34:40 y en el caso 1 (2:37:30-2:38:45) se explicó que si toca primero la torre debe moverla y ya no puede enrocar."
+    },
+    {
+     "t": 10623,
+     "banco": "sesiones",
+     "k": 0,
+     "i": 19,
+     "por_que": "En 2:52:30 y 2:54:01-2:56:00 se explicó el ahogado: el rey no está en jaque, no tiene jugada legal y son tablas."
+    },
+    {
+     "t": 10882,
+     "banco": "tareas",
+     "k": 0,
+     "i": 11,
+     "por_que": "En 3:00:29-3:01:10 se mostró que rey y alfil contra rey es posición muerta: nunca hay mate y es empate."
+    }
+   ],
+   "avisos": [
+    "La presentación que se ve en el video tenía 48 láminas (en 0:17:20 alguien dice «8 de 48» en la de Deberes); diapositivas.json tiene 51. La numeración coincide al menos hasta la 8, pero conviene revisar que el resto se corresponda.",
+    "Las láminas 33 a 50 no se explicaron: la notación algebraica y la planilla se pasaron a la sesión 2 (3:02:26), y no hubo práctica en salas por estaciones (41-47), errores frecuentes (48) ni quiz en vivo (49-50). Los casos del laboratorio (26-27) se hicieron en plenaria, con preguntas a participantes al azar, no en grupos.",
+    "La lámina 51 (Tarea y cierre) se puso en el cierre por deducción: María José no la lee en voz alta. La 33 se puso solo por la mención «venía la anotación algebraica» en 3:02:26.",
+    "Orden distinto al de la presentación: la captura al paso (21) y la coronación (22) se explicaron con el tablero antes del enroque (20); después, en 2:00:47, Óscar pasa por la 21 diciendo que se la salta y repasa la 22.",
+    "Entre 1:13 y 1:31 aprox. Óscar no explica sobre la lámina 19 sino con el tablero interactivo y juegos de recoger estrellas en la plataforma; se dejó la 19.",
+    "De 0:16:01 a 0:18:00 hay un problema técnico: a varios participantes la presentación se les quedó pegada en la lámina 1 y se pierde tiempo refrescando; no hay exposición.",
+    "Receso de 2:11:52 a 2:24:08 sin audio (unos 12 minutos de silencio); de 2:24:08 a 2:27:41 hay conversación informal (grabación por Teams, bromas) antes de retomar con jugadas ilegales. En el receso se puso la lámina 28.",
+    "El video empieza a mitad de una frase («presenten ustedes y nos den la…»): falta el arranque de la sesión.",
+    "Error dicho en el video y corregido después: en 1:57:01 un participante pregunta si la ilegal «se sanciona con 2 minutos al jugador que la hizo» y Óscar contesta «Sí, exacto»; los 2 minutos se le suman al RIVAL (así lo dice él mismo en 1:53:01 y lo aclara en 2:39:31-2:41:30). La pregunta del banco sobre esto va después de la aclaración.",
+    "Contradicción interna sobre el tiempo de la ilegal: en 1:57:30 Óscar dice que los 2 minutos se aplican también en regionales e interregionales (rápidas); en 2:30:00 corrige que en ese ritmo es 1 minuto (FIDE A.3), que es lo que dice el banco (sesiones[0][1]). Por eso esa pregunta va en 2:32:26, después de la corrección.",
+    "Error dicho en el video: en 2:59:01 Óscar dice que la triple repetición y las 50 jugadas son tablas aunque no las reclame nadie, si el árbitro las ve. Según la FIDE (9.2, 9.3 y 9.6) y la lámina 29, esas tablas las reclama el jugador; el árbitro interviene de oficio solo con quíntuple repetición o 75 jugadas. No se usó ninguna pregunta sobre esto.",
+    "En 2:30:31 se dice que la segunda ilegal pierde, sin mencionar la excepción (si el rival no puede dar mate, son tablas, FIDE 7.5.5). No contradice el banco de la sesión 1, pero sesiones[1][6] toca justo esa excepción.",
+    "En 1:01:01 se dice que el asistente de un jugador puede ser «alguien del público» o cualquier persona de confianza del árbitro; la FIDE dice que lo aporta el jugador y debe ser aceptable para el árbitro (lámina 15). Matiz menor.",
+    "La pregunta sesiones[0][15] (celular en el bolsillo) agrega «salvo que el reglamento fije algo menos severo», que no se dijo en el video; no lo contradice.",
+    "La pregunta sobre árbitros de juego limpio (0:29:31) y la respuesta «todo tiene que llegar al principal» no tienen pregunta en el banco; tampoco la parte de público y gradería (0:33:51-0:46:00)."
+   ],
+   "aclaraciones": [
+    {
+     "t": 7021,
+     "avatar": "arbitro",
+     "titulo": "La jugada ilegal: el tiempo es para el rival",
+     "texto": "La jugada ilegal no se castiga sumándole tiempo a quien la hizo: se restablece la posición y se le suman 2 minutos al RIVAL (1 minuto en rápidas y relámpago). Se corrige más adelante en este mismo video.",
+     "fuente": "Leyes de la FIDE, art. 7.5.5 y Apéndice A.3"
+    },
+    {
+     "t": 10741,
+     "avatar": "arbitro",
+     "titulo": "Triple repetición y 50 jugadas: se reclaman",
+     "texto": "La triple repetición y las 50 jugadas no terminan solas la partida: las reclama el jugador que tiene el turno. La persona árbitra interviene por su cuenta solo con la quíntuple repetición o las 75 jugadas.",
+     "fuente": "Leyes de la FIDE, art. 9.2, 9.3 y 9.6; lámina 29"
+    }
+   ]
+  },
+  {
+   "presentacion": "clase-02",
+   "youtube_id": "KYxPogxcpoA",
+   "duracion": 14518,
+   "capitulos": [
+    {
+     "t": 0,
+     "titulo": "Bienvenida y pendiente de la Sesión 1: anotación"
+    },
+    {
+     "t": 2466,
+     "titulo": "Práctica: dictado de la planilla"
+    },
+    {
+     "t": 3210,
+     "titulo": "Trabajo en salas: posiciones y casos de árbitro"
+    },
+    {
+     "t": 6594,
+     "titulo": "Receso"
+    },
+    {
+     "t": 7445,
+     "titulo": "Revisión: mate, ahogado, dictado y casos"
+    },
+    {
+     "t": 8939,
+     "titulo": "Errores frecuentes y quiz de repaso"
+    },
+    {
+     "t": 9432,
+     "titulo": "Sesión 2: objetivos, conducta y zona de juego"
+    },
+    {
+     "t": 9746,
+     "titulo": "Dispositivos electrónicos"
+    },
+    {
+     "t": 9906,
+     "titulo": "Irregularidades: jugada ilegal y piezas desplazadas"
+    },
+    {
+     "t": 10020,
+     "titulo": "Sanciones: de menor a mayor"
+    },
+    {
+     "t": 10201,
+     "titulo": "Reclamos y apelaciones"
+    },
+    {
+     "t": 10383,
+     "titulo": "Casos: ¿qué decide la persona árbitra?"
+    },
+    {
+     "t": 10899,
+     "titulo": "Receso"
+    },
+    {
+     "t": 11244,
+     "titulo": "Práctica: simulación de reclamos en salas"
+    },
+    {
+     "t": 12727,
+     "titulo": "Revisión de los ejercicios y preguntas"
+    },
+    {
+     "t": 13776,
+     "titulo": "Quiz de la sesión y cierre"
+    }
+   ],
+   "laminas": [
+    {
+     "t": 0,
+     "lamina": 33,
+     "clase": "clase-01"
+    },
+    {
+     "t": 1148,
+     "lamina": 34,
+     "clase": "clase-01"
+    },
+    {
+     "t": 1505,
+     "lamina": 35,
+     "clase": "clase-01"
+    },
+    {
+     "t": 1759,
+     "lamina": 36,
+     "clase": "clase-01"
+    },
+    {
+     "t": 1856,
+     "lamina": 37,
+     "clase": "clase-01"
+    },
+    {
+     "t": 1906,
+     "lamina": 38,
+     "clase": "clase-01"
+    },
+    {
+     "t": 2460,
+     "lamina": 41,
+     "clase": "clase-01"
+    },
+    {
+     "t": 2500,
+     "lamina": 45,
+     "clase": "clase-01"
+    },
+    {
+     "t": 3929,
+     "lamina": 42,
+     "clase": "clase-01"
+    },
+    {
+     "t": 4713,
+     "lamina": 43,
+     "clase": "clase-01"
+    },
+    {
+     "t": 5146,
+     "lamina": 46,
+     "clase": "clase-01"
+    },
+    {
+     "t": 6064,
+     "lamina": 47,
+     "clase": "clase-01"
+    },
+    {
+     "t": 7445,
+     "lamina": 44,
+     "clase": "clase-01"
+    },
+    {
+     "t": 8066,
+     "lamina": 45,
+     "clase": "clase-01"
+    },
+    {
+     "t": 8358,
+     "lamina": 46,
+     "clase": "clase-01"
+    },
+    {
+     "t": 8554,
+     "lamina": 47,
+     "clase": "clase-01"
+    },
+    {
+     "t": 8939,
+     "lamina": 48,
+     "clase": "clase-01"
+    },
+    {
+     "t": 9341,
+     "lamina": 49,
+     "clase": "clase-01"
+    },
+    {
+     "t": 9432,
+     "lamina": 2
+    },
+    {
+     "t": 9460,
+     "lamina": 3
+    },
+    {
+     "t": 9467,
+     "lamina": 4
+    },
+    {
+     "t": 9746,
+     "lamina": 5
+    },
+    {
+     "t": 9906,
+     "lamina": 6
+    },
+    {
+     "t": 9993,
+     "lamina": 7
+    },
+    {
+     "t": 10035,
+     "lamina": 9
+    },
+    {
+     "t": 10201,
+     "lamina": 10
+    },
+    {
+     "t": 10383,
+     "lamina": 11
+    },
+    {
+     "t": 10472,
+     "lamina": 12
+    },
+    {
+     "t": 10487,
+     "lamina": 13
+    },
+    {
+     "t": 10495,
+     "lamina": 14
+    },
+    {
+     "t": 10683,
+     "lamina": 17
+    },
+    {
+     "t": 10727,
+     "lamina": 18
+    },
+    {
+     "t": 10759,
+     "lamina": 19
+    },
+    {
+     "t": 10838,
+     "lamina": 20
+    },
+    {
+     "t": 10851,
+     "lamina": 21
+    },
+    {
+     "t": 10861,
+     "lamina": 22
+    },
+    {
+     "t": 10899,
+     "lamina": 23
+    },
+    {
+     "t": 11257,
+     "lamina": 24
+    },
+    {
+     "t": 11574,
+     "lamina": 25
+    },
+    {
+     "t": 11715,
+     "lamina": 26
+    },
+    {
+     "t": 11826,
+     "lamina": 27
+    },
+    {
+     "t": 11920,
+     "lamina": 28
+    },
+    {
+     "t": 12029,
+     "lamina": 29
+    },
+    {
+     "t": 12421,
+     "lamina": 30
+    },
+    {
+     "t": 12727,
+     "lamina": 25
+    },
+    {
+     "t": 12805,
+     "lamina": 26
+    },
+    {
+     "t": 12906,
+     "lamina": 27
+    },
+    {
+     "t": 13010,
+     "lamina": 28
+    },
+    {
+     "t": 13525,
+     "lamina": 29
+    },
+    {
+     "t": 13559,
+     "lamina": 30
+    },
+    {
+     "t": 13776,
+     "lamina": 31
+    },
+    {
+     "t": 13784,
+     "lamina": 32
+    },
+    {
+     "t": 13791,
+     "lamina": 33
+    },
+    {
+     "t": 14119,
+     "lamina": 34
+    },
+    {
+     "t": 14252,
+     "lamina": 37
+    }
+   ],
+   "preguntas": [
+    {
+     "t": 1148,
+     "banco": "sesiones",
+     "k": 1,
+     "i": 15,
+     "por_que": "En 0:18:00–0:19:07 se explica que ofrecer tablas una y otra vez llega a ser molesto y que el árbitro le llama la atención a quien lo hace por molestar."
+    },
+    {
+     "t": 5277,
+     "banco": "sesiones",
+     "k": 1,
+     "i": 0,
+     "por_que": "En 1:25:49–1:27:46 se resuelve el caso «toca su alfil y mueve el caballo»: pieza tocada, pieza movida; se devuelve el caballo y se le obliga a mover el alfil."
+    },
+    {
+     "t": 9745,
+     "banco": "sesiones",
+     "k": 1,
+     "i": 13,
+     "por_que": "En 2:38:30–2:39:20 se explica que el jugador no puede salir de la zona de juego (sala y baños) sin autorización del árbitro."
+    },
+    {
+     "t": 9993,
+     "banco": "sesiones",
+     "k": 1,
+     "i": 3,
+     "por_que": "En 2:45:06–2:46:30 se explica que una jugada ilegal no cuenta como tal hasta que se presiona el reloj."
+    },
+    {
+     "t": 10200,
+     "banco": "sesiones",
+     "k": 1,
+     "i": 16,
+     "por_que": "En 2:47:00–2:49:55 se recorre la lista del art. 12.9 empezando por la advertencia como la sanción más suave."
+    },
+    {
+     "t": 10382,
+     "banco": "sesiones",
+     "k": 1,
+     "i": 19,
+     "por_que": "En 2:52:10–2:53:00 se explica que firmar la planilla es protocolo, no aceptación, y que no impide apelar."
+    },
+    {
+     "t": 10898,
+     "banco": "sesiones",
+     "k": 1,
+     "i": 10,
+     "por_que": "En 3:00:51–3:01:33 (caso 6) se dice que quien vuelca las piezas las repone en su propio tiempo."
+    },
+    {
+     "t": 12905,
+     "banco": "sesiones",
+     "k": 1,
+     "i": 6,
+     "por_que": "En 3:15:15–3:16:50 y otra vez en 3:33:29–3:35:00 (ejercicio 2) se explica que la segunda ilegal con un rival que solo tiene el rey da tablas."
+    },
+    {
+     "t": 13229,
+     "banco": "sesiones",
+     "k": 1,
+     "i": 11,
+     "por_que": "En 3:18:30–3:20:20 y 3:36:50–3:40:20 (ejercicio 4) se explica que si el celular vibra en el bolso pierde la partida, y en 2:53:03 y 3:27:20 que manda primero el reglamento del torneo."
+    },
+    {
+     "t": 13558,
+     "banco": "sesiones",
+     "k": 1,
+     "i": 20,
+     "por_que": "En 3:20:29–3:21:15 y 3:45:25–3:45:58 (ejercicio 5) se explica que, pasadas 10 jugadas, la partida sigue con los colores invertidos."
+    }
+   ],
+   "avisos": [
+    "De 0:00 a 2:37:12 se retoman las láminas 33 a 49 de clase-01 que quedaron pendientes de la Sesión I (la línea de láminas las marca con \"clase\": \"clase-01\"). De esas no se vieron: la 39 (art. 8.6-8.7, su contenido de reconstrucción se dijo junto con la 38), la 40 (receso, «este no lo vamos a saltar», 0:40:56) y la 50 (respuestas del quiz, que se hizo de viva voz).",
+    "El cronograma de la lámina 3 no se cumplió: la Sesión 2 propiamente arranca a las 2:37:12, después del pendiente de la Sesión 1.",
+    "Receso de 1:49:54 a 2:04:05 y receso de 3:01:52 a 3:07:24, casi sin audio (sin habla de 1:53:14 a 2:02:19 y de 3:02:12 a 3:07:24).",
+    "En la práctica en salas de la Sesión I, la plataforma llamó «estación uno» al dictado (que en las láminas es la estación 2); las posiciones (láminas 42 y 43) y los casos (46 y 47) se hicieron después, en salas. De 1:00:00 a 1:48:30 y de 3:09:00 a 3:30:00 los grupos estaban en salas de trabajo: la grabación solo recoge la sala principal con unas pocas personas (y mucha logística de mover gente entre salas).",
+    "Lámina 8 (receso) se saltó («Eso no lo vamos a saltar», 2:47:15). Láminas 15 y 16 (caso 3, rápidas) no se explicaron aparte: en el caso 2 solo se dijo «2 minutos o uno si es regional o interregional» (2:54:50).",
+    "Láminas 35 y 36 (respuestas del quiz) no se mostraron: el quiz se hizo de viva voz y las preguntas 9 y 11 quedaron pendientes («esas las vemos después», 3:58:30).",
+    "Posible error (2:38:30): se dice que salir de la zona de juego sin autorización hace perder la partida. Las Leyes (art. 11.2.3) solo lo prohíben; la sanción sale del art. 12.9 o del reglamento del torneo. La pregunta del banco usada (sesiones[1][13], «solo con permiso del árbitro») no lo contradice.",
+    "Imprecisión (1:44:00): «siempre que hay una ilegal se le da 2 minutos a la persona afectada»; se corrige después (2:23:30 y 2:45:50): 2 minutos en ritmo clásico (etapa nacional) y 1 minuto en rápidas y relámpago (regionales e interregionales).",
+    "Imprecisión (1:25:20): «si usted dura 50 movimientos sin ganar es un empate». La regla de las 50 jugadas cuenta jugadas sin captura ni movimiento de peón y las tablas hay que reclamarlas (son automáticas a las 75).",
+    "Imprecisión (2:20:10): el ritmo mínimo de la fase regional se dice como «10 minutos con 2 segundos» y enseguida como «10 minutos 10 segundos».",
+    "Caso 5 (2:59:30): el expositor agrega que, si no hay partidas en juego cerca, el árbitro puede permitir el análisis en orden y en silencio. No contradice la lámina ni sesiones[1][14], que hablan de mesas que siguen jugando."
+   ],
+   "aclaraciones": [
+    {
+     "t": 5120,
+     "avatar": "arbitro",
+     "titulo": "Las 50 jugadas: cómo se cuentan",
+     "texto": "Son 50 jugadas de cada jugador sin ninguna captura ni movimiento de peón, no «50 movimientos sin ganar». Y esas tablas hay que reclamarlas; son automáticas recién a las 75.",
+     "fuente": "Leyes de la FIDE, art. 9.3 y 9.6"
+    },
+    {
+     "t": 6240,
+     "avatar": "arbitro",
+     "titulo": "La jugada ilegal: 2 minutos o 1",
+     "texto": "Los 2 minutos para el rival son del ritmo clásico. En rápidas y relámpago, como en las etapas regional e interregional de los JDE, es 1 minuto. Se aclara más adelante en este video.",
+     "fuente": "Leyes de la FIDE, art. 7.5.5 y Apéndice A.3"
+    },
+    {
+     "t": 9510,
+     "avatar": "arbitro",
+     "titulo": "Salir de la zona de juego",
+     "texto": "Salir de la zona de juego sin permiso está prohibido, pero no hace perder la partida por sí solo: la sanción la decide la persona árbitra o la fija el reglamento del torneo.",
+     "fuente": "Leyes de la FIDE, art. 11.2.3 y 12.9"
+    }
+   ]
+  },
+  {
+   "presentacion": "clase-03",
+   "youtube_id": "kgaq7FK4AnU",
+   "duracion": 13766,
+   "capitulos": [
+    {
+     "t": 0,
+     "titulo": "Bienvenida y objetivos de la sesión"
+    },
+    {
+     "t": 336,
+     "titulo": "Ritmos de juego y reglas de rápidas y relámpago"
+    },
+    {
+     "t": 970,
+     "titulo": "Desempates: Buchholz, Sonneborn-Berger y encuentro directo"
+    },
+    {
+     "t": 1407,
+     "titulo": "Preguntas: desempate jugado, armagedón y matemáticos"
+    },
+    {
+     "t": 2580,
+     "titulo": "Ejemplos resueltos: Buchholz y Sonneborn-Berger"
+    },
+    {
+     "t": 3543,
+     "titulo": "Receso"
+    },
+    {
+     "t": 4117,
+     "titulo": "Preguntas al regreso: otros desempates"
+    },
+    {
+     "t": 4458,
+     "titulo": "La Normativa JDE 2026: equipos, puntos y presentación"
+    },
+    {
+     "t": 5335,
+     "titulo": "Sistemas y ritmos de la JDE, etapa por etapa"
+    },
+    {
+     "t": 5479,
+     "titulo": "Sistema suizo y todos contra todos"
+    },
+    {
+     "t": 5942,
+     "titulo": "Casos: ¿qué decide la persona árbitra?"
+    },
+    {
+     "t": 6650,
+     "titulo": "Demostración: Pareo Integral y otras herramientas"
+    },
+    {
+     "t": 9456,
+     "titulo": "Ejercicios: ritmos, JDE y duración de un torneo"
+    },
+    {
+     "t": 10690,
+     "titulo": "Comentarios de participantes: material y Federación"
+    },
+    {
+     "t": 11772,
+     "titulo": "Ejercicios: rondas y tabla de Berger"
+    },
+    {
+     "t": 12813,
+     "titulo": "Quiz de la sesión en vivo"
+    }
+   ],
+   "laminas": [
+    {
+     "t": 0,
+     "lamina": 1
+    },
+    {
+     "t": 101,
+     "lamina": 2
+    },
+    {
+     "t": 245,
+     "lamina": 3
+    },
+    {
+     "t": 320,
+     "lamina": 4
+    },
+    {
+     "t": 336,
+     "lamina": 5
+    },
+    {
+     "t": 554,
+     "lamina": 6
+    },
+    {
+     "t": 870,
+     "lamina": 7
+    },
+    {
+     "t": 970,
+     "lamina": 8
+    },
+    {
+     "t": 1310,
+     "lamina": 9
+    },
+    {
+     "t": 2580,
+     "lamina": 10
+    },
+    {
+     "t": 2782,
+     "lamina": 11
+    },
+    {
+     "t": 2927,
+     "lamina": 10
+    },
+    {
+     "t": 2947,
+     "lamina": 11
+    },
+    {
+     "t": 3098,
+     "lamina": 12
+    },
+    {
+     "t": 3126,
+     "lamina": 13
+    },
+    {
+     "t": 3213,
+     "lamina": 14
+    },
+    {
+     "t": 3543,
+     "lamina": 15
+    },
+    {
+     "t": 4458,
+     "lamina": 16
+    },
+    {
+     "t": 4967,
+     "lamina": 17
+    },
+    {
+     "t": 5335,
+     "lamina": 18
+    },
+    {
+     "t": 5449,
+     "lamina": 19
+    },
+    {
+     "t": 5479,
+     "lamina": 20
+    },
+    {
+     "t": 5655,
+     "lamina": 21
+    },
+    {
+     "t": 5747,
+     "lamina": 22
+    },
+    {
+     "t": 5776,
+     "lamina": 23
+    },
+    {
+     "t": 5813,
+     "lamina": 24
+    },
+    {
+     "t": 5872,
+     "lamina": 25
+    },
+    {
+     "t": 5905,
+     "lamina": 26
+    },
+    {
+     "t": 5942,
+     "lamina": 27
+    },
+    {
+     "t": 5973,
+     "lamina": 28
+    },
+    {
+     "t": 5994,
+     "lamina": 29
+    },
+    {
+     "t": 6009,
+     "lamina": 30
+    },
+    {
+     "t": 6038,
+     "lamina": 31
+    },
+    {
+     "t": 6152,
+     "lamina": 32
+    },
+    {
+     "t": 6168,
+     "lamina": 33
+    },
+    {
+     "t": 6210,
+     "lamina": 34
+    },
+    {
+     "t": 6294,
+     "lamina": 35
+    },
+    {
+     "t": 6307,
+     "lamina": 36
+    },
+    {
+     "t": 6340,
+     "lamina": 37
+    },
+    {
+     "t": 6394,
+     "lamina": 38
+    },
+    {
+     "t": 6413,
+     "lamina": 39
+    },
+    {
+     "t": 6471,
+     "lamina": 41
+    },
+    {
+     "t": 6532,
+     "lamina": 42
+    },
+    {
+     "t": 6606,
+     "lamina": 43
+    },
+    {
+     "t": 6618,
+     "lamina": 44
+    },
+    {
+     "t": 6650,
+     "lamina": 46
+    },
+    {
+     "t": 9513,
+     "lamina": 47
+    },
+    {
+     "t": 9539,
+     "lamina": 48
+    },
+    {
+     "t": 9618,
+     "lamina": 49
+    },
+    {
+     "t": 9624,
+     "lamina": 50
+    },
+    {
+     "t": 9773,
+     "lamina": 51
+    },
+    {
+     "t": 11772,
+     "lamina": 53
+    },
+    {
+     "t": 11840,
+     "lamina": 54
+    },
+    {
+     "t": 12312,
+     "lamina": 55
+    },
+    {
+     "t": 12478,
+     "lamina": 56
+    },
+    {
+     "t": 12584,
+     "lamina": 57
+    },
+    {
+     "t": 12630,
+     "lamina": 58
+    },
+    {
+     "t": 12671,
+     "lamina": 59
+    },
+    {
+     "t": 12713,
+     "lamina": 60
+    },
+    {
+     "t": 12772,
+     "lamina": 63
+    },
+    {
+     "t": 12799,
+     "lamina": 64
+    },
+    {
+     "t": 12813,
+     "lamina": 67
+    },
+    {
+     "t": 13013,
+     "lamina": 68
+    },
+    {
+     "t": 13292,
+     "lamina": 69
+    },
+    {
+     "t": 13485,
+     "lamina": 70
+    },
+    {
+     "t": 13552,
+     "lamina": 71
+    },
+    {
+     "t": 13640,
+     "lamina": 74
+    }
+   ],
+   "preguntas": [
+    {
+     "t": 553,
+     "banco": "sesiones",
+     "k": 2,
+     "i": 2,
+     "por_que": "Entre 0:05:36 y 0:06:00 se explica que relámpago es menos de 10 minutos y rápidas va de 10 a menos de 60."
+    },
+    {
+     "t": 966,
+     "banco": "sesiones",
+     "k": 2,
+     "i": 8,
+     "por_que": "Entre 0:14:41 y 0:16:00 se explica que el mate termina la partida al instante, aunque después caiga la bandera."
+    },
+    {
+     "t": 2578,
+     "banco": "sesiones",
+     "k": 2,
+     "i": 15,
+     "por_que": "Entre 0:29:06 y 0:36:49 se recomienda jugar el desempate por el puesto de clasificación: dos partidas a menos tiempo y, al final, armagedón."
+    },
+    {
+     "t": 2946,
+     "banco": "sesiones",
+     "k": 2,
+     "i": 12,
+     "por_que": "El corte 1 se explica a las 0:21:10 (quitar al rival de menor puntaje) y se aplica en el ejemplo entre 0:47:56 y 0:48:57."
+    },
+    {
+     "t": 4965,
+     "banco": "sesiones",
+     "k": 2,
+     "i": 17,
+     "por_que": "A las 1:22:19 se dice que la Normativa obliga a designar al menos tres desempates en el congresillo técnico."
+    },
+    {
+     "t": 5746,
+     "banco": "sesiones",
+     "k": 2,
+     "i": 25,
+     "por_que": "Entre 1:35:06 y 1:35:41 se explica la ronda 1 con 12 jugadores: el 1 contra el 7 y, en el tablero 2, «8–2» con el 2 de negras."
+    },
+    {
+     "t": 6642,
+     "banco": "sesiones",
+     "k": 2,
+     "i": 35,
+     "por_que": "Entre 1:50:06 y 1:50:42 se explica que con siete en todos contra todos hay siete rondas y en cada una alguien descansa."
+    },
+    {
+     "t": 10685,
+     "banco": "sesiones",
+     "k": 2,
+     "i": 21,
+     "por_que": "A las 1:37:52 y otra vez a las 2:51:51 se dice que el suizo es para cuando hay mucha gente y el todos contra todos para pocos."
+    },
+    {
+     "t": 12712,
+     "banco": "sesiones",
+     "k": 2,
+     "i": 36,
+     "por_que": "Entre 3:31:11 y 3:31:44 se explica que en la ronda 1 de la tabla de Berger el primero juega contra el último, con blancas."
+    },
+    {
+     "t": 13639,
+     "banco": "sesiones",
+     "k": 2,
+     "i": 37,
+     "por_que": "Entre 3:46:19 y 3:47:06 se explica que en todos contra todos todos tienen los mismos rivales, así que el Buchholz no separa y el Sonneborn-Berger sí."
+    }
+   ],
+   "avisos": [
+    "diapositivas.json tiene 74 láminas, no 75; la línea de tiempo usa la numeración 1-74.",
+    "Quien expone es un hombre (habla de sí mismo como «su servidor», «como entrenador y jugador»): la página no debería decir «la expositora».",
+    "ERROR EN EL VIDEO (3:37:18-3:37:43): dice que un tablero mal orientado se corrige «sin importar que sea la uno, la 10, la 100». Contradice la lámina 6 (A.5.1), la respuesta 8 del quiz (lámina 71) y el Kahoot sesiones[2][7]: en rápidas o relámpago sin supervisión adecuada, pasadas 10 jugadas de cada bando, ese reclamo ya no se admite. Por eso no se usó la pregunta 7; convendría un aviso en pantalla en ese momento.",
+    "ERROR EN EL VIDEO (3:16:12-3:17:09): el Ejercicio 7 (lámina 53: todos contra todos con 10 y con 9 jugadores) se contesta como si fuera un suizo: «cinco rondas», y «con nueve, cinco rondas también». La respuesta de la lámina 65 es 9 rondas y 45 partidas con 10, y 9 rondas y 36 partidas (con un descanso) con 9.",
+    "ERROR EN EL VIDEO (2:57:10): dice que con 100 jugadores un suizo necesita «nueve rondas» para tener un único ganador. Con la regla de la lámina 25 (dividir entre 2 hasta llegar a 1) son 7 rondas. El Kahoot sesiones[2][38] (32 jugadores, 5 rondas) no se usó por eso.",
+    "Imprecisión (1:29:40 y 1:30:26): para la Etapa Nacional dice que aplican las mismas reglas de la Regional (suizo con más de ocho, todos contra todos con ocho o menos) y después que la Normativa «dice si son seis o si son ocho». La lámina 18 dice suizo con más de siete y todos contra todos con seis o menos; lo de los siete exactos sí coincide (la Normativa no dice nada). A las 1:30:37 sugiere jugar todos contra todos con siete; la lámina 65 y el Kahoot sesiones[2][19] dicen acordarlo en el congresillo y dejarlo en el acta.",
+    "Imprecisión (0:06:02): dice que el clásico es «más de 60 minutos», pero después (0:07:27 y 1:40:09) aclara bien que 60 justos ya es clásico.",
+    "Lámina 10 (0:45:37-0:46:19): el expositor dice que la tabla cruzada «está mal puesta» y «no calza», y la deja. La tabla está bien: la columna de cada ronda da el número inicial del rival (5 = Lucía), y él la leyó por el puesto (5.º = Andrés). Conviene un aviso en pantalla para no confundir a quien mira.",
+    "La fórmula de las 60 jugadas (base + 60 × incremento) no se dice nunca; el video solo enseña a «sumar» base e incremento. Por eso no se usó el Kahoot sesiones[2][3]. Tampoco se explica que no recibe el punto de la ronda libre quien ganó por incomparecencia (sesiones[2][28]).",
+    "Láminas saltadas o sin comentar: la 40 (Caso 7, decisión: «este me lo voy a saltar», 1:47:41; la 39 solo se nombra), la 45 (segundo receso: no lo hubo), la 52 (Ejercicio 6), la 61 y la 62 (pasan sin comentarse hacia las 3:32), la 65 y la 66 (respuestas de los ejercicios) y la 72 y la 73 (respuestas del quiz): ninguna se leyó. La 48 y la 49 pasan en pocos segundos (2:38:59-2:40:24); su momento exacto es aproximado.",
+    "De 1:51:04 a 2:37:36 no se ve la presentación: se comparte la pantalla con Pareo Integral, Swiss Manager y otras herramientas. Ahí se carga un Excel real de inscripciones de una regional (320 estudiantes, con centro educativo, cédula y fecha de nacimiento) y se leen en voz alta nombres de estudiantes menores (1:57:09-2:07:00). Antes de publicar el video conviene revisar si esos datos personales se ven en pantalla.",
+    "Receso de 0:59:30 a 1:08:37 sin exposición (se anunciaron 7 minutos y fueron unos 9).",
+    "Solo se oye el micrófono del expositor: las preguntas y respuestas de los participantes no quedaron en el audio (silencios largos, por ejemplo 0:23:33-0:24:31, 0:27:37-0:29:06, 0:36:55-0:38:48, 3:03:30-3:04:19 y 3:12:37-3:13:56), así que en el quiz en vivo no se oye qué contestaron.",
+    "El orden real no sigue el cronograma de la lámina 4: un solo receso, la normativa JDE empieza a la 1:14:18, la práctica integradora se reemplazó en buena parte por la demostración de herramientas y la sesión termina a las 3:49 sin la tarea leída (la lámina 74 aparece a las 3:47:20)."
+   ],
+   "aclaraciones": [
+    {
+     "t": 2737,
+     "avatar": "atencion",
+     "titulo": "La tabla cruzada sí está bien",
+     "texto": "La tabla de la lámina está bien puesta: en cada ronda, el número es el número inicial del rival (5 = Lucía), no su puesto en la clasificación.",
+     "fuente": "Lámina 10"
+    },
+    {
+     "t": 5380,
+     "avatar": "arbitro",
+     "titulo": "Etapa Nacional: suizo o todos contra todos",
+     "texto": "La Normativa dice suizo con más de siete y todos contra todos con seis o menos. Con siete exactos no dice nada: se acuerda en el congresillo y queda en el acta.",
+     "fuente": "Normativa JDE 66.2.d, 66.2.e y art. 34; lámina 18"
+    },
+    {
+     "t": 10630,
+     "avatar": "atencion",
+     "titulo": "Rondas de un suizo con 100 jugadores",
+     "texto": "Con 100 jugadores, la regla de la lámina 25 da al menos 7 rondas (2 elevado a 7 es 128, que ya pasa de 100), y conviene sumar una o dos más para separar bien los primeros puestos.",
+     "fuente": "Lámina 25"
+    },
+    {
+     "t": 11772,
+     "avatar": "atencion",
+     "titulo": "El ejercicio 7 es de todos contra todos",
+     "texto": "El ejercicio 7 es de todos contra todos, no de suizo: con 10 jugadores son 9 rondas y 45 partidas; con 9, también 9 rondas (en cada una descansa alguien) y 36 partidas.",
+     "fuente": "Lámina 65"
+    },
+    {
+     "t": 13038,
+     "avatar": "arbitro",
+     "titulo": "Tablero mal orientado en rápidas",
+     "texto": "Ojo: en rápidas o relámpago SIN supervisión adecuada, pasadas 10 jugadas de cada bando ya no se admite el reclamo por el tablero mal orientado. Corregirlo en cualquier momento vale con supervisión adecuada.",
+     "fuente": "Leyes de la FIDE, Apéndice A.5.1; lámina 6"
+    }
+   ]
+  }
+ ]
+}

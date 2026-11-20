@@ -110,13 +110,13 @@
                 <div class="flex items-center justify-center gap-4 mb-4">
                     <div class="relative shrink-0 avatar-glow">
                         <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-[3px] bg-gradient-to-br from-accent-400 via-accent-500 to-accent-600 shadow-lg">
-                            <img loading="lazy" decoding="async" src="img/oscar-avatar-160.jpg" alt="Oscar Angulo" width="80" height="80" class="w-full h-full rounded-full object-cover border-2 border-white">
+                            <img id="bot-foto" loading="lazy" decoding="async" src="img/oscar-avatar-160.jpg" alt="Oscar Angulo" width="80" height="80" class="w-full h-full rounded-full object-cover border-2 border-white">
                         </div>
                         <span class="absolute -bottom-1 -right-1 bg-brand-800 text-accent-400 text-base sm:text-lg w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center border-2 border-white shadow-md" title="Oscar Angulo">♞</span>
                     </div>
-                    <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white text-left">Juega contra Oscar <span aria-hidden="true">♟️</span></h1>
+                    <h1 id="bot-titulo" class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white text-left">Juega contra Oscar <span aria-hidden="true">♟️</span></h1>
                 </div>
-                <p class="text-brand-600 dark:text-brand-300 max-w-2xl mx-auto"><strong class="text-brand-800 dark:text-white">No es un bot cualquiera:</strong> cada jugada que se hace las hice en un tablero real — la tomé de mis propias partidas. Elige tu color, ajusta el nivel y mueve una pieza para empezar. ¿Te atreves a ganarme?</p>
+                <p id="bot-presentacion" class="text-brand-600 dark:text-brand-300 max-w-2xl mx-auto"><strong class="text-brand-800 dark:text-white">No es un bot cualquiera:</strong> cada jugada que se hace las hice en un tablero real — la tomé de mis propias partidas. Elige tu color, ajusta el nivel y mueve una pieza para empezar. ¿Te atreves a ganarme?</p>
                 <div class="flex flex-wrap items-center justify-center gap-2 mt-4">
                     <span class="bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 text-xs sm:text-sm px-3 py-1.5 rounded-full font-semibold">♟️ +30,000 partidas reales</span>
                     <span class="bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 text-xs sm:text-sm px-3 py-1.5 rounded-full font-semibold">🎚️ 3 niveles de dificultad</span>
@@ -226,7 +226,7 @@
             </div>
             <div class="mt-6 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                 <button id="origins-toggle" type="button" class="flex items-center justify-between w-full font-serif font-bold text-brand-800 dark:text-white" aria-expanded="false" aria-controls="origins-panel">
-                    <span>¿De dónde salen las jugadas de Oscar? <span aria-hidden="true" class="text-accent-500">▾</span></span>
+                    <span id="bot-origen-titulo">¿De dónde salen las jugadas de Oscar? <span aria-hidden="true" class="text-accent-500">▾</span></span>
                 </button>
                 <div id="origins-panel" class="hidden mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-1.5"></div>
             </div>
@@ -248,6 +248,8 @@
     </footer>
     <script defer src="js/vendor/chess.js"></script>
     <script defer src="js/oscar-book.js"></script>
+    <script defer src="js/avatar-profe-oscar.js"></script>
+    <script defer src="js/pame-book.js"></script>
     <script defer src="data/oscar-positions.js"></script>
     <script defer src="js/chess-bot.js"></script>
     <script defer src="js/blind-notation.js"></script>

@@ -154,9 +154,11 @@
         });
     }
     async function cliente() {
-        if (window.sb) return window.sb;
-        if (!window.supabase) await cargar("js/vendor/supabase.js");
-        if (!window.sb) await cargar("js/supabase-client.js");
+        if (!window.sb && !window.supabase) await cargar("js/vendor/supabase.js");
+        // También cuando la página ya trae su cliente sin js/supabase-client.js:
+        // ahí vive SesionCursos, la cookie con que el worker entrega el código
+        // de la herramienta (ver recuperarCodigo). No crea otro cliente.
+        if (!window.sb || !window.SesionCursos) await cargar("js/supabase-client.js");
         return window.sb;
     }
 
@@ -206,7 +208,20 @@
                 [{ texto: "Volver a cargar", href: location.href, principal: true }]);
             return;
         }
-        if (r.data === true) { guardar(cuenta, true); destapar("abierta"); return; }
+        if (r.data === true) {
+            guardar(cuenta, true);
+            // El código de la herramienta que el worker no entregó porque la
+            // cookie había vencido (ver SesionCursos.recuperarCodigo).
+            const codigo = window.SesionCursos && window.SesionCursos.recuperarCodigo ? window.SesionCursos.recuperarCodigo(sesion) : "";
+            if (codigo === "recarga") { pintar("Abriendo " + nombreHerramienta() + "…", "Un momento: se carga la herramienta."); return; }
+            if (codigo === "falta") {
+                pintar("No se pudo cargar la herramienta", "Tu licencia está bien, pero la herramienta no terminó de cargar. Vuelve a cargar la página; si sigue igual, cierra sesión y vuelve a entrar.",
+                    [{ texto: "Volver a cargar", href: location.href, principal: true }]);
+                return;
+            }
+            destapar("abierta");
+            return;
+        }
         guardar(cuenta, false);
         sinLicencia();
     }

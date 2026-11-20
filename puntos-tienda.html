@@ -42,9 +42,27 @@
                 o una broma a un compañero de clase, y ver cómo va tu salón en el marcador.
             </p>
 
+            <!-- El rango (js/rangos.js): sube con los puntos GANADOS, no con el saldo. -->
+            <section aria-labelledby="rango-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
+                <h2 id="rango-titulo" class="sr-only">Tu rango</h2>
+                <div id="rango-caja"><p class="text-sm text-brand-500 dark:text-brand-300">Cargando tu rango…</p></div>
+            </section>
+
             <section aria-labelledby="tienda-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
                 <h2 id="tienda-titulo" class="sr-only">Tu saldo y los premios</h2>
                 <div id="tienda-puntos"><p class="text-sm text-brand-500 dark:text-brand-300">Cargando tu saldo…</p></div>
+            </section>
+
+            <!-- Los premios que pone tu academia (js/premios-academia.js). Solo sale si hay. -->
+            <section id="premios-academia" hidden aria-labelledby="premios-academia-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
+                <h2 id="premios-academia-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🏫 </span>Premios de tu academia</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">Los pone tu academia y te los entrega tu supervisor en persona. Si no te lo puede dar, te devuelve los puntos.</p>
+                <p data-premios-aviso class="text-sm text-green-700 dark:text-green-400 mt-2 min-h-[1.25rem]" aria-live="polite"></p>
+                <ul data-premios-lista class="grid gap-3 sm:grid-cols-2 mt-2"></ul>
+                <div class="mt-6" hidden>
+                    <h3 class="text-base font-bold text-brand-800 dark:text-white">Lo que canjeaste</h3>
+                    <ul data-premios-mios class="mt-2 space-y-1"></ul>
+                </div>
             </section>
 
             <section aria-labelledby="historial-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
@@ -66,6 +84,9 @@
     <script src="js/puntos-regalos.js"></script>
     <script src="js/puntos.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/hora-cr.js"></script>
+    <script src="js/rangos.js"></script>
+    <script src="js/premios-academia.js"></script>
     <script src="js/puntos-tienda-pagina.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- bromas: inicio --><script src="js/bromas.js" defer></script><!-- bromas: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>

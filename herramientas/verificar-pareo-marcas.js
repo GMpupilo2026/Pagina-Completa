@@ -125,6 +125,8 @@ async function pruebaPagina(browser) {
   await page.selectOption("#pi-adj-nota-articulo", "tocar");
   await page.fill("#pi-adj-nota", "Tocó la dama y movió el caballo.");
   await page.click("#pi-adj-nota-mandar");
+  // Primero prueba la base (en las pruebas no contesta) y después va por el canal.
+  await page.waitForFunction(() => window.__enviados.some((x) => x.evento === "nota"), null, { timeout: 5000 }).catch(() => {});
   const nota = await page.evaluate(() => window.__enviados.filter((x) => x.evento === "nota").pop().payload);
   igual("manda la mesa, el jugador, el tipo y el artículo", [nota.mesa, nota.lado, nota.tipo, nota.articulo], [1, "b", "reclamo", "tocar"]);
   ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), "sin correrse de lado");

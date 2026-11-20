@@ -123,6 +123,10 @@ async function abrir(browser, hash, viewport) {
   page.on("pageerror", (e) => errores.push(String(e)));
   await page.clock.setFixedTime(new Date("2026-10-23T18:00:00Z"));
   const pedidos = await dobles(page);
+  // Los de ajedrezcostarica.com están apagados por ahora: acá se prueba cómo
+  // se ven cuando están prendidos (verificar-torneos-externos-pagina.js
+  // prueba que hoy no salen).
+  await require("./lib/fuentes-ocultas").mostrarTodasEnPagina(page);
   await page.goto(BASE + "/torneos-pareo.html" + hash, { waitUntil: "networkidle" });
   return { ctx, page, errores, pedidos };
 }

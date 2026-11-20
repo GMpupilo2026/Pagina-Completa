@@ -18,7 +18,7 @@ página equivocada. Lo que se comprueba:
   - que las tildes y las eñes hayan llegado;
   - que la ficha de la tienda prometa las fichas, páginas y cartas que hay;
   - la versión accesible: al día con el banco, sin imágenes, con los
-    encabezados en orden, las 198 fichas en los dos índices y cada enlace
+    encabezados en orden, todas las fichas en los dos índices y cada enlace
     llevando a algo que existe.
 
 Si falla, casi siempre basta con volver a generar:
@@ -166,7 +166,7 @@ if existe:
     ids = set(re.findall(r'\bid="([^"]+)"', html))
     rotos = sorted({h for h in re.findall(r'href="#([^"]+)"', html) if h not in ids})
     ok("todos los enlaces internos llevan a algo que existe", not rotos, ", ".join(rotos[:5]))
-    # Las 198 fichas, en el orden del libro, cada una con su número, en los dos
+    # Todas las fichas, en el orden del libro, cada una con su número, en los dos
     # índices, con la posición contada y su «Volver al índice».
     orden = [F["id"] for c in banco["c"] for F in banco["f"] if F["c"] == c]
     en_doc = re.findall(r'<section class="ficha" id="ficha-([^"]+)"', html)

@@ -36,10 +36,20 @@
 window.TorneoSync = (function () {
   "use strict";
 
+  /* Una lectura que falla NO es «no hay nada»: sin los cruces, todos quedan
+     con 0 puntos, empatan, y salían TODOS campeones al salón de la fama; sin
+     los inscritos, no salía ninguno y el torneo quedaba «en curso» para
+     siempre. Se lanza, y quien llama no cierra nada. */
+  function leido(r, que) {
+    if (r.error) throw new Error("No se pudo leer " + que + ": " + r.error.message);
+    return r.data;
+  }
+
   async function standingsAndWinners(sb, tournamentId, format) {
-    const { data: registros } = await sb.from("tournament_registrations").select("player_id, registered_at").eq("tournament_id", tournamentId).order("registered_at", { ascending: true });
+    const registros = leido(await sb.from("tournament_registrations").select("player_id, registered_at").eq("tournament_id", tournamentId).order("registered_at", { ascending: true }), "los inscritos");
     const players = (registros || []).map((r) => r.player_id);
-    const { data: pairingsRows } = await sb.from("tournament_pairings").select("white_id, black_id, is_bye, result, advance_id").eq("tournament_id", tournamentId);
+    if (!players.length) throw new Error("El torneo no tiene inscritos que puntuar.");
+    const pairingsRows = leido(await sb.from("tournament_pairings").select("white_id, black_id, is_bye, result, advance_id").eq("tournament_id", tournamentId), "los cruces");
     const pairings = (pairingsRows || []).map((p) => ({ white: p.white_id, black: p.black_id, isBye: p.is_bye, result: p.result, advanceId: p.advance_id }));
     const { score } = TorneoEngine.standingsFromPairings(players, pairings);
     if (format === "elimination") {
@@ -66,29 +76,48 @@ window.TorneoSync = (function () {
       tournament_id: tournament.id, tournament_name: tournament.name, format: tournament.format,
       variant: tournament.variant, display_name: displayNames[id] || "Alumno",
     }));
-    if (rows.length) await sb.from("public_tournament_champions").insert(rows);
+    if (rows.length) {
+      const { error } = await sb.from("public_tournament_champions").insert(rows);
+      if (error) console.error("El torneo cerró, pero el campeón no entró al salón de la fama:", error.message);
+    }
   }
 
   async function maybeFinishRound(sb, roundId) {
-    const { data: pairings } = await sb.from("tournament_pairings").select("id, result, needs_manual_advance").eq("round_id", roundId);
+    const pairings = leido(await sb.from("tournament_pairings").select("id, result, needs_manual_advance").eq("round_id", roundId), "los cruces de la ronda");
     if (!pairings || !pairings.length) return;
-    const allResolved = pairings.every((p) => p.result !== null && !p.needs_manual_advance);
+    const allResolved = pairings.every((p) => p.result != null && !p.needs_manual_advance);
     if (!allResolved) return;
-    const { data: round } = await sb.from("tournament_rounds").select("*").eq("id", roundId).single();
+    const round = leido(await sb.from("tournament_rounds").select("*").eq("id", roundId).single(), "la ronda");
     if (!round || round.status === "finished") return;
+    const tournament = leido(await sb.from("tournaments").select("*").eq("id", round.tournament_id).single(), "el torneo");
+    if (!tournament || tournament.status === "finished") return;
+    const esLaUltima = round.round_number >= (tournament.total_rounds || 0);
+
+    /* En la última, los campeones se calculan ANTES de cerrar la ronda: si una
+       lectura falla, la ronda queda abierta y se vuelve a intentar (torneo.js
+       lo reintenta al abrir el torneo). Antes se cerraba primero, y un error
+       después la dejaba cerrada con el torneo sin terminar, sin vuelta atrás. */
+    let winnerIds = null, displayNames = {};
+    if (esLaUltima) {
+      winnerIds = await campeones(sb, tournament, roundId);
+      if (!winnerIds.length) throw new Error("La última ronda está resuelta pero no salió ningún campeón.");
+      const { data: perfiles, error: errPerfiles } = await sb.from("profiles").select("id, full_name, email").in("id", winnerIds);
+      if (errPerfiles) console.error(errPerfiles);   // sin nombres sale «Alumno»: no frena el cierre
+      (perfiles || []).forEach((p) => { displayNames[p.id] = p.full_name || p.email; });
+    }
+
     // Lo mismo con la ronda: la cierra UNO solo, el que la encontró abierta.
     const { data: rondaCerrada } = await sb.from("tournament_rounds").update({ status: "finished" })
       .eq("id", roundId).neq("status", "finished").select("id");
     if (!rondaCerrada || !rondaCerrada.length) return;
+    if (!esLaUltima) return;   // todavía no es la última ronda
+    await finishTournament(sb, tournament, winnerIds, displayNames);
+  }
 
-    const { data: tournament } = await sb.from("tournaments").select("*").eq("id", round.tournament_id).single();
-    if (!tournament || tournament.status === "finished") return;
-    if (round.round_number < (tournament.total_rounds || 0)) return; // todavía no es la última ronda
-
-    // Última ronda resuelta: cerrar el torneo y calcular campeón(es).
+  async function campeones(sb, tournament, roundId) {
     let winnerIds;
     if (tournament.format === "elimination") {
-      const { data: finalPairing } = await sb.from("tournament_pairings").select("*").eq("round_id", roundId).order("board_number", { ascending: true }).limit(1).maybeSingle();
+      const finalPairing = leido(await sb.from("tournament_pairings").select("*").eq("round_id", roundId).order("board_number", { ascending: true }).limit(1).maybeSingle(), "el cruce final");
       const champion = finalPairing ? TorneoEngine.resultToWinner({
         white: finalPairing.white_id, black: finalPairing.black_id, isBye: finalPairing.is_bye,
         result: finalPairing.result, advanceId: finalPairing.advance_id,
@@ -98,11 +127,7 @@ window.TorneoSync = (function () {
       const { winners } = await standingsAndWinners(sb, tournament.id, tournament.format);
       winnerIds = winners || [];
     }
-    if (!winnerIds.length) return;
-    const { data: perfiles } = await sb.from("profiles").select("id, full_name, email").in("id", winnerIds);
-    const displayNames = {};
-    (perfiles || []).forEach((p) => { displayNames[p.id] = p.full_name || p.email; });
-    await finishTournament(sb, tournament, winnerIds, displayNames);
+    return winnerIds;
   }
 
   async function onRoomUpdate(sb, room) {

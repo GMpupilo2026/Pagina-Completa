@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}var p=location.pathname.replace(/^\/+/,'');if(!p||/\/$/.test(p))p+='index.html';else if(!/\.html$/.test(p))p+='.html';location.replace('/login.html?next='+encodeURIComponent(p));})();</script><!-- guardia: fin -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Plan de temporada — Ajedrez Integral</title>
+    <meta name="robots" content="noindex">
+    <meta name="description" content="El plan por etapas hasta una competencia, con el énfasis de cada etapa y cómo va cada alumno.">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+
+
+<!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><a href="tareas.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Tareas</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Plan de temporada</span></li></ol></nav></div><!-- migas: fin -->
+
+        <!-- ===== PASSWORD GATE ===== -->
+    <div id="gate" class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4">
+        <div class="w-full max-w-sm text-center">
+            <p class="text-5xl mb-4" aria-hidden="true">🗓️</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Plan de temporada</h1>
+            <p id="gate-checking" class="text-brand-500 dark:text-brand-300 mb-4">Comprobando tu sesión…</p>
+        </div>
+    </div>
+
+    <!-- ===== MAIN APP ===== -->
+    <div id="app" class="hidden pt-10 pb-16">
+        <main id="main-content" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-wrap items-baseline justify-between gap-2 pb-5 mb-6 border-b border-brand-200 dark:border-brand-800">
+                <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Plan de temporada <span aria-hidden="true">🗓️</span></h1>
+            </div>
+            <p id="tp-intro" class="text-sm text-brand-600 dark:text-brand-200 mb-4"></p>
+            <p id="tp-nota-vista" hidden class="text-sm rounded-xl px-4 py-3 mb-4 bg-accent-50 dark:bg-brand-800 text-brand-800 dark:text-white"></p>
+            <p id="tp-estado" role="status" class="text-sm text-brand-500 dark:text-brand-300 mb-4">Cargando…</p>
+
+            <!-- Quien da clase: sus temporadas y el armador. -->
+            <div id="tp-profe" hidden>
+                <section aria-labelledby="tp-lista-titulo" class="mb-8">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                        <h2 id="tp-lista-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white">Tus temporadas</h2>
+                        <button type="button" id="tp-nueva" class="text-sm font-semibold px-4 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">+ Nueva temporada</button>
+                    </div>
+                    <p id="tp-lista-vacia" hidden class="text-sm text-brand-500 dark:text-brand-300">Todavía no armaste ninguna. Una temporada va de hoy a una competencia, por etapas: arma la primera con «Nueva temporada».</p>
+                    <ul id="tp-lista" class="grid gap-3 list-none p-0"></ul>
+                </section>
+
+                <section id="tp-editor" hidden aria-labelledby="tp-editor-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-8">
+                    <h2 id="tp-editor-titulo" tabindex="-1" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4 focus:outline-none">Nueva temporada</h2>
+                    <form id="tp-form" novalidate>
+                        <div class="grid gap-4 sm:grid-cols-2 mb-4">
+                            <div class="sm:col-span-2">
+                                <label for="tp-titulo" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Título</label>
+                                <input id="tp-titulo" type="text" maxlength="120" required placeholder="Camino al Nacional Juvenil" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label for="tp-competencia" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Competencia <span class="font-normal text-brand-450 dark:text-brand-350">(opcional)</span></label>
+                                <input id="tp-competencia" type="text" maxlength="160" placeholder="Nacional Juvenil, San José" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <div>
+                                <label for="tp-inicio" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Empieza</label>
+                                <input id="tp-inicio" type="date" required class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <div>
+                                <label for="tp-fecha" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Día de la competencia</label>
+                                <input id="tp-fecha" type="date" required class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                        </div>
+
+                        <fieldset class="mb-5">
+                            <legend class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Alumnos</legend>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Todos los que marques comparten este plan: al cambiarlo, cambia para todos.</p>
+                            <p id="tp-sin-alumnos" hidden class="text-sm text-brand-500 dark:text-brand-300">No tienes alumnos todavía.</p>
+                            <div id="tp-alumnos" class="grid sm:grid-cols-2 gap-1 max-h-56 overflow-y-auto bg-brand-50 dark:bg-brand-800/40 rounded-lg p-2"></div>
+                        </fieldset>
+
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+                            <h3 class="font-semibold text-brand-800 dark:text-white">Etapas</h3>
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" id="tp-proponer" class="text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Proponer etapas</button>
+                                <button type="button" id="tp-agregar-etapa" class="text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">+ Agregar etapa</button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">«Proponer etapas» reparte las fechas en cuatro etapas, de lo general a lo específico, como lo planifica la escuela cubana. Los porcentajes son solo un punto de partida: cámbialos según cada grupo. Los de cada etapa tienen que sumar 100.</p>
+                        <div id="tp-etapas" class="grid gap-4"></div>
+
+                        <div class="mt-4">
+                            <label for="tp-nota" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Nota para los alumnos <span class="font-normal text-brand-450 dark:text-brand-350">(opcional)</span></label>
+                            <textarea id="tp-nota" rows="2" maxlength="2000" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
+                        </div>
+
+                        <div id="tp-problemas" hidden role="alert" class="mt-4 rounded-xl px-4 py-3 text-sm bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-100"></div>
+
+                        <div class="flex flex-wrap items-center gap-3 mt-5">
+                            <button type="submit" id="tp-guardar" class="text-sm font-semibold px-4 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Guardar la temporada</button>
+                            <button type="button" id="tp-cancelar" class="text-sm font-semibold px-4 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cerrar sin guardar</button>
+                            <button type="button" id="tp-borrar" hidden class="ml-auto text-sm font-semibold px-4 py-2 rounded-lg text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Borrar la temporada</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section id="tp-como-va" hidden aria-labelledby="tp-como-va-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-8">
+                    <h2 id="tp-como-va-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">Cómo va cada alumno</h2>
+                    <p id="tp-como-va-sub" class="text-sm text-brand-500 dark:text-brand-300 mb-4"></p>
+                    <div id="tp-como-va-cuerpo" aria-live="polite" class="grid gap-5"></div>
+                </section>
+            </div>
+
+            <!-- El alumno: su temporada, la etapa en la que va y cómo va. -->
+            <div id="tp-alumno" hidden>
+                <div id="tp-mias" class="grid gap-6"></div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/hora-cr.js"></script>
+    <script src="js/avisos.js"></script>
+    <script src="js/alumnos-mios.js"></script>
+    <script src="js/direcciones-entrenamiento.js"></script>
+    <script src="js/temporada.js"></script>
+    <script src="js/plan-clase.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/temporada-pagina.js"></script>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
+</html>
+
+<!-- rev bfb5bbb0d2d82f9f -->

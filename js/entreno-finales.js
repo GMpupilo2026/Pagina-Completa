@@ -17,12 +17,22 @@
    Cuenta como resuelto el final que se gana o se salva, UNA vez, y se registra
    en training_progress como actividad 'finales' (lo ve el profesor en
    Informes, suma en las tareas y en el plan del diagnóstico). Ver «Finales
-   contra la máquina» en docs/decisiones/entrenamiento.md. */
+   contra la máquina» en docs/decisiones/entrenamiento.md.
+
+   Con ?banco=clases son las posiciones que el profe armó en las clases de
+   ADAES (entreno/data/finales-clases.json, herramientas/finales-clases-generar.js):
+   misma página, otro banco, y su propia actividad, 'finales_clases', con la
+   posición en detail.theme, para que una tarea pida una posición puntual y no
+   se mezcle con los finales de libro. Ver «Las posiciones de las clases, para
+   practicarlas contra el motor» en docs/decisiones/accesibilidad.md. */
 
 const gate = document.getElementById('gate');
 const app = document.getElementById('app');
 const gateChecking = document.getElementById('gate-checking');
-const NEXT_PATH = 'entreno/finales.html';
+const BANCO_CLASES = new URLSearchParams(location.search).get('banco') === 'clases';
+const NEXT_PATH = BANCO_CLASES ? 'entreno/finales.html?banco=clases' : 'entreno/finales.html';
+const ARCHIVO_BANCO = BANCO_CLASES ? 'data/finales-clases.json' : 'data/finales.json';
+const QUE = BANCO_CLASES ? 'posiciones logradas' : 'finales logrados';
 
 async function unlock(){
   gate.classList.add('hidden');
@@ -119,8 +129,8 @@ function jugarEscribiendo(texto, api){
 
 async function cargarBancoYEmpezar(){
   try {
-    const res = await fetch('data/finales.json');
-    if(!res.ok) throw new Error('finales.json: ' + res.status);
+    const res = await fetch(ARCHIVO_BANCO);
+    if(!res.ok) throw new Error(ARCHIVO_BANCO + ': ' + res.status);
     const banco = await res.json();
     FINALES = banco.finales || [];
     if(banco.aguantar) AGUANTAR = banco.aguantar;
@@ -190,7 +200,7 @@ function buildTabs(){
   });
   const hechos = FINALES.filter((f) => s[f.id]).length;
   document.getElementById('progress-fill').style.width = (FINALES.length ? Math.round(100 * hechos / FINALES.length) : 0) + '%';
-  document.getElementById('progress-label').textContent = `${hechos} de ${FINALES.length} finales logrados` +
+  document.getElementById('progress-label').textContent = `${hechos} de ${FINALES.length} ${QUE}` +
     (repasar.length ? ` · ${repasar.length} para repasar hoy (🔁)` : '');
 }
 
@@ -424,8 +434,10 @@ function logrado(texto){
   anotarRepaso(false, usedHint);
   if(!yaEstaba){
     markSolved(f.id);
-    EntrenoProgress.log('finales', Object.assign({ final_id: f.id, meta: f.meta, jugadas: jugadasPropias },
-      EntrenoProgress.comoSalio(false, usedHint)));
+    const detalle = Object.assign({ final_id: f.id, meta: f.meta, jugadas: jugadasPropias }, EntrenoProgress.comoSalio(false, usedHint));
+    // Escritas literales: verificar-finales.js busca cada actividad en el CHECK de la base.
+    if(BANCO_CLASES) EntrenoProgress.log('finales_clases', Object.assign({ theme: f.id }, detalle));
+    else EntrenoProgress.log('finales', detalle);
   }
   mostrarResultado('🎉', texto, usedHint ? 'Lo lograste con pista: la próxima vez, intenta sin ella.' : '', true);
 }
@@ -466,6 +478,7 @@ async function giveHint(){
   if(locked || terminado) return;
   const f = finalActual();
   usedHint = true;
+  if(hintStage === 0 && !f.pista) hintStage = 1;   // las de las clases no traen pista escrita: va directo al motor
   if(hintStage === 0){
     hintStage = 1;
     setStatus(`Pista: ${f.pista}`);
@@ -499,6 +512,11 @@ let appInitialized = false;
 function initApp(){
   if(appInitialized) return;
   appInitialized = true;
+  if(BANCO_CLASES){
+    document.getElementById('titulo-pagina').firstChild.textContent = 'Posiciones de las clases ';
+    document.getElementById('intro-pagina').textContent = 'Las posiciones que armó el profe en las clases, para jugarlas contra Stockfish a toda su fuerza. En unas la meta es ganar (dar mate); en otras, salvar (hacer tablas). Cada una se comprobó con el motor.';
+    document.title = 'Posiciones de las clases · Ajedrez Integral';
+  }
   applyBlindModeUI();
   // ?final=<id> es el enlace de una tarea o del plan; si no, el primero sin
   // lograr (o el último que se abrió, si todos están logrados).

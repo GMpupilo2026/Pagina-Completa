@@ -782,8 +782,16 @@ const FILAS_FIDE = [
     cierto("con «Sí, quiero verlas» se ven todos los menús, solo para mirar (sin elegir), con quién prepara y el precio por día",
       (await tm.locator("[data-menus] .metro-plato").count()) === 2 && (await tm.locator("[data-menus] input").count()) === 0
       && /Lo prepara: Soda Tala/.test(vistos) && /Lo prepara: Doña Rosa/.test(vistos) && /\$6\.50 por día/.test(vistos) && /Lo prepara: La organización/.test(vistos), vistos);
+    // La foto tarda en llegar (la sirve la ruta de arriba): se espera a que
+    // cargue antes de medirla; en el runner del CI la comprobación llegaba antes.
+    await mn.p.waitForFunction(() => { const i = document.querySelector("[data-menus] .metro-plato-foto"); return i && i.complete; });
     cierto("el mismo plato de dos cocinas va en una sola tarjeta, con su foto", (await tm.locator("[data-menus] .metro-plato").first().locator(".metro-plato-nombre").textContent()) === "Gallo pinto"
-      && await tm.locator("[data-menus] .metro-plato-foto").first().evaluate((i) => i.complete && i.naturalWidth > 0));
+      // La foto se espera (hasta 5 s): recién pintada puede no haber cargado todavía, y en el CI tardaba más.
+      && await tm.locator("[data-menus] .metro-plato-foto").first().evaluate((i) => (i.complete && i.naturalWidth > 0) || new Promise((ok) => {
+        i.addEventListener("load", () => ok(i.naturalWidth > 0), { once: true });
+        i.addEventListener("error", () => ok(false), { once: true });
+        setTimeout(() => ok(i.complete && i.naturalWidth > 0), 5000);
+      })));
     cierto("y no se cobra nada: el total sigue sin costo, y lo dice", /sin costo/.test(await mn.p.textContent("#total")) && await tm.locator("[data-alim-nota-tal-vez]").isVisible());
     await tm.locator('[data-alim-ver-op][value="no"]').check();
     cierto("con «Por ahora no» se esconden y se sigue", (await tm.locator("[data-menus] .metro-plato").count()) === 0);
@@ -1107,10 +1115,18 @@ const FILAS_FIDE = [
       const img = li.querySelector(".metro-sala-imagen");
       return { tema: li.classList.contains("metro-sala"), hojas: getComputedStyle(li, "::before").backgroundImage.includes("hojas-arriba"),
         logo: !!img && img.complete && img.naturalWidth > 0 && img.checkVisibility(), enlaces: [...li.querySelectorAll("a")].map((a) => a.getAttribute("href")),
-        afuera: li.querySelectorAll("a[target]").length };
+        afuera: li.querySelectorAll("a[target]").length,
+        // Todavía no se entra (`proximamente` en js/salas-torneo.js): el candado escrito y botones sin destino.
+        aviso: (li.querySelector(".sala-proximamente") || {}).textContent || "", botones: [...li.querySelectorAll("button[aria-disabled='true']")].map((b) => b.textContent) };
     });
-    igual("la tarjeta de «Torneos» lleva el diseño del Metropolitano y no saca a nadie del sitio", fichaSala,
-      { tema: true, hojas: true, logo: true, enlaces: ["/metropolitano-2026.html", "/inscripcion-metropolitano.html", "/metropolitano-2026.html#bases"], afuera: 0 });
+    igual("la tarjeta de «Torneos» lleva el diseño del Metropolitano, bloqueada: «🔒 Próximamente» y sus botones sin llevar a ningún lado", fichaSala,
+      { tema: true, hojas: true, logo: true, enlaces: [], afuera: 0, aviso: "🔒 Próximamente", botones: ["Toda la información", "Inscripción", "Bases del torneo"] });
+    // Playwright no toca un botón con aria-disabled (lo toma por apagado); una persona sí puede: se toca directo.
+    await tv.$eval('li[data-sala="metropolitano-2026"] button:nth-of-type(2)', (b) => b.click());
+    igual("al tocar un botón dice «Próximamente» (en el botón y para el lector de pantalla)", await tv.evaluate(() => {
+      const li = document.querySelector('li[data-sala="metropolitano-2026"]');
+      return [li.querySelectorAll("button")[1].textContent, li.querySelector('[role="status"]').textContent];
+    }), ["Próximamente", "Inscripción: próximamente."]);
     await tv.close();
     const pb = await ctx.newPage();
     await pb.route("**/rest/v1/**", (r) => r.fulfill({ contentType: "application/json", body: "null" }));

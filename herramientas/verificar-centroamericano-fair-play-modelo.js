@@ -35,7 +35,8 @@ const igual = (que, salio, esperaba) => {
     const codigo = fs.readFileSync(path.join(FUNCION, "index.ts"), "utf8")
         .replace('"npm:@supabase/supabase-js@2"', '"./supabase-falso.mjs"').replace('"npm:chess.js@0.10.3"', '"./chess-falso.mjs"') + "\nexport { modelo };\n";
     fs.writeFileSync(path.join(dir, "index.ts"), codigo);
-    fs.copyFileSync(path.join(FUNCION, "analisis.ts"), path.join(dir, "analisis.ts"));
+    // Los demás archivos, los mismos que se despliegan (los suyos y los de _compartido): herramientas/funciones-armar.js.
+    for (const f of require("./funciones-armar.js").armar("centroamericano-fair-play")) if (f.name !== "index.ts") fs.writeFileSync(path.join(dir, f.name), f.content);
     fs.writeFileSync(path.join(dir, "supabase-falso.mjs"), "export const createClient = () => ({});\n");
     fs.writeFileSync(path.join(dir, "chess-falso.mjs"), "export class Chess {}\n");
     const esbuild = require("esbuild");
@@ -115,9 +116,13 @@ const igual = (que, salio, esperaba) => {
         return q;
     };
     let guardado = null;
-    const inicio = process.hrtime.bigint();
+    // El tope de la Edge Function es de TIEMPO DE PROCESADOR: se mide ese (process.cpuUsage), no el reloj.
+    // Con el reloj, en una máquina cargada (el CI corre más de 160 verificadores a la vez) el proceso
+    // esperando su turno contaba como trabajo y fallaba sin que el modelo fuera más lento.
+    const inicio = process.cpuUsage();
     const r = await modelo({ from: consulta }, async (fn, args) => { if (fn === "centroamericano_fp_modelo_guardar") guardado = args; return 1; }, true);
-    const ms = Number(process.hrtime.bigint() - inicio) / 1e6;
+    const gasto = process.cpuUsage(inicio);
+    const ms = (gasto.user + gasto.system) / 1000;
 
     console.log("=== El modelo de la función, sobre un torneo inventado ===");
     igual("corre y guarda el índice de los 90 jugadores y de cada partida medida, en menos de 1,5 s (la función tiene un tope de tiempo de procesador)",

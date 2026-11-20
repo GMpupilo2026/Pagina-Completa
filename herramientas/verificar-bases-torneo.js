@@ -56,6 +56,8 @@ igual("4 rondas por día desde las 8:30, con rondas de 160 min y 15 de descanso:
 igual("el día de calendario no corre: la ronda 1 es el sábado 7 de marzo", B.documento(con({})).bloques.find((b) => b.tipo === "tabla").filas[0], ["1", "sábado, 7 de marzo de 2026", "8:30 a. m."]);
 igual("las fechas, juntas cuando son del mismo mes", [B.rango("2026-03-07", "2026-03-08"), B.rango("2026-02-28", "2026-03-01"), B.rango("2026-12-31", "2027-01-01")],
   ["7 al 8 de marzo de 2026", "28 de febrero al 1 de marzo de 2026", "31 de diciembre de 2026 al 1 de enero de 2027"]);
+igual("una pausa (el almuerzo): la ronda que caería adentro empieza cuando termina, y las demás siguen desde ahí",
+  B.horario(con({ pausas: [{ desde: "11:00", hasta: "13:00" }] })).slice(0, 3).map((x) => x.hora), ["8:30 a. m.", "1:00 p. m.", "4:00 p. m."]);
 igual("avisa si una ronda empieza de noche", avisos(con({ rondasPorDia: 7 })).some((t) => t.includes("10 de la noche")), true);
 
 console.log("\n=== Lo que dice ===");

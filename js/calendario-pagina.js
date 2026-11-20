@@ -23,13 +23,14 @@
     const C = window.CalendarioInteligente;
     const $ = (id) => document.getElementById(id);
     const DIAS_CLASES = 90;
-    const EMOJI = { clase: "🎓", tarea: "📋", examen: "📝", plan: "🧭" };
-    const NOMBRE_TIPO = { clase: ["clase", "clases"], tarea: ["tarea", "tareas"], examen: ["examen", "exámenes"], plan: ["sugerencia", "sugerencias"] };
+    const EMOJI = { sinclase: "🚫", clase: "🎓", tarea: "📋", examen: "📝", plan: "🧭" };
+    const NOMBRE_TIPO = { sinclase: ["día sin clase", "días sin clase"], clase: ["clase", "clases"], tarea: ["tarea", "tareas"], examen: ["examen", "exámenes"], plan: ["sugerencia", "sugerencias"] };
     const SEMANA = [["lun", "lunes"], ["mar", "martes"], ["mié", "miércoles"], ["jue", "jueves"], ["vie", "viernes"], ["sáb", "sábado"], ["dom", "domingo"]];
 
     const estado = {
         yo: null, modo: "alumno", hoy: "", mes: "", elegido: "", vista: "mes",
         eventos: [], plan: [], porDia: {}, planPorDia: {}, minMes: "", maxMes: "", horizonte: "",
+        diasSinClase: [], esAdmin: false,
         datosIcs: null,
         filtros: { clase: true, tarea: true, examen: true, plan: true },
     };
@@ -71,8 +72,11 @@
         li.dataset.tipo = e.tipo;
         li.appendChild(el("span", "text-xl leading-none mt-0.5", EMOJI[e.tipo])).setAttribute("aria-hidden", "true");
         const cuerpo = el("div", "min-w-0 flex-1");
-        const titulo = el("a", "font-semibold text-brand-800 dark:text-white underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", e.titulo);
-        titulo.href = e.href;
+        // Un día sin clase no lleva a ningún lado: va como texto, no como enlace.
+        const titulo = e.href
+            ? el("a", "font-semibold text-brand-800 dark:text-white underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", e.titulo)
+            : el("span", "font-semibold text-brand-800 dark:text-white", e.titulo);
+        if (e.href) titulo.href = e.href;
         cuerpo.appendChild(titulo);
         if (e.estado) { cuerpo.appendChild(document.createTextNode(" ")); cuerpo.appendChild(etiqueta(e.estado)); }
         cuerpo.appendChild(el("p", "text-xs text-brand-500 dark:text-brand-300 mt-0.5", e.detalle));
@@ -149,7 +153,7 @@
     function resumenDelDia(d) {
         const { ev, pl } = cosasDelDia(d);
         const partes = [];
-        ["clase", "tarea", "examen"].forEach((t) => {
+        ["sinclase", "clase", "tarea", "examen"].forEach((t) => {
             const n = ev.filter((e) => e.tipo === t).length;
             if (n) partes.push(plural(n, t));
         });
@@ -212,7 +216,7 @@
         // En el celular, solo los dibujitos (con el número si hay más de uno).
         const compacto = el("span", "md:hidden mt-0.5 flex flex-wrap gap-0.5 text-xs leading-none");
         compacto.setAttribute("aria-hidden", "true");
-        ["clase", "tarea", "examen"].forEach((t) => {
+        ["sinclase", "clase", "tarea", "examen"].forEach((t) => {
             const n = ev.filter((e) => e.tipo === t).length;
             if (n) compacto.appendChild(el("span", null, EMOJI[t] + (n > 1 ? n : "")));
         });
@@ -222,7 +226,7 @@
         // En la computadora, hasta tres renglones y «y N más».
         const lista = el("span", "hidden md:flex flex-col gap-0.5 mt-1 text-xs leading-tight");
         lista.setAttribute("aria-hidden", "true");
-        const filas = ev.map((e) => EMOJI[e.tipo] + " " + (e.tipo === "clase" ? C.hora(e.inicio) + " " : "") + e.titulo.replace(/^(Clase|Tarea|Examen): /, ""))
+        const filas = ev.map((e) => EMOJI[e.tipo] + " " + (e.tipo === "clase" ? C.hora(e.inicio) + " " : "") + e.titulo.replace(/^(Clase|Tarea|Examen|Sin clase): /, ""))
             .concat(pl.map((p) => EMOJI.plan + " " + p.texto));
         filas.slice(0, 3).forEach((t) => lista.appendChild(el("span", "truncate", t)));
         if (filas.length > 3) lista.appendChild(el("span", "font-semibold", "y " + (filas.length - 3) + " más"));
@@ -318,32 +322,50 @@
     }
 
     // ---------- Los datos ----------
+    /* Los días sin clase del rango que se ve: los feriados, los de mis profes
+       (alumno) o los míos (profe). La RLS decide cuáles llegan; si la tabla no
+       contesta, el calendario sigue sin ellos. */
+    async function leerDiasSinClase() {
+        try {
+            const { data, error } = await sb.from("dias_sin_clase").select("id, profesor_id, fecha, motivo")
+                .gte("fecha", C.sumarDias(estado.hoy, -40)).lte("fecha", estado.horizonte).order("fecha").limit(1000);
+            return error ? [] : data || [];
+        } catch (e) { return []; }
+    }
+
     async function cargarAlumno() {
-        const [c, t, x] = await Promise.all([
+        const [c, t, x, s] = await Promise.all([
             sb.rpc("mis_clases_proximas", { p_dias: DIAS_CLASES }),
             sb.rpc("tareas_con_avance", { p_alumno: estado.yo, p_pendientes: true, p_limite: 200 }),
             sb.rpc("examenes_con_nota", { p_alumno: estado.yo, p_limite: 100 }),
+            leerDiasSinClase(),
         ]);
         if (c.error && t.error && x.error) throw c.error;
         const clases = c.error ? [] : c.data || [];
         const tareas = t.error ? [] : t.data || [];
         const examenes = x.error ? [] : x.data || [];
         const ahora = new Date();
-        estado.eventos = C.eventosAlumno({ clases, tareas, examenes, ahora });
-        estado.plan = C.planAlumno({ eventos: estado.eventos, tareas, examenes, ahora });
-        pintarAvisos(C.avisosAlumno({ eventos: estado.eventos, tareas, examenes, ahora }));
+        estado.diasSinClase = s;
+        // Las clases ya vienen sin esos días (mis_clases_proximas los salta en la base).
+        /* El plan y los avisos reciben solo clases y entregas: lo que no es clase
+           lo tratan como algo que vence, y un día sin clase no vence. */
+        const base = C.eventosAlumno({ clases, tareas, examenes, ahora });
+        estado.eventos = C.eventosSinClase(s, { yo: estado.yo, modo: "alumno" }).concat(base);
+        estado.plan = C.planAlumno({ eventos: base, tareas, examenes, ahora });
+        pintarAvisos(C.avisosAlumno({ eventos: base, tareas, examenes, ahora }));
         estado.datosIcs = { clases, tareas, examenes };
         return clases.length + tareas.length + examenes.length;
     }
 
     async function cargarProfe() {
         const desde = C.semanasDelMes(estado.hoy.slice(0, 7))[0][0];
-        const [h, t, x] = await Promise.all([
+        const [h, t, x, s] = await Promise.all([
             sb.from("horario_clases")
                 .select("id, dia_semana, hora, duracion_min, grupo, subgrupo_id, titulo, modalidad, desde, hasta")
                 .eq("profesor_id", estado.yo),
             sb.rpc("tareas_con_avance", { p_profesor: estado.yo, p_pendientes: true, p_limite: 1000 }),
             sb.rpc("examenes_con_nota", { p_profesor: estado.yo, p_limite: 300 }),
+            leerDiasSinClase(),
         ]);
         if (h.error && t.error && x.error) throw h.error;
         const filas = h.error ? [] : h.data || [];
@@ -354,13 +376,16 @@
                 (data || []).forEach((s) => { nombres[s.id] = s.nombre; });
             } catch (e) { /* sin nombres, «Grupo …» */ }
         }
-        const clases = C.clasesDelHorario(filas, { desde, dias: C.diasEntre(desde, estado.hoy) + DIAS_CLASES, nombres });
+        estado.diasSinClase = s;
+        // Los feriados y los días que el profe marcó: esas clases no van (ni en el .ics).
+        const clases = C.quitarClasesSinClase(C.clasesDelHorario(filas, { desde, dias: C.diasEntre(desde, estado.hoy) + DIAS_CLASES, nombres }), s, estado.yo);
         const tareas = t.error ? [] : t.data || [];
         const examenes = (x.error ? [] : x.data || []).filter((e) => e.estado === "asignado" || e.estado === "en_curso");
         const ahora = new Date();
-        estado.eventos = C.eventosProfe({ clases, tareas, examenes, ahora });
-        estado.plan = C.planProfe({ eventos: estado.eventos, ahora });
-        const avisos = C.avisosProfe({ eventos: estado.eventos, tareas, hayHorario: filas.length > 0, ahora });
+        const base = C.eventosProfe({ clases, tareas, examenes, ahora });   // el plan y los avisos, sin los días sin clase
+        estado.eventos = C.eventosSinClase(s, { yo: estado.yo, modo: "profe" }).concat(base);
+        estado.plan = C.planProfe({ eventos: base, ahora });
+        const avisos = C.avisosProfe({ eventos: base, tareas, hayHorario: filas.length > 0, ahora });
         /* PostgREST corta a mil filas: si llegaron mil, se dice. */
         if (tareas.length >= 1000) avisos.push({ nivel: "info", texto: "Tienes más de mil tareas sin terminar entre todos tus alumnos: el calendario muestra las que vencen primero. «Tareas» las tiene todas." });
         pintarAvisos(avisos);
@@ -405,6 +430,7 @@
             $("cal-filtro-" + t).addEventListener("change", (ev) => { estado.filtros[t] = ev.target.checked; pintarTodo(); });
         });
         $("cal-bajar").addEventListener("click", bajarIcs);
+        $("cal-sin-clase-form").addEventListener("submit", ponerSinClase);
     }
     function irMes(n) {
         const mes = C.mesVecino(estado.mes, n);
@@ -446,17 +472,27 @@
         prepararModo();
         conectar();
 
+        estado.esAdmin = !!(p && p.is_admin);
+        if (!(await cargarYPintar())) return;
+        let vista = "mes";
+        try { if (localStorage.getItem("calendario_vista_v1") === "agenda") vista = "agenda"; } catch (e) { /* el mes */ }
+        ponerVista(vista);
+    }
+
+    /* Lee todo y lo pinta. Se vuelve a llamar después de marcar o quitar un
+       día sin clase, para que las clases de ese día aparezcan o desaparezcan. */
+    async function cargarYPintar() {
         let cuantos = 0;
         try {
             cuantos = estado.modo === "alumno" ? await cargarAlumno() : await cargarProfe();
         } catch (e) {
             $("cal-estado").textContent = "No se pudo leer tu calendario. Revisa tu conexión y vuelve a intentarlo.";
-            return;
+            return false;
         }
         estado.porDia = C.porDia(estado.eventos);
         estado.planPorDia = C.porDia(estado.plan);
         $("cal-horizonte").textContent = "Las clases se ven hasta el " + C.nombreDia(estado.horizonte) + "; las tareas y los exámenes, con su fecha.";
-        const futuras = estado.eventos.filter((e) => e.dia >= estado.hoy);
+        const futuras = estado.eventos.filter((e) => e.dia >= estado.hoy && e.tipo !== "sinclase");
         $("cal-cuenta").textContent = futuras.length ? plural(futuras.filter((e) => e.tipo === "clase").length, "clase") + " · "
             + (futuras.length - futuras.filter((e) => e.tipo === "clase").length) + " por entregar" : "";
         $("cal-estado").textContent = cuantos ? "" : estado.modo === "alumno"
@@ -466,9 +502,84 @@
         $("cal-contenido").hidden = false;
         pintarPlan();
         pintarTodo();
-        let vista = "mes";
-        try { if (localStorage.getItem("calendario_vista_v1") === "agenda") vista = "agenda"; } catch (e) { /* el mes */ }
-        ponerVista(vista);
+        pintarSinClase();
+        return true;
+    }
+
+    // ---------- Días sin clase (quien da clase y quien administra) ----------
+    /* Lo que se puede quitar desde acá: los días propios y, quien administra,
+       los feriados. Los demás (los de otros profes que administración también
+       lee) no se listan: no son de quien mira. */
+    function pintarSinClase() {
+        const caja = $("cal-sin-clase");
+        const puede = estado.modo === "profe" || estado.esAdmin;
+        caja.hidden = !puede;
+        if (!puede) return;
+        $("cal-sin-clase-todos-caja").hidden = !estado.esAdmin;
+        if (estado.esAdmin && estado.modo !== "profe") $("cal-sin-clase-todos").checked = true;
+        $("cal-sin-clase-fecha").min = estado.hoy;
+        const ul = $("cal-sin-clase-lista");
+        ul.replaceChildren();
+        const mios = estado.diasSinClase.filter((d) => d.fecha >= estado.hoy
+            && (d.profesor_id === estado.yo || (!d.profesor_id)));
+        if (!mios.length) {
+            ul.appendChild(el("li", "text-brand-500 dark:text-brand-300", "No hay ningún día sin clase marcado de aquí en adelante."));
+            return;
+        }
+        for (const d of mios) {
+            const li = el("li", "flex flex-wrap items-center justify-between gap-2 rounded-lg border border-brand-100 dark:border-brand-800 px-3 py-2");
+            const texto = el("span", "text-brand-800 dark:text-white");
+            texto.appendChild(el("strong", null, C.mayuscula(C.nombreDia(d.fecha))));
+            texto.appendChild(document.createTextNode(" · " + (d.profesor_id ? "" : "Feriado para todos · ") + d.motivo));
+            li.appendChild(texto);
+            const quitable = d.profesor_id === estado.yo || (!d.profesor_id && estado.esAdmin);
+            if (quitable) {
+                const b = el("button", "text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Quitar");
+                b.type = "button";
+                b.setAttribute("aria-label", "Quitar el día sin clase del " + C.nombreDia(d.fecha));
+                b.addEventListener("click", () => quitarSinClase(d));
+                li.appendChild(b);
+            }
+            ul.appendChild(li);
+        }
+    }
+
+    async function ponerSinClase(ev) {
+        ev.preventDefault();
+        const estadoEl = $("cal-sin-clase-estado");
+        const fecha = $("cal-sin-clase-fecha").value;
+        const motivo = $("cal-sin-clase-motivo").value.trim();
+        const todos = estado.esAdmin && $("cal-sin-clase-todos").checked;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) { estadoEl.textContent = "Elige el día."; $("cal-sin-clase-fecha").focus(); return; }
+        if (fecha < estado.hoy) { estadoEl.textContent = "Ese día ya pasó: elige hoy o un día que venga."; $("cal-sin-clase-fecha").focus(); return; }
+        if (!motivo) { estadoEl.textContent = "Escribe el motivo: tus alumnos lo ven («Feriado», «Vacaciones»…)."; $("cal-sin-clase-motivo").focus(); return; }
+        if (!todos && estado.modo !== "profe") { estadoEl.textContent = "Marca «Feriado para todas las academias»: tú no tienes horario propio."; return; }
+        const boton = $("cal-sin-clase-poner");
+        boton.disabled = true;
+        estadoEl.textContent = "Guardando…";
+        const { error } = await sb.from("dias_sin_clase").insert({ profesor_id: todos ? null : estado.yo, fecha, motivo });
+        boton.disabled = false;
+        if (error) {
+            estadoEl.textContent = error.code === "23505"
+                ? "Ese día ya estaba marcado sin clase."
+                : "No se pudo guardar. Revisa tu conexión y vuelve a intentarlo.";
+            return;
+        }
+        $("cal-sin-clase-motivo").value = "";
+        await cargarYPintar();
+        estadoEl.textContent = "Listo: el " + C.nombreDia(fecha) + " queda sin clase" + (todos ? " para todas las academias." : ".");
+    }
+
+    async function quitarSinClase(d) {
+        const ok = await Avisos.confirmar("El " + C.nombreDia(d.fecha) + " vuelve a tener las clases de siempre.", {
+            titulo: "¿Quitar este día sin clase?", aceptar: "Quitar el día sin clase", cancelar: "Dejarlo",
+        });
+        if (!ok) return;
+        const estadoEl = $("cal-sin-clase-estado");
+        const { error } = await sb.from("dias_sin_clase").delete().eq("id", d.id);
+        if (error) { estadoEl.textContent = "No se pudo quitar. Revisa tu conexión y vuelve a intentarlo."; return; }
+        await cargarYPintar();
+        estadoEl.textContent = "Listo: el " + C.nombreDia(d.fecha) + " vuelve a tener clase.";
     }
 
     async function requireLoginThenGate() {

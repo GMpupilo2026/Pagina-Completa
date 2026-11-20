@@ -35,6 +35,19 @@ dominio sin `www`, así que servir las dos direcciones sería contenido duplicad
   coincide con www.ajedrez-integral.com" aunque la zona estaba en la misma
   cuenta, así que queda escrito el de dos pasos, que no depende de esa
   búsqueda.
+- **El 301 del worker no alcanza a las páginas.** Desde que el worker corre
+  solo en las rutas de `run_worker_first` (`wrangler.jsonc`), las páginas las
+  sirve Cloudflare directo, también por `www`: la página abría, y lo que sí
+  pasa por el worker (`cursos/recursos/`, `cursos/protegido/`, `material/`)
+  contestaba con el 301 al dominio sin `www`, que la CSP (`connect-src 'self'`)
+  corta sin más aviso que la consola. El 16/11 la presentación de la Sesión 5
+  quedó en «No se pudo abrir la presentación» para un profe que había entrado
+  por `www`. Ahora la primera línea de `js/errores.js` (el primer script,
+  síncrono, de todas las páginas) manda a la misma dirección sin `www` antes
+  de que la página haga nada; lo revisa `verificar-www.js`. Lo limpio sería una
+  regla de redirección de Cloudflare (Reglas → Redirecciones, `www` → dominio
+  sin `www`, 301, conservando la ruta y los parámetros), que actúa antes de
+  servir nada; con ella, lo de `js/errores.js` queda de respaldo.
 - **Al tocar `worker.js`, correr `node herramientas/verificar-worker.js`.** No
   necesita ni Cloudflare ni internet: el worker es una función que recibe una
   petición y devuelve una respuesta, así que se la llama y se mira qué contesta,
@@ -144,6 +157,17 @@ Lo que el service worker no toca nunca:
   de cerrar sesión;
 - las respuestas que no vengan bien: un 404 no se guarda.
 
+**Lo pesado pasa, pero no se suma a la caché (`NO_GUARDAR`).** Hasta el
+10/11/2026 la caché general guardaba toda respuesta que llegara bien y crecía
+sin tope hasta el próximo cambio de `VERSION`: el visor de PDF (1,5 MB),
+three.js, los bancos de `entreno/data/` (4 MB), cada PDF que se abría y las
+tarjetas que arma el worker (`/t/`, `/o/`, `/calendario/`, `/incrustar/`).
+Eso no va en `NUNCA` porque `NUNCA` ni siquiera pasa por el service worker, y
+sin señal hay que seguir buscando en las cachés: Pareo Integral y el
+Centroamericano guardan PDF y scripts en `ajedrez-integral-sin-red`, y un
+pedido que no pasara por acá no los encontraría. `verificar-pwa.js` comprueba
+que esas cuatro no queden guardadas y que un script común sí.
+
 **La única caché que sobrevive a un cambio de versión es la de «Ejercicios sin
 internet»** (`ajedrez-integral-sin-red`): la llena esa página con ella misma y
 sus scripts cuando el alumno guarda una tanda, y la renueva cada vez que se
@@ -153,6 +177,11 @@ ahí solo, con su motor, para emparejar sin conexión el día del torneo (ver
 `juegos-y-torneos.md`). Sin red, `sw.js` busca una página también con el otro
 nombre (con o sin `.html`) y rearma una respuesta que llegó redirigida. Ver
 «Ejercicios sin internet» en `entrenamiento.md`.
+
+**`img/*` lleva un día de caché en `_headers`** (`max-age=86400`): sin eso
+cada visita volvía a preguntar por cada imagen. `js/vendor/` NO, a propósito:
+una librería vieja junto al código nuevo de la página es el mismo error callado
+que el CSS viejo.
 
 **`sw.js` y `manifest.json` llevan `Cache-Control: no-cache` en `_headers`.** Si
 el navegador se queda con un `sw.js` viejo, la app deja de actualizarse y no hay
@@ -316,6 +345,11 @@ es el modo de juguete de Tailwind: baja unos 400 KB de JavaScript y **compila el
 CSS dentro del navegador, en cada carga y de cada visitante** — de ahí el
 parpadeo sin estilos al entrar. Compilado, el sitio entero son 50 KB de CSS que
 el navegador cachea.
+
+- **`npm run css` también corre en Windows** (18/11/2026): en Windows
+  `css-construir.js` usa `node_modules/.bin/tailwindcss.cmd` con shell (el
+  `tailwindcss` de al lado es un guion de sh que `execFileSync` no puede
+  ejecutar y salía `ENOENT`).
 
 - **La paleta ya no se compila dentro de cada clase: son variables CSS.**
   Estuvo copiada en el `<head>` de las 73 páginas, después vivió en
@@ -1054,6 +1088,11 @@ donde se comparte esto, y sin `og:image` el enlace sale pelado.
 - `sitemap.xml` **no se escribe a mano**: lo arma `herramientas/sitemap.py`
   leyendo qué páginas NO tienen `noindex`. Si una página se abre o se cierra,
   se vuelve a correr y el sitemap se entera solo.
+- **Una página sin enlaces ni sitemap no es necesariamente huérfana.**
+  `ruta-a-la-beca.html` (Club Cenfotec, con `noindex`) no la nombra ninguna
+  página a propósito: el enlace se comparte a mano. Confirmado con el dueño el
+  10/11/2026, en una revisión que la había marcado para sacarla del sitio. Antes
+  de mandar a `.assetsignore` algo que «nadie pide», preguntar.
   - **Los que barren `**/*.html` tienen que saltarse `node_modules/`.**
     `sitemap.py` y `verificar-metadatos.py` no lo hacían, y como `node_modules`
     está en `.gitignore` la falla solo aparece en la máquina de quien siguió las
@@ -2362,3 +2401,171 @@ encuentra la copia de cualquier archivo.
 `node herramientas/verificar-sello.js` (sin navegador) revisa que cada
 archivo lo lleve, que vaya al final, que `quitar()` devuelva el texto exacto
 y que sobreviva a un minificador.
+
+## El CI en una máquina propia
+
+Desde que el repositorio es privado, GitHub cobra cada minuto de Actions que
+pase de los gratis del mes, y «Verificar» gasta entre 60 y 150 minutos por PR
+(la rápida y cuatro tandas con navegador). Un *runner autoalojado* —el programa
+de GitHub instalado en una máquina del dueño— corre los mismos flujos sin
+cobrar nada, aunque el repositorio sea privado.
+
+**Cómo se elige dónde corre.** `verificar.yml` y `dependencias.yml` dicen
+`runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}`. Con la variable del
+repositorio `RUNNER` = `self-hosted` (Settings → Secrets and variables →
+Actions → pestaña Variables) corren en la máquina propia; sin ella, en las de
+GitHub. Es una variable y no un cambio del archivo para que, si la máquina se
+apaga por días, baste borrarla para que los PR no se queden esperando.
+
+**Los flujos de datos no se mueven** (`ajedrez-estudiantil.yml`,
+`centroamericano-ejercicios.yml`): abren un PR, piden «Verificar» y se quedan
+esperando que termine. Con un solo runner propio, ese trabajo lo ocuparía
+mientras «Verificar» espera el mismo runner, y ninguno de los dos terminaría
+nunca, sin dar ningún error. Corren poco (uno al mes; el otro solo del 1 al 9
+de noviembre), así que se quedan en las de GitHub.
+
+**Lo que no hay que olvidar en la máquina propia:**
+
+- Linux o macOS. En Windows, el runner va dentro de WSL (Ubuntu): los pasos
+  usan bash, `python3` y `sudo apt`.
+- Una vez, las librerías que necesita Chromium:
+  `sudo npx playwright install-deps chromium` (en las de GitHub lo hace
+  `--with-deps` en cada corrida; en la propia se salta para no pedir sudo).
+- **Un solo runner por máquina**, y nada escuchando en el 8777: los
+  verificadores usan el sitio que encuentren ahí, y con el de la carpeta de
+  trabajo probarían otro código. El paso «¿El puerto 8777 está libre?» lo
+  revisa y frena antes de correr.
+- **En la máquina propia la tanda con navegador es UNA, de a cuatro a la vez**
+  (`--parte=1/1 --paralelo=4`; desde el 9/11/2026). Con cuatro tandas y un solo
+  runner iban una tras otra, y cada una repetía `npm ci`, la instalación de
+  Chromium y el arranque del sitio: unos 70 minutos por PR. En las de GitHub
+  siguen las cuatro, cada una en su máquina, de a una. Los verificadores con
+  navegador aguantan correr juntos: ninguno abre un puerto fijo, y el sitio del
+  8777 es solo de lectura. Menos dos, los más pesados (`verificar-camara-tablero.js` y
+  `verificar-partidas-simultaneas.js`): de a cuatro se pasaban de tiempo, y
+  solos pasan. Van en `SOLOS` de `verificar-todo.js`, que con `--paralelo` los
+  deja para el final, de a uno. `verificar-pareo-pagina.js` leía la dirección
+  del QR antes de que terminara de armarse; ahora la espera.
+- **Las cuatro tandas de GitHub se reparten por lo que tarda cada verificador**
+  (`DURACION` de `verificar-todo.js`, desde el 18/11/2026): el más lento
+  primero, cada uno a la tanda más liviana. Antes iban de a uno por turno y a
+  la 4 le tocaron cámara y simultáneas juntas: 43 minutos contra 19 de la 1, y
+  se cortaba en el límite de 45 con todo en verde (el PR quedaba «cancelado»,
+  sin ningún verificador en rojo, y cada reintento eran otros 45 minutos
+  pagados). Repartidas, quedan en unos 28 minutos cada una. Un verificador
+  nuevo que tarde más de un minuto va a esa tabla; los demás cuentan 10 s.
+- **La máquina propia está en hora de Costa Rica; las de GitHub, en UTC.** La
+  primera corrida ahí destapó un error real que en UTC no se veía: el día de
+  cierre de los formularios se leía en UTC y al volver a abrirlo decía el día
+  siguiente. Un verificador que pase en las dos zonas es la prueba de que la
+  página no depende de la de la computadora.
+- `verificar-partidas-simultaneas.js` arma la mitad de partidas con menos de 4
+  núcleos **o menos de 12 GB de memoria**: con los 10 GB de Ubuntu, 100
+  pestañas atrasaban los relojes por la propia computadora, no por la página.
+- **Un PR que solo cambia `docs/` o un `.md` de la raíz no corre las tandas con
+  navegador** (paso «¿El cambio toca el sitio?» de la rápida): ninguna lee esos
+  archivos. La rápida sí corre siempre: `verificar-alumno-sin-correo.js` lee
+  `CLAUDE.md`. Un `.md` dentro de otra carpeta (un curso) sí cuenta como sitio.
+- Si la máquina está apagada, el PR queda «Queued» sin fallar; no se mergea
+  hasta que pase. Para salir del apuro, borrar `RUNNER`.
+
+## Los verificadores que fallaban por tiempo, sin relación con el PR
+
+El 17-18/11/2026 cuatro verificadores con navegador fallaron en el CI sin que
+el PR tocara nada suyo, y hubo que repetir tandas (que se pagan). Ninguno se
+arregló subiendo una espera: cada uno dependía de que la máquina fuera
+rápida, y se buscó **cuál era la condición de verdad** y se esperó esa.
+
+- **`verificar-camara-tablero.js`, «Calibrar» apagado 30 s** (mesa por QR).
+  Dos causas. Una de la página: en el modo mesa abre la cámara sola, y si
+  mientras tanto se elegía una foto, la cámara llegaba después, le ganaba a la
+  foto y borraba las esquinas. Ahora cada pedido de cámara lleva su número
+  (`pedidoCamara`): elegir una foto o soltar la cámara lo deja sin vigencia y
+  el flujo que llega tarde se suelta. Lo comprueba una cámara de mentira que
+  abre cuando la prueba dice (`CAMARA_LENTA`), no cuando la máquina puede. La
+  otra, de la prueba: el aviso de cómo le fue a la cámara cambia de alto el
+  recuadro de arriba y corre el lienzo; si llegaba entre medir y tocar, los
+  toques caían fuera. `tocar()` ahora espera el lienzo quieto, anota dónde
+  estaba en el instante de cada `pointerdown` (en la captura de `window`,
+  antes que la página lo atienda) y, si no coincide con lo medido, borra y
+  vuelve a tocar; si no se movió y una esquina no llegó, falla (eso es de la
+  página). La página deja `lienzo.dataset.esquinas` para eso.
+- **`verificar-camara-tablero.js`, «0:30» que salía «0:29».** Quien mira
+  muestra lo que quedaba al mandarse menos lo que pasó desde que llegó,
+  redondeado hacia arriba: con más de un segundo de verdad entre el arranque
+  y la lectura, cambiaba. Mientras se mira, los relojes de las dos páginas
+  quedan **quietos** (solo avanzan lo que la prueba adelanta) y después se
+  sueltan.
+- **`verificar-partidas-simultaneas.js`, «ningún reloj que llegó a tiempo
+  hubo que recortarlo → 2».** «Lenta» era solo la escritura que la base de
+  mentira atrasaba a propósito; en la máquina de 2 núcleos con 50 pestañas, la
+  computadora misma atrasaba el pedido de la pestaña a Node más de un segundo,
+  la base lo cobraba y salía como si la página hubiera dado tiempo de más. La
+  página anota cuándo armó la escritura (`pedido.creado`) y la raya es la de
+  siempre: más de 0,8 s desde ahí hasta la base es lenta, la cause quien la
+  cause.
+- **`verificar-preparacion-rivales.js`, «evaluación» escrita.** Contesta lo
+  que dice la línea del motor en ese momento; si la evaluación de la salida
+  todavía no llegaba, contestaba «Stockfish está evaluando…» y la prueba
+  esperaba otra cosa que nunca venía. Se pregunta con la posición ya
+  evaluada, y la respuesta tiene que ser igual a esa línea.
+- **`verificar-centroamericano-mesas-pagina.js`, «avisar a los árbitros».**
+  El doble le ponía a cada fila de un mismo `insert` su propio `new Date()`;
+  si el ciclo cruzaba un milisegundo, el aviso «a todos» quedaba con dos horas,
+  la página lo agrupaba como dos envíos y la tabla nunca llegaba a 2 filas.
+  Postgres da la misma hora (`now()`, la de la transacción) a toda la
+  sentencia: el doble ahora también. **Un doble que pone la hora fila por fila
+  no se parece a la base.**
+
+Lo que queda para la próxima: **una espera con `.catch(() => {})` que sigue
+de largo esconde la causa** (en `tocar()` la cámara no llegaba en 10 s y se
+tocaba igual); y **un dato que la página calcula «ahora» no se lee contra un
+reloj que corre**: o se congela, o se compara con lo que la misma página
+muestra. Antes de dar por bueno cada arreglo se rompió a propósito lo que
+comprueba (la página sin `pedidoCamara`, los relojes sin congelar con una
+espera de 1,5 s, el doble con horas distintas) y saltó.
+
+## Las Edge Functions se despliegan solas desde GitHub
+
+Hasta el 10/11/2026 cada Edge Function se desplegaba a mano: a veces desde el
+repositorio y a veces pegando el código en Supabase. Lo que estaba en `main` no
+siempre era lo que corría. Ese día apareció un caso: `centroamericano-mesas-vivo`
+llevaba días corriendo con el ahorro de internet de las tablets, que vivía en una
+rama nunca mergeada (`claude/bandwidth-data-extraction-nyb6vq`), y desplegarla
+desde `main` lo habría borrado. Además, desplegar desde una sesión de Claude
+significaba copiar a mano cientos de KB, y un error de copia rompe una función en
+uso. El dueño eligió que GitHub las despliegue solo.
+
+- **Qué se despliega.** `.github/workflows/funciones.yml` corre al entrar a
+  `main` un cambio en `supabase/functions/`. `herramientas/funciones-desplegar.js`
+  compara el commit de antes con el de después y elige:
+  - las funciones de las carpetas que cambiaron;
+  - las que llevan un archivo de `_compartido/` que cambió, según la lista de
+    `funciones-armar.js`, que es una sola copia.
+
+  Arma cada una con lo compartido y la sube con `supabase functions deploy
+  --use-api`, que no necesita Docker. Una carpeta borrada no se borra en
+  Supabase: eso se hace a mano y a propósito.
+- **El `verify_jwt` sale de `supabase/esquema/funciones-desplegadas.txt`**, no
+  de un valor por omisión. Equivocarse ahí deja una función abierta o rechazando
+  a quien la llama (pg_cron, la tablet sin cuenta, quien perdió la contraseña),
+  y eso no da ningún error. Por eso una función que no esté anotada **no se
+  despliega**: el flujo falla y lo dice.
+  - El 10/11 se comparó la lista con lo que tiene cada función en Supabase y
+    coincidían todas.
+  - `explicar-posicion` corre en Supabase y no está en el repositorio (otra
+    sesión): el flujo no la toca.
+- **A mano**: Actions → Funciones → «Run workflow», con los nombres separados
+  por comas. Lo escrito entra al comando por una variable de entorno, nunca
+  pegado.
+- **La clave** es el secreto del repositorio `SUPABASE_ACCESS_TOKEN`, una clave
+  de acceso personal de supabase.com/dashboard/account/tokens. Sin ella el flujo
+  falla y lo dice; no se escribe en ningún archivo.
+- **La herramienta va fijada** en la 2.122.0, como todo lo demás. Nunca hay dos
+  despliegues a la vez: el segundo espera al primero. Corre en la máquina propia
+  si `RUNNER` lo dice (ver «El CI en una máquina propia»).
+- Lo prueba `verificar-funciones-despliegue.js`, sin red:
+  - cada carpeta de función está anotada con su `verify_jwt`;
+  - un archivo compartido despliega todas las que lo llevan;
+  - el flujo va al proyecto de la Academia, con la versión fijada y la clave del
+    secreto, y nada de afuera entra pegado en un comando.

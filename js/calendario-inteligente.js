@@ -90,7 +90,7 @@
        titulo, detalle, href, estado }. `estado` va escrito, nunca solo el
        color: «Ahora», «Vence hoy», «Vencida», «Hecha»… */
     function ordenar(eventos) {
-        const peso = { clase: 0, examen: 1, tarea: 2 };
+        const peso = { sinclase: -1, clase: 0, examen: 1, tarea: 2 };
         return eventos.sort((a, b) => (a.dia < b.dia ? -1 : a.dia > b.dia ? 1
             : (a.inicio < b.inicio ? -1 : a.inicio > b.inicio ? 1 : peso[a.tipo] - peso[b.tipo])));
     }
@@ -434,10 +434,55 @@
         return plan.sort((a, b) => (a.dia < b.dia ? -1 : a.dia > b.dia ? 1 : 0));
     }
 
+    /* Los días sin clase (tabla dias_sin_clase: los de un profe, o un feriado
+       para todos con profesor_id nulo). Ver «Días sin clase y feriados» en
+       docs/decisiones/paneles.md.
+
+       - quitarClasesSinClase: las clases del horario del profe que caen en un
+         feriado o en un día que él marcó. Solo cuentan los suyos y los
+         feriados: quien administra lee TODOS los días (la RLS se lo deja), y
+         el día libre de otro profe no le quita ninguna clase. Al alumno no le
+         hace falta: mis_clases_proximas ya los salta en la base.
+       - eventosSinClase: un renglón por día, para que el calendario diga por
+         qué ese día no hay clase en vez de dejarlo vacío. */
+    function cuentaPara(d, yo) {
+        return d && (!d.profesor_id || !yo || d.profesor_id === yo);
+    }
+    function quitarClasesSinClase(clases, dias, yo) {
+        const fechas = new Set((dias || []).filter((d) => cuentaPara(d, yo)).map((d) => d.fecha));
+        if (!fechas.size) return (clases || []).slice();
+        return (clases || []).filter((c) => !fechas.has(dia(c.inicio)));
+    }
+    function eventosSinClase(dias, { yo, modo } = {}) {
+        const vistos = new Set();
+        const ev = [];
+        for (const d of dias || []) {
+            if (!d || !d.fecha || !/^\d{4}-\d{2}-\d{2}$/.test(d.fecha)) continue;
+            // Mirando como profe, el día libre de otro profe no es asunto suyo.
+            if (modo === "profe" && !cuentaPara(d, yo)) continue;
+            const feriado = !d.profesor_id;
+            const k = d.fecha + "|" + (d.profesor_id || "todos");
+            if (vistos.has(k)) continue;
+            vistos.add(k);
+            const inicio = new Date(d.fecha + "T00:00:00-06:00").toISOString();
+            ev.push({
+                tipo: "sinclase", clave: "sinclase-" + k, id: d.id, propio: !!yo && d.profesor_id === yo, feriado,
+                dia: d.fecha, inicio, fin: inicio,
+                titulo: (feriado ? "Feriado: " : "Sin clase: ") + (d.motivo || "sin motivo"),
+                detalle: feriado ? "Ese día no hay clase en ninguna academia."
+                    : d.profesor_id === yo ? "Lo marcaste tú: tus clases de ese día no se cuentan."
+                    : "Lo marcó tu profe: ese día no hay clase.",
+                href: "", estado: "",
+            });
+        }
+        return ordenar(ev);
+    }
+
     const api = {
         ZONA, dia, sumarDias, diasEntre, diaSemana, hora, nombreDia, nombreCorto, nombreMes, cuando, mayuscula, conPunto,
         eventosAlumno, eventosProfe, clasesDelHorario, porDia, semanasDelMes, mesVecino,
         planAlumno, planProfe, avisosAlumno, avisosProfe,
+        quitarClasesSinClase, eventosSinClase,
     };
     if (typeof window !== "undefined") window.CalendarioInteligente = api;
     if (typeof module !== "undefined") module.exports = api;

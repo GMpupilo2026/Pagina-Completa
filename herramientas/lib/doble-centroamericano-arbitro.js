@@ -20,7 +20,7 @@ const SERVIDOR_ARBITRO = `
   const MESAS = ${JSON.stringify(MESAS)};
   const filas = []; let n = 0;
   // Las banderitas (la federación de cada jugador): solo cuando la prueba enciende window.__feds, para no tocar las demás pruebas.
-  const FEDS = { "Muñoz Feliz Alejandro": "CRC", "Gramajo Tovar Marco": "ESA", "Harvey Ian": "JAM", "Acuña Porras Fabio": "GUA", "Hopkins John": "TTO", "Baquero Graterol": "FRA", "Pérez Mora, Ana": "CRC", "Rojas Vega, Lía": "PAN" };
+  const FEDS = { "Muñoz Feliz Alejandro": "CRC", "Gramajo Tovar Marco": "ESA", "Harvey Ian": "JAM", "Acuña Porras Fabio": "GUA", "Hopkins John": "TTO", "Baquero Graterol": "FRA", "Pérez Mora, Ana": "CRC", "Rojas Vega, Lía": "PAN", "Solano Brenes, Diego": "USA", "Mora Ugalde, Camila": "FRA", "Árias Núñez, María José": "CRC", "Zúñiga Rojas, Pedro": "BRA" };
   const conFed = (m) => (window.__feds ? Object.assign({}, m, { fed_b: FEDS[m.blancas] || null, fed_n: FEDS[m.negras] || null }) : m);
   const falla = (estado, error) => ({ data: null, error: { context: { status: estado, json: () => Promise.resolve({ error }) } } });
   const marcasDe = () => {
@@ -79,7 +79,7 @@ const SERVIDOR_ARBITRO = `
       if (window.__avisos.todas_las_mesas === false) return falla(403, "La organización no habilitó «¿Dónde juega?» en tu enlace.");
       if (window.__todasFalla) return falla(502, "chess-results no contestó.");
       const mesas1 = MESAS.map((m) => conFed({ mesa: m.mesa, blancas: m.blancas, negras: m.negras }));
-      const otras = [{ mesa: 1, blancas: "Árias Núñez, María José", negras: "Zúñiga Rojas, Pedro" }, { mesa: 2, blancas: "Castro Vega, Luis", negras: "Jiménez Mora, Ana Sofía" }, { mesa: 15, blancas: "Solano Brenes, Diego", negras: "Mora Ugalde, Camila" }];
+      const otras = [{ mesa: 1, blancas: "Árias Núñez, María José", negras: "Zúñiga Rojas, Pedro" }, { mesa: 2, blancas: "Castro Vega, Luis", negras: "Jiménez Mora, Ana Sofía" }, { mesa: 15, blancas: "Solano Brenes, Diego", negras: "Mora Ugalde, Camila" }].map(conFed);
       const ahora = new Date().toISOString();
       return { data: { ok: true, actual: "1529737", generado: ahora, categorias: [
         { tnr: "1529737", nombre: "Sub-10 Femenino", categoria: "Sub-10", rama: "Femenino", ronda: 3, desde: ahora, viejo: false, error: null, mesas: mesas1 },

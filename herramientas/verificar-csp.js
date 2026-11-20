@@ -141,6 +141,24 @@ console.log("\n=== La CSP de _headers ===");
   if (sobran.length) mal("script-src autoriza hashes que ya no son de ningún bloque: " + sobran.join(" ") + ". Corre: node herramientas/csp-hashes.js");
 }
 
+/* jsDelivr, solo con la ruta de la librería de la transcripción. Con el dominio
+   entero cualquier paquete de npm pasaba la CSP; con otra versión que la de
+   js/reporte-transcribir.js, la transcripción dejaría de cargar sin avisar. */
+console.log("\n=== jsDelivr, solo la librería de la transcripción ===");
+{
+  const headers = fs.readFileSync(path.join(RAIZ, "_headers"), "utf8");
+  const cdn = (fs.readFileSync(path.join(RAIZ, "js", "reporte-transcribir.js"), "utf8").match(/const CDN = "([^"]+)"/) || [])[1];
+  if (!cdn) mal("no encontré la constante CDN en js/reporte-transcribir.js");
+  const csp = (headers.match(/Content-Security-Policy:[^\n]*/) || [""])[0];
+  for (const directiva of ["script-src", "connect-src"]) {
+    const fuentes = ((csp.match(new RegExp(directiva + " ([^;]*)")) || [])[1] || "").split(/\s+/);
+    const delCdn = fuentes.filter((f) => /cdn\.jsdelivr\.net/.test(f)).sort();
+    const esperadas = cdn ? [cdn, cdn + "/"].sort() : [];
+    if (JSON.stringify(delCdn) === JSON.stringify(esperadas)) bien(directiva + " deja pasar de jsDelivr solo " + cdn + " (y su carpeta)");
+    else mal(directiva + " tiene de jsDelivr " + JSON.stringify(delCdn) + "; tiene que ser exactamente " + JSON.stringify(esperadas));
+  }
+}
+
 console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);
 

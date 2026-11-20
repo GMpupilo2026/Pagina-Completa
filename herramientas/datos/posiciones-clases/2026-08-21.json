@@ -1,0 +1,40 @@
+{
+ "fecha": "2026-08-21",
+ "posiciones": [
+  {
+   "seg": 0,
+   "titulo": "Peón de más contra peón lejano de Ana",
+   "fen": "8/1p2k1p1/1P6/p6P/6P1/8/4PK2/8 w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "Cualquier jugada que no sea de rey pierde por el peón de Ana. Busca la jugada de rey que defiende sin estorbar a tus peones y deja al rival sin jugadas buenas."
+  },
+  {
+   "seg": 1492,
+   "titulo": "Dos peones ligados contra un peón lejano",
+   "fen": "8/7p/8/Pk6/8/8/1P6/7K w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "Los peones ligados se defienden solos: si el rey se come el de atrás, el de adelante corona. Ten paciencia: tu rey va por el peón negro y después vuelve."
+  },
+  {
+   "seg": 1721,
+   "titulo": "Peones a una casilla de distancia: la carnada",
+   "fen": "8/p7/6k1/8/5P2/8/7P/K7 w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "A una casilla de distancia y en la misma fila, los peones se defienden solos. No los muevas sin necesidad mientras tu rey va por el peón de Ana."
+  },
+  {
+   "seg": 3708,
+   "titulo": "Peones a dos casillas de distancia: hay que traer al rey",
+   "fen": "8/8/2k5/8/P2P4/8/8/7K w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "A dos casillas de distancia los peones no se defienden solos. Trae tu rey, y usa un peón como carnada solo cuando el rey negro ataque."
+  },
+  {
+   "seg": 5033,
+   "titulo": "Tarea: peones ligados contra tres peones",
+   "fen": "8/7k/p3p1pP/6P1/8/2K5/8/8 w - - 0 1",
+   "objetivo": "tablas",
+   "nota": "La tarea que dejó el profe: juegan blancas y empatan. Mezcla dos ideas de la clase, los peones ligados de las blancas contra los peones negros."
+  }
+ ]
+}

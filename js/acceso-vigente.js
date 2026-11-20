@@ -239,11 +239,288 @@
     h1.focus();
   }
 
+  /* ---------------------------------------------------------- cobros
+     El alumno con una cuenta de cobro (mensualidades.html): `mi_acceso()`
+     contesta «cobro» con el estado de la cuenta, el monto y el SINPE. Si está
+     apagada, el aviso dice cuánto pagar y a dónde, y deja subir la foto del
+     comprobante (bucket comprobantes-pago + pago_reportar()): quien coordina
+     lo confirma y la cuenta se enciende sola. Ver «Cobros, versión 2» en
+     docs/decisiones/cobros-acceso-y-tienda.md. */
+  // «₡24.000»: el punto de miles a mano, como js/precios-acceso.js.
+  function dinero(n, moneda) {
+    const v = String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, moneda === "USD" ? "," : ".");
+    return moneda === "USD" ? "US$" + v : "₡" + v;
+  }
+  function hoyCR() { return new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }); }
+
+  function datosDePago(a) {
+    const caja = document.createElement("dl");
+    caja.className = "mt-4 text-left rounded-xl bg-brand-50 dark:bg-brand-950 px-4 py-3 text-base grid grid-cols-[auto_1fr] gap-x-3 gap-y-1";
+    function fila(dt, dd) {
+      const t = document.createElement("dt"); t.className = "text-brand-600 dark:text-brand-300"; t.textContent = dt;
+      const d = document.createElement("dd"); d.className = "font-bold text-brand-800 dark:text-white"; d.textContent = dd;
+      caja.append(t, d);
+    }
+    fila("Monto", dinero(a.monto, a.moneda));
+    if (a.sinpe_numero) fila("SINPE Móvil", String(a.sinpe_numero).replace(/(\d{4})(\d{4})/, "$1-$2"));
+    if (a.sinpe_nombre) fila("A nombre de", a.sinpe_nombre);
+    return caja;
+  }
+
+  function formularioComprobante(sb, a, alListo) {
+    const form = document.createElement("form");
+    form.className = "mt-4 text-left space-y-3";
+    form.noValidate = true;
+    const campo = (etq, input, ayuda) => {
+      const d = document.createElement("div");
+      const l = document.createElement("label");
+      l.className = "block text-sm font-semibold mb-1";
+      l.textContent = etq;
+      input.id = "pago-" + Math.random().toString(36).slice(2, 8);
+      l.htmlFor = input.id;
+      input.className = "w-full px-3 py-3 rounded-lg bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500";
+      d.append(l, input);
+      if (ayuda) { const p = document.createElement("p"); p.className = "text-xs text-brand-500 dark:text-brand-300 mt-1"; p.textContent = ayuda; d.append(p); }
+      return d;
+    };
+    const foto = document.createElement("input"); foto.type = "file"; foto.accept = "image/*,application/pdf";
+    const monto = document.createElement("input"); monto.inputMode = "numeric"; monto.value = String(Math.round(Number(a.monto) || 0));
+    const fecha = document.createElement("input"); fecha.type = "date"; fecha.value = hoyCR(); fecha.max = hoyCR();
+    const refe = document.createElement("input"); refe.maxLength = 120; refe.autocomplete = "off";
+    const error = document.createElement("p"); error.className = "text-sm text-red-700 dark:text-red-300"; error.setAttribute("role", "alert");
+    const enviar = document.createElement("button");
+    enviar.type = "submit";
+    enviar.className = "w-full min-h-[48px] rounded-xl bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 disabled:opacity-60";
+    enviar.textContent = "Mandar comprobante";
+    form.append(campo("Foto del comprobante", foto, "La captura del SINPE o de la transferencia."),
+      campo("Cuánto pagaste", monto), campo("Fecha del pago", fecha),
+      campo("Número de comprobante (opcional)", refe), error, enviar);
+    form.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      error.textContent = "";
+      const m = Number(String(monto.value).replace(/[^\d]/g, ""));
+      const archivo = foto.files && foto.files[0];
+      if (!archivo && !refe.value.trim()) { error.textContent = "Sube la foto del comprobante o escribe su número."; foto.focus(); return; }
+      if (archivo && archivo.size > 5 * 1024 * 1024) { error.textContent = "La foto pesa más de 5 MB. Manda una captura más liviana."; foto.focus(); return; }
+      if (!(m > 0)) { error.textContent = "Escribe cuánto pagaste."; monto.focus(); return; }
+      if (!fecha.value || fecha.value > hoyCR()) { error.textContent = "La fecha del pago no puede ser en el futuro."; fecha.focus(); return; }
+      enviar.disabled = true;
+      enviar.textContent = "Mandando…";
+      try {
+        let ruta = null;
+        if (archivo) {
+          const { data: ses } = await sb.auth.getSession();
+          const uid = ses && ses.session && ses.session.user.id;
+          const ext = (archivo.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5) || "jpg";
+          ruta = uid + "/" + Date.now() + "." + ext;
+          const up = await sb.storage.from("comprobantes-pago").upload(ruta, archivo, { contentType: archivo.type || undefined, upsert: false });
+          if (up.error) throw up.error;
+        }
+        const r = await sb.rpc("pago_reportar", { p_monto: m, p_fecha: fecha.value, p_referencia: refe.value.trim() || null, p_comprobante: ruta, p_nota: null });
+        if (r.error) throw r.error;
+        alListo();
+      } catch (e) {
+        error.textContent = (e && e.message) || "No se pudo mandar. Intenta otra vez.";
+        enviar.disabled = false;
+        enviar.textContent = "Mandar comprobante";
+      }
+    });
+    return form;
+  }
+
+  // Lo que se ve debajo de los datos: el formulario, o «ya lo mandaste».
+  async function parteComprobante(sb, a, caja) {
+    const esperando = () => {
+      caja.replaceChildren();
+      const p = document.createElement("p");
+      p.className = "mt-4 rounded-xl bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-50 px-4 py-3 text-sm font-semibold";
+      p.setAttribute("role", "status");
+      p.textContent = "Recibimos tu comprobante. En cuanto se confirme el pago, tu usuario se activa solo.";
+      caja.append(p);
+    };
+    if (a.reporte_pendiente) { esperando(); return; }
+    caja.replaceChildren();
+    try {
+      const { data } = await sb.rpc("mi_reporte_de_pago");
+      if (data && data.estado === "rechazado") {
+        const p = document.createElement("p");
+        p.className = "mt-4 rounded-xl bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-50 px-4 py-3 text-sm";
+        p.textContent = "Tu último comprobante no se pudo confirmar" + (data.motivo ? ": " + data.motivo : ".");
+        caja.append(p);
+      }
+    } catch (e) { /* sin el último reporte, igual se puede mandar uno */ }
+    const abrir = document.createElement("button");
+    abrir.type = "button";
+    abrir.className = "mt-4 w-full min-h-[48px] rounded-xl bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2";
+    abrir.textContent = "Ya pagué: subir comprobante";
+    abrir.setAttribute("aria-expanded", "false");
+    abrir.addEventListener("click", () => {
+      const form = formularioComprobante(sb, a, esperando);
+      abrir.setAttribute("aria-expanded", "true");
+      abrir.replaceWith(form);
+      const primero = form.querySelector("input");
+      if (primero) primero.focus();
+    });
+    caja.append(abrir);
+  }
+
+  function enlaceWa(wa) {
+    if (!wa) return null;
+    const p = document.createElement("p");
+    p.className = "text-sm mt-3";
+    p.append("¿Dudas? ", enlace(wa + "?text=" + encodeURIComponent("Hola, quiero activar mi usuario de la Academia."), "Escríbenos por WhatsApp", true), ".");
+    return p;
+  }
+
+  /* La tarjeta del usuario apagado. En el panel va arriba (el panel se queda:
+     es la puerta de salida); en cualquier otra página tapa el contenido. */
+  function tarjetaApagado(sb, a, wa, enElPanel) {
+    const caja = document.createElement("div");
+    caja.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 sm:p-8 text-center text-brand-700 dark:text-brand-100 max-w-xl mx-auto";
+    const icono = document.createElement("p");
+    icono.className = "text-4xl mb-3";
+    icono.setAttribute("aria-hidden", "true");
+    icono.textContent = "🔒";
+    const h = document.createElement(enElPanel ? "h2" : "h1");
+    h.className = "font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2";
+    h.tabIndex = -1;
+    h.textContent = "Tu usuario está inactivo";
+    const p = document.createElement("p");
+    p.textContent = "Para activarlo, paga la mensualidad. Tu progreso no se pierde: queda guardado en tu cuenta.";
+    const comprobante = document.createElement("div");
+    caja.append(icono, h, p, datosDePago(a), comprobante);
+    const w = enlaceWa(wa);
+    if (w) caja.append(w);
+    parteComprobante(sb, a, comprobante);
+    return { caja, h };
+  }
+
+  function avisoCobroVigente(sb, a, wa) {
+    // Al día: nada. Vence pronto o vencida (sin apagar todavía): la franja del panel.
+    if (a.estado === "vence_pronto") {
+      const cuando = a.dias === 0 ? "hoy" : a.dias === 1 ? "mañana" : "en " + a.dias + " días (el " + fecha(a.hasta) + ")";
+      franjaCobro(sb, a, wa, "Tu mensualidad vence " + cuando + ".", false);
+    } else if (a.estado === "vencido") {
+      franjaCobro(sb, a, wa, "Tu mensualidad venció el " + fecha(a.hasta) + "."
+        + (a.apaga_el ? " Si no se paga, tu usuario se apaga el " + fecha(a.apaga_el) + "." : ""), true);
+    }
+  }
+
+  function franjaCobro(sb, a, wa, texto, urgente) {
+    const main = document.getElementById("main-content") || document.querySelector("main");
+    if (!main) return;
+    const div = document.createElement("div");
+    div.id = "acceso-franja";
+    div.setAttribute("role", "status");
+    div.className = "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6";
+    const caja = document.createElement("div");
+    caja.className = urgente
+      ? "rounded-2xl border-2 border-red-300 dark:border-red-700 bg-red-50 dark:bg-brand-900 p-4 text-brand-800 dark:text-brand-100"
+      : "rounded-2xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-900 p-4 text-brand-800 dark:text-brand-100";
+    const p = document.createElement("p");
+    p.className = "font-semibold";
+    p.textContent = texto;
+    const det = document.createElement("details");
+    det.className = "mt-2";
+    const sum = document.createElement("summary");
+    sum.className = "cursor-pointer text-sm font-semibold underline underline-offset-2";
+    sum.textContent = "Cómo pagar";
+    const dentro = document.createElement("div");
+    det.append(sum, datosDePago(a), dentro);
+    caja.append(p, det);
+    const w = enlaceWa(wa);
+    if (w) caja.append(w);
+    parteComprobante(sb, a, dentro);
+    div.append(caja);
+    main.prepend(div);
+  }
+
+  function apagadoEnPanel(sb, a, wa) {
+    const main = document.getElementById("main-content") || document.querySelector("main");
+    if (!main) return;
+    const div = document.createElement("div");
+    div.id = "acceso-franja";
+    div.className = "px-4 pt-6";
+    const { caja } = tarjetaApagado(sb, a, wa, true);
+    div.append(caja);
+    main.prepend(div);
+  }
+
+  function taparPorCobro(sb, a, wa) {
+    const main = document.getElementById("main-content") || document.querySelector("main");
+    if (!main) return;
+    main.style.display = "none";
+    main.setAttribute("inert", "");
+    main.setAttribute("aria-hidden", "true");
+    const aviso = document.createElement("main");
+    aviso.id = "acceso-aviso";
+    aviso.className = "my-10 px-4";
+    const { caja, h } = tarjetaApagado(sb, a, wa, false);
+    const volver = document.createElement("a");
+    volver.href = panelHref();
+    volver.className = "inline-block mt-5 text-sm font-semibold underline underline-offset-2 text-accent-700 dark:text-accent-400";
+    volver.textContent = "← Volver al panel";
+    caja.append(volver);
+    aviso.append(caja);
+    main.after(aviso);
+    const saltar = document.querySelector('a[href="#main-content"], a[href="#app"]');
+    if (saltar) saltar.setAttribute("href", "#acceso-aviso");
+    h.focus();
+  }
+
   async function whatsapp(sb) {
     try {
       const { data } = await sb.from("ajustes_academia").select("valor").eq("clave", "whatsapp_consultas").maybeSingle();
       return waDe(data && data.valor);
     } catch (e) { return null; }
+  }
+
+  /* Las páginas que una cuenta de árbitro sí abre: su panel y las de las
+     herramientas, que salen de la lista de la vitrina
+     (js/herramientas-arbitraje.js, una sola copia). La lista se baja solo
+     para estas cuentas, que son pocas: las demás no pagan nada por esto. Si
+     no se puede leer, se va al panel: ahí están sus herramientas. */
+  function cargarLista(base) {
+    if (window.HerramientasArbitraje) return Promise.resolve(window.HerramientasArbitraje);
+    return new Promise((ok) => {
+      const s = document.createElement("script");
+      s.src = base + "js/herramientas-arbitraje.js";
+      s.onload = () => ok(window.HerramientasArbitraje || null);
+      s.onerror = () => ok(null);
+      document.head.appendChild(s);
+    });
+  }
+
+  function paginaActual() {
+    return (location.pathname.split("/").pop() || "index.html").replace(/(\.html)?$/, ".html");
+  }
+
+  async function alPanelDelArbitro() {
+    const base = panelHref().replace(/clases\.html$/, "");
+    // Su «Academia» del encabezado y de las migas es su panel.
+    document.querySelectorAll('a[href$="clases.html"]').forEach((a) => {
+      a.setAttribute("href", a.getAttribute("href").replace(/clases\.html$/, "arbitro.html"));
+    });
+    const aqui = paginaActual();
+    // En las migas, su punto de partida se llama como su panel.
+    const migaPanel = document.querySelector('#migas li:first-child a[href$="arbitro.html"]');
+    if (migaPanel) {
+      if (aqui === "arbitro.html") {
+        // En su panel, la miga sería el mismo panel dos veces: queda solo la actual.
+        migaPanel.closest("li").remove();
+        const sep = document.querySelector("#migas li:first-child > span[aria-hidden]");
+        if (sep) sep.remove();
+      } else {
+        migaPanel.textContent = "Mis herramientas";
+      }
+    }
+    if (aqui === "arbitro.html") return;
+    const H = await cargarLista(base);
+    const deHerramientas = new Set(((H && H.LISTA) || [])
+      .map((h) => String(h.href || "").split(/[?#]/)[0].split("/").pop())
+      .filter(Boolean));
+    if (deHerramientas.has(aqui)) return;
+    location.replace(base + "arbitro.html");
   }
 
   async function arrancar() {
@@ -267,6 +544,31 @@
       return;
     }
     window.AccesoVigente = a;
+
+    // La cuenta de árbitro no es de la Academia: en una página de sus
+    // herramientas se queda; en cualquier otra, va a su panel.
+    if (a.motivo === "arbitro") {
+      await alPanelDelArbitro();
+      return;
+    }
+
+    // Cobros: la cuenta de la familia decide (mi_acceso() dice «cobro»).
+    if (a.motivo === "cobro") {
+      if (a.vigente) {
+        /* La franja de «vence pronto / venció» del panel está APAGADA para
+           todos: el dueño pidió el 18/11/2026 que a los alumnos no les salga
+           nada mientras lleva los cobros a mano. Solo vuelve si la base
+           contesta `avisar_en_panel: true` (hoy nunca lo hace). El aviso de
+           la cuenta APAGADA sí se queda: sin él, quien no puede entrar no
+           sabe por qué ni cómo arreglarlo. */
+        if (enPanel() && a.avisar_en_panel === true) avisoCobroVigente(sb, a, await whatsapp(sb));
+        return;
+      }
+      const wa = await whatsapp(sb);
+      if (enPanel()) apagadoEnPanel(sb, a, wa);
+      else taparPorCobro(sb, a, wa);
+      return;
+    }
 
     if (a.vigente) {
       if (enPanel() && a.motivo === "prueba" && typeof a.horas === "number") {

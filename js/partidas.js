@@ -24,7 +24,7 @@
         }
 
         function openViewer(g) {
-            document.getElementById("view-modal-title").textContent = (g.title || new Date(g.created_at).toLocaleString("es-CR", { timeZone: "America/Costa_Rica" })) + " · " + g.move_count + " jugadas";
+            document.getElementById("view-modal-title").textContent = (g.title || new Date(g.created_at).toLocaleString("es-CR", { timeZone: "America/Costa_Rica" })) + " · " + (g.move_count ? g.move_count + " jugadas" : "posición");
             document.getElementById("view-modal").classList.remove("hidden");
             if (!viewBoard) viewBoard = new ClasesBoard(document.getElementById("view-board"), { interactive: false });
             const game = new Chess();
@@ -99,8 +99,12 @@
             const game = new Chess();
             if (!game.load_pgn(chunk, { sloppy: true })) return null;
             const moves = game.history();
-            if (!moves.length) return null; // sin jugadas no hay nada que jalar a la clase
             const headers = game.header();
+            /* Sin jugadas no hay nada que jalar a la clase, salvo que sea una
+               posición armada ([FEN]): esa se practica contra el motor o se
+               pregunta desde ahí («Las posiciones de las clases, para
+               practicarlas contra el motor» en docs/decisiones/accesibilidad.md). */
+            if (!moves.length && !headers.FEN) return null;
             let titulo = null;
             if (headers.White && headers.Black && headers.White !== "?" && headers.Black !== "?") {
                 titulo = headers.White + " vs " + headers.Black;
@@ -224,7 +228,7 @@
             title.textContent = a.titulo;
             const meta = document.createElement("p");
             meta.className = "text-xs text-brand-450 dark:text-brand-350";
-            let metaTxt = a.move_count + " jugadas · de " + a.nombre_archivo;
+            let metaTxt = (a.move_count ? a.move_count + " jugadas" : "Posición") + " · de " + a.nombre_archivo;
             if (a.profesor_id !== session.user.id && archivosProfesores[a.profesor_id]) {
                 metaTxt += " · subido por " + archivosProfesores[a.profesor_id];
             }

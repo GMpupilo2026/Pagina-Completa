@@ -92,6 +92,9 @@ img/redes
 # la pide; la página lee temas.json, que ya los trae.
 entreno/data/finales_dificiles.json
 
-# Los originales del avatar del profe Oscar (en alta resolución): de ahí sale
-# img/avatar-profe-oscar/ con herramientas/avatar-profe-oscar.py.
+# Los originales de los avatares de los profes (en alta resolución): de ahí
+# salen img/avatar-profe-oscar/, img/avatar-profe-pame/ e img/avatar-profe-karina/
+# con herramientas/avatar-profe-oscar.py.
 herramientas/avatar-profe-oscar
+herramientas/avatar-profe-pame
+herramientas/avatar-profe-karina

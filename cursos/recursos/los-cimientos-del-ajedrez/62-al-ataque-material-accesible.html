@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,12 +57,30 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: ¿Hay motivos para atacar al rey: piezas cerca, peones débiles, líneas que se abren? Juegan las negras; el rival acaba de jugar torre captura cesar 8.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Atacar al rey es tentador, pero un ataque sin fundamento solo debilita tu propia posición. Para que funcione hacen falta motivos: más piezas tuyas que defensoras cerca del rey rival, peones del enroque debilitados, una línea abierta o fácil de abrir, o un centro cerrado que impida al rival contraatacar por ahí. Si no se cumplen al menos dos de estas condiciones, lo más probable es que el ataque se estrelle.</p>
-<p>Antes de lanzarte, cuenta: cuántas de tus piezas pueden llegar al flanco del rey en dos o tres jugadas y cuántas del rival pueden defenderlo. Mira si el centro está cerrado o estable, porque un centro abierto permite al rival contraatacar justo cuando tus piezas están lejos. Busca también las palancas: un peón que puedas avanzar para abrir una columna, como g4-g5 o h4-h5 si los reyes están enrocados en lados opuestos.</p>
+<p>Antes de lanzarte, cuenta: cuántas de tus piezas pueden llegar al flanco del rey en dos o tres jugadas y cuántas del rival pueden defenderlo. Mira si el centro está cerrado o estable, porque un centro abierto permite al rival contraatacar justo cuando tus piezas están lejos. Busca también las palancas: un peón que puedas avanzar para abrir una columna, como gustav 4-gustav 5 o hector 4-hector 5 si los reyes están enrocados en lados opuestos.</p>
 <p>Una vez decidido, el ataque necesita velocidad y todas las piezas posibles: un ataque con dos piezas casi nunca rompe una defensa con tres. Trae primero las piezas que están lejos y luego abre las líneas. El error típico es el ataque a medias: avanzar peones del enroque propio, no traer refuerzos y quedarse con una posición rota cuando el rival se defiende. Si no vas a llegar hasta el final, mejor no empezar.</p>
 
 
@@ -65,32 +89,59 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>El enroque</dt>
   <dd>La única jugada que mueve dos piezas: el rey va dos casillas hacia la torre y la torre salta al otro lado. Pone al rey a salvo y saca la torre al centro de un solo golpe.</dd>
-  <dd><strong>El error de siempre:</strong> Dejarlo para después. El enroque tardío es el motivo más común de derrota por debajo de los 1600: el centro se abre, el rey sigue en e1 o e8 y la partida se acaba en cinco jugadas.</dd>
+  <dd><strong>El error de siempre:</strong> Dejarlo para después. El enroque tardío es el motivo más común de derrota por debajo de los 1600: el centro se abre, el rey sigue en eva 1 o eva 8 y la partida se acaba en cinco jugadas.</dd>
   <dd><strong>Para verlo:</strong> En la mayoría de las aperturas abiertas, el plan de las primeras diez jugadas es: peón al centro, caballos, alfil, enroque. Si a la jugada ocho no estás enrocado, algo salió mal.</dd>
   <dt>La captura al paso</dt>
   <dd>Cuando un peón avanza dos casillas y cae al lado de un peón rival, ese peón rival puede capturarlo como si hubiera avanzado una sola. Solo en la jugada inmediatamente siguiente.</dd>
   <dd><strong>El error de siempre:</strong> No usarla porque no se conoce, o intentarla una jugada tarde. El derecho se pierde si no se ejerce de inmediato: no se guarda para después.</dd>
-  <dd><strong>Para verlo:</strong> Peón blanco en e5, el negro juega d7-d5. El blanco puede jugar eva captura david 6 y su peón termina en d6, como si el negro solo hubiera avanzado una. El peón de d5 se retira del tablero.</dd>
+  <dd><strong>Para verlo:</strong> Peón blanco en eva 5, el negro juega david 7-david 5. El blanco puede jugar eva captura david 6 y su peón termina en david 6, como si el negro solo hubiera avanzado una. El peón de david 5 se retira del tablero.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: ¿Hay motivos para atacar al rey: piezas cerca, peones débiles, líneas que se abren? Juegan las negras; el rival acaba de jugar torre captura cesar 8.</h3>
+  <h3 id="posicion-1">Posición 1: ¿Hay motivos para atacar al rey: piezas cerca, peones débiles, líneas que se abren? Juegan las negras; el rival acaba de jugar torre captura cesar 8.</h3>
   
-  <p>Piezas blancas: rey en g1; dama en d1; torres en c8, f1; alfil en b3; caballo en g3; peones en a4, b2, d3, f2, g2, h2.</p>
-  <p>Piezas negras: rey en g8; dama en d5; torre en f8; alfil en b7; caballo en f6; peones en a5, d4, e6, f7, g7, h7.</p>
+  <h4>Piezas blancas: 12</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en david 1.</li>
+    <li>Torre en cesar 8.</li>
+    <li>Torre en felix 1.</li>
+    <li>Alfil en bella 3.</li>
+    <li>Caballo en gustav 3.</li>
+    <li>Peón en anna 4.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en david 3.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 11</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en david 5.</li>
+    <li>Torre en felix 8.</li>
+    <li>Alfil en bella 7.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 5.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 23… dama captura gustav 2 jaque mate</p>
+  <p>La jugada: 23, negras: dama captura gustav 2 jaque mate.</p>
   <p>Resultado: Ganan negras</p>
   <p>23… dama captura gustav 2 jaque mate. El ataque funciona porque se dan sus condiciones: más atacantes que defensores y una línea por donde entrar. (Ejercicio 2mxoi de la base abierta de Lichess (CC0), rating 955. Stockfish 16 a profundidad 18: dama captura gustav 2 jaque mate es la mejor (mate en 1) y la segunda queda en -4,7.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 2R2rk1/1b3ppp/4pn2/p2q4/P2p4/1B1P2N1/1P3PPP/3Q1RK1 b - - 0 23</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 2R2rk1/1b3ppp/4pn2/p2q4/P2p4/1B1P2N1/1P3PPP/3Q1RK1 b - - 0 23</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
@@ -100,7 +151,7 @@
   <li>En tus próximas tres partidas, cada vez que tu rival avance dos casillas al lado de uno de tus peones, párate a mirar si te conviene la captura al paso.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +204,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

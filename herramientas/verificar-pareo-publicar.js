@@ -77,13 +77,19 @@ function pruebaSinNavegador() {
     [PP.datosPublicos(Object.assign(torneo("PRUEBA R1", false), { ritmo: "3 + 2" })).ritmoTipo, d.ritmoTipo, PP.datosPublicos(Object.assign(torneo("PRUEBA R2", false), { ritmo: "" })).ritmoTipo], ["blitz", "rapido", ""]);
   // La función vuelve a limpiar lo que llega: el campo tiene que estar en su lista.
   const fn = require("fs").readFileSync(require("path").join(__dirname, "..", "supabase/functions/pareo-publicar/index.ts"), "utf8");
+  // El código de las cámaras de Notara: con él, la página del torneo lleva a
+  // «Partidas en vivo». Solo con las cámaras conectadas.
+  const conCamaras = (c) => PP.datosPublicos(Object.assign(torneo("PRUEBA CAM", false), { camaras: c })).camaras;
+  igual("el código de las cámaras va solo si están conectadas", [conCamaras({ codigo: "abcd2345", activo: true }), conCamaras({ codigo: "abcd2345", activo: false }), d.camaras], ["abcd2345", undefined, undefined]);
+  ok(/camaras: codigo\(v\.camaras\)/.test(fn), "y la función lo guarda (sin eso, «Partidas en vivo» no sale nunca, callado)");
   ok(/validoElo: \["fide", "nacional", "no"\]\.includes\(v\.validoElo/.test(fn), "la función pareo-publicar lo guarda (sin eso se pierde al publicar, callado)");
   ok(/resumen: lista\(v\.resumen, 1000, filaResumen\)/.test(fn) && /provincia: PROVINCIAS\.has/.test(fn), "y el resumen y la provincia (sin eso, el ranking y «Por provincia» quedan vacíos)");
   // El ID FIDE: la función lo cambia por la huella y lo borra ANTES de guardar.
   const borra = fn.indexOf("delete j.fideId"), pone = fn.indexOf("await ponerIdentidad(t.jugadores)"), guarda = fn.indexOf('from("pareo_publicados").insert(');
   ok(borra > 0 && pone > 0 && pone < guarda && pone < fn.indexOf('from("pareo_publicados").update(cambio)'), "la función borra el ID FIDE (deja su huella) antes de guardar el torneo");
   ok(/ritmoTipo: \["clasico", "rapido", "blitz"\]\.includes\(v\.ritmoTipo/.test(fn), "y el ritmo (sin eso, el filtro de ritmo de la lista no encuentra nada)");
-  ok(/sistema: \["todos", "scheveningen", "eliminacion"\]\.includes\(v\.sistema/.test(fn), "y el sistema, también el Scheveningen y la eliminación directa (sin eso, la lista los muestra como suizo)");
+  ok(/sistema: \["todos", "scheveningen", "eliminacion", "keizer"\]\.includes\(v\.sistema/.test(fn), "y el sistema, también el Scheveningen, la eliminación directa y el Keizer (sin eso, la lista los muestra como suizo)");
+  ok(/m\.llave = v\.llave/.test(fn) && /m\.tercer = true/.test(fn) && /dobleEliminacion: v\.sistema === "eliminacion"/.test(fn), "y la doble eliminación y el tercer puesto: la llave de cada mesa y las dos casillas del torneo (sin eso, la clasificación pública no sabe quién quedó fuera)");
   ok(/if \(v\.ko === true\)[\s\S]{0,200}m\.pasa = v\.pasa/.test(fn) && /v\.pasa === v\.b \|\| v\.pasa === v\.n/.test(fn),
     "y en la eliminación directa, quién pasó de cada mesa (y solo si es uno de los dos)");
   // Las pruebas abren Pareo Integral en localhost y la publicación es
@@ -234,7 +240,13 @@ async function pruebaPagina(browser) {
   await page.selectOption("#tp-jugador", { label: "PRUEBA A 12" });
   await page.waitForSelector("#tp-tabla-jugador");
   const filasJ = await page.$$eval("#tp-tabla-jugador tbody tr", (l) => l.map((tr) => [...tr.children].map((td) => td.textContent).join("|")));
-  igual("ronda, rival, su Elo, el color y lo que sacó", filasJ, ["1|PRUEBA D 12|1500|Blancas|1", "2|PRUEBA B 12|1700|Negras|jugando"]);
+  igual("ronda, mesa, rival, su Elo, el color y lo que sacó", filasJ, ["1|11|PRUEBA D 12|1500|Blancas|1", "2|11|PRUEBA B 12|1700|Negras|jugando"]);
+  // «Ahora»: lo que ve quien llega por el QR de su gafete (la Eliminatoria
+  // JDN de PZ), arriba y en grande: la ronda que se juega, su mesa, su rival
+  // y su puesto con sus puntos. La mesa es la de la sala: este torneo empieza en la 11.
+  igual("«Ahora»: la ronda, la mesa, el rival y el puesto", await page.$eval("#tp-ahora", (x) => [...x.children].map((p) => p.textContent)),
+    ["Ronda 2 · se está jugando", "Mesa 11", "Con negras contra PRUEBA B 12 (1700)", "Puesto 1 de 6 · 1 punto tras la ronda 1"]);
+  ok(await page.$eval("#tp-ahora-mesa", (x) => x.checkVisibility() && parseFloat(getComputedStyle(x).fontSize) >= 40), "el número de la mesa se ve, en grande");
   await page.waitForFunction(() => /Aparece en 1 torneo más/.test((document.getElementById("tp-otros-estado") || {}).textContent || ""));
   ok(/PRUEBA SUB-14/.test(await page.textContent("#tp-otros-lista")), "trae el otro torneo publicado donde jugó");
   ok(pedidos.some((x) => x.datos && x.datos.startsWith("cs.")), "lo busca por su nombre en los datos");

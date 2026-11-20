@@ -50,6 +50,8 @@
     return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s) && s.length <= 40 && s !== "centroamericano-2026" ? s : "";
   })();
   const SALA = CONFIG.sala || PRUEBA || "centroamericano-2026";
+  // Los datos de Pareo Integral en lugar de chess-results (js/torneo-pareo-datos.js).
+  const DE_PAREO = CONFIG.fuente === "pareo" && !!window.TorneoPareoDatos;
   const PREFIJO = CONFIG.guardado || (PRUEBA ? "cac_prueba" : "cac");
   const CLAVE_GUARDADO = PREFIJO + "_jugadores_v1";
   const CLAVE_SEGUIDOS = PREFIJO + "_seguidos_v1";
@@ -100,6 +102,14 @@
       termino: (r) => "El torneo terminó, a " + r + " rondas. Toca «Sus rondas» para ver cada una.",
       federacion: "Federación", oro: "Oro", plata: "Plata", bronce: "Bronce", total: "Total",
       medallasDe: "Medallas por federación",
+      copa: "Copa de naciones",
+      copaRegla: "Suma de los cinco primeros de cada categoría del Clásico: el 1.° da 10 puntos, el 2.° 8, el 3.° 6, el 4.° 4 y el 5.° 2. Empate: gana quien tiene más primeros lugares, después más segundos, y así.",
+      copaSoloClasico: "La Copa de naciones cuenta solo el Clásico: toca «Clásico» arriba para verla.",
+      copaPuntos: (n) => n + (n === 1 ? " punto" : " puntos"),
+      copaPuesto: (i) => ["1.er lugar", "2.º lugar", "3.er lugar"][i],
+      copaTabla: "Todos los países",
+      copaPais: "País", copaTotal: "Puntos",
+      copaBoton: "Imagen de la Copa para compartir",
       podios: "Los podios de cada categoría",
       podioFinal: "Final",
       podioProvisional: (r) => "Provisional, tras la ronda " + r,
@@ -204,6 +214,14 @@
       termino: (r) => "The tournament is over, after " + r + " rounds. Tap “Their rounds” to see each one.",
       federacion: "Federation", oro: "Gold", plata: "Silver", bronce: "Bronze", total: "Total",
       medallasDe: "Medals by federation",
+      copa: "Nations Cup",
+      copaRegla: "Sum of the top five of every Classical section: 1st gets 10 points, 2nd 8, 3rd 6, 4th 4 and 5th 2. Ties: most first places, then most second places, and so on.",
+      copaSoloClasico: "The Nations Cup counts only the Classical: choose «Classical» above to see it.",
+      copaPuntos: (n) => n + (n === 1 ? " point" : " points"),
+      copaPuesto: (i) => ["1st place", "2nd place", "3rd place"][i],
+      copaTabla: "All countries",
+      copaPais: "Country", copaTotal: "Points",
+      copaBoton: "Nations Cup image to share",
       podios: "The podium of every section",
       podioFinal: "Final",
       podioProvisional: (r) => "Provisional, after round " + r,
@@ -288,12 +306,30 @@
     fr: window.CentroamericanoFR ? window.CentroamericanoFR.vivo({ categoria: (g, l) => categoria(g, l), MAX_SEGUIDOS, fmtPuntos: (n) => fmtPuntos(n) }) : null,
   };
 
+  // Con los datos de otra fuente (`fuenteNombre`: «Pareo Integral»), los
+  // textos dicen esa en lugar de «chess-results», también los que se arman.
+  if (CONFIG.fuenteNombre) ["es", "en"].forEach((k) => cambiarFuente(TEXTOS[k], CONFIG.fuenteNombre));
+  // Los textos propios de otra página (`textos`, en español): el nombre del
+  // torneo, la sede, «nivel» en lugar de «categoría»… Sin esto se colaba el
+  // Centroamericano en el calendario de un jugador o en «¡Hoy juega!».
+  if (CONFIG.textos) Object.keys(CONFIG.textos).forEach((k) => { if (k in TEXTOS.es) TEXTOS.es[k] = CONFIG.textos[k]; });
+
   // El idioma de la página: «es», «en» o «fr» (lo pone js/centroamericano.js).
   const IDIOMAS = ["es", "en", "fr"];
   const idioma = () => (IDIOMAS.indexOf(document.documentElement.lang) !== -1 ? document.documentElement.lang : "es");
   const t = () => TEXTOS[idioma()] || TEXTOS.es;
 
   // «U18F» → «Sub-18 Femenino» / «U18 Girls»; «U08» → «Sub-8 Absoluto» / «U8 Open».
+  // Cambia «chess-results» por otra fuente en los textos de un idioma: los
+  // fijos y lo que devuelven los que se arman (una función).
+  function cambiarFuente(textos, nombre) {
+    const cambiar = (s) => s.replace(/chess-results/g, nombre);
+    Object.keys(textos || {}).forEach((k) => {
+      const v = textos[k];
+      if (typeof v === "string") textos[k] = cambiar(v);
+      else if (typeof v === "function") textos[k] = function () { const r = v.apply(this, arguments); return typeof r === "string" ? cambiar(r) : r; };
+    });
+  }
   function categoria(g, lang) {
     // «—» es el grupo de un torneo sin categorías (el de CENFOTEC): todos juntos.
     if (g === "—") return lang === "en" ? "Overall" : lang === "fr" ? "Général" : "General";
@@ -320,7 +356,13 @@
     const fr = lang === "fr" && window.CentroamericanoFR && window.CentroamericanoFR.paises[f];
     return (fr || PAISES[f][lang === "en" ? 1 : 0]) + " (" + f + ")";
   };
-  const ordenGrupo = (g) => { const m = String(g).match(/^U0?(\d+)(F?)$/i); return m ? Number(m[1]) * 2 + (m[2] ? 1 : 0) : 999; };
+  // Con `ordenGrupos` (los niveles de Tacho Chess 2, de primer grado a
+  // undécimo año), ese orden; si no, el de las categorías «U08» a «U18F».
+  const ordenGrupo = (g) => {
+    const i = Array.isArray(CONFIG.ordenGrupos) ? CONFIG.ordenGrupos.indexOf(g) : -1;
+    if (i >= 0) return i;
+    const m = String(g).match(/^U0?(\d+)(F?)$/i); return m ? Number(m[1]) * 2 + (m[2] ? 1 : 0) : 999;
+  };
 
   // Sin tildes, sin mayúsculas y sin comas: «Muñoz, José» → «munoz jose».
   const plano = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
@@ -418,18 +460,25 @@
   // Cada pedido lleva su número: si se cambia de modalidad mientras uno va en
   // camino, lo que trae ya no se pinta ni se guarda como de la otra.
   let pedidos = 0;
-  function pedir() {
+  // forzar: vuelve a leer aunque la última lectura sea reciente (la ventana de
+  // pareos, cuando sabe que el torneo cambió).
+  function pedir(forzar) {
     if (pidiendo) return pidiendo;
-    if (datos && !deGuardado && Date.now() - ultimoPedido < REFRESCO_MS) return Promise.resolve(datos);
+    if (forzar !== true && datos && !deGuardado && Date.now() - ultimoPedido < REFRESCO_MS) return Promise.resolve(datos);
     ultimoPedido = Date.now();
     const n = ++pedidos, pidio = modalidad;
     const p = (async () => {
       await null;
       try {
-        if (!window.sb || !window.sb.functions) throw new Error("sin cliente");
+        if (!window.sb || (!DE_PAREO && !window.sb.functions)) throw new Error("sin cliente");
         const body = { clave: SALA, modalidad: pidio };
         if (PRUEBA) body.prueba = true;
-        const { data, error } = await window.sb.functions.invoke("sala-jugadores", { body });
+        // Un torneo dirigido en Pareo Integral (`fuente: "pareo"`): los mismos
+        // datos, leídos de Pareo por js/torneo-pareo-datos.js en lugar de
+        // chess-results. Ver «Los resultados de Pareo, como en el Centroamericano».
+        const { data, error } = DE_PAREO
+          ? await window.TorneoPareoDatos.leer().then((x) => ({ data: x, error: null }), (e) => ({ data: null, error: e }))
+          : await window.sb.functions.invoke("sala-jugadores", { body });
         if (error || !data || !Array.isArray(data.torneos)) throw error || new Error("respuesta rara");
         if (n !== pedidos) return datos;
         // Las modalidades que tiene la sala; si no tiene la pedida, la función
@@ -500,7 +549,7 @@
     deGuardado = !!datos;
     pintarModalidades();
     anunciar(t().modalidadAhora(m));
-    const alDia = () => { pintarTodo(); if (dialogo && dialogo.open) pintarMedallero(); };
+    const alDia = () => { pintarTodo(); if (dialogo && dialogo.open) pintarMedallero(); if ($("copa") && $("copa").open) pintarCopa(); };
     alDia();
     document.dispatchEvent(new Event("cac-datos"));
     pedir().then(alDia, alDia);
@@ -844,6 +893,15 @@
       linea = tx.mesa(x.ronda, x.partida.mesa, x.partida.color === "blancas" ? tx.blancas : tx.negras, rival);
     } else linea = tx.sinPareo(x.ronda);
     li.appendChild(el("p", "cac-jugador-ronda", linea));
+    // Dónde queda su mesa en la sala (js/centroamericano-plano.js), solo en
+    // el clásico: el plano es el de sus torneos.
+    // Con la foto de la sala y sus mesas marcadas (js/torneo-sala-foto.js,
+    // Tacho Chess 2), la mesa iluminada sobre la foto.
+    const plano = window.TorneoSalaFoto || window.CentroamericanoPlano;
+    if (x.partida && x.partida.rival && modalidad === "clasico" && plano) {
+      const enSala = plano.enTarjeta(x.torneo.texto, x.partida.mesa, x.torneo);
+      if (enSala) li.appendChild(enSala);
+    }
     const res = x.partida && x.partida.resultado && x.partida.resultado !== "bye" && /\d|½/.test(x.partida.resultado) ? x.partida.resultado : "";
     if (res) li.appendChild(el("p", "text-sm", tx.resultado(res)));
     // En las páginas universitarias, cómo le fue en las ediciones anteriores
@@ -1002,7 +1060,7 @@
     const eventos = eventosDelCalendario(x);
     if (!eventos.length) { anunciar(tx.calendarioSin); return; }
     const { texto, eventos: n } = window.CalendarioIcs.armarHoras({ nombre: tx.calNombre(nombreCorto(x.j)), eventos });
-    window.CalendarioIcs.bajar(texto, "centroamericano-2026-rondas-" + slugDe(x.j.nombre) + ".ics");
+    window.CalendarioIcs.bajar(texto, ((CONFIG.imagen && CONFIG.imagen.archivo) || "centroamericano-2026") + "-rondas-" + slugDe(x.j.nombre) + ".ics");
     anunciar(tx.calendarioListo(n));
   }
 
@@ -1212,7 +1270,7 @@
     const c = porColor(deCada.flatMap((d) => d.rondas));
     if (c.blancas.n || c.negras.n) caja.appendChild(el("p", "cac-colores-pais text-sm", tx.coloresPais(c)));
     const texto = [tx.whatsappTitulo(nombrePais, ronda), tx.resumen(ronda, g, e, p, b, a) + " " + tx.resumenPuntos(pts, posibles), ""]
-      .concat(lineas, ["", "https://ajedrez-integral.com/centroamericano-2026.html" + (idioma() !== "es" ? "?lang=" + idioma() : "")]).join("\n");
+      .concat(lineas, ["", "https://" + (CONFIG.url || "ajedrez-integral.com/centroamericano-2026.html") + (idioma() !== "es" ? "?lang=" + idioma() : "")]).join("\n");
     const boton = el("button", "cac-boton mt-3", tx.copiarWhatsapp);
     boton.type = "button";
     const aviso = el("p", "mt-2 text-sm font-semibold");
@@ -1508,6 +1566,100 @@
     caja.appendChild(rejilla);
   }
 
+  // Los puntos de la Copa de naciones por federación, con cuántos 1.°, 2.°…
+  // 5.° lugares tiene cada una (para el desempate). grupos: {grupo: jugadores
+  // ordenados por puesto}. Ver «La Copa de naciones» en juegos-y-torneos.md.
+  const PUNTOS_COPA = [10, 8, 6, 4, 2];
+  function copaDeNaciones(grupos) {
+    const por = {};
+    Object.keys(grupos).forEach((g) => {
+      grupos[g].slice().sort((a, b) => a.puesto - b.puesto).slice(0, PUNTOS_COPA.length).forEach((j, i) => {
+        if (!j.fed) return;
+        const x = por[j.fed] = por[j.fed] || { fed: j.fed, puntos: 0, lugares: PUNTOS_COPA.map(() => 0) };
+        x.puntos += PUNTOS_COPA[i];
+        x.lugares[i] += 1;
+      });
+    });
+    return Object.values(por).sort((a, b) => b.puntos - a.puntos
+      || a.lugares.reduce((d, n, i) => d || (b.lugares[i] - n), 0) || a.fed.localeCompare(b.fed));
+  }
+
+  // La ventana «Copa de naciones» (la ficha de la página; la pidió el dueño el
+  // 7/11/2026): los cinco primeros de cada categoría del Clásico dan 10, 8, 6,
+  // 4 y 2 puntos a su país.
+  function pintarCopa() {
+    const caja = $("copa-contenido");
+    if (!caja) return;
+    const tx = t();
+    caja.replaceChildren();
+    if (!datos) { caja.appendChild(el("p", "text-brand-600 dark:text-brand-300", tx.cargando)); return; }
+    const torneos = datos.torneos.filter((tor) => Array.isArray(tor.jugadores) && tor.jugadores.length);
+    const ronda = Math.max(0, ...torneos.map((tor) => tor.ronda || 0));
+    const sec = el("section", "cac-copa");
+    caja.appendChild(sec);
+    if (modalidad !== "clasico") {
+      sec.appendChild(el("p", "mt-1 text-sm font-semibold", tx.copaSoloClasico));
+      return;
+    }
+    if (!ronda) { sec.appendChild(el("p", "font-semibold", tx.medalleroAntes)); return; }
+    const todosTerminaron = torneos.every((tor) => tor.terminado || (tor.rondas && tor.ronda >= tor.rondas));
+    const rondas = Math.max(0, ...torneos.map((tor) => tor.rondas || 0));
+    sec.appendChild(el("p", "mt-2 font-semibold", todosTerminaron ? tx.final : tx.provisional(ronda, rondas)));
+    const grupos = {};
+    torneos.forEach((tor) => tor.jugadores.forEach((j) => { (grupos[j.grupo || "—"] = grupos[j.grupo || "—"] || []).push(j); }));
+    const filas = copaDeNaciones(grupos);
+    sec.appendChild(el("p", "mt-1 text-sm", tx.copaRegla));
+    // El podio: el 2.° a la izquierda, el 1.° en el medio y más alto, el 3.° a la derecha.
+    const podio = el("ol", "cac-copa-podio");
+    [1, 0, 2].forEach((i) => {
+      const x = filas[i];
+      if (!x) return;
+      const li = el("li", "cac-copa-escalon cac-copa-" + (i + 1));
+      li.value = i + 1;
+      const m = el("span", "cac-copa-medalla", ["🥇", "🥈", "🥉"][i]); m.setAttribute("aria-hidden", "true");
+      li.append(m, el("span", "cac-copa-fed", pais(x.fed, idioma()) || x.fed), el("span", "cac-copa-puntos", tx.copaPuntos(x.puntos)), el("span", "cac-copa-lugar", tx.copaPuesto(i)));
+      podio.appendChild(li);
+    });
+    sec.appendChild(podio);
+    // Y la tabla de todos, con cuántos lugares tiene cada uno.
+    const envoltura = el("div", "mt-3 overflow-x-auto rounded-2xl border border-brand-100 dark:border-brand-800 bg-white dark:bg-brand-900");
+    const tabla = el("table", "cac-medallas cac-copa-tabla");
+    const cap = el("caption", "sr-only", tx.copaTabla);
+    tabla.appendChild(cap);
+    const cab = el("tr", "bg-brand-100 dark:bg-brand-800");
+    ["#", tx.copaPais, "1.°", "2.°", "3.°", "4.°", "5.°", tx.copaTotal].forEach((c) => { const th = el("th", "", c); th.scope = "col"; cab.appendChild(th); });
+    const thead = el("thead"); thead.appendChild(cab); tabla.appendChild(thead);
+    const tbody = el("tbody", "divide-y divide-brand-100 dark:divide-brand-800");
+    filas.forEach((x, i) => {
+      const tr = el("tr");
+      tr.appendChild(el("td", "", String(i + 1)));
+      const th = el("th", "font-semibold", pais(x.fed, idioma()) || x.fed); th.scope = "row"; tr.appendChild(th);
+      x.lugares.forEach((n) => tr.appendChild(el("td", "", String(n))));
+      tr.appendChild(el("td", "font-bold", String(x.puntos)));
+      tbody.appendChild(tr);
+    });
+    tabla.appendChild(tbody);
+    envoltura.appendChild(tabla);
+    sec.appendChild(envoltura);
+    // La imagen para compartir, con la marca de agua (js/centroamericano-tablas.js).
+    const boton = el("button", "cac-boton mt-4", "");
+    boton.type = "button";
+    boton.id = "copa-imagen";
+    const ico = el("span", "", "📸 "); ico.setAttribute("aria-hidden", "true");
+    boton.append(ico, document.createTextNode(tx.copaBoton));
+    const estado = el("p", "mt-2 text-sm font-semibold");
+    estado.setAttribute("role", "status");
+    boton.addEventListener("click", () => { if (window.CentroamericanoTablas) window.CentroamericanoTablas.compartirCopa(filas, todosTerminaron, ronda, boton, estado); });
+    sec.append(boton, estado);
+  }
+  function abrirCopa() {
+    pintarCopa();
+    pedir().then(pintarCopa, () => {
+      const caja = $("copa-contenido");
+      if (caja && !datos) caja.replaceChildren(el("p", "font-semibold", t().error));
+    });
+  }
+
   function abrirMedallero() {
     pintarMedallero();
     pedir().then(pintarMedallero, () => {
@@ -1563,12 +1715,17 @@
     new MutationObserver(() => { if (dialogo.open) abrirMedallero(); }).observe(dialogo, { attributes: true, attributeFilter: ["open"] });
     if (dialogo.open) abrirMedallero();
   }
+  const ventanaCopa = $("copa");
+  if (ventanaCopa) {
+    new MutationObserver(() => { if (ventanaCopa.open) abrirCopa(); }).observe(ventanaCopa, { attributes: true, attributeFilter: ["open"] });
+    if (ventanaCopa.open) abrirCopa();
+  }
 
   // Lo que usa js/centroamericano-tablas.js (la clasificación, la tabla por
   // país, el proyector y la imagen para compartir): una sola copia de los datos.
   window.CentroamericanoVivo = {
     datos: () => datos, deGuardado: () => deGuardado, pedir, jugadores, rondasDe, rendimiento, queHizo, rivalTexto,
-    textos: t, idioma, categoria: (g) => t().categoria(g), ordenGrupo, pais: (f) => pais(f, idioma()), fmtPuntos, puntosNum,
+    textos: t, idioma, copaDeNaciones, categoria: (g) => t().categoria(g), ordenGrupo, cambiarFuente, pais: (f) => pais(f, idioma()), fmtPuntos, puntosNum,
     cuandoSeLeyo: () => cuandoSeLeyo(t()), plano, el, ZONA, progresoRonda, anunciar, puntosDeMesa, eloDe, porColor, textoElo,
     puestosDe, puntosTras, puestoTexto: (p) => puestoTexto(p, idioma()), delegacionGuardada, eventosDelCalendario, nombreCorto, enlaceDe, slugDe,
     modalidad: () => modalidad, conModalidad,
@@ -1576,7 +1733,8 @@
     sala: () => SALA, seguidos, repintar: () => pintarTodo(),
   };
 
-  document.addEventListener("cac-idioma", () => { pintarTodo(); ponerAvisosAlDia(); if (dialogo && dialogo.open) pintarMedallero(); });
+  document.addEventListener("cac-plano", () => { if (datos) pintarTodo(); });
+  document.addEventListener("cac-idioma", () => { pintarTodo(); ponerAvisosAlDia(); if (dialogo && dialogo.open) pintarMedallero(); if (ventanaCopa && ventanaCopa.open) pintarCopa(); });
 
   // Mientras la página está a la vista y alguien ya buscó (o sigue a alguien,
   // o eligió su país), se pone al día sola.

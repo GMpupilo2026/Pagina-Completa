@@ -118,6 +118,9 @@
             ocupado = true;
             if (boton) boton.disabled = true;
             try { await tarea(); }
+            // Una lectura que falló (ver fetchAllPairingsFlat) frena la tarea
+            // ANTES de escribir nada: se dice, en vez de quedarse callado.
+            catch (e) { console.error(e); Avisos.avisar(e.message || "No se pudo completar. Vuelve a intentarlo.", { tipo: "error" }); }
             finally { ocupado = false; if (boton) boton.disabled = false; render(); }
         }
 
@@ -165,7 +168,10 @@
         }
 
         async function fetchAllPairingsFlat() {
-            const { data } = await sb.from("tournament_pairings").select("white_id, black_id, is_bye, result, advance_id").eq("tournament_id", tournament.id);
+            const { data, error } = await sb.from("tournament_pairings").select("white_id, black_id, is_bye, result, advance_id").eq("tournament_id", tournament.id);
+            // Sin el historial, el suizo pareaba como si fuera la ronda 1:
+            // rivales repetidos y los puntajes ignorados. Mejor no generar.
+            if (error) throw new Error("No se pudo leer el historial de cruces: " + error.message + ". La ronda no se generó.");
             return (data || []).map((p) => ({ white: p.white_id, black: p.black_id, isBye: p.is_bye, result: p.result, advanceId: p.advance_id }));
         }
 
@@ -650,13 +656,18 @@
         document.getElementById("modos-guardar").addEventListener("click", guardarModos);
         document.getElementById("generate-round-btn").addEventListener("click", (e) => unaVez(e.currentTarget, generateRound));
 
+        const reintentadas = new Set();   // rondas cuyo cierre ya se reintentó en esta carga
         async function loadAll() {
             const { data: t, error } = await sb.from("tournaments").select("*").eq("id", TOURNEY_ID).maybeSingle();
             if (error || !t) { showError("No se encontró ese torneo — puede que ya se haya eliminado."); return; }
             tournament = t;
             isOwner = tournament.created_by === profile.id || !!profile.is_admin;
 
-            const { data: regs } = await sb.from("tournament_registrations").select("*").eq("tournament_id", TOURNEY_ID).order("registered_at", { ascending: true });
+            /* Si una de estas lecturas falla, la página no sigue con la lista
+               vacía: «Generar ronda» armaba una ronda sin cruces que no se
+               podía borrar ni cerrar, y el torneo quedaba trabado. */
+            const { data: regs, error: errRegs } = await sb.from("tournament_registrations").select("*").eq("tournament_id", TOURNEY_ID).order("registered_at", { ascending: true });
+            if (errRegs) { showError("No se pudo cargar el torneo (los inscritos). Recarga la página."); return; }
             registrations = regs || [];
             const ids = registrations.map((r) => r.player_id);
             if (ids.length) {
@@ -665,15 +676,28 @@
             }
             amIRegistered = registrations.some((r) => r.player_id === profile.id);
 
-            const { data: roundsData } = await sb.from("tournament_rounds").select("*").eq("tournament_id", TOURNEY_ID).order("round_number", { ascending: true });
+            const { data: roundsData, error: errRounds } = await sb.from("tournament_rounds").select("*").eq("tournament_id", TOURNEY_ID).order("round_number", { ascending: true });
+            if (errRounds) { showError("No se pudo cargar el torneo (las rondas). Recarga la página."); return; }
             rounds = roundsData || [];
             pairingsByRound = {};
             if (rounds.length) {
-                const { data: pairingsData } = await sb.from("tournament_pairings").select("*").eq("tournament_id", TOURNEY_ID).order("board_number", { ascending: true });
+                const { data: pairingsData, error: errPairings } = await sb.from("tournament_pairings").select("*").eq("tournament_id", TOURNEY_ID).order("board_number", { ascending: true });
+                if (errPairings) { showError("No se pudo cargar el torneo (los cruces). Recarga la página."); return; }
                 (pairingsData || []).forEach((p) => {
                     if (!pairingsByRound[p.round_id]) pairingsByRound[p.round_id] = [];
                     pairingsByRound[p.round_id].push(p);
                 });
+            }
+            /* Una ronda con todos sus cruces resueltos que sigue abierta: su
+               cierre quedó a medias (una lectura falló en TorneoSync, que ya no
+               cierra con datos incompletos). Se reintenta una vez por carga;
+               si cierra, se vuelve a pintar con la ronda y el campeón al día. */
+            const atascada = tournament.status !== "finished" && rounds.find((r) => r.status !== "finished"
+                && (pairingsByRound[r.id] || []).length
+                && pairingsByRound[r.id].every((p) => p.result != null && !p.needs_manual_advance));
+            if (atascada && !reintentadas.has(atascada.id)) {
+                reintentadas.add(atascada.id);
+                TorneoSync.maybeFinishRound(sb, atascada.id).then(loadAll, (e) => console.error(e));
             }
             /* Las salas de los cruces que siguen en juego, para dibujarlas acá
                mismo. Se piden solo las que hacen falta —ni una de las rondas ya

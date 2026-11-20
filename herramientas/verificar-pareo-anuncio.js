@@ -155,11 +155,13 @@ async function pruebaAnuncio(browser) {
   ok(/La inscribió PRUEBA MAMÁ · 8888-8888/.test(await page.textContent("#pi-insc-lista")), "con quién inscribió y su contacto (solo aquí)");
   igual("nadie entra solo a la lista", (await P.leerTodos(page))[0].jugadores.length, 0);
   await page.click('[data-aceptar="11111111-1111-4111-8111-111111111111"]');
+  await page.click(formulario + " [data-avisos-aceptar]");
   const [g] = await P.esperarGuardado(page, (l) => l[0].jugadores.length === 1);
   igual("aceptar la agrega a la lista, con su centro, categoría y Elo", [g.jugadores[0].nombre, g.jugadores[0].institucion, g.jugadores[0].categoria, g.jugadores[0].elo], ["PRUEBA NIÑA", "ESCUELA X", "Sub-10", 1200]);
   const marcarA = pedidos.filter((x) => x.accion === "marcar").pop();
   igual("y la marca como aceptada con la clave", [marcarA.estado, marcarA.ids, marcarA.clave], ["aceptada", ["11111111-1111-4111-8111-111111111111"], "clave-1"]);
   await page.click('[data-rechazar="22222222-2222-4222-8222-222222222222"]');
+  await page.click(formulario + " [data-avisos-aceptar]");
   await page.waitForFunction(() => /Rechazada/.test(document.getElementById("pi-insc-lista").textContent));
   igual("rechazar no la agrega", (await P.leerTodos(page))[0].jugadores.length, 1);
   ok(!errores.length, "sin errores en la página", errores.join(" | "));

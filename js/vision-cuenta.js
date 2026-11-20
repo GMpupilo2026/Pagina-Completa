@@ -50,7 +50,7 @@ window.VisionCuenta = (function () {
     "bot.html", "cartas.html", "concentracion.html", "confites.html", "crazyhouse.html",
     "cuatro-jugadores.html", "duelo.html", "ilumina-tablero.html", "variante.html",
     "transmision.html", "torneos-en-vivo.html", "lector-planilla.html", "tv.html",
-    "memoria.html", "coordenadas.html", "sonar.html", "batalla-naval.html",
+    "memoria.html", "sonar.html", "batalla-naval.html",
     "fundamentos-del-ajedrez.html",
   ];
 
@@ -385,7 +385,8 @@ window.VisionCuenta = (function () {
   var JUEGO_VACIO = { get: function () { return null; }, turn: function () { return "w"; }, moves: function () { return []; }, history: function () { return []; } };
   function esPreguntaAlTablero(texto) {
     if (!window.ComandosTablero) return false;
-    try { return !!ComandosTablero.interpretar(texto, { juego: JUEGO_VACIO }).manejado; } catch (e) { return false; }
+    // `sinEfecto`: solo se pregunta si es un comando del recuadro («voz más lenta» no cambia nada acá).
+    try { return !!ComandosTablero.interpretar(texto, { juego: JUEGO_VACIO, sinEfecto: true }).manejado; } catch (e) { return false; }
   }
   /* Un botón que ES una respuesta (una opción de la pregunta) no se aprieta
      por una palabra suelta: en el diagnóstico «volver» marcó la opción D, «Una
@@ -502,6 +503,10 @@ window.VisionCuenta = (function () {
     var form = e.target;
     var campo = form && form.querySelector ? form.querySelector(SEL) : null;
     if (!campo || !campo.value) return;
+    /* Mientras el recuadro dicta la posición (js/cuadro-comandos.js),
+       «siguiente» y «otra vez» son la pieza siguiente y repetirla, no el
+       botón del ejercicio. */
+    if (campo.dataset && campo.dataset.dictando) return;
     if (comandoGeneral(campo.value, campo)) {
       e.preventDefault();
       e.stopImmediatePropagation();

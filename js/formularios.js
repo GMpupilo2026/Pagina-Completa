@@ -291,7 +291,10 @@ async function abrirEditor(form) {
     document.getElementById("f-titulo").value = form ? form.titulo : "";
     document.getElementById("f-descripcion").value = form ? (form.descripcion || "") : "";
     document.getElementById("f-abierto").checked = form ? !!form.abierto : true;
-    document.getElementById("f-cierra").value = form && form.cierra_el ? form.cierra_el.slice(0, 10) : "";
+    // El día de cierre en hora de Costa Rica: el final del 20 en Costa Rica es
+    // el 21 a las 05:59 UTC, y leer los primeros diez caracteres daba «21» (y
+    // al volver a guardar, el cierre se corría un día más).
+    document.getElementById("f-cierra").value = form && form.cierra_el ? HoraCR.dia(form.cierra_el) : "";
     document.getElementById("f-grupo").value = form ? (form.grupo || "") : "";
     llenarAcademias(form);
     document.getElementById("guardar-msg").textContent = "";
@@ -433,9 +436,10 @@ async function guardar() {
         grupo: document.getElementById("f-grupo").value || null,
         campos: limpios,
         abierto: document.getElementById("f-abierto").checked,
-        // La fecha se guarda como el final de ese día: "cierra el 20" es que el
-        // 20 todavía se puede contestar.
-        cierra_el: cierra ? new Date(cierra + "T23:59:59").toISOString() : null,
+        // La fecha se guarda como el final de ese día EN COSTA RICA, sea cual
+        // sea la zona de la computadora: "cierra el 20" es que el 20 todavía se
+        // puede contestar.
+        cierra_el: cierra ? new Date(HoraCR.desdeCampo(cierra + "T23:59").getTime() + 59000).toISOString() : null,
         updated_at: new Date().toISOString(),
     };
     // Sin academias a la vista no se toca: un formulario que armó

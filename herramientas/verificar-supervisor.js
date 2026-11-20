@@ -121,6 +121,7 @@ async function pruebaSupervisor(browser) {
         await page.evaluate(() => Array.from(document.querySelectorAll(".sup-pestana")).map((a) => a.dataset.ir + ":" + a.firstChild.textContent.trim())),
         ["inicio:Inicio", "personas:Personas", "profesores:Profesores", "estudiantes:Estudiantes", "cobros:Cobros y accesos"]);
   igual("al entrar se ve SOLO Inicio", await page.evaluate(SECCION_VISIBLE), ["inicio"]);
+  igual("tiene cómo cerrar sesión, a la vista", await page.isVisible("#logout-btn"), true);
   igual("rótulo de la pestaña marcada", await page.getAttribute('.sup-pestana[aria-current="page"]', "data-ir"), "inicio");
 
   /* «Lo urgente»: lo que alguien espera primero, lo de vigilar después,

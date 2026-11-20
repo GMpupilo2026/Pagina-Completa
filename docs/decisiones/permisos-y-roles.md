@@ -1920,7 +1920,11 @@ con el rol `public` NO se tocaron** (`bajo_mi_coordinacion`,
 evalúa también para `anon`, y sin el execute la consulta de una página pública
 tronaría con un error de permisos en vez de dar «0 filas». Esas se arreglan
 moviéndolas fuera de `public` o reescribiendo la política `to authenticated`,
-que es un cambio aparte. (`equipo_docente()` sí se cerró, en
+que es un cambio aparte. (`es_del_equipo_docente` ya se cerró así, el
+10/11/2026: `plan_compartidos_insert` pasó a `to authenticated` —anon no tiene
+insert en esa tabla, no cambió nada para nadie— y se le revocó a `public, anon`.
+Quedan las otras cuatro, que contestan sobre quien llama: sin sesión dan falso
+y no dicen nada de nadie.) (`equipo_docente()` sí se cerró, en
 `equipo_docente_solo_con_sesion`: ninguna política la usa —la de
 `plan_compartidos` usa `es_del_equipo_docente()`, que se parece en el nombre—,
 solo `js/plan-clase.js`, en páginas con sesión.) Las que quedan a propósito para
@@ -2018,9 +2022,12 @@ cuenta que la activó no lee ni escribe nada**, llame como llame.
   cliente con `Authorization: Bearer <jwt>`) pasan por PostgREST y quedan
   cubiertas solas. **Las que lo miran con la clave de servicio no**:
   `prueba-gratis` (solo administración) comprueba a mano el `aal` del token
-  (`sesionAMedias`). `mejorar-informe` también usa la clave de servicio, pero
-  lo peor que hace con una contraseña robada es gastar el tope de la IA: queda
-  pendiente.
+  (`sesionAMedias`). `mejorar-informe` también usa la clave de servicio y se
+  había quedado sin él (con una contraseña robada se podía gastar el tope de la
+  IA de la academia); lo lleva desde el 10/11/2026, versión 5.
+  `verificar-funciones-dos-pasos.js` falla si una función valida la sesión con
+  `auth.getUser` y la clave de servicio sin llamar a `sesionAMedias` (las que
+  arman un cliente con el token de quien llama ya pasan por PostgREST).
 - `interno.verificacion_al_dia()` es la única pregunta: sí si no hay sesión, si
   el token dice `aal2` o si la cuenta no tiene ningún factor verificado.
   Comprobado impersonando roles en SQL: sin factor pasa; con factor y `aal1`
@@ -2102,6 +2109,13 @@ Una bitácora que alguien puede escribir o borrar no prueba nada.
 - **Se guarda dos años.** `interno.purgar_auditoria()` corre el día 1 de cada
   mes (pg_cron `auditoria-purga`) y es lo único que puede borrar: levanta la
   marca local `ajedrez.purgando_auditoria`, que solo vive en su transacción.
+- **`compras_tienda` y `course_unlocks` se habían quedado afuera** hasta el
+  10/11/2026 (`revision_auditoria_indices_y_equipo_docente`): abren material
+  de pago y cursos antes de tiempo, y nadie podía contestar «¿quién le abrió
+  esto?». `verificar-auditoria.js` solo revisa las tablas de su lista, así que
+  una tabla que reparte acceso y no está en `VIGILADAS` pasa sin aviso: al
+  crear una, la pregunta es si abre algo, no si se llama «acceso». En
+  `compras_tienda` la persona queda en la fila (`profile_id`), no en `sobre`.
 - Comprobado impersonando roles en SQL: el cambio de `teacher_id` se anota
   con quién y sobre quién; uno que no cambió nada, no; el profesor lee 0 filas
   y administración todas; insertar como `authenticated` o `service_role` se
@@ -2356,3 +2370,266 @@ migración termina mirando el catálogo y no entra si queda alguna sin regla.
 
 **Una columna nueva que apunte a una cuenta lleva su `on delete`** en la misma
 migración: `verificar-borrar-cuenta.js` lo revisa en cada migración desde esa.
+
+## Las cuentas de árbitro
+
+El dueño lo pidió el 8/11/2026, al decidir que la Mesa del árbitro del
+Centroamericano será la que se ofrezca en las herramientas: «crear usuarios a
+árbitros y poder elegir qué herramientas pueden usar, al igual que alumnos pero
+que sea exclusivo de árbitros». Se le preguntaron tres cosas y eligió:
+
+- **Quién las crea:** administración **y cada organizador**, es decir, quien
+  tiene una licencia propia de alguna herramienta. El organizador solo le puede
+  dar a sus árbitros **las herramientas que él mismo tiene**, y solo ve a los
+  suyos.
+- **Cómo entran:** con **usuario y contraseña**, sin correo. Es el mismo usuario
+  de la Academia que el de los alumnos sin correo (`alumno.ajedrez-integral.com`,
+  el dominio sin MX) y la misma regla de contraseña (`problemaDeContrasena()`).
+- **Qué ven:** **solo sus herramientas** (`arbitro.html`, «Mis herramientas»),
+  nada de la Academia.
+
+**No se hizo una puerta nueva para cada herramienta: las herramientas de un
+árbitro son licencias de siempre.** Ver «Todas las herramientas llevan
+licencia» en juegos-y-torneos.md. `arbitro_herramientas_fijar()` le pone a la
+cuenta licencias de `licencias_herramientas` con `otorgada_por` = quien se la
+dio. Así, el candado de cada página (`js/candado-herramienta.js`), las Edge
+Functions y el worker (`CODIGO_CON_LICENCIA`), que ya preguntan
+`tengo_herramienta()`, atienden al árbitro sin cambiar una línea.
+
+**Una licencia dada vale solo mientras quien la dio la tenga.**
+`tengo_herramienta()` exige, para una licencia con `otorgada_por`, que
+`interno.herramienta_propia(otorgada_por, herramienta)` diga que sí: que quien
+la dio administre o tenga esa herramienta por una licencia **propia** (sin
+`otorgada_por`) vigente.
+
+- Si al organizador se le vence o se le anula la suya, a sus árbitros se les
+  apaga en el mismo momento, sin que nadie se acuerde de hacerlo. Si la renueva,
+  vuelven a tenerla.
+- Es una sola vuelta: una licencia dada no sostiene a otra. Además,
+  `arbitros_puedo_dar()` le dice «nada» a una cuenta de árbitro, así que un
+  árbitro no crea árbitros.
+- «Mis árbitros» enseña esas licencias como «sin usar por ahora» (`pausadas` de
+  `arbitros_mis()`), y `mis_herramientas()` no las cuenta.
+- Comprobado en la base impersonando roles (8/11, dentro de una transacción que
+  se deshizo): el organizador da la que tiene y no la que no tiene; el árbitro
+  abre esa y ninguna otra, no puede dar ninguna y `acceso_vigente()` le dice que
+  no; otra cuenta no ve al árbitro ni le puede quitar nada; y al anular la
+  licencia del organizador, al árbitro se le cerró la herramienta.
+
+**Fuera de la Academia lo decide la base.** `profiles.role` acepta `'arbitro'`.
+
+- `acceso_vigente()` le dice que no a esa cuenta. Con eso, las políticas
+  restrictivas de la Academia (progreso, clase, exámenes) y el candado de los
+  cursos en el worker la dejan afuera.
+- `mi_acceso()` contesta `motivo: 'arbitro'`, y `js/acceso-vigente.js`, que va
+  en todas las páginas de la Academia, hace dos cosas:
+  - cambia los enlaces a `clases.html` (el «Academia» del encabezado y de las
+    migas) por `arbitro.html`;
+  - si la página no es la de una herramienta, la reemplaza por `arbitro.html`.
+    Cuáles son las páginas de herramientas sale de la lista de la vitrina,
+    `js/herramientas-arbitraje.js`, que se baja solo para estas cuentas.
+- Así, al entrar (el login lleva a `clases.html`), el árbitro llega a su panel.
+- No sale en ninguna lista de alumnos, porque todas filtran por
+  `role = 'alumno'` o por `profile_teachers`.
+- En `admin.html` figura como «Árbitro», y su rol no se cambia desde ahí: la
+  ficha lleva a «Mis árbitros». `admin-manage-users` sigue aceptando solo
+  `profesor` y `alumno`.
+
+**De quién es cada árbitro: `arbitros_cuentas`.**
+
+- Tiene RLS y ninguna política de escritura; el navegador solo la lee, y la
+  política deja ver la fila al organizador, al propio árbitro y a
+  administración.
+- La escribe la Edge Function `arbitro-cuentas`.
+- Lleva el trigger de la bitácora y está en `VIGILADAS`.
+- Si se borra la cuenta del organizador, la fila queda con `organizador_id`
+  nulo y la ve administración. Sus licencias dadas se borran con él
+  (`on delete cascade`): ya no valdrían de todos modos.
+
+**La Edge Function `arbitro-cuentas`** (`verify_jwt` en true) tiene dos
+acciones, `crear` y `contrasena`. Todo permiso se le pregunta a la base **con el
+token de quien llama**, así que pasa por la verificación en dos pasos:
+
+- `arbitros_puedo_dar()` dice si puede crear árbitros;
+- las herramientas las fija `arbitro_herramientas_fijar()` con su identidad,
+  nunca con la clave de servicio, que habría dejado dar cualquier herramienta;
+- `arbitros_mis()` dice si el árbitro de `contrasena` es suyo.
+
+La clave de servicio se usa solo para lo que la base no deja hacer desde
+afuera:
+
+- crear la cuenta en Auth;
+- ponerle el rol (el trigger de identidad no deja que nadie se cambie el rol);
+- anotarla en `arbitros_cuentas`.
+
+**La cuenta nace entera o no nace.** Si después de crearla falla el perfil, la
+fila o las herramientas, se borra: una cuenta suelta con rol de alumno sería un
+alumno más en la Academia. Además:
+
+- Hay un tope de 200 árbitros por organizador.
+- La contraseña solo se le cambia a una cuenta con rol `arbitro`.
+- No hay «olvidé mi contraseña» por correo, porque no tiene buzón: se la cambia
+  su organizador desde «Mis árbitros».
+
+**`arbitro_herramientas_fijar()` deja la lista exactamente como llega**, como
+las funciones `set_*`, **pero solo entre las que quien llama puede dar**:
+
+- Lo que puso administración y el organizador no tiene no se le quita por no
+  aparecer en su pantalla, y la pantalla lo dice («También tiene…»).
+- «Todas las herramientas» solo la da administración.
+- Al final vuelve a **leer** lo que quedó, no devuelve lo pedido.
+
+**Las pantallas:**
+
+- **`mis-arbitros.html`** (sesión; quien no tiene licencia propia ve el aviso):
+  - el formulario lleva nombre, usuario (se propone del nombre con
+    `UsuarioAlumno.base()`, la misma regla del servidor, y se enseña el que
+    devolvió el servidor), contraseña con «Proponer una fácil»
+    (`ContrasenaAlumno.claveFacil()`), las herramientas que puede dar por ficha
+    de la vitrina (`HerramientasArbitraje.conLicenciaPropia()`) y la casilla de
+    consentimiento con su enlace a `privacidad.html`;
+  - al crearla, el mensaje listo para copiar o mandar por WhatsApp, porque no
+    sale ningún correo;
+  - cada árbitro con sus casillas y «Guardar sus herramientas», y «Cambiar su
+    contraseña».
+- Se llega desde la vitrina (`herramientas-arbitraje.html`, debajo de «Mis
+  licencias», solo si `arbitros_puedo_dar()` trae algo) y desde las páginas de
+  administración (`js/paginas-admin.js`).
+- **`arbitro.html`** pinta una tarjeta por herramienta que abre
+  `mis_herramientas()` (`HerramientasArbitraje.abre()`). Va sin la burbuja de
+  conectados, sin el aviso de partida y sin el aviso del profe.
+
+### Las fichas a la vista
+
+El dueño lo pidió el 16/11/2026 con la cuenta de Brandon: «permitir que vea
+las fichas pero sin poder entrar hasta tener la licencia» de Pareo Integral,
+Pareo para DGT, Notara, Normas de título, Reclamos de tablas, Bases del torneo
+y Mesa del árbitro.
+
+- **No es un permiso.** Ver la ficha no abre nada: abrir lo siguen decidiendo
+  `tengo_herramienta()`, el candado de cada página, las Edge Functions y el
+  worker, que no miran esta lista. La ficha es lo mismo que la vitrina pública
+  le enseña a cualquiera. Por eso el organizador puede poner a la vista
+  **cualquier** herramienta, también una que él no tiene: justo la que el
+  árbitro tendría que conseguir.
+- **Dónde vive:** `arbitros_cuentas.a_la_vista` (migración
+  `20261116171834`), una lista por árbitro, que hereda la política de lectura
+  (el propio árbitro, su organizador, administración), la falta de política de
+  escritura y la bitácora de esa tabla. La escribe
+  `arbitro_fichas_a_la_vista_fijar()`: solo su organizador o administración
+  (con `coalesce`), deja la lista exactamente como llega y la vuelve a leer.
+- **`arbitro.html`** pinta debajo de sus herramientas «Para cuando tengas la
+  licencia»: las fichas a la vista que todavía no abre (si ya la abre, sale
+  arriba y no se repite), con el borde punteado, «Sin licencia todavía» escrito
+  y «Cómo conseguir la licencia», que lleva a la ficha de su tema en la
+  vitrina. Una tarjeta cerrada no lleva `href`, se alcanza con Tab y lleva
+  `aria-disabled`.
+- **`mis-arbitros.html`**: en cada árbitro, el desplegable «Fichas a la vista,
+  sin abrir» con todas las herramientas de la vitrina y su propio botón de
+  guardar.
+- Comprobado impersonando roles en SQL (16/11, dentro de una transacción que
+  se deshizo): administración las fija; el árbitro lee su lista, no abre la
+  herramienta, no puede fijarse la lista ni escribir la tabla directo; otro
+  profesor no la fija ni ve la fila; sin sesión, rechaza.
+  `verificar-arbitros-cuentas.js` prueba las promesas de la migración y las dos
+  pantallas.
+
+**Lo que falta** (el punto 1 de lo conversado con el dueño): que lo de la Mesa
+del árbitro del Centroamericano (`centroamericano_*`) tenga dueño por evento.
+Hoy cualquiera con la licencia `mesa-arbitro` ve todo lo del Centroamericano,
+así que **dar `mesa-arbitro` a un árbitro le abre `centroamericano-mesas.html`
+entero**. Hasta que eso tenga dueño, no conviene repartir esa licencia.
+
+Lo prueba `verificar-arbitros-cuentas.js`:
+
+- las promesas, leídas en la migración, la función y los scripts;
+- las dos páginas con un Supabase de mentira: solo las herramientas que tiene,
+  lo que se manda al crear y al guardar, el nombre ajeno literal, el panel con
+  sus tarjetas, y el árbitro que va a su panel desde una página de la Academia
+  y se queda en la de una herramienta.
+
+Rompiendo a propósito que lo lleve a su panel o que se ofrezcan todas las
+herramientas, salta.
+
+## La sala de seminario de arbitraje
+
+El dueño lo pidió el 16/11/2026, para «ajedrez-integral.com/arbitro»: además
+de estudiar y entrenar (eso ya es el Aula de Arbitraje, una herramienta con
+licencia que el organizador le marca a cada árbitro en «Mis árbitros»), «un
+espacio para sesión de seminario y poder correr todo ese contenido, que esté
+cerrada solo para cuando el instructor la abra y decida quién entra». Se le
+preguntaron cuatro cosas y eligió:
+
+- **Estudiar y entrenar:** como una herramienta más (el Aula de Arbitraje, que
+  ya existía), no algo que vea toda cuenta de árbitro.
+- **Instructor:** administración **y** cada organizador (quien puede dar
+  herramientas: `arbitros_puedo_dar()` no vacío). El organizador solo deja
+  entrar a **sus** árbitros (`arbitros_cuentas.organizador_id`); la sala de
+  administración la puede pedir cualquier cuenta de árbitro.
+- **Entrada:** **solo sala de espera**. Con la sala abierta, el árbitro pide
+  entrar y el instructor lo deja entrar o lo rechaza, uno por uno («Dejar
+  entrar a todos los que esperan» es un atajo para lo mismo). Sin sala
+  abierta no hay nada que pedir. Quien fue rechazado o sacado puede volver a
+  pedir: vuelve a la sala de espera y el instructor decide otra vez.
+- **Contenido:** las diapositivas del seminario AF (tres días, cinco temas por
+  día, `js/arbitro-seminario/contenido.js`), preguntas con tiempo (quién
+  contestó qué) y el examen de práctica de 25 preguntas con su nota sobre 100
+  (se aprueba con 80).
+
+**Todo pasa en `arbitro.html`**, en la sección «Sala de seminario»
+(`js/arbitro-seminario.js`, `css/arbitro-seminario.css`): el árbitro la ve
+siempre; la cuenta que no es de árbitro, solo si puede instruir. No es una
+página nueva de la Academia porque la cuenta de árbitro no entra a la
+Academia (`acceso_vigente()` le dice que no) y su panel es este.
+
+**Quién ve qué lo decide la base** (migración `…_seminario_arbitraje.sql`):
+
+- Cuatro tablas (`seminario_salas`, `seminario_participantes`,
+  `seminario_respuestas`, `seminario_examenes`) **sin política de
+  escritura**: las escriben las funciones `seminario_*`, que validan.
+  `seminario_participantes` es la que da el permiso (quién está admitido):
+  lleva el trigger de la bitácora y está en `VIGILADAS`.
+- Un árbitro lee la sala **solo admitido** (`interno.seminario_admitido_en()`,
+  el conjunto una vez); en la sala de espera no la ve. Ve solo **sus**
+  respuestas y su nota; el instructor, las de su sala. Los nombres los da
+  `seminario_participantes_de()` / `seminario_respuestas_de()` /
+  `seminario_examenes_de()`, solo al instructor o a administración.
+- **La opción buena no viaja con la pregunta.** `seminario_preguntar()` no la
+  recibe y deja `correcta` nula; la pone `seminario_revelar()`, que además
+  cierra la pregunta: desde ahí `seminario_responder()` rechaza. La página
+  del instructor baraja las opciones al lanzar y recuerda, en
+  `sessionStorage` (`seminario_pregunta_<sala>`), cuál quedó como buena. Si
+  la pregunta se lanzó desde otra pestaña, lo dice y pide volver a lanzarla.
+- **El examen se corrige en la página** (el banco del curso ya está en el
+  navegador) y `seminario_entregar_examen()` guarda aciertos, total y la nota
+  **una sola vez por sala** (índice primario y `do nothing`). Es una nota de
+  práctica para el instructor, no un acta: quien sabe usar la consola podría
+  mandar otro número. Si algún día cuenta para algo, las respuestas y la
+  corrección van a la base.
+- Una sala por instructor (índice único parcial); `seminario_abrir()`
+  devuelve la que ya tiene abierta. Una sala sin movimiento del instructor por
+  3 horas se cierra sola (`interno.cerrar_seminarios_inactivos()`, pg_cron
+  cada 15 min), como la clase en vivo.
+- Realtime: `seminario_salas` (lo que se proyecta), `seminario_participantes`
+  (la sala de espera y la admisión) y `seminario_respuestas` (el conteo),
+  cada una con `verificacion_en_dos_pasos` restrictiva y escuchadas siempre
+  con filtro (`id=eq.`, `sala_id=eq.`, `arbitro_id=eq.`). Las salas que se
+  abren se buscan cada 20 s mientras la página está a la vista: no hay una
+  columna por la que filtrar «salas nuevas para mí».
+- Comprobado en la base impersonando roles (16/11, dentro de una transacción
+  que se deshizo): el organizador abre y reabre la misma; un árbitro de otro
+  organizador no ve la sala ni puede pedir, admitir ni ver participantes; el
+  árbitro en espera no lee la sala ni contesta; admitido ve la diapositiva sin
+  la buena, contesta y cambia, no puede mandar una opción que no existe ni
+  contestar después de revelar; entrega el examen una vez (80,00 con 20/25);
+  sacado deja de ver la sala y puede volver a pedir; la sala de
+  administración la pide un árbitro de administración; cerrada no se lista; y
+  la inactiva se cierra sola.
+
+Lo prueba `verificar-seminario-arbitraje.js`: las promesas de la migración,
+que cada posición del contenido sea legal (chess.js) y cada pregunta tenga su
+buena, y `arbitro.html` con un Supabase de mentira como árbitro (sin sala,
+pedir entrar, la diapositiva con su tablero, contestar, el examen con su nota
+exacta) y como instructor (abrir, dejar entrar con el nombre literal,
+proyectar, lanzar sin la buena y revelar la buena ya barajada). Rompiendo a
+propósito lo que recuerda como buena al barajar, salta.

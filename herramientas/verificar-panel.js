@@ -47,221 +47,9 @@ const ALUMNA = { id: "u-ana",   role: "alumno",   is_admin: false, es_coordinado
    quién» al mandar una tarea y contaba como alumna en los conteos. */
 const ADMIN  = { id: "u-admin", role: "admin", is_admin: true,  es_coordinador: true,  full_name: "Oscar Angulo", email: "oscar@x.cr",  grupo: null };
 
-/* 47 clases repartidas en cinco meses: más de una página (van de 20 en 20) y
-   más de un mes, que es lo que hace falta para probar el agrupado. */
-/* Las clases de mentira se cuelgan de HOY, no de una fecha escrita a mano.
-   Con la fecha fija esta prueba se pudría sola: el filtro de "últimos 3 meses"
-   se mide contra el día en que se corre, así que cuando el calendario pasaba
-   de esa fecha las clases se iban cayendo del filtro de a una y la prueba
-   fallaba por el almanaque y no por el código. Con 30 clases cada 3 días entran
-   87 días, que siempre caben en los 90 del filtro. */
-const HOY = (() => { const d = new Date(); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); })();
-function clasesDeMentira() {
-  const filas = [];
-  for (let i = 0; i < 47; i += 1) {
-    const dia = new Date(HOY - i * 3 * 86400000);
-    const fin = new Date(dia.getTime() + 60 * 60000);
-    filas.push({
-      id: "c-" + i,
-      created_by: "u-profe",
-      title: i === 0 ? "Finales de torre" : "Clase " + i,
-      notes: i === 0 ? "repasamos la posición de Lucena" : null,
-      started_at: dia.toISOString(),
-      ended_at: fin.toISOString(),
-      // En la base nunca es null (default 'en_linea'): «Tu última clase» filtra por ella.
-      modalidad: "en_linea",
-    });
-  }
-  return filas;
-}
-
-/* `datos` trae lo que cada prueba quiere que la base conteste: las tareas del
-   alumno y lo que devuelve cada RPC. Sin eso no se puede probar lo que el panel
-   AHORA hace, que es pedirle a la base los números ya contados en vez de
-   bajarse las tablas y sumarlas acá. */
-function clienteFalso(perfiles, usuarioId, clases, datos) {
-  return `
-window.__consultas = [];
-(function () {
-  const PERFILES = ${JSON.stringify(perfiles)};
-  const CLASES = ${JSON.stringify(clases)};
-  const DATOS = ${JSON.stringify(datos || {})};
-
-  /* Un constructor que de verdad FILTRA y de verdad CORTA, y que además deja
-     anotado lo que se le pidió. Un doble que devolviera siempre la tabla entera
-     daría por buena una página que no filtra nada. */
-  function constructor(tabla, filas, args) {
-    const anotado = { tabla: tabla, eq: {}, gte: null, or: null, range: null, limit: null, count: false, args: args || null };
-    window.__consultas.push(anotado);
-    let filas2 = (filas || []).slice(), unica = false;
-    const cmp = (a, b) => String(a) === String(b);
-    // "profiles.grupo" es como PostgREST nombra una columna de la tabla
-    // relacionada; sin resolver el punto, ese filtro no encuentra nunca nada.
-    const valor = (fila, col) => String(col).split(".").reduce((o, k) => (o == null ? o : o[k]), fila);
-    const b = {
-      select(_cols, opts) { if (opts && opts.count) anotado.count = true; if (opts && opts.head) anotado.head = true; return b; },
-      eq(col, val) { anotado.eq[col] = val; filas2 = filas2.filter((r) => cmp(valor(r, col), val)); return b; },
-      neq(col, val) { anotado.neq = Object.assign(anotado.neq || {}, { [col]: val }); filas2 = filas2.filter((r) => !cmp(valor(r, col), val)); return b; },
-      gte(col, val) { anotado.gte = { col: col, val: val }; filas2 = filas2.filter((r) => String(valor(r, col)) >= String(val)); return b; },
-      lt(col, val) { anotado.lt = { col: col, val: val }; filas2 = filas2.filter((r) => String(valor(r, col)) < String(val)); return b; },
-      lte(col, val) { anotado.lte = { col: col, val: val }; filas2 = filas2.filter((r) => String(valor(r, col)) <= String(val)); return b; },
-      is(col, val) { if (val === null) filas2 = filas2.filter((r) => r[col] === null || r[col] === undefined); return b; },
-      not(col, op, val) { if (op === "is" && val === null) filas2 = filas2.filter((r) => r[col] !== null && r[col] !== undefined); return b; },
-      in(col, vals) { filas2 = filas2.filter((r) => vals.map(String).includes(String(valor(r, col)))); return b; },
-      or(expr) {
-        anotado.or = expr;
-        // title.ilike.%x%,notes.ilike.%x%
-        const partes = String(expr).split(",").map((p) => p.split("."));
-        filas2 = filas2.filter((r) => partes.some(([col, op, val]) =>
-          op === "ilike" && String(r[col] || "").toLowerCase().includes(String(val).replace(/%/g, "").toLowerCase())));
-        return b;
-      },
-      order(col, opts) {
-        const asc = !opts || opts.ascending !== false;
-        filas2.sort((x, y) => (String(x[col]) < String(y[col]) ? -1 : 1) * (asc ? 1 : -1));
-        return b;
-      },
-      limit(n) { anotado.limit = n; filas2 = filas2.slice(0, n); return b; },
-      range(a, z) { anotado.range = [a, z]; anotado.total = filas2.length; filas2 = filas2.slice(a, z + 1); return b; },
-      // Un insert queda anotado (window.__inserts) y devuelve la fila con su id,
-      // como PostgREST con .select(): sin id no se puede seguir (un plan y sus renglones).
-      insert(fila) {
-        window.__inserts = window.__inserts || [];
-        window.__inserts.push({ tabla: tabla, fila: fila });
-        filas2 = [Object.assign({ id: tabla + "-" + window.__inserts.length }, fila)];
-        return b;
-      },
-      // Como insert: Racha táctica guarda la mejor racha con upsert().
-      upsert(fila) {
-        window.__upserts = window.__upserts || [];
-        window.__upserts.push({ tabla: tabla, fila: fila });
-        filas2 = [fila];
-        return b;
-      },
-      update() { return b; },
-      delete() { return b; },
-      maybeSingle() { unica = true; return b; },
-      single() { unica = true; return b; },
-      then(res, rej) {
-        let d = filas2;
-        const total = anotado.total !== undefined ? anotado.total : filas2.length;
-        if (unica) d = filas2.length ? filas2[0] : null;
-        // { head: true } es contar sin traer ninguna fila, como PostgREST.
-        if (anotado.head) d = null;
-        return Promise.resolve({ data: d, error: null, count: anotado.count ? total : null }).then(res, rej);
-      },
-    };
-    return b;
-  }
-
-  /* Un renglón de mis_clases() como lo devuelve la base, con los nombres de
-     columna DE VERDAD (la columna se llama profesor, no profesor_nombre: con
-     el nombre equivocado el botón diría "tu profe" y la prueba daría por bueno
-     algo que en producción no se ve así).
-
-     Y la videollamada SOLO llega con la clase abierta, porque así lo hace
-     cumplir la RLS de profesor_videollamada. Un doble que la mandara siempre
-     daría por buena una página que ofrece entrar a una llamada que no está
-     pasando. */
-  /* Se arma CADA VEZ que se pide, y no una sola al inyectar, porque abrir la
-     clase en medio de la prueba es justo lo que hay que poder simular: lo que
-     se rompe callado es que el aviso llegue y la pantalla no se entere. */
-  let claseAbierta = !!DATOS.clase_abierta;
-  const MI_CLASE = () => ({ profesor_id: "u-profe", profesor: "Karina Rojas", es_principal: true,
-                     clase_abierta: claseAbierta, titulo_clase: null,
-                     videollamada: claseAbierta ? (DATOS.videollamada || null) : null });
-  window.__abrirClase = () => { claseAbierta = true; };
-
-  const TABLAS = {
-    profiles: PERFILES,
-    /* Una clase EN CURSO es una fila sin ended_at: la página la busca con
-       .is("ended_at", null). Va primera para que el .limit(1) la encuentre. */
-    class_sessions: (DATOS.clase_abierta
-      ? [{ id: "c-viva", created_by: "u-profe", title: "Finales de torre", notes: null,
-           started_at: new Date(Date.now() - 20 * 60000).toISOString(), ended_at: null }]
-      : []).concat(CLASES),
-    puzzle_rush_scores: DATOS.puzzle_rush_scores || [],
-    // El último ejercicio de la alumna (marcarLoUltimo pide UNA fila).
-    training_progress: DATOS.training_progress || [],
-    // El plan que el profesor le compartió (la RLS solo lo devuelve compartido).
-    training_plans: DATOS.training_plans || [],
-    /* La sala de videollamada del profesor. Al equipo docente se la sirve esta
-       tabla (es SUYA); al alumnado le llega por mis_clases(), que es donde la
-       RLS decide si se la entrega. */
-    /* Una fila por (profesor, grupo): «» es la sala de todas sus clases.
-       Al alumnado no se le sirve de acá —le llega por mis_clases(), que es
-       donde la RLS decide cuál le toca—; esto es lo que ve el equipo docente
-       de lo SUYO. */
-    profesor_videollamada: DATOS.profesor_videollamada || [],
-    // Lo que se preguntó en una clase y lo que contestó cada uno («Tu última clase»).
-    questions: DATOS.questions || [],
-    question_answers: DATOS.question_answers || [],
-    solicitudes_academia: DATOS.solicitudes_academia || [],
-    // Los recibos que quien supervisa tiene por revisar y entregar.
-    recibos: DATOS.recibos || [],
-    informes_profesor: DATOS.informes_profesor || [],
-    /* La visión que marcó administración (verificar-vision-cuenta.js). */
-    vision_personas: DATOS.vision_personas || [],
-    // Lo que avisa la tarjeta de Competir: retos sin contestar y torneos de su profe.
-    desafios: DATOS.desafios || [],
-    tournaments: DATOS.tournaments || [],
-    tournament_registrations: DATOS.tournament_registrations || [],
-    // Lo que junta la campana del alumno (la RLS le da solo lo suyo).
-    tareas: DATOS.tareas || [],
-    examenes: DATOS.examenes || [],
-    avisos_profesor: DATOS.avisos_profesor || [],
-    notas_alumno: DATOS.notas_alumno || [],
-    // El horario de quien da clase (asistencia.html → «Tu horario»).
-    horario_clases: DATOS.horario_clases || [],
-    // La prueba de estilo: su última fecha (a los tres meses, repetirla) y
-    // quién ya jugó 5 partidas con la apertura recomendada (la campana del profe).
-    estilo_pruebas: DATOS.estilo_pruebas || [],
-    estilo_seguimiento: DATOS.estilo_seguimiento || [],
-  };
-
-  window.sb = {
-    auth: {
-      getSession: () => Promise.resolve({ data: { session: { user: { id: ${JSON.stringify(usuarioId)} }, access_token: "t" } } }),
-      signOut: () => Promise.resolve({}),
-      updateUser: () => Promise.resolve({ error: null }),
-    },
-    from: (t) => constructor(t, TABLAS[t] !== undefined ? TABLAS[t] : []),
-    /* Los RPC contestan lo que la prueba les puso, y pasan por el MISMO
-       constructor que las tablas: así quedan anotados en window.__consultas y
-       se puede exigir, por ejemplo, que los tres números de Entrenamiento
-       salgan de mi_entreno_resumen() y no de bajarse training_progress.
-
-       Un solo profesor en mis_clases: el selector de clase no aparece, que es
-       lo correcto. */
-    rpc: (n, args, opciones) => {
-      /* Una base saturada: la consulta no contesta nunca (colgar) o revienta
-         antes de salir (lanzar). pruebaBaseLenta() exige que el panel igual
-         aparezca, o que al menos diga qué pasa y ofrezca volver a intentar. */
-      if ((DATOS.colgar || []).includes(n)) return new Promise(() => {});
-      if ((DATOS.lanzar || []).includes(n)) throw new Error("se cayó " + n);
-      if (n === "mis_funciones_coordinacion") {
-        return Promise.resolve({ data: (window.__misFunciones || ["formularios","altas","solicitudes","cuentas","acceso","roles","cobros","equipos","subgrupos"]), error: null });
-      }
-      /* Un RPC que devuelve un valor suelto (un booleano, como
-         puedo_preparar_rivales) y no filas: se contesta tal cual. */
-      if (DATOS.rpc && DATOS.rpc[n] !== undefined && !Array.isArray(DATOS.rpc[n])) {
-        window.__consultas.push({ tabla: n, args: args || null });
-        return Promise.resolve({ data: DATOS.rpc[n], error: null });
-      }
-      const c = constructor(n, n === "mis_clases"
-        ? (DATOS.mis_clases || [MI_CLASE()])
-        : (DATOS.rpc && DATOS.rpc[n]) || [], args);
-      // sb.rpc(nombre, args, { count: "exact", head: true }): cuenta sin traer filas.
-      if (opciones && opciones.count) c.select(null, { count: opciones.count });
-      if (opciones && opciones.head) window.__consultas[window.__consultas.length - 1].head = true;
-      return c;
-    },
-    channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
-    removeChannel: () => {},
-  };
-})();
-`;
-}
+/* El Supabase de mentira (y las 47 clases de mentira) viven en
+   herramientas/lib/doble-panel.js: los comparte verificar-panel-jornada.js. */
+const { HOY, clasesDeMentira, clienteFalso } = require("./lib/doble-panel");
 
 let fallos = 0;
 function igual(nombre, hallado, esperado) {
@@ -400,10 +188,10 @@ async function pruebaAlumna(browser) {
      "entreno/aprende-a-jugar.html", "entreno/aprender.html", "entreno/desafios.html", "articulos.html"]);
   igual("Estudiar: lo que se estudia con el profe",
     grupo(grupos, "Estudiar").tiles.map((t) => t.enlace),
-    ["cursos/academia/index.html", "repasar-clases.html"]);
+    ["cursos/academia/index.html", "repasar-clases.html", "audios-clases.html"]);
   igual("Entrenamiento básico",
     grupo(grupos, "Entrenamiento básico").tiles.map((t) => t.enlace),
-    ["entreno/coordenadas.html", "entreno/memoria.html", "entreno/mates.html", "entreno/practicas.html", "entreno/4x4.html"]);
+    ["entreno/coordenadas.html", "entreno/memoria.html", "entreno/oido.html", "entreno/mates.html", "entreno/practicas.html", "entreno/4x4.html"]);
   igual("Entrenamiento intermedio",
     grupo(grupos, "Entrenamiento intermedio").tiles.map((t) => t.enlace),
     ["entreno/temas.html", "entreno/aperturas.html", "entreno/estilo.html", "entreno/mis-estudios.html", "entreno/sin-internet.html"]);
@@ -521,7 +309,7 @@ async function pruebaProfesora(browser) {
      quiere decir es que no es suyo. */
   igual("«Tus clases»: su calendario, prepararlas (planes y cuestionarios), darlas, repasarlas e informarlas",
     grupo(grupos, "Tus clases").tiles.map((t) => t.enlace),
-    ["calendario.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "informe-mensual.html"]);
+    ["calendario.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "audios-clases.html", "partidas.html", "informe-mensual.html"]);
   /* La tienda de materiales entra en la misma regla: todavía no está abierta,
      así que a quien da clase no se le pinta ni escondida — un enlace
      invisible pero presente sigue siendo una parada de tabulador, y encima
@@ -554,8 +342,8 @@ async function pruebaProfesora(browser) {
      nada. Y como no coordina, tampoco le toca la página entera de Cobros. */
   igual("a quien da clase no se le ofrece su propio recibo",
     grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta), ["Configuración", "Guía del profesor", "Logros"]);
-  igual("y sin coordinar, cobros.html no le aparece por ningún lado",
-    grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "cobros.html").length, "0");
+  igual("y sin coordinar, los cobros no le aparecen por ningún lado",
+    grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "mensualidades.html" || t.enlace === "cobros.html").length, "0");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
@@ -581,6 +369,12 @@ async function pruebaRecorrido(browser) {
   }), ["dialog", "Busca lo que necesites"]);
   igual("señala el buscador, con el aro a la vista", await page.evaluate(() =>
     [...document.querySelectorAll(".buscar-resaltado")].map((el) => el.id + ":" + el.checkVisibility())), ["buscar-panel:true"]);
+  /* El «?» de la guía (js/ayuda-guia.js) aparece recién cuando leyó la sesión y
+     el perfil. Con la máquina cargada (cuatro verificadores a la vez en el CI),
+     el recorrido llegaba al último paso antes que él y señalaba, con razón, la
+     ficha de la guía, que es su alternativa. Se espera a que esté, como lo vería
+     cualquiera que no recorre los pasos en un segundo. */
+  await page.waitForSelector("#ayuda-guia", { state: "visible", timeout: 10000 }).catch(() => {});
   const pasos = [];
   for (let n = 0; n < 6; n++) {
     pasos.push(await page.evaluate(() => {
@@ -795,7 +589,7 @@ async function pruebaUrgenteProfesora(browser) {
     await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "informes_profesor").map((c) => c.eq)),
     [{ profesor_id: "u-profe", periodo: mesPasado, estado: "enviado" }]);
   igual("sin coordinar, no se le cuentan solicitudes ni cobros",
-    await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "solicitudes_academia" || c.tabla === "cobros_morosos").length), 0);
+    await r.page.evaluate(() => window.__consultas.filter((c) => ["solicitudes_academia", "cuentas_cobro_vista", "pagos_reportados"].includes(c.tabla)).length), 0);
   await r.page.click("#campana");
   igual("y se vuelve a cerrar", await r.page.evaluate(() => document.getElementById("campana-panel").checkVisibility()), false);
   igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
@@ -955,7 +749,7 @@ async function pruebaAdmin(browser) {
     ["sesion.html", "tareas.html", "examenes.html", "planes.html", "asistencia.html", "informe-mensual.html",
      "subgrupos.html", "partidas.html", "juegos.html", "competir.html", "torneos.html"].filter((x) => enlaces.includes(x)), []);
   igual("y sí lo de supervisar y administrar",
-    ["informes.html", "supervision.html", "tablero-academias.html", "novedades.html", "admin.html", "academias.html", "coordinacion.html", "cobros.html", "solicitudes.html"]
+    ["informes.html", "supervision.html", "tablero-academias.html", "novedades.html", "admin.html", "academias.html", "coordinacion.html", "mensualidades.html", "solicitudes.html"]
       .filter((x) => !enlaces.includes(x)), []);
   igual("cada destino una sola vez", enlaces.length, new Set(enlaces).size);
   const visible = (id) => page.evaluate((i) => document.getElementById(i).checkVisibility(), id);
@@ -1035,12 +829,12 @@ async function pruebaBuscador(browser) {
         && document.getElementById("tile-grid").checkVisibility();
     }), "true");
   igual("«pagos» encuentra Cobros aunque la tarjeta no diga «pagos» en el nombre",
-    await page.evaluate(VISIBLES), ["Cobros de la Academia"]);
+    await page.evaluate(VISIBLES), ["Cobros"]);
   igual("los grupos sin nada que mostrar no se ven",
     await page.evaluate(() => Array.from(document.querySelectorAll("#tile-grid > section"))
       .filter((s) => s.checkVisibility()).map((s) => s.querySelector("h2").textContent)), ["Cobros y accesos"]);
   igual("el resultado se anuncia", await page.textContent("#buscar-panel-estado"),
-    "1 acceso con «pagos». Enter abre «Cobros de la Academia».");
+    "1 acceso con «pagos». Enter abre «Cobros».");
   igual("y el anuncio va en role=status", await page.getAttribute("#buscar-panel-estado", "role"), "status");
 
   await buscar(page, "CONTRASENA");
@@ -1072,9 +866,9 @@ async function pruebaBuscador(browser) {
   igual("y la barra no se escribe en el campo", await page.inputValue("#buscar-panel-campo"), "");
 
   await buscar(page, "pagos");
-  await Promise.all([page.waitForURL(/cobros\.html$/, { timeout: 10000 }), page.press("#buscar-panel-campo", "Enter")]);
+  await Promise.all([page.waitForURL(/mensualidades\.html$/, { timeout: 10000 }), page.press("#buscar-panel-campo", "Enter")]);
   bien("Enter abre el primero: " + page.url().replace(BASE, ""));
-  igual("sin errores en la página", errores.filter((e) => !/cobros/.test(e)), []);
+  igual("sin errores en la página", errores.filter((e) => !/cobros|mensualidades/.test(e)), []);
   await ctx.close();
 
   // La alumna no tiene Cobros: buscarlo no lo inventa.
@@ -1178,13 +972,13 @@ async function pruebaCoordinadorRecortado(browser) {
     { misFunciones: ["formularios", "altas", "cuentas", "acceso", "roles", "equipos", "subgrupos"] });
   const enlaces = grupo(await page.evaluate(LEER_GRILLA), "Coordinación").tiles.map((t) => t.enlace);
   igual("no se le pintan ni Cobros ni Solicitudes, y sí Formularios y Coordinación",
-    ["cobros.html", "solicitudes.html", "formularios.html", "coordinacion.html"].map((x) => enlaces.includes(x)),
+    ["mensualidades.html", "solicitudes.html", "formularios.html", "coordinacion.html"].map((x) => enlaces.includes(x)),
     [false, false, true, true]);
   /* Lo urgente solo cuenta lo que tiene tarjeta: sin Solicitudes ni Cobros,
      ni se le preguntan a la base (le diría «al día» de algo que no ve). */
   await page.waitForTimeout(300);
   igual("y «Lo urgente» no le cuenta solicitudes ni cobros",
-    await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "solicitudes_academia" || c.tabla === "cobros_morosos").length), 0);
+    await page.evaluate(() => window.__consultas.filter((c) => ["solicitudes_academia", "cuentas_cobro_vista", "pagos_reportados"].includes(c.tabla)).length), 0);
   igual("sin errores en la página", errores, []);
   await ctx.close();
 }

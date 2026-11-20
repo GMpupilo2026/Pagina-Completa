@@ -38,6 +38,7 @@ const os = require("os");
 const { Chess } = require("chess.js");
 const RAIZ = path.join(__dirname, "..");
 const { describir } = require("./lib/describir-fen.js");
+const { posicionHtml } = require("./lib/posicion-accesible.js");
 const N = require("./lib/notacion.js");
 const { unir, proteger } = require("./lib/pdf-armar.js");
 const {
@@ -531,17 +532,14 @@ const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
    dichas («alfil captura felix 6»), que es como se entienden con lector de
    pantalla. */
 function accesible() {
-  const oido = (t) => N.textoHablado(t, "espanol");
+  const oido = (t) => N.casillasHabladas(N.textoHablado(t, "espanol"));
   const pruebas = Array.from({ length: LIBRO.PRUEBAS }, (_, k) => {
     const p = k + 1;
     const delas = ITEMS.filter((i) => i.prueba === p);
     const preguntas = delas.map((it) => {
-      const d = describir(it.fen);
       const orden = ordenOpciones(it);
       return `<article><h3>Posición ${it.n} · dificultad ${it.peso} de 5</h3>
-        <p class="posicion"><strong>La posición.</strong> ${d.turno} Piezas blancas: ${esc(d.blancas)}. Piezas negras: ${esc(d.negras)}.
-        Las negras acaban de jugar ${esc(oido("…" + it.ultima))}.
-        <span class="fen">FEN: ${esc(it.fen)}</span></p>
+        ${posicionHtml(it.fen, { despues: `Las negras acaban de jugar ${esc(oido("…" + it.ultima))}.` })}
         <p><strong>Pregunta 1.</strong> Con la mejor jugada, ¿cómo queda la posición?</p>
         <ol type="a">${LIBRO.EVALUACION.map((t) => `<li>${esc(t)}</li>`).join("")}</ol>
         <p><strong>Pregunta 2.</strong> ¿Cuál es la mejor jugada?</p>

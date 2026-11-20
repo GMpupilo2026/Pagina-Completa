@@ -25,8 +25,23 @@ function igual(nombre, hallado, esperado) {
 /* worker.js es un módulo ES y este archivo no lo es, así que se carga por una
    dirección `data:`. Es el camino más corto para importarlo tal cual está, sin
    tener que cambiar el worker ni agregarle un package.json al repositorio. */
-async function cargarWorker() {
-  const fuente = fs.readFileSync(path.join(__dirname, "..", "worker.js"), "utf8");
+/* Para probar la firma (lo único que cuenta cuando Supabase no contesta), la
+   clave pública de Supabase se cambia por una de prueba, cuya privada tiene
+   este archivo: así se firman tokens de verdad y se ve que uno inventado no
+   pasa. El resto del worker queda tal cual. */
+const { webcrypto } = require("crypto");
+let clavePrueba = null;
+// `real`: con FUENTES_OCULTAS tal cual está. Sin él, la lista se vacía para
+// probar cómo entran los de ajedrezcostarica.com cuando están prendidos.
+async function cargarWorker(real) {
+  clavePrueba = clavePrueba || await webcrypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+  const pub = await webcrypto.subtle.exportKey("jwk", clavePrueba.publicKey);
+  let fuente = fs.readFileSync(path.join(__dirname, "..", "worker.js"), "utf8");
+  const antes = fuente;
+  fuente = fuente.replace(/const CLAVES_PUBLICAS = \{[\s\S]*?\n\};/,
+    "const CLAVES_PUBLICAS = { prueba: " + JSON.stringify({ kty: pub.kty, crv: pub.crv, x: pub.x, y: pub.y }) + " };");
+  if (fuente === antes) throw new Error("no encontré CLAVES_PUBLICAS en worker.js");
+  if (!real) fuente = require("./lib/fuentes-ocultas").sinOcultas(fuente, "worker.js");
   const mod = await import("data:text/javascript;base64," + Buffer.from(fuente).toString("base64"));
   return mod.default;
 }
@@ -125,13 +140,24 @@ async function cargarWorker() {
     iss: URL_SB + "/auth/v1", role: "authenticated", sub: "u-" + Math.random(),
     exp: Math.floor(Date.now() / 1000) + 3600, ...extra }) + ".firma";
 
+  // Un token firmado de verdad (ES256, con la clave de prueba), como los de Supabase.
+  const tokenFirmado = async (extra = {}, kid = "prueba") => {
+    const cab = b64({ alg: "ES256", typ: "JWT", kid });
+    const cuerpo = b64({ iss: URL_SB + "/auth/v1", role: "authenticated", sub: "u-" + Math.random(),
+      exp: Math.floor(Date.now() / 1000) + 3600, ...extra });
+    const firma = await webcrypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, clavePrueba.privateKey,
+      new TextEncoder().encode(cab + "." + cuerpo));
+    return cab + "." + cuerpo + "." + Buffer.from(firma).toString("base64url");
+  };
+
   let preguntas = [];
   let contesta = () => new Response("true", { status: 200 });
   globalThis.fetch = async (u, opciones) => { preguntas.push({ u: String(u), opciones }); return contesta(); };
-  const abrir = async (ruta, { cookie, pagina } = {}) => {
+  const abrir = async (ruta, { cookie, pagina, bearer } = {}) => {
     pedido = null; preguntas = [];
     const headers = {};
     if (cookie) headers.Cookie = "otra=1; ai_sesion_cursos=" + cookie + "; y=2";
+    if (bearer) headers.Authorization = "Bearer " + bearer;
     if (pagina) { headers["Sec-Fetch-Mode"] = "navigate"; headers.Accept = "text/html"; }
     const res = await worker.fetch(new Request("https://ajedrez-integral.com" + ruta, { headers }), env);
     return { estado: res.status, aArchivos: !!pedido, preguntas, cuerpo: await res.text(), cache: res.headers.get("cache-control"),
@@ -169,6 +195,25 @@ async function cargarWorker() {
     igual("y una cookie que no es un token", r.estado + "/" + r.preguntas.length, "401/0");
   }
   const bueno = token();
+  {
+    // Sin la cookie (un perfil de Chrome que no la mandaba, el 10/11), la
+    // página manda el mismo token en Authorization: pasa por las mismas preguntas.
+    contesta = () => new Response("true", { status: 200 });
+    const r = await abrir(PDF, { bearer: token() });
+    igual("sin cookie pero con Authorization: Bearer, se sirve", r.estado + "/" + r.aArchivos, "200/true");
+    igual("y también se le preguntó a Supabase", r.preguntas.length, 1);
+    contesta = () => new Response("false", { status: 200 });
+    const n = await abrir(PDF, { bearer: token({ sub: "otra-cuenta" }) });
+    igual("con el encabezado y sin acceso, no", n.estado + "/" + n.aArchivos, "403/false");
+    const v = await abrir(PDF, { bearer: token({ exp: Math.floor(Date.now() / 1000) - 10 }) });
+    igual("y un token vencido en el encabezado tampoco", v.estado + "/" + v.preguntas.length, "401/0");
+    const raro = await abrir(PDF, { bearer: "esto-no-es-un-token" });
+    igual("ni algo que no es un token", raro.estado, 401);
+    contesta = () => new Response("true", { status: 200 });
+    const ambos = await abrir(PDF, { cookie: token({ exp: Math.floor(Date.now() / 1000) - 10 }), bearer: token() });
+    igual("con una cookie vieja y el encabezado al día, gana el encabezado", ambos.estado, 200);
+    contesta = () => new Response("true", { status: 200 });
+  }
   {
     contesta = () => new Response("true", { status: 200 });
     const r = await abrir(PDF, { cookie: bueno });
@@ -229,13 +274,27 @@ async function cargarWorker() {
     /* Si Supabase no contesta, se deja pasar: una red caída no puede dejar sin
        su material a todos los que pagaron (la regla de acceso-vigente.js). */
     contesta = () => { throw new Error("red caída"); };
-    const r = await abrir(PDF, { cookie: token() });
-    igual("Supabase sin red: pasa", r.estado, 200);
+    const r = await abrir(PDF, { cookie: await tokenFirmado() });
+    igual("Supabase sin red: pasa un token firmado de verdad", r.estado, 200);
     contesta = () => new Response("", { status: 503 });
-    const r2 = await abrir(PDF, { cookie: token() });
-    igual("Supabase con un 5xx: pasa", r2.estado, 200);
-    const r3 = await abrir(PDF, { cookie: token({ iss: "https://otro.supabase.co/auth/v1" }) });
+    const r2 = await abrir(PDF, { cookie: await tokenFirmado() });
+    igual("Supabase con un 5xx: pasa un token firmado de verdad", r2.estado, 200);
+    const r3 = await abrir(PDF, { cookie: await tokenFirmado({ iss: "https://otro.supabase.co/auth/v1" }) });
     igual("pero ni así pasa un token que no es de este proyecto", r3.estado, 401);
+    // Antes pasaba: con Supabase caído solo se miraba lo que el token decía de
+    // sí mismo, y un JSON escrito a mano abría el material y el código con licencia.
+    const r4 = await abrir(PDF, { cookie: token() });
+    igual("ni un token inventado (bien formado, firma falsa)", r4.estado, 401);
+    const bueno = await tokenFirmado();
+    const [c5, , f5] = bueno.split(".");
+    const otroCuerpo = b64({ iss: URL_SB + "/auth/v1", role: "authenticated", sub: "otra-persona", exp: Math.floor(Date.now() / 1000) + 3600 });
+    const r5 = await abrir(PDF, { cookie: c5 + "." + otroCuerpo + "." + f5 });
+    igual("ni uno de verdad con el contenido cambiado", r5.estado, 401);
+    const r6 = await abrir(PDF, { cookie: await tokenFirmado({}, "otra-clave") });
+    igual("ni uno firmado con una clave que el worker no conoce", r6.estado, 401);
+    contesta = () => { throw new Error("red caída"); };
+    const r7 = await abrir(PDF, { cookie: token() });
+    igual("y con la red caída, el inventado tampoco", r7.estado, 401);
   }
   {
     // Los cursos escondidos: la lista del worker es la de js/cursos-ocultos.js.
@@ -392,6 +451,14 @@ async function cargarWorker() {
     ] }).texto;
     const sinSuscripcion = (t) => t.replace(/^(REFRESH-INTERVAL|X-PUBLISHED-TTL)[^\r\n]*\r\n/gm, "");
     igual("el texto es línea por línea el de js/calendario-ics.js (escapes, líneas dobladas, días enteros)", sinSuscripcion(r.texto) === esperado, true);
+    {
+      // worker.js tal cual: los de ajedrezcostarica.com están apagados por ahora.
+      const real = await cargarWorker(true);
+      globalThis.fetch = async (u) => contesta(String(u));
+      const t = await (await real.fetch(new Request("https://ajedrez-integral.com/calendario/torneos.ics"), env)).text();
+      igual("con FUENTES_OCULTAS tal cual, ningún torneo de ajedrezcostarica.com entra al calendario; los de chess-results sí",
+        uids(t).join(" "), "torneo-66666666-6666-4666-8666-666666666666@ajedrez-integral.com torneo-" + ID + "@ajedrez-integral.com chess-results-1234567@ajedrez-integral.com");
+    }
     if (sinSuscripcion(r.texto) !== esperado) console.log(sinSuscripcion(r.texto).split("\r\n").filter((l, i) => l !== esperado.split("\r\n")[i]).slice(0, 5));
     const rO = await pedirCal("https://ajedrez-integral.com/calendario/torneos.ics?o=" + ORG);
     igual("con ?o=, solo los de ese organizador y sin los de afuera", preguntas.some((u) => u.includes("organizador_id=eq." + ORG)) && !preguntas.some((u) => /torneos_externos/.test(u)), true);
@@ -417,6 +484,82 @@ async function cargarWorker() {
     igual("/m a secas manda a la página sin código (ahí aparece la casilla para escribirlo)", [(await ir(base + "/m")).ubicacion, (await ir(base + "/m/")).ubicacion], Array(2).fill(base + "/centroamericano-arbitro.html"));
     igual("el worker no pregunta nada a la base (el código lo canjea la Edge Function, con su freno)", preguntas, 0);
     igual("lo que no es un código (otra ruta, símbolos raros, larguísimo) pasa a los archivos y no redirige", (await Promise.all(["/mesa", "/m/<script>", "/m/" + "A".repeat(40), "/manual.html"].map(ir))).map((x) => [x.estado, x.aArchivos !== null]), Array(4).fill([200, true]));
+  }
+
+  console.log("\n=== El código de las herramientas con licencia, solo con la licencia ===");
+  {
+    const raiz = path.join(__dirname, "..");
+    const fuenteW = fs.readFileSync(path.join(raiz, "worker.js"), "utf8");
+    const lista = JSON.parse("{" + fuenteW.match(/const CODIGO_CON_LICENCIA = \{([^}]*)\}/)[1].replace(/,\s*$/, "") + "}");
+    const rutas = Object.keys(lista);
+    igual("la lista no está vacía", rutas.length > 0, true);
+    // Las tres copias de la lista: el worker decide, run_worker_first hace que
+    // el worker se entere (sin la línea, Cloudflare sirve el archivo directo y
+    // el candado no existe) y sw.js no guarda en el teléfono ni el aviso ni el código.
+    const wr = JSON.parse(fs.readFileSync(path.join(raiz, "wrangler.jsonc"), "utf8").replace(/^\s*\/\/.*$/gm, ""));
+    igual("cada archivo está en run_worker_first", rutas.filter((r) => !wr.assets.run_worker_first.includes(r)), []);
+    const sw = fs.readFileSync(path.join(raiz, "sw.js"), "utf8");
+    const nunca = new Function("return [" + sw.match(/const NUNCA = \[([\s\S]*?)\n\];/)[1].replace(/^\s*\/\/[^\n]*$/gm, "") + "]")();
+    igual("y en NUNCA de sw.js", rutas.filter((r) => !nunca.some((re) => re.test(r))), []);
+    igual("la cookie viaja a /js/ (si no, nadie con licencia recibe el código)",
+      /var RUTAS = \[[^\]]*"\/js\/"/.test(fs.readFileSync(path.join(raiz, "js", "supabase-client.js"), "utf8")), true);
+    // Que no se cuele nada que use el público: un archivo de la lista no lo
+    // carga ninguna página fuera de la de su herramienta.
+    const paginaDe = { "bases-torneo": "bases-torneo.html", "inscripcion-jde": "inscripcion-jde.html", "normas-titulo": "normas-titulo.html", "aula-arbitraje": "aula-arbitraje.html" };
+    const ajenas = [];
+    const htmls = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+      ["node_modules", ".git", "herramientas", "docs", "supabase"].includes(e.name) ? [] :
+      e.isDirectory() ? htmls(path.join(dir, e.name)) : e.name.endsWith(".html") ? [path.join(dir, e.name)] : []);
+    for (const f of htmls(raiz)) {
+      const t = fs.readFileSync(f, "utf8");
+      for (const r of rutas) if (t.includes('src="' + r.slice(1)) && ![].concat(lista[r]).map((h) => paginaDe[h]).includes(path.relative(raiz, f).split(path.sep).join("/"))) ajenas.push(path.relative(raiz, f) + " → " + r);
+    }
+    igual("ninguna otra página carga ese código (sería una página pública rota)", ajenas, []);
+
+    const ASSETS = { fetch: (req) => { pedido = req.url; return new Response("// el código", { status: 200, headers: { "Content-Type": "application/javascript" } }); } };
+    const pedirJs = async (ruta, cookie, contestar) => {
+      pedido = null; const preguntas = [];
+      globalThis.fetch = async (u, o) => { preguntas.push({ u: String(u), cuerpo: o && o.body }); return contestar(); };
+      const headers = cookie ? { Cookie: "ai_sesion_cursos=" + cookie } : {};
+      const res = await worker.fetch(new Request("https://ajedrez-integral.com" + ruta, { headers }), { ASSETS });
+      return { estado: res.status, tipo: res.headers.get("content-type") || "", cache: res.headers.get("cache-control") || "", cuerpo: await res.text(), aArchivos: !!pedido, preguntas };
+    };
+    const si = () => new Response("true", { status: 200 });
+    const no = () => new Response("false", { status: 200 });
+    const r1 = await pedirJs("/js/normas-titulo.js", null, si);
+    igual("sin sesión no entrega el código ni pregunta", [r1.aArchivos, r1.preguntas.length], [false, 0]);
+    igual("en su lugar, un aviso en JavaScript que corre (200) y anota el archivo, sin caché",
+      [r1.estado, /javascript/.test(r1.tipo), /window\.__codigoNegado/.test(r1.cuerpo) && r1.cuerpo.includes('"/js/normas-titulo.js"'), r1.cache], [200, true, true, "no-store"]);
+    igual("el aviso no trae nada del código", r1.cuerpo.includes("el código"), false);
+    const t = token();
+    const r2 = await pedirJs("/js/bases-torneo.js", t, no);
+    igual("con sesión y sin la licencia: le pregunta a tengo_herramienta() por SU herramienta",
+      [/\/rpc\/tengo_herramienta$/.test(r2.preguntas[0] && r2.preguntas[0].u), r2.preguntas[0] && JSON.parse(r2.preguntas[0].cuerpo).p_herramienta], [true, "bases-torneo"]);
+    igual("y no entrega el código", [r2.aArchivos, /__codigoNegado/.test(r2.cuerpo)], [false, true]);
+    const r3 = await pedirJs("/js/bases-torneo.js", t, si);
+    igual("con la licencia, el código, sin que el navegador lo guarde sin volver a preguntar", [r3.aArchivos, r3.cuerpo, r3.cache], [true, "// el código", "private, no-cache"]);
+    const r4 = await pedirJs("/js/inscripcion-jde.js", t, no);
+    igual("la licencia de una herramienta no abre el código de otra (se recuerda por herramienta)", [r4.preguntas.length, r4.aArchivos], [1, false]);
+    const r5 = await pedirJs("/js/main.js", t, si);
+    igual("el resto de js/ pasa de largo, sin preguntar", [r5.aArchivos, r5.preguntas.length], [true, 0]);
+    // El cálculo de normas va con la licencia de normas O con la del Aula.
+    const t2 = token();
+    let n = 0;
+    const r6 = await pedirJs("/js/normas-titulo.js", t2, () => new Response(n++ === 0 ? "false" : "true", { status: 200 }));
+    igual("normas-titulo.js: sin la licencia de normas pregunta por la del Aula y, con esa, entrega el código",
+      [r6.preguntas.map((x) => JSON.parse(x.cuerpo).p_herramienta), r6.aArchivos], [["normas-titulo", "aula-arbitraje"], true]);
+
+    console.log("\n=== Los PDF del Aula, solo con la licencia ===");
+    igual("la carpeta está en run_worker_first", wr.assets.run_worker_first.includes("/descargas/*"), true);
+    igual("y en NUNCA de sw.js", nunca.some((re) => re.test("/descargas/aula-arbitraje/revista-01.pdf")), true);
+    const d1 = await pedirJs("/descargas/aula-arbitraje/revista-01.pdf", null, si);
+    igual("sin sesión: 403, sin entregar el archivo ni preguntar", [d1.estado, d1.aArchivos, d1.preguntas.length], [403, false, 0]);
+    const t3 = token();
+    const d2 = await pedirJs("/descargas/aula-arbitraje/revista-01.pdf", t3, no);
+    igual("con sesión y sin la licencia del Aula: 403, después de preguntar por aula-arbitraje",
+      [d2.estado, d2.aArchivos, d2.preguntas[0] && JSON.parse(d2.preguntas[0].cuerpo).p_herramienta], [403, false, "aula-arbitraje"]);
+    const d3 = await pedirJs("/descargas/aula-arbitraje/revista-01.pdf", t3, si);
+    igual("con la licencia: el archivo, sin caché compartida", [d3.estado, d3.aArchivos, d3.cache], [200, true, "private, no-cache"]);
   }
 
   console.log(fallos ? "\n" + fallos + " fallo(s)" : "\nTodo bien.");

@@ -68,6 +68,8 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     const b = {
       select() { return b; },
       eq(col, val) { if (Array.isArray(datos)) datos = datos.filter((f) => String(f[col]) === String(val)); return b; },
+      // Tareas lo usa para el aviso de alumnos sin tarea (vence_at > ahora).
+      gt(col, val) { if (Array.isArray(datos)) datos = datos.filter((f) => String(f[col]) > String(val)); return b; },
       in() { return b; }, order() { return b; }, limit() { return b; },
       range() { return b; }, is() { return b; }, not() { return b; }, or() { return b; },
       insert(v) { window.__llamadas.push({ tabla, verbo: "insert", datos: v }); return b; },

@@ -1,0 +1,26 @@
+{
+ "fecha": "2026-09-04",
+ "posiciones": [
+  {
+   "seg": 141,
+   "titulo": "Final de peones: el rey blanco puede entrar",
+   "fen": "8/1k6/p7/p2p2K1/P2P4/8/8/8 w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "Antes de calcular, descarta las jugadas de rey que pierden la oposición y las que van en contra del avance. Cuando te comas un peón, fíjate si el rey rival llega a la casilla conjugada."
+  },
+  {
+   "seg": 2042,
+   "titulo": "Dama contra peón de alfil, con el rey cerca",
+   "fen": "6Q1/8/8/8/K7/8/1kp5/8 w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "Con peón de alfil el rey defensor se esconde en la esquina y comerse el peón puede ser ahogado. Pero con tu rey cerca puedes dejar que corone, porque tienes mate."
+  },
+  {
+   "seg": 3689,
+   "titulo": "Tarea: dama contra peones de a5 y h2",
+   "fen": "7Q/8/8/p7/K7/8/6kp/8 w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "Fíjate en qué cambia el peón negro de a5: sin él, el rey negro se mete en h1 y queda ahogado; con él, ya no hay ahogado."
+  }
+ ]
+}

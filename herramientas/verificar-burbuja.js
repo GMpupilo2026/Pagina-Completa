@@ -380,7 +380,9 @@ function pruebaPaginas() {
      que se despliega solo, y tienda.html tenía el botón de pedido JUSTO
      DEBAJO de ella — la burbuja flota fija en esa esquina y no dejaba
      comprar. */
-  igual("las tres exceptuadas están escritas", sin.slice().sort().join(","), "examen.html,sesion.html,tienda.html");
+  /* Y arbitro.html, el panel de una cuenta de árbitro: no tiene a quién
+     anunciarse (ver «Las cuentas de árbitro» en docs/decisiones/permisos-y-roles.md). */
+  igual("las cuatro exceptuadas están escritas", sin.slice().sort().join(","), "arbitro.html,examen.html,sesion.html,tienda.html");
 
   igual("sesion.html la lleva solo para anunciar", solo.join(","), "sesion.html");
 

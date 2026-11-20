@@ -35,6 +35,7 @@ const os = require("os");
 const { Chess } = require("chess.js");
 const { tablero } = require("./lib/tablero-svg.js");
 const { describir } = require("./lib/describir-fen.js");
+const { posicionHtml } = require("./lib/posicion-accesible.js");
 const { unir, proteger, datosAdaptado } = require("./lib/pdf-armar.js");
 const N = require("./lib/notacion.js");
 const D = require("./libro-ninos/dibujos.js");
@@ -552,12 +553,8 @@ const htmlMarca = `<!doctype html><html lang="es"><head><meta charset="utf-8">
    pieza por pieza y cada jugada dicha («torre anna 8», no «Ta8»), que es como
    se entiende con lector de pantalla. */
 function posicionEnPalabras(fen, extra) {
-  const d = describir(fen);
-  const partes = [];
-  if (d.blancas) partes.push(`Piezas blancas: ${d.blancas}.`);
-  if (d.negras) partes.push(`Piezas negras: ${d.negras}.`);
-  if (!partes.length) partes.push("El tablero está vacío.");
-  return `<p class="posicion"><strong>La posición.</strong> ${esc(partes.join(" "))}${extra ? " " + esc(extra) : ""}</p>`;
+  // Una pieza por renglón (lib/posicion-accesible.js): se pone en el tablero de a una.
+  return posicionHtml(fen, { turno: false, fen: false, sinVacias: true, despues: extra ? esc(extra) : "" });
 }
 
 /* ---------------------------------------------------------- con las manos */

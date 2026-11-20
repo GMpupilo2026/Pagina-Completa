@@ -1544,7 +1544,7 @@
           "resumen": "Casos integradores de arbitraje y elementos logísticos de un torneo estudiantil.",
           "contenido": [
             "Integración de los contenidos de las sesiones I a V en casos complejos e integradores.",
-            "Elementos logísticos de un torneo: inscripción, espacios, materiales y personal de apoyo.",
+            "Elementos logísticos de un torneo: acreditación con la Boleta Oficial, congresillo técnico, espacios, materiales y personal de apoyo.",
             "Estrategias de fortalecimiento del desempeño como persona asesora y árbitra."
           ],
           "practica_titulo": "Resolución grupal de casos integradores",
@@ -1590,7 +1590,7 @@
           "tarea": "Elaborar una propuesta logística breve (inscripción, espacios, materiales, personal de apoyo) para un torneo estudiantil de su región.",
           "objetivos": [
             "Resolver casos complejos con un método: hechos, artículo, decisión y registro.",
-            "Planificar la logística de un torneo estudiantil antes, durante y después de las rondas.",
+            "Planificar la logística de un torneo estudiantil: acreditación, congresillo técnico y materiales, antes, durante y después de las rondas.",
             "Comunicar decisiones arbitrales con claridad a estudiantes, familias y docentes.",
             "Redactar el informe de una incidencia."
           ],
@@ -1601,14 +1601,14 @@
               "Se revisa una configuración de reloj de la tarea anterior."
             ],
             [
-              35,
+              25,
               "Método para resolver un caso arbitral",
               "Los cuatro pasos (hechos, artículo, decisión y registro) aplicados a un caso de las sesiones anteriores."
             ],
             [
-              35,
+              45,
               "Logística de un torneo estudiantil",
-              "Inscripción, lista inicial, sala y mesas, materiales, personal de apoyo, horarios, charla técnica y publicación de resultados."
+              "Acreditación con la Boleta Oficial y sus requisitos, congresillo técnico por etapa (qué se revisa, qué se puede y qué no) y simulacro de materiales: mesas dobles, tableros y relojes."
             ],
             [
               10,
@@ -1672,6 +1672,199 @@
               "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 14, 27, 28, 33, 34 y 66; buenas prácticas de organización"
             },
             {
+              "titulo": "La Boleta Oficial y la acreditación",
+              "texto": "Sin Boleta Oficial completa y correcta, la delegación no se acredita ni juega.",
+              "puntos": [
+                "La genera la Plataforma JDE al cerrar la inscripción y la verificación, una por etapa: la de la Etapa Institucional no vale para las siguientes (art. 27).",
+                "La revisan la jefatura del centro educativo y el comité de la etapa (art. 28).",
+                "Se presenta el día del evento, en físico o en un dispositivo, con su número de consecutivo (art. 28 y 29).",
+                "Si falta un dato o hay uno incorrecto, no se recibe hasta que se corrija (art. 28)."
+              ],
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 2.a, 27, 28 y 29"
+            },
+            {
+              "titulo": "Requisitos de la acreditación",
+              "texto": "El comité revisa, uno por uno, los documentos del artículo 59.",
+              "puntos": [
+                "1. Boleta de Inscripción Oficial, digital o impresa en original y copia (59.a).",
+                "2. Documento de identidad de cada persona de la delegación, en físico y en buen estado, o la cédula digital (59.b).",
+                "3. Al menos un correo del MEP en la boleta; los centros privados, el institucional (59.c).",
+                "4. Oficio de la jefatura para quien está en el cuerpo técnico sin ser persona funcionaria (59.d).",
+                "5. Cuerpo técnico: jefatura de delegación y una persona más, con al menos una adulta del mismo sexo que las atletas (60.a y 60.e)."
+              ],
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 59 y 60"
+            },
+            {
+              "titulo": "Ocho documentos para identificar al estudiante",
+              "texto": "Vale uno de estos ocho, vigente y en físico; la única excepción es la cédula digital (art. 59.e).",
+              "puntos": [
+                "Cédula de identidad, tarjeta de identidad de menores, pasaporte o carné consular.",
+                "Carné oficial JDE o carné estudiantil del centro: foto, nombre, identificación, fecha de nacimiento, firma de la dirección y sello.",
+                "Certificación del centro, con membrete y fecha de ingreso; una sola puede traer a toda la delegación.",
+                "Identidad Digital Costarricense del TSE."
+              ],
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 59.e"
+            },
+            {
+              "titulo": "Qué más se revisa y qué pasa si falta",
+              "texto": "En ajedrez, quien no cumple queda descalificado del evento (art. 90).",
+              "puntos": [
+                "Categoría según el año de nacimiento y el nivel que cursa: con 2013 o 2014, en primaria juega B y en secundaria C (art. 17); por equipos suben hasta 3, de A a B, de C a D o de D a E (art. 18).",
+                "Una sola modalidad por estudiante, y equipos de 3 a 5 (art. 66.1.g y 66.1.h).",
+                "Sin Boleta Oficial o sin documento de identidad presentado en la acreditación: descalificación (art. 90.f y 90.g).",
+                "Cambiar sin autorización una inscripción ya correcta también se sanciona (art. 90.l).",
+                "La persona estudiante puede presentarse hasta que su reloj caiga a cero (art. 30)."
+              ],
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 17, 18, 30, 66.1 y 90"
+            },
+            {
+              "titulo": "El congresillo técnico",
+              "texto": "Fija las reglas del evento, y lo acordado queda en un Acta Oficial que ya no se cambia (art. 34).",
+              "puntos": [
+                "Circuital, Regional e Interregional: el comité, una persona por delegación y el cuerpo arbitral, antes o después de la acreditación (art. 33).",
+                "Nacional: solo una persona por delegación, después de la acreditación; si es virtual, antes (art. 33).",
+                "Lo convoca y lo dirige el comité de la etapa, presencial o virtual (art. 44, 45 y 46).",
+                "Quien no asiste acepta todos los acuerdos (art. 34).",
+                "En la Etapa Nacional se integra ahí el Jurado de Competencia (art. 35)."
+              ],
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 33, 34, 35, 44, 45 y 46"
+            },
+            {
+              "titulo": "Qué se revisa en cada congresillo",
+              "texto": "En todas las etapas se cierran el sistema, el ritmo, los desempates y el orden de tableros.",
+              "puntos": [
+                "Regional: suizo de 5 rondas o más con más de 8 inscritos; todos contra todos con 8 o menos; mínimo 10 min + 2 s (66.2.a y b).",
+                "Interregional: todos contra todos; mínimo 10 min + 2 s (66.2.c).",
+                "Nacional: suizo de 5 rondas con más de 7; todos contra todos con 6 o menos; con 7 no dice nada y se acuerda (66.2.d y e).",
+                "Al menos tres desempates, que fija la persona árbitra principal (66.4), y el orden de tableros de cada equipo (66.2.h).",
+                "Se depuran las inscripciones y se anuncia ante quién y en qué plazo se denuncia o se apela (art. 81, 85 y 86)."
+              ],
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 66, 81, 85 y 86"
+            },
+            {
+              "titulo": "La hoja de conformación del equipo",
+              "texto": "Cada equipo entrega en el congresillo su orden de tableros, y ese orden se mantiene toda la etapa (art. 66.2.h).",
+              "puntos": [
+                "De 3 a 5 estudiantes: hasta 4 titulares y 1 suplente (art. 66.1.g).",
+                "El orden va del tablero 1 al 4, y el suplente al final, en el quinto lugar.",
+                "La hoja lleva el centro educativo, la categoría y la rama, y la firma de la jefatura de delegación.",
+                "Una vez entregada, el orden no se cambia durante la etapa."
+              ],
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 66.1.g y 66.2.h"
+            },
+            {
+              "titulo": "Cómo se alinea cuando entra el suplente",
+              "texto": "La suplencia va por sistema olímpico (art. 66.2.h): el orden de la hoja nunca se altera, y solo se corre cuando entra el suplente.",
+              "puntos": [
+                "Si no juega un titular, los que están debajo de él suben un tablero y el suplente entra en el tablero 4.",
+                "Descansa D: juegan A, B, C y E. Descansa B: juegan A, C, D y E. Descansa A: juegan B, C, D y E.",
+                "Sin suplente, nadie se mueve: si falta B, A, C y D juegan en sus tableros (1, 3 y 4) y el tablero 2 queda vacío, aunque B no llegue.",
+                "Al inicio de cada ronda tiene que haber al menos 2 estudiantes del equipo frente al tablero (art. 66.2.f)."
+              ],
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 66.2.f y 66.2.h"
+            },
+            {
+              "titulo": "Congresillo: lo que se puede y lo que no",
+              "texto": "El congresillo decide dentro de la Normativa, nunca contra ella.",
+              "puntos": [
+                "Sí: escoger los desempates y su orden, y las rondas del suizo regional, desde 5 (66.2.a y 66.4).",
+                "Sí: acordar lo que la Normativa no prevé; lo no previsto se rige por la FCA y después por la FIDE (art. 66).",
+                "No: un ritmo menor de 10 min + 2 s, menos de tres desempates o inscribir estudiantes nuevos (66.2, 66.4 y 90.l).",
+                "No: cambiar el orden de tableros durante la etapa ni el acta después (66.2.h y art. 34)."
+              ],
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 34, 66 y 90"
+            },
+            {
+              "titulo": "Calcular los materiales",
+              "texto": "Con los inscritos de cada torneo se calcula todo el material; el simulador en Excel lo hace solo.",
+              "puntos": [
+                "Individual: partidas por ronda = inscritos ÷ 2; si son impares, uno queda libre.",
+                "Equipos: encuentros = equipos ÷ 2, y tableros = encuentros × 4 (art. 66.1.g).",
+                "Mesas dobles = tableros ÷ 2, hacia arriba; cada encuentro con sus mesas juntas.",
+                "Cada tablero en juego: un juego de piezas, un reloj y dos sillas, más un 10 % de repuesto.",
+                "Regional de Alajuela 2026: 16 torneos a la vez piden 74 mesas dobles y 142 tableros y relojes."
+              ],
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 66.1.g; acta del congresillo de la Etapa Regional, DRE Alajuela, 2026"
+            },
+            {
+              "titulo": "Paso 1: los torneos individuales",
+              "texto": "Para cada torneo: el sistema y las rondas salen de cuántos inscritos tiene; las partidas y las mesas, de dividir entre 2.",
+              "puntos": [
+                "Con más de 8 inscritos, suizo de 7 rondas (lo acordado en el congresillo); con 8 o menos, todos contra todos (art. 66.2.a y b).",
+                "Partidas por ronda = inscritos ÷ 2; con impares, una persona queda libre.",
+                "Mesas dobles = partidas ÷ 2, redondeado hacia arriba, cada torneo con sus propias mesas.",
+                "Los 9 torneos individuales: 159 estudiantes, 78 partidas por ronda y 42 mesas dobles."
+              ],
+              "fuente": "Estadísticas de inscripción de la Etapa Regional, DRE Alajuela, 2026; simulador de logística de la Sesión 5"
+            },
+            {
+              "titulo": "Paso 2: los torneos por equipos",
+              "texto": "En equipos se cuentan equipos, no personas: cada encuentro usa 4 tableros y 2 mesas dobles juntas.",
+              "puntos": [
+                "Encuentros por ronda = equipos ÷ 2; tableros = encuentros × 4 (art. 66.1.g).",
+                "Equipos A Mujeres tuvo un solo equipo: no hubo torneo.",
+                "Los 6 torneos por equipos: 16 encuentros, 64 tableros y 32 mesas dobles."
+              ],
+              "fuente": "Estadísticas de inscripción de la Etapa Regional, DRE Alajuela, 2026; simulador de logística de la Sesión 5"
+            },
+            {
+              "titulo": "Paso 3: lo que se lleva a la sede",
+              "texto": "Con los 142 tableros en juego (78 individuales y 64 por equipos) sale el resto de la lista, cada cantidad con su razón.",
+              "puntos": [
+                "Repuesto: el 10 % de 142 es 14,2, que se redondea a 15. Juegos, tableros y relojes: 142 + 15 = 157, los relojes a 10 min + 2 s.",
+                "Mesas dobles: 42 + 32 + 2 de control = 76. Sillas: 142 × 2 + 4 de control = 288. Baterías: una por cada 4 relojes, 36.",
+                "Planillas: 2 por partida en cada ronda suman 1848; con el 10 %, 2033.",
+                "Hojas de resultados: una por ronda en individual y una por encuentro en equipos, 155; con el 10 %, 171.",
+                "Árbitros de sala: 142 ÷ 20 = 7,1, o sea 8, más la principal: 9. Sala: 76 mesas × 4 m² = 304 m²."
+              ],
+              "fuente": "Estadísticas de inscripción de la Etapa Regional, DRE Alajuela, 2026; simulador de logística de la Sesión 5"
+            },
+            {
+              "titulo": "La sala de un torneo real",
+              "texto": "Dos salas reales listas para la ronda: el Tacho Chess 2 y un torneo de la FCA en un gimnasio del ICODER.",
+              "puntos": [
+                "Mesas en filas largas, con sillas a los dos lados y pasillos entre filas para que circulen las personas árbitras.",
+                "El público queda afuera de la zona de juego: detrás de una tela en el Tacho, en las graderías en el torneo de la FCA.",
+                "En el torneo de la FCA, cada categoría tiene su bloque de mesas con un rótulo (U08, U14, U16…), para que cada quien encuentre su mesa.",
+                "Una mesa aparte, fuera de las filas, para control, resultados y repuestos."
+              ],
+              "fuente": "Fotos de la sala del Tacho Chess 2 y de un torneo de la Federación Costarricense de Ajedrez"
+            },
+            {
+              "titulo": "Salón virtual de la Regional",
+              "texto": "El plano de la Regional de Alajuela 2026 con los 15 torneos jugando a la vez.",
+              "puntos": [
+                "Una fila de mesas por torneo: 9 individuales y 6 por equipos. Equipos A Mujeres tuvo un solo equipo, así que no hubo torneo.",
+                "74 mesas dobles y 142 tableros en juego; cada encuentro por equipos con sus dos mesas juntas.",
+                "Al frente, la mesa de control con la persona árbitra principal; al fondo, el público detrás de la tela o cinta.",
+                "8 personas árbitras de sala, cada una con unos 16 a 20 tableros vecinos."
+              ],
+              "fuente": "Estadísticas de inscripción de la Etapa Regional, DRE Alajuela, 2026"
+            },
+            {
+              "titulo": "Cómo se coloca cada mesa",
+              "texto": "Todas las mesas se arman igual, para que el resultado se lea y se anote sin dudar.",
+              "puntos": [
+                "Vistas desde el árbitro, de frente al reloj, las blancas quedan a su izquierda y las negras a su derecha.",
+                "El reloj va a la derecha de las negras, igual en todas las mesas.",
+                "La casilla de la esquina a la derecha de cada jugador es blanca (Leyes del Ajedrez de la FIDE, art. 2.1).",
+                "Cada jugador tiene su planilla ordenada y un lapicero listo para usar.",
+                "El número de mesa queda a la vista, para ubicarla y anotar el resultado: izquierda blancas, derecha negras."
+              ],
+              "fuente": "Leyes del Ajedrez de la FIDE, art. 2.1"
+            },
+            {
+              "titulo": "El árbitro, de frente al reloj",
+              "texto": "Dos fotos de torneos reales: dónde se para la persona árbitra para mirar el reloj.",
+              "puntos": [
+                "Mal colocado: el árbitro queda del lado del reloj y tiene que estirarse para verlo; el reloj le queda incómodo.",
+                "Bien colocado: el árbitro queda de frente al reloj, ve los dos tiempos y no estorba a quienes juegan.",
+                "Por eso el reloj va siempre del mismo lado, a la derecha de las negras: el árbitro sabe dónde pararse en cualquier mesa."
+              ],
+              "fuente": "Fotos: Amruta Mokal; Copa del Mundo FIDE 2021",
+              "receso_despues": true
+            },
+            {
               "titulo": "Durante y después de las rondas",
               "texto": "Durante el torneo, el orden de las tareas se repite ronda a ronda.",
               "puntos": [
@@ -1720,12 +1913,19 @@
               "respuesta": "Hechos: suena el celular del jugador X en la mesa N, ronda R, a tal hora. Artículo: 11.3.2 y el reglamento del torneo. Decisión: pérdida de la partida (o la sanción menor que prevea el reglamento), comunicada a las dos partes. Registro: «Ronda R, mesa N: suena el celular del jugador X durante la partida; se aplica el art. 11.3.2 y se declara la partida perdida. Firma del árbitro»."
             },
             {
-              "enunciado": "Escribe la lista de materiales para un torneo de 40 estudiantes (20 mesas).",
-              "respuesta": "20 tableros y 20 juegos de piezas completos, más 2 o 3 de repuesto; 20 relojes configurados, más 2 o 3 de repuesto; planillas para cada ronda; actas de resultados; formularios de inscripción; lista de cotejo; numeración de mesas; hojas de emparejamiento y tabla para publicar."
+              "enunciado": "Escribe la lista de materiales para un torneo individual de 40 estudiantes en mesas dobles.",
+              "respuesta": "20 partidas por ronda: 10 mesas dobles y 40 sillas; 20 tableros y 20 juegos de piezas completos, más 2 de repuesto; 20 relojes configurados, más 2 de repuesto; planillas para cada ronda; actas de resultados; formularios de inscripción; lista de cotejo; numeración de mesas; hojas de emparejamiento y tabla para publicar."
             },
             {
               "enunciado": "Un familiar le señala a su hija una jugada desde el público. ¿Qué haces?",
               "respuesta": "Nadie puede comentar ni interferir en una partida en curso. Se retira al familiar de la zona de juego y se evalúa si hubo ayuda: si la hubo, se sanciona a la jugadora según el art. 12.9. Se registra la incidencia (art. 11.3.1 y 12.7)."
+            }
+          ],
+          "extras": [
+            {
+              "archivo": "simulador-logistica-ajedrez-jde.xlsx",
+              "emoji": "🧮",
+              "texto": "Simulador de logística del torneo (Excel)"
             }
           ]
         },

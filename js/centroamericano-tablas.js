@@ -82,6 +82,7 @@
       finPuesto: (p, de) => "Puesto " + p + " de " + de,
       finPuntos: "Puntos", finDe: (r) => "de " + r,
       finRend: "Rendimiento", finElo: "Elo FIDE", finEloSin: "sin Elo FIDE",
+      finGanadas: "Ganadas", finTablas: "Tablas · Perdidas",
       finColores: "Blancas · Negras",
       finRondas: "Ronda a ronda",
       finMejor: (r, rival, n) => "Mejor victoria: " + rival + ", ronda " + n + ".",
@@ -235,7 +236,7 @@
       finTitulo: "How my tournament ended",
       finPuesto: (p, de) => "Place " + p + " of " + de,
       finPuntos: "Points", finDe: (r) => "of " + r,
-      finRend: "Performance", finElo: "FIDE rating", finEloSin: "no FIDE rating",
+      finRend: "Performance", finGanadas: "Wins", finTablas: "Draws · Losses", finElo: "FIDE rating", finEloSin: "no FIDE rating",
       finColores: "White · Black",
       finRondas: "Round by round",
       finMejor: (r, rival, n) => "Best win: " + rival + ", round " + n + ".",
@@ -363,6 +364,11 @@
     // El francés está en js/centroamericano-fr.js (sin él, esta página va en español).
     fr: window.CentroamericanoFR ? window.CentroamericanoFR.tablas({ NOMBRE_CORTO }) : null,
   };
+  // Con los datos de Pareo Integral, «Pareo Integral» donde dice «chess-results».
+  if (CONFIG.fuenteNombre && V.cambiarFuente) ["es", "en"].forEach((k) => V.cambiarFuente(TEXTOS[k], CONFIG.fuenteNombre));
+  // Los textos propios de otra página (`textos`, en español): sin esto, el
+  // certificado o «Así terminó mi torneo» decían el Centroamericano.
+  if (CONFIG.textos) Object.keys(CONFIG.textos).forEach((k) => { if (k in TEXTOS.es) TEXTOS.es[k] = CONFIG.textos[k]; });
   const T = () => TEXTOS[V.idioma()] || TEXTOS.es;
   const decir = (nodo, s) => { nodo.textContent = String(s).replace(/\.\./g, "."); };
   const nombreCompleto = (j) => (j.titulo ? j.titulo + " " : "") + j.nombre;
@@ -437,7 +443,16 @@
     decir(estado, (ronda ? comoVa(ronda) : tx.antes) + V.cuandoSeLeyo());
     caja.replaceChildren(estado);
     if (!filas.length) { caja.appendChild(el("p", "mt-3", tx.nadie)); return; }
-    caja.appendChild(tabla([tx.colPuesto, tx.colJugador, tx.colFed, tx.colElo, tx.colPuntos, tx.colRend], filas, [0, 3, 4, 5], 1));
+    // Una columna que saldría vacía en todos no va: sin federación en nadie
+    // (un torneo de un solo país, como los de Pareo Integral en Costa Rica),
+    // sin «FED»; sin Elo en nadie, sin «Elo» ni «Rend.» (el rendimiento sale
+    // del Elo de los rivales).
+    const cabeceras = [tx.colPuesto, tx.colJugador, tx.colFed, tx.colElo, tx.colPuntos, tx.colRend];
+    const vacia = (i) => filas.every((f) => f[i] === "" || f[i] === "—");
+    const quitar = [2, 3, 5].filter((i) => (i === 2 ? !lista.some((x) => x.j.fed) : vacia(i)));
+    const quedan = cabeceras.map((c, i) => i).filter((i) => !quitar.includes(i));
+    const numericas = quedan.map((i, k) => ([0, 3, 4, 5].includes(i) ? k : -1)).filter((k) => k >= 0);
+    caja.appendChild(tabla(quedan.map((i) => cabeceras[i]), filas.map((f) => quedan.map((i) => f[i])), numericas, 1));
   }
 
   function botonJugador(x, alTocar) {
@@ -832,10 +847,15 @@
         String(m.mesa), quien(m.blancas), m.negras ? (/\d|½|\+/.test(m.resultado || "") ? m.resultado : "–") : "", m.negras ? quien(m.negras) : tx.proyBye]), ["mesa", "", "res", ""]));
     } else if (p.tipo === "clasif") {
       titulo.textContent = tx.proyClasif(p.ronda, V.conModalidad(V.categoria(p.grupo)), p.pag, p.de);
-      caja.replaceChildren(tablaProyector([tx.colPuesto, tx.colJugador, tx.colPuntos, tx.colRend], p.filas.map((x, i) => {
+      const filasP = p.filas.map((x, i) => {
         const r = V.rendimiento(x);
         return [String(p.desde + i + 1), conFed(x.j), x.j.puntos || "0", r ? String(r.rp) : "—"];
-      }), ["mesa", "", "res", "res"]));
+      });
+      // Sin Elo en nadie (un torneo escolar), el rendimiento no existe: sin esa columna.
+      const conRend = filasP.some((f) => f[3] !== "—");
+      caja.replaceChildren(conRend
+        ? tablaProyector([tx.colPuesto, tx.colJugador, tx.colPuntos, tx.colRend], filasP, ["mesa", "", "res", "res"])
+        : tablaProyector([tx.colPuesto, tx.colJugador, tx.colPuntos], filasP.map((f) => f.slice(0, 3)), ["mesa", "", "res"]));
     } else {
       titulo.textContent = tx.proyPodios + (p.de > 1 ? " · " + p.pag + "/" + p.de : "");
       const rejilla = el("div", "cac-proyector-podios");
@@ -1098,6 +1118,10 @@
       ctx.drawImage(dibujo, (dibujo.width - lado) / 2, (dibujo.height - lado) / 2, lado, lado, 865, 210, 160, 160);
       ctx.restore();
       ctx.lineWidth = 6; ctx.strokeStyle = "#ffffff"; ctx.beginPath(); ctx.arc(945, 290, 80, 0, Math.PI * 2); ctx.stroke();
+    } else if (dibujo) {
+      // Un logo o una mascota de cuerpo entero, a la derecha y sin recortar.
+      const alto = Math.round(Math.min(210, (260 * dibujo.height) / dibujo.width)), ancho = Math.round((alto * dibujo.width) / dibujo.height);
+      ctx.drawImage(dibujo, 1080 - 60 - ancho, 380 - alto, ancho, alto);
     }
     // La tarjeta blanca.
     caja(40, 410, 1000, 1290, 44, "#ffffff");
@@ -1120,10 +1144,14 @@
     const rondas = V.rondasDe(x);
     const jugadas = x.torneo.ronda || x.torneo.rondas || rondas.length;
     const rend = V.rendimiento(x), elo = V.eloDe(x), col = V.porColor(rondas);
+    // Sin Elo en el torneo (ni el suyo ni el de sus rivales: un torneo
+    // escolar), en vez del rendimiento y el Elo van sus ganadas y sus tablas.
+    const sinElo = !rend && !elo && !Number(x.j.elo) && !rondas.some((o) => o.rival && o.rival.elo > 0);
+    const cuenta = (pts) => String(rondas.filter((o) => !o.bye && o.rival && o.puntos === pts).length);
     const datos = [
       [tx.finPuntos, (x.j.puntos || "0") + " " + tx.finDe(jugadas)],
-      [tx.finRend, rend ? String(rend.rp) : "—"],
-      [tx.finElo, elo ? V.textoElo(elo.cambio) : tx.finEloSin],
+      sinElo ? [tx.finGanadas, cuenta(1)] : [tx.finRend, rend ? String(rend.rp) : "—"],
+      sinElo ? [tx.finTablas, cuenta(0.5) + " · " + cuenta(0)] : [tx.finElo, elo ? V.textoElo(elo.cambio) : tx.finEloSin],
       [tx.finColores, V.fmtPuntos(col.blancas.pts) + "/" + col.blancas.n + " · " + V.fmtPuntos(col.negras.pts) + "/" + col.negras.n],
     ];
     datos.forEach(([titulo, valor], i) => {
@@ -1271,7 +1299,9 @@
     const dibujo = await cargarImagen(CARA.dibujo);
     if (dibujo) {
       ctx.save(); caja(730, y, 290, 300, 34, "#ffffff"); ctx.clip();
-      const escala = Math.max(290 / dibujo.width, 300 / dibujo.height), w = dibujo.width * escala, h = dibujo.height * escala;
+      // Redondo (el pizote), llena el recuadro; un logo o una mascota de cuerpo
+      // entero (Tacho), entra completo, con un margen, sin cortarle la cabeza.
+      const escala = CARA.redondo ? Math.max(290 / dibujo.width, 300 / dibujo.height) : Math.min(260 / dibujo.width, 270 / dibujo.height), w = dibujo.width * escala, h = dibujo.height * escala;
       ctx.drawImage(dibujo, 730 + (290 - w) / 2, y + (300 - h) / 2, w, h);
       ctx.restore();
     }
@@ -1609,6 +1639,7 @@
     const D = Object.assign({
       evento: tx.dipEvento, lugar: tx.dipLugar, fondo: ["#40478f", "#5a5fa3"], pildora: "#ce1328",
       dibujo: "img/centroamericano-2026/mascota-trofeo.png", hojas: "img/centroamericano-2026/hojas.png",
+      sombra: "rgba(30, 36, 83, 0.45)", marco: null, escudo: null, escudoDerecha: null,
     }, CONFIG.diploma || {});
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
     const letra = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
@@ -1630,10 +1661,26 @@
       });
       ctx.restore();
     }
+    // El marco de otra página (en Tacho Chess 2, las franjas roja y blanca del afiche).
+    if (D.marco) D.marco.forEach(([color, grosor, margen]) => {
+      ctx.lineWidth = grosor; ctx.strokeStyle = color; ctx.beginPath(); ctx.roundRect(margen, margen, W - 2 * margen, H - 2 * margen, 36); ctx.stroke();
+    });
+    // El escudo de quien organiza, arriba a la izquierda (redondo, sobre blanco).
+    const escudo = D.escudo ? await cargarImagen(D.escudo) : null;
+    if (escudo) {
+      ctx.save(); ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(250, 250, 128, 0, Math.PI * 2); ctx.fill(); ctx.clip();
+      ctx.drawImage(escudo, 130, 130, 240, 240); ctx.restore();
+    }
+    // Un segundo escudo, arriba a la derecha (en Pérez Zeledón, el del CCDR).
+    const escudo2 = D.escudoDerecha ? await cargarImagen(D.escudoDerecha) : null;
+    if (escudo2) {
+      ctx.save(); ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(W - 250, 250, 128, 0, Math.PI * 2); ctx.fill(); ctx.clip();
+      ctx.drawImage(escudo2, W - 370, 130, 240, 240); ctx.restore();
+    }
     ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
     // Letra blanca con la sombra de las bases (#1E2453 al 45 %, corrida hacia abajo).
     const conSombra = (pintar, corrida) => {
-      ctx.save(); ctx.fillStyle = "rgba(30, 36, 83, 0.45)"; ctx.translate(0, corrida); pintar(); ctx.restore();
+      ctx.save(); ctx.fillStyle = D.sombra; ctx.translate(0, corrida); pintar(); ctx.restore();
       ctx.fillStyle = "#ffffff"; pintar();
     };
     const centrado = (texto, y, fuente, ancho, corrida) => {
@@ -2025,6 +2072,79 @@
     if (window.TablaImagen && window.TablaImagen.marcar) await window.TablaImagen.marcar(c);
     return new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("sin imagen"))), "image/png"));
   }
+  // La Copa de naciones en imagen (js/centroamericano-vivo.js la calcula): el
+  // podio de los tres países y los que siguen, con la marca de agua de Ajedrez
+  // Integral. filas: [{fed, puntos, lugares}], final: si ya terminaron todas.
+  async function imagenCopa(filas, final, ronda) {
+    const tx = T(), tv = V.textos();
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const letra = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
+    const resto = filas.slice(3, 10);
+    const alto = 1080 + Math.max(0, resto.length - 4) * 52;
+    const c = document.createElement("canvas");
+    c.width = 1080; c.height = alto;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 1080, alto);
+    ctx.fillStyle = "#40478f"; ctx.fillRect(0, 0, 1080, 230);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "800 64px " + letra;
+    ctx.fillText("🏆 " + tv.copa, 60, 100);
+    ctx.font = "600 30px " + letra;
+    ctx.fillText(renglones(ctx, tx.imgResumenSub, 760, 1)[0], 60, 155);
+    ctx.fillText(renglones(ctx, final ? tv.podioFinal : tv.podioProvisional(ronda), 760, 1)[0], 60, 197);
+    const mascota = await cargarImagen("img/centroamericano-2026/mascota.jpg");
+    if (mascota) {
+      ctx.save(); ctx.beginPath(); ctx.arc(950, 115, 90, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+      const lado = Math.min(mascota.width, mascota.height);
+      ctx.drawImage(mascota, (mascota.width - lado) / 2, (mascota.height - lado) / 2, lado, lado, 860, 25, 180, 180);
+      ctx.restore();
+      ctx.lineWidth = 6; ctx.strokeStyle = "#ffffff"; ctx.beginPath(); ctx.arc(950, 115, 90, 0, Math.PI * 2); ctx.stroke();
+    }
+    // El podio: el 2.° a la izquierda, el 1.° en el medio y más alto, el 3.° a la derecha.
+    const base = 735, ancho = 300;
+    [[1, 60, 230], [0, 390, 300], [2, 720, 180]].forEach(([i, x, h]) => {
+      const f = filas[i];
+      if (!f) return;
+      ctx.fillStyle = i === 0 ? "#fdf3dc" : "#eef0fb"; ctx.fillRect(x, base - h, ancho, h);
+      ctx.lineWidth = i === 0 ? 6 : 2; ctx.strokeStyle = i === 0 ? "#b7791f" : "#c9cbee"; ctx.strokeRect(x, base - h, ancho, h);
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#1e2453"; ctx.font = "800 90px " + letra;
+      ctx.fillText(String(i + 1), x + ancho / 2, base - h + 100);
+      ctx.font = "800 40px " + letra;
+      const nombre = renglones(ctx, V.pais(f.fed), ancho - 30, 2);
+      nombre.forEach((l, k) => ctx.fillText(l, x + ancho / 2, base - h - 30 - (nombre.length - 1 - k) * 46 - 64));
+      ctx.fillStyle = "#40478f"; ctx.font = "700 36px " + letra;
+      ctx.fillText(tv.copaPuntos(f.puntos), x + ancho / 2, base - h - 34);
+      ctx.textAlign = "left";
+    });
+    // Los que siguen.
+    let y = base + 80;
+    ctx.fillStyle = "#1f2937"; ctx.font = "600 34px " + letra;
+    resto.forEach((f, k) => {
+      ctx.fillText((k + 4) + ". " + V.pais(f.fed), 60, y);
+      ctx.textAlign = "right"; ctx.fillText(tv.copaPuntos(f.puntos), 1020, y); ctx.textAlign = "left";
+      y += 52;
+    });
+    ctx.fillStyle = "#40478f"; ctx.font = "700 32px " + letra;
+    ctx.fillText(URL_PAGINA, 60, alto - 70);
+    [["#1e4c8a", alto - 40], ["#ffffff", alto - 30], ["#ce1328", alto - 22], ["#ffffff", alto - 14], ["#1e4c8a", alto - 8]].forEach(([color, yy], i, arr) => {
+      ctx.fillStyle = color; ctx.fillRect(0, yy, 1080, (arr[i + 1] ? arr[i + 1][1] : alto) - yy);
+    });
+    if (window.TablaImagen && window.TablaImagen.marcar) await window.TablaImagen.marcar(c);
+    return new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("sin imagen"))), "image/png"));
+  }
+  async function compartirCopa(filas, final, ronda, boton, estado) {
+    if (boton) boton.disabled = true;
+    if (estado) estado.textContent = "";
+    try {
+      const blob = await imagenCopa(filas, final, ronda);
+      await compartirBlob(blob, "centroamericano-2026-copa-de-naciones" + (final ? "" : "-ronda-" + ronda) + ".png", V.textos().copa + " · https://" + URL_PAGINA);
+    } catch (e) {
+      if (estado) estado.textContent = T().imagenError;
+    } finally {
+      if (boton) boton.disabled = false;
+    }
+  }
   async function compartirNumeros(boton, estado) {
     if (boton) boton.disabled = true;
     if (estado) estado.textContent = "";
@@ -2192,7 +2312,7 @@
   document.addEventListener("cac-datos", repintar);
   document.addEventListener("cac-idioma", repintar);
 
-  window.CentroamericanoTablas = { compartirJugador, imagenJugador, imagenFinal, compartirFinal, imagenHoyJuega, compartirHoyJuega, mensajeHoyJuega, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, documentoInforme, informeDelegacion, numerosDelFestival, imagenNumeros, diplomasDelegacion, conDiploma, textosTablas: T, diploma, descargarDiploma, nombreAlDerecho };
+  window.CentroamericanoTablas = { imagenCopa, compartirCopa, compartirJugador, imagenJugador, imagenFinal, compartirFinal, imagenHoyJuega, compartirHoyJuega, mensajeHoyJuega, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, documentoInforme, informeDelegacion, numerosDelFestival, imagenNumeros, diplomasDelegacion, conDiploma, textosTablas: T, diploma, descargarDiploma, nombreAlDerecho };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

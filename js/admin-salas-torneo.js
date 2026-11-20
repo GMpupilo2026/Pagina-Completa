@@ -1,5 +1,6 @@
 /* Las salas de torneos en admin.html#torneos: crearlas, editarlas,
- * ordenarlas, ocultarlas y borrarlas.
+ * ocultarlas y borrarlas. El orden ya no se toca: la más reciente va primero
+ * (SalasTorneo.listar; ver «Las salas, la más reciente primero»).
  *
  * Escribe directo en salas_torneo: la RLS deja escribir solo a quien
  * administra, y la base valida los enlaces (https y nada más) y la dirección.
@@ -63,7 +64,7 @@
     const ul = $("salas-admin");
     ul.innerHTML = "";
     $("salas-admin-vacio").classList.toggle("hidden", salas.length > 0);
-    salas.forEach((s, i) => {
+    salas.forEach((s) => {
       const li = el("li", "py-3 flex flex-wrap items-center gap-3");
       li.dataset.sala = s.clave;
       const emoji = el("span", "text-2xl w-8 text-center", s.emoji || "🏆");
@@ -82,12 +83,6 @@
       li.appendChild(estado);
 
       const acciones = el("div", "flex flex-wrap gap-1.5");
-      const subir = boton("↑", "Subir " + s.nombre);
-      subir.disabled = i === 0;
-      subir.addEventListener("click", () => mover(i, -1));
-      const bajar = boton("↓", "Bajar " + s.nombre);
-      bajar.disabled = i === salas.length - 1;
-      bajar.addEventListener("click", () => mover(i, 1));
       const editar = boton("Editar");
       editar.setAttribute("aria-label", "Editar " + s.nombre);
       editar.addEventListener("click", () => abrirEditor(s));
@@ -96,7 +91,7 @@
       ver.addEventListener("click", () => cambiarVisible(s));
       const borrar = boton("Borrar", "Borrar " + s.nombre, "px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:hover:bg-red-900 text-red-700 dark:text-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
       borrar.addEventListener("click", () => borrarSala(s));
-      [subir, bajar, editar, ver, borrar].forEach((b) => acciones.appendChild(b));
+      [editar, ver, borrar].forEach((b) => acciones.appendChild(b));
       if (s.tipo === "lichess") {
         const abrir = el("a", "px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Abrir la sala ↗");
         abrir.href = "transmision.html?torneo=" + encodeURIComponent(s.clave);
@@ -115,23 +110,6 @@
     if (error && error.code === "23514") return "La base rechazó algún dato: revisa que los enlaces empiecen con https:// y que la dirección de la sala tenga solo minúsculas, números y guiones.";
     if (error && error.code === "42501") return "Tu cuenta no tiene permiso para cambiar las salas.";
     return "No se pudo guardar. Vuelve a intentarlo.";
-  }
-
-  // Intercambia el orden con la vecina. Dos filas, dos updates; si falla uno
-  // se vuelve a leer la lista, que es lo que de verdad quedó.
-  async function mover(i, paso) {
-    const a = salas[i], b = salas[i + paso];
-    if (!a || !b) return;
-    // Si las dos tienen el mismo orden, intercambiarlo no cambia nada: se
-    // renumera por la posición en la lista.
-    const oa = a.orden === b.orden ? i : a.orden;
-    const ob = a.orden === b.orden ? i + paso : b.orden;
-    const r1 = await sb.from("salas_torneo").update({ orden: ob }).eq("id", a.id);
-    const r2 = r1.error ? r1 : await sb.from("salas_torneo").update({ orden: oa }).eq("id", b.id);
-    if (r1.error || r2.error) Avisos.avisar(errorDeBase(r1.error || r2.error), { tipo: "error" });
-    await cargar();
-    const fila = document.querySelector('#salas-admin li[data-sala="' + CSS.escape(a.clave) + '"] button[aria-label^="' + (paso < 0 ? "Subir" : "Bajar") + '"]');
-    if (fila && !fila.disabled) fila.focus();
   }
 
   async function cambiarVisible(s) {

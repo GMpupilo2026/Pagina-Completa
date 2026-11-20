@@ -3,7 +3,8 @@
  * (la sala de cine busca su torneo por la clave) y admin.html#torneos (el
  * editor, que muestra la misma ficha como vista previa).
  *
- * Las salas viven en la tabla salas_torneo: la lee cualquiera (las visibles)
+ * Las salas viven en la tabla salas_torneo, la más reciente primero (ver
+ * «Las salas, la más reciente primero»): la lee cualquiera (las visibles)
  * y la escribe solo quien administra. Ver «Las salas de torneos se editan en
  * administración» en docs/decisiones/juegos-y-torneos.md.
  *
@@ -17,11 +18,16 @@
 (function () {
   "use strict";
 
-  const COLUMNAS = "id, clave, nombre, descripcion, emoji, tipo, lichess_id, enlaces, pizarras, video_url, quiniela, tema, visible, orden";
+  const COLUMNAS = "id, clave, nombre, descripcion, emoji, tipo, lichess_id, enlaces, pizarras, video_url, quiniela, tema, visible, orden, created_at";
 
+  // La más reciente primero: la sala que se acaba de crear va arriba, sin
+  // ordenar nada a mano (lo pidió el dueño el 12/11/2026). Dos creadas en el
+  // mismo instante (CENFOTEC y UTN) desempatan por su `orden` de antes, y eso
+  // deja igual la sala que transmision.js abre por defecto (la primera de
+  // Lichess). Ver «Las salas, la más reciente primero».
   async function listar() {
     const { data, error } = await sb.from("salas_torneo").select(COLUMNAS)
-      .order("orden", { ascending: true }).order("nombre", { ascending: true });
+      .order("created_at", { ascending: false }).order("orden", { ascending: true }).order("nombre", { ascending: true });
     if (error) throw error;
     return data || [];
   }
@@ -121,6 +127,10 @@
       clase: "metro-sala", imagen: "/img/metropolitano-2026/logo.png", ancho: 900, alto: 397,
       pagina: "/metropolitano-2026.html",
       marca: true,
+      // Todavía no se entra (lo pidió el dueño el 12/11/2026): la ficha se ve
+      // con el candado y sus botones dicen «Próximamente» al tocarlos. Se
+      // quita esta línea para abrirla.
+      proximamente: true,
       fichas: [[/chess-results\.com\//i, "resultados", "Resultados en vivo"], [/bases-metropolitano-2026(-2)?\.pdf$/i, "bases"]],
     },
     // Las universidades, con su azul y su logo (css/universidades.css). Lo
@@ -136,6 +146,25 @@
       clase: "u-sala", tema: "u-sala-utn", imagen: "/img/utn/logo.png", ancho: 410, alto: 313,
       pagina: "/utn-2026.html",
       fichas: [[/chess-results\.com\/tnr1498221\b/i, "ficha-femenino"], [/chess-results\.com\/tnr1498218\b/i, "ficha-masculino"], [/lichess\.org\//i, "ficha-partidas"]],
+    },
+    // La Eliminatoria Cantonal JDN de Pérez Zeledón: la misma cara, con el
+    // azul y el logo redondo de la ADAPZ. Sin chess-results: los resultados
+    // son de Pareo Integral, y un enlace a sus torneos lleva a las fichas de
+    // la página; la inscripción, a su formulario.
+    "jdn-pz-2026": {
+      clase: "u-sala", tema: "u-sala-pz", imagen: "/img/adapz/logo.jpg", ancho: 349, alto: 349,
+      pagina: "/jdn-pz-2026.html",
+      fichas: [[/torneos-pareo\.html/i, "fichas", "Resultados en Pareo Integral"], [/bases-eliminatoria-cantonal-jdn-pz-2026\.pdf$/i, "ficha-bases"], [/inscrib/i, "inscribirme"]],
+    },
+    // El Torneo Intereducativo Tacho Chess 2 del Liceo Anastasio Alfaro: la
+    // misma cara, con el azul y el rojo de su afiche y Tacho, su mascota. Las
+    // bases llevan a su ficha; el formulario de inscripción (forms.gle) y lo
+    // que diga «inscrib», a la ventana «Inscribirme» de la página; Pareo
+    // Integral (los resultados), a las fichas.
+    "tacho-chess-2": {
+      clase: "u-sala", tema: "u-sala-tacho", imagen: "/img/tacho-chess-2/mascota.png", ancho: 450, alto: 755,
+      pagina: "/tacho-chess-2.html",
+      fichas: [[/torneos-pareo\.html/i, "fichas", "Resultados en Pareo Integral"], [/bases-tacho-chess-2\.pdf$/i, "ficha-bases"], [/forms\.gle\/|inscrib/i, "inscribirme"]],
     },
   };
 
@@ -210,7 +239,36 @@
       enlaces.forEach((e, i) => caja.appendChild(enlaceAfuera(e, boton(i === 0), sala.nombre, portada)));
       li.appendChild(caja);
     }
+    if (portada && portada.proximamente) bloquear(li, sala.nombre);
     return li;
+  }
+
+  // Una ficha que todavía no se abre (`proximamente` en su portada): se ve
+  // entera, con «🔒 Próximamente» escrito arriba, y cada enlace pasa a ser un
+  // botón que no lleva a ningún lado y, al tocarlo, dice «Próximamente» (en el
+  // botón y para el lector de pantalla). Sigue alcanzándose con Tab: una
+  // ficha apagada no lleva href, pero se puede llegar a ella.
+  function bloquear(li, nombre) {
+    li.dataset.bloqueada = "si";
+    const aviso = el("p", "sala-proximamente", "🔒 Próximamente");
+    li.insertBefore(aviso, li.querySelector("h2"));
+    const estado = el("p", "sr-only");
+    estado.setAttribute("role", "status");
+    li.querySelectorAll("a").forEach((a) => {
+      const b = el("button", a.className + " sala-bloqueada", a.textContent.replace(/\s*[→↗]\s*$/, "").replace(" de " + nombre, "").replace(/ \(se abre en otra pestaña\)/, "").trim());
+      b.type = "button";
+      b.setAttribute("aria-disabled", "true");
+      b.setAttribute("aria-label", b.textContent + " de " + nombre + ": todavía no está disponible");
+      const texto = b.textContent;
+      b.addEventListener("click", () => {
+        b.textContent = "Próximamente";
+        estado.textContent = texto + ": próximamente.";
+        clearTimeout(b._vuelta);
+        b._vuelta = setTimeout(() => { b.textContent = texto; }, 2500);
+      });
+      a.replaceWith(b);
+    });
+    li.appendChild(estado);
   }
 
   window.SalasTorneo = { listar, porClave, ficha, idDeLichess };

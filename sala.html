@@ -115,6 +115,7 @@
                         <p class="min-w-0"><span id="nombre-yo" class="font-semibold"></span> <span id="equipo-yo" class="text-xs text-brand-450 dark:text-brand-350"></span></p>
                         <p id="reloj-yo" class="sala-reloj" role="timer" aria-label="Tu reloj">0:00</p>
                     </div>
+                    <p id="anuncio" class="sr-only" aria-live="polite"></p>
                     <p id="turno" class="text-center text-sm font-semibold mt-3" aria-live="polite"></p>
                 </div>
                 <div class="space-y-4">
@@ -153,7 +154,6 @@
                     </div>
                 </div>
             </div>
-            <p id="anuncio" class="sr-only" aria-live="polite"></p>
         </section>
     </main>
 
@@ -176,6 +176,7 @@
     <!-- tablero-js: fin -->
     <script src="js/board-themes.js"></script>
     <script src="js/vendor/supabase.js"></script>
+    <script src="js/blind-notation.js"></script>
     <script src="js/sala-cliente.js"></script>
     <script src="js/vendor/chess.js"></script>
     <script src="js/reloj-servidor.js"></script>

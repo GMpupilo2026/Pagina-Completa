@@ -1,0 +1,29 @@
+{
+  "numero": 5,
+  "fecha_original": "septiembre de 2012",
+  "titulo_presentacion": "Editorial",
+  "temas": [
+    {"titulo": "Árbitro: ¿ángel o demonio?", "desc": "Psicología del deporte · arts. 12.1 y 12.2"},
+    {"titulo": "¿Esto es un torneo o un mercado prehispánico?", "desc": "Zonas de la sala · arts. 11.2, 11.4 y 12.2 · C.01"},
+    {"titulo": "Eliminación directa «Wimbledon» (2.ª parte)", "desc": "Cuadros de 32 y de 23 · C.04.2 art. 2.2 · C.07 art. 3"},
+    {"titulo": "El sistema Arranz", "desc": "Tablas según el color · fuera del C.07 (2026)"},
+    {"titulo": "Guías rápidas de Swiss Manager (1.ª parte)", "desc": "Guías 1 a 10 · qué sigue valiendo en 2026"}
+  ],
+  "presentacion": "<div class=\"cols\"><p>Cada día recibimos propuestas y sugerencias para publicar; estamos preparando mucho material y lo iremos publicando poco a poco. Es increíble la cantidad de información que hay sobre arbitraje, además de las preguntas y proyectos que nos envían nuestros lectores. Vamos muy bien, y eso es gracias a ustedes: sigamos así para tener un medio informativo importante a nivel internacional.</p><p>En esta edición les ofrecemos la conocida sección de la psicóloga Paula Man Reich, que habla del árbitro: ¿ángel o demonio?; un extenso estudio, «¿Esto es un torneo o un mercado prehispánico?», sobre cómo se administra la sala de un torneo (¡no hagan de sus torneos un mercado!); el sistema de desempate Arranz; la segunda parte del sistema de competencia Wimbledon, y el inicio de las guías rápidas de Swiss Manager.</p><p>Espero que este número sea de su agrado.</p><p style=\"text-align:left\"><b>Santiago García Ramos</b><br>Árbitro Internacional</p></div><p class=\"small\">Se omitieron del editorial original el anuncio de los cambios reglamentarios que «estaban por publicarse» en 2012 y la cita para el número de octubre, ya caducados.</p>",
+  "cambios": [
+    ["Árbitro: ¿ángel o demonio?", "Texto sin referencia normativa; erratas de redacción.", "Se conserva el texto de Paula Man Reich, corregido. Se agrega un recuadro con lo que las Leyes 2023 esperan del árbitro (arts. 12.1 y 12.2.1-12.2.7)."],
+    ["Zonas de juego", "Citaba las Leyes de entonces sin artículo y el Manual del Organizador y Reglamento de Torneos de 2012.", "Recinto y zona de juego: <b>art. 11.2.1-11.2.3</b>; quien terminó es espectador: <b>art. 11.4</b>; deberes del árbitro: <b>art. 12.2</b>. Para alto nivel, pautas <b>C.01 (2022)</b>: zona de juego de al menos 5n m², 450 lux, sin ruido."],
+    ["Medidas de la sala", "4,5 m² por jugador (2 m² en niveles bajos), 2,5 m entre filas, 1,2-1,5 m al público, como norma FIDE.", "Se conservan solo como referencia práctica histórica: no las encontramos en la normativa vigente. La cifra vigente para alto nivel es la de C.01 art. 1.2."],
+    ["Anécdota de la planilla", "Exigencia de completar la planilla con 15 minutos, sin artículos.", "Se explica con los <b>arts. 8.1.1 y 8.4</b> (no se anota con menos de 5 minutos si no hay incremento de 30 s) y <b>11.7</b> (negativa persistente: pérdida), con las sanciones del <b>art. 12.9</b>."],
+    ["Wimbledon: lista de 32", "Orden con errores (un 2348 en el puesto 19 y un 2349 en el 31).", "<b>Fe de erratas.</b> El ejemplo se explica con números de siembra y el orden inicial de <b>C.04.2 art. 2.2</b> (rating, título, alfabético). Cuadro comprobado: cada cruce suma n + 1."],
+    ["Wimbledon: tarea de 23", "«Potencias de 2… 126»; «del 23 al 32 son 9»; ratings copiados del otro ejemplo; paso 5 con los nombres del cuadro de 32.", "<b>Fe de erratas:</b> 128; los vacíos son del 24 al 32; cuadro de 23 corregido y resuelto (9 exentos, 7 encuentros). Se agrega que el desempate de cada encuentro va en las bases (<b>C.07 art. 3.1</b>)."],
+    ["Sistema Arranz", "Presentado como desempate adoptado y próximo a entrar en competiciones FIDE; ejemplo con jugadores reales y datos que no cuadraban.", "Se aclara que <b>no está en el C.07 (2026)</b> y que, como puntuación, puede invertir medio punto. Se muestran los desempates oficiales afines (<b>BPG 7.3, BWG 7.4</b>) y el <b>art. 9.1.1</b> contra las tablas rápidas. Ejemplo nuevo ficticio, verificado (28 puntos)."],
+    ["Guías de Swiss Manager", "Rutas y capturas de la versión de 2012; «Windows XP y posteriores»; versión DEMO.", "Se conservan las rutas como guía, marcadas para comprobar en cada versión; se actualiza lo que dice hoy el sitio oficial (Windows 10, versión completa y ligera). Se corrige «Sprachauswahl und Verzeichnisse»."]
+  ],
+  "directorio": [
+    ["Director (edición original)", "Santiago García Ramos · Árbitro Internacional"],
+    ["Revisión (edición original)", "Ignacio Córdoba Navarro · Periodista"],
+    ["Diseño (edición original)", "Ángel Antonio Espino · Diseñador gráfico"],
+    ["Colaboradora (edición original)", "Paula Man Reich · Psicóloga del deporte"]
+  ]
+}

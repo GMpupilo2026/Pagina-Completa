@@ -1,0 +1,222 @@
+<!-- ========== QUÉ ES ========== -->
+<section class="page">
+  <div class="kicker">Pareo Integral</div>
+  <h2 class="sec">Qué es y qué necesitas</h2>
+  <div class="byline">Por IA Oscar Angulo Cubero</div>
+  <div class="cols">
+    <p>Pareo Integral es el programa de emparejamientos de Ajedrez Integral. Se abre en el navegador, en <b>ajedrez-integral.com/pareo.html</b>, y hace lo que un árbitro necesita en un torneo:</p>
+    <ul>
+      <li>empareja con el <b>Sistema Holandés de FIDE</b> (C.04.3), con todos contra todos (tablas de Berger), Scheveningen o eliminación directa;</li>
+      <li>anota los resultados y avisa cuando falta alguno;</li>
+      <li>arma la clasificación con los desempates del <b>C.07 (2026)</b>, en el orden que elijas, y la tabla cruzada;</li>
+      <li>baja el <b>TRF</b>, el archivo que FIDE pide para el informe de Elo;</li>
+      <li>imprime el pareo para la pared, las planillas y los resultados.</li>
+    </ul>
+    <p>Para usarlo hace falta una cuenta de Ajedrez Integral con la <b>licencia de Pareo Integral</b>, que se pide y se activa en la página de Herramientas. Sin la licencia, la página muestra el botón «Activar o pedir la licencia».</p>
+    <div class="box ok"><p><b>Dónde queda el torneo.</b> Lo que escribes queda guardado en el navegador de la computadora donde trabajas. Para pasarlo a otra computadora o tener un respaldo, baja la copia del torneo (.json) en «Archivos y comprobador».</p></div>
+    <div class="box warn"><p><b>Todo torneo se publica.</b> Al emparejar la ronda 1, el torneo aparece solo en «Torneos en Pareo Integral», la página pública de torneos, con el nombre, la institución, el Elo, la categoría y los resultados de cada jugador. Nunca se publican la fecha de nacimiento, el sexo ni el ID FIDE.</p></div>
+    <h3>Las siete fichas</h3>
+    <p>Arriba, debajo del nombre del torneo abierto, están las fichas que ordenan todo el trabajo:</p>
+    <table class="calc">
+      <tr><th>Ficha</th><th>Para qué</th></tr>
+      <tr><td>Torneo</td><td>Los datos del torneo, el sistema, las rondas, los puntos y los desempates.</td></tr>
+      <tr><td>Jugadores</td><td>Inscribir, pegar una lista o traerlos de una lista de Elo.</td></tr>
+      <tr><td>Rondas</td><td>Marcar byes, emparejar, anotar resultados e imprimir.</td></tr>
+      <tr><td>Centro del evento</td><td>La ronda de un vistazo, los adjuntos y las cámaras.</td></tr>
+      <tr><td>Clasificación</td><td>La tabla con los desempates y los premios.</td></tr>
+      <tr><td>Tabla cruzada</td><td>Quién jugó con quién, con qué color y qué resultado.</td></tr>
+      <tr><td>Archivos y comprobador</td><td>Publicar, el TRF, la copia del torneo y el comprobador.</td></tr>
+    </table>
+    <p class="small">El botón «Manual de uso», arriba a la derecha, abre la guía corta de la propia herramienta.</p>
+  </div>
+</section>
+
+<!-- ========== PASO 1: EL TORNEO ========== -->
+<section class="page">
+  <div class="kicker">Paso 1</div>
+  <h2 class="sec">Crear el torneo</h2>
+  <ol class="pasos">
+    <li>Toca <span class="boton">Nuevo torneo</span> en la barra de arriba. Se abre la ficha <b>Torneo</b>.</li>
+    <li>Escribe el <b>nombre</b>, la ciudad, la provincia, las fechas, el árbitro principal, el adjunto y el ritmo de juego. Todo eso va al TRF, así que conviene escribirlo como lo pide FIDE.</li>
+    <li>En <b>Válido para Elo</b>, elige si el torneo va para FIDE, solo para el Elo Nacional o para ninguno: sale en la lista pública para que los jugadores lo sepan.</li>
+  </ol>
+  <figure class="captura"><img src="capturas/01-torneo-datos.jpg" alt="La ficha Torneo con los datos del torneo"><figcaption>Los datos del torneo. Lo que escribes se guarda solo, sin botón de «Guardar».</figcaption></figure>
+  <ol class="pasos" start="4" style="counter-reset: paso 3">
+    <li>En <b>Sistema</b>, elige el suizo (Sistema Holandés de FIDE), todos contra todos, Scheveningen o eliminación directa, y el <b>número de rondas</b>.</li>
+    <li>El <b>color del n.º 1 en la ronda 1</b> sale del sorteo del árbitro. La <b>aceleración Baku</b> es para torneos grandes.</li>
+    <li>Revisa los <b>puntos</b> (por omisión 1, ½ y 0, y 1 para el bye del pareo) y los <b>desempates, en orden</b>. Por omisión trae BH-C1, BH, SB, DE y WIN; con «Agregar un desempate» se suma otro.</li>
+  </ol>
+  <figure class="captura"><img src="capturas/02-torneo-sistema.jpg" alt="El recuadro del sistema y el número de rondas"><figcaption>El sistema y las rondas.</figcaption></figure>
+  <div class="box law"><span class="tag">Antes de la ronda 1</span><p>El sistema y los puntos <b>no se pueden cambiar</b> una vez emparejada la primera ronda. El número de rondas sí se puede subir durante el torneo, pero nunca por debajo de las que ya se emparejaron. Los desempates deben publicarse antes del torneo, como pide el C.07: por eso conviene ponerlos en las bases y en Pareo Integral el mismo día.</p></div>
+</section>
+
+<!-- ========== PASO 2: JUGADORES ========== -->
+<section class="page">
+  <div class="kicker">Paso 2</div>
+  <h2 class="sec">Inscribir a los jugadores</h2>
+  <p>Hay tres maneras, y se pueden combinar:</p>
+  <ul>
+    <li><b>Uno por uno</b>, con el formulario «Agregar un jugador»: apellidos y nombre, institución, categoría, Elo FIDE, título, federación, ID FIDE, sexo y fecha de nacimiento. Solo el nombre es obligatorio.</li>
+    <li><b>Pegar una lista</b>: uno por línea, con los datos separados por punto y coma (Nombre; Elo; Título; Federación; ID FIDE). Sirve copiar las columnas de una hoja de cálculo.</li>
+    <li><b>Desde una lista de Elo</b>: FIDE (estándar, rápido o blitz) o el Elo Nacional, con «Buscar».</li>
+  </ul>
+  <p>También se puede subir el archivo de la inscripción (Excel, CSV o Word) en la ficha Torneo, con «Subir la lista de jugadores».</p>
+  <ol class="pasos">
+    <li>Abre <b>Pegar una lista de jugadores</b>, pega la lista y toca <span class="boton">Agregar la lista</span>.</li>
+  </ol>
+  <figure class="captura"><img src="capturas/03-jugadores-pegar.jpg" alt="El cuadro para pegar una lista de jugadores"><figcaption>Diez jugadores pegados de una vez.</figcaption></figure>
+  <ol class="pasos" start="2" style="counter-reset: paso 1">
+    <li>Revisa la lista de <b>Inscritos</b>: el número de cada jugador sale del <b>orden inicial de FIDE</b> (Elo, después título, después nombre) y queda fijo al emparejar la ronda 1. Con <span class="boton">Editar</span> se corrige un dato.</li>
+  </ol>
+  <figure class="captura"><img src="capturas/04-jugadores-inscritos.jpg" alt="La lista de inscritos con su número, Elo y estado"><figcaption>Los inscritos, ordenados como pide FIDE.</figcaption></figure>
+  <div class="box"><p><b>Inscripción tardía y retiros.</b> Quien se inscribe tarde se intercala en el lugar que le toca por Elo, sin cambiar el orden de los demás; en las rondas que no jugó cuenta como ausente. <b>Retirar</b> a un jugador lo saca de las rondas siguientes y lo que jugó sigue contando; eliminarlo solo se puede si todavía no jugó ninguna ronda.</p></div>
+</section>
+
+<!-- ========== PASO 3: ANTES DE EMPAREJAR ========== -->
+<section class="page">
+  <div class="kicker">Paso 3</div>
+  <h2 class="sec">Antes de emparejar: byes y ausentes</h2>
+  <p>En la ficha <b>Rondas</b>, antes de cada ronda, aparece la lista de jugadores con lo que cuenta la ronda para cada uno:</p>
+  <table class="calc">
+    <tr><th>Opción</th><th>Qué cuenta</th></tr>
+    <tr><td>Juega</td><td>Entra al emparejamiento.</td></tr>
+    <tr><td>Bye pedido (½)</td><td>Pidió no jugar esa ronda, con medio punto (si las bases lo permiten).</td></tr>
+    <tr><td>Ausente (0)</td><td>No juega y suma cero.</td></tr>
+    <tr><td>Bye de punto entero</td><td>Un punto sin jugar. FIDE lo desaconseja: la página pide confirmarlo.</td></tr>
+  </table>
+  <p>El botón <span class="boton">No viene</span> lo marca en un toque, y se puede deshacer. Arriba, un repaso avisa quién no tiene categoría o Elo: es solo un aviso, no bloquea el emparejamiento.</p>
+  <figure class="captura"><img src="capturas/05-ronda-antes.jpg" alt="La ficha Rondas antes de emparejar la ronda 1"><figcaption>Antes de la ronda 1: quién juega, quién pidió bye y el aviso de lo que falta.</figcaption></figure>
+  <div class="box law"><span class="tag">C.07 (2026) · arts. 15 y 16</span><p>Los byes y las rondas no jugadas cuentan distinto en los desempates: el C.07 las suma contra un rival ficticio con el mismo puntaje del jugador, con el tope del art. 16.4. Pareo Integral lo hace solo, pero el árbitro tiene que saberlo para explicar una clasificación. Las revistas 3, 4 y 7 lo explican con ejemplos, y el Taller de la Aula tiene casos para practicarlo.</p></div>
+</section>
+
+<!-- ========== PASO 4: EMPAREJAR Y ANOTAR ========== -->
+<section class="page">
+  <div class="kicker">Paso 4</div>
+  <h2 class="sec">Emparejar la ronda y anotar los resultados</h2>
+  <ol class="pasos">
+    <li>Toca <span class="boton">Emparejar la ronda 1</span>. Pareo Integral calcula los emparejamientos con el Sistema Holandés y muestra las mesas en el orden de FIDE. Si sobra un jugador, recibe el bye del pareo.</li>
+  </ol>
+  <figure class="captura"><img src="capturas/06-ronda-emparejada.jpg" alt="La ronda emparejada con los botones de imprimir y compartir"><figcaption>La ronda emparejada, con sus herramientas: imprimir, la plantilla para la pared, las planillas y el enlace para un árbitro adjunto.</figcaption></figure>
+  <figure class="captura"><img src="capturas/06b-ronda-mesas.jpg" alt="Las mesas de la ronda 1 sin resultados"><figcaption>Las mesas de la ronda 1, sin resultados todavía.</figcaption></figure>
+  <ol class="pasos" start="2" style="counter-reset: paso 1">
+    <li>Anota el resultado de cada mesa en su lista: <b>1-0</b>, <b>½-½</b> o <b>0-1</b>; <b>+/−</b> y <b>−/+</b> son incomparecencias (gana quien vino) y <b>−/−</b> es que no vino ninguno. Con el teclado es más rápido: <b>1</b> gana blancas, <b>0</b> gana negras, <b>=</b> tablas, y salta solo a la mesa siguiente.</li>
+    <li>Arriba de las mesas, la página dice cuántos resultados faltan. Con todos anotados ya se puede emparejar la ronda siguiente.</li>
+  </ol>
+  <figure class="captura"><img src="capturas/07-ronda-resultados.jpg" alt="Las mesas de la ronda 1 con sus resultados"><figcaption>La ronda 1 con todos sus resultados.</figcaption></figure>
+  <div class="box warn"><p><b>Corregir y deshacer.</b> Un resultado de una ronda vieja se puede corregir, pero las rondas siguientes no se vuelven a emparejar. «Deshacer el emparejamiento» solo se puede en la última ronda, y con los mismos datos sale la misma ronda. Para un cambio puntual sin deshacerla (quien llegó tarde, invertir los colores de una mesa, sacar a alguien) está <b>Modificar la ronda sin deshacerla</b>, debajo de las mesas: cada cambio queda en las incidencias de la ronda.</p></div>
+  <div class="box"><p><b>Quién no ha llegado.</b> Con «Empezó la ronda: anotar la hora», la página sabe a qué hora arrancó y, con «No ha llegado», avisa cuando cae el tiempo de espera de las bases y anota la incomparecencia. La decisión de declarar la partida perdida sigue siendo del árbitro (Leyes 2023, art. 6.7).</p></div>
+</section>
+
+<!-- ========== LA RONDA EN JUEGO ========== -->
+<section class="page">
+  <div class="kicker">Paso 5</div>
+  <h2 class="sec">La ronda en juego: imprimir, compartir y los adjuntos</h2>
+  <p>Con la ronda emparejada, la barra de la ficha <b>Rondas</b> tiene todo lo que se usa en la sala:</p>
+  <ul>
+    <li><span class="boton">Imprimir</span> y <span class="boton">Plantilla para la pared</span>: el pareo para pegar en la pizarra.</li>
+    <li><span class="boton">Planillas para firmar</span> y <span class="boton">Planillas de anotación</span>, o <span class="boton">Todo para imprimir</span> de una vez.</li>
+    <li><span class="boton">Ver desde el celular</span> y <span class="boton">Compartir por WhatsApp</span>: un enlace con su QR para que jugadores y familias vean la ronda y la clasificación.</li>
+    <li><span class="boton">Enlace para un árbitro adjunto</span>: el enlace (o el código de 8 letras) con el que cada adjunto anota los resultados de sus mesas desde la mesa del árbitro.</li>
+    <li><span class="boton">Recibir de las cámaras</span>: los resultados que leen las cámaras de Notara, que el principal confirma.</li>
+  </ul>
+  <figure class="captura"><img src="capturas/08-ronda-herramientas.jpg" alt="La ronda 4 en juego con dos resultados anotados"><figcaption>La ronda 4 en juego: faltan tres resultados.</figcaption></figure>
+</section>
+
+<!-- ========== CENTRO DEL EVENTO ========== -->
+<section class="page">
+  <div class="kicker">El centro del evento</div>
+  <h2 class="sec">El torneo de un vistazo</h2>
+  <p>La ficha <b>Centro del evento</b> es la pantalla del árbitro principal durante la ronda. Se pone al día sola:</p>
+  <ul>
+    <li><b>La ronda en juego</b>: cuántas mesas terminaron, con una barra de avance.</li>
+    <li><b>Para confirmar</b>: lo que espera la decisión del principal, como una lectura de las cámaras o una segunda jugada ilegal que anotó un adjunto.</li>
+    <li><b>Árbitros adjuntos</b>: con «+ Agregar árbitro» se crea uno por cada grupo de mesas; cada uno recibe su código.</li>
+    <li><b>Cámaras de Notara</b> y los <b>enlaces para compartir</b>: el de las familias y el público, el de los adjuntos que entran con el código y el de la mesa del árbitro.</li>
+  </ul>
+  <figure class="captura"><img src="capturas/09-centro.jpg" alt="El centro del evento con la ronda 4 en juego"><figcaption>El centro del evento: 2 de 5 mesas terminadas en la ronda 4.</figcaption></figure>
+</section>
+
+<!-- ========== CLASIFICACIÓN ========== -->
+<section class="page">
+  <div class="kicker">Clasificación</div>
+  <h2 class="sec">La clasificación, los desempates y la tabla cruzada</h2>
+  <p>La ficha <b>Clasificación</b> cuenta solo las rondas que tienen todos sus resultados: con la ronda 4 en juego, la tabla es la de la ronda 3. Ordena por puntos y después por los desempates en el orden que se eligió en Torneo. Si dos jugadores quedan iguales en todo, comparten el puesto y lo resuelve el árbitro.</p>
+  <figure class="captura"><img src="capturas/10-clasificacion.jpg" alt="La clasificación tras la ronda 3 con BH-C1, BH, SB, DE y WIN"><figcaption>La clasificación tras la ronda 3, con cada desempate en su columna y la leyenda debajo.</figcaption></figure>
+  <ul>
+    <li><span class="boton">Bajar PDF</span>, <span class="boton">Imprimir</span>, <span class="boton">Para la pared (A3)</span> y <span class="boton">Compartir por WhatsApp</span>.</li>
+    <li><b>Premios especiales</b>: por franja de Elo, categoría, la mejor mujer o el mejor sin Elo. Nadie se lleva dos premios: primero el podio y después cada premio en el orden de la lista.</li>
+    <li>Si las bases lo piden, el <b>desempate en la mesa</b> (por ejemplo, un Armagedón) se juega y se anota ahí mismo.</li>
+  </ul>
+  <figure class="captura"><img src="capturas/11-cruzada.jpg" alt="La tabla cruzada con rival, color y resultado de cada ronda"><figcaption>La tabla cruzada: en cada ronda, el número del rival, el color (b o n) y el resultado.</figcaption></figure>
+  <div class="box ok"><p><b>Para explicar una clasificación</b>, la herramienta «Desempates explicados» y las calculadoras de la Aula desglosan cada número ronda por ronda: de dónde sale el Buchholz de un jugador, qué rival se cortó y por qué.</p></div>
+</section>
+
+<!-- ========== ARCHIVOS ========== -->
+<section class="page">
+  <div class="kicker">Archivos y comprobador</div>
+  <h2 class="sec">Publicar, el TRF y el respaldo</h2>
+  <p>La última ficha guarda todo lo que sale del torneo:</p>
+  <ul>
+    <li><b>Publicar en «Torneos en Pareo Integral»</b>: muestra el enlace público y se pone al día con cada resultado. Antes del torneo se puede abrir la <b>inscripción</b> desde la página pública: las familias inscriben y el árbitro acepta o rechaza a cada uno.</li>
+    <li><span class="boton">Bajar el TRF para FIDE</span>: el archivo del informe de Elo, con las rondas que tienen todos sus resultados.</li>
+    <li><span class="boton">Bajar una copia (.json)</span>: el torneo entero, para abrirlo en otra computadora o guardarlo de respaldo.</li>
+    <li><b>Abrir un torneo</b>: un TRF de Swiss-Manager, Vega u otro programa, o una copia .json; se pueden seguir emparejando las rondas que faltan.</li>
+    <li><b>Comprobador de emparejamientos</b>: vuelve a emparejar cada ronda de un TRF con el Sistema Holandés y muestra dónde difiere.</li>
+  </ul>
+  <figure class="captura"><img src="capturas/12-archivos.jpg" alt="La ficha Archivos con la publicación y la inscripción"><figcaption>La publicación del torneo y la inscripción desde la página pública.</figcaption></figure>
+  <div class="box warn"><p><b>El respaldo es tuyo.</b> Si se borran los datos del navegador, el torneo se pierde con ellos. Al terminar cada ronda, baja la copia (.json) o guarda tus torneos en tu cuenta.</p></div>
+</section>
+
+<!-- ========== MESA DEL ÁRBITRO ========== -->
+<section class="page">
+  <div class="kicker">La mesa del árbitro</div>
+  <h2 class="sec">Los adjuntos anotan desde el celular</h2>
+  <div class="byline">Por IA Oscar Angulo Cubero</div>
+  <p>En un torneo grande, el principal no puede estar en todas las mesas. La <b>mesa del árbitro</b> (ajedrez-integral.com/mesa-arbitro.html) es la pantalla de cada árbitro adjunto: ve <b>solo sus mesas</b> de la ronda en juego y anota los resultados, las jugadas ilegales, las irregularidades y las notas. Todo le llega al Pareo Integral del principal, que lo acepta en el torneo.</p>
+  <p>Al entrar, la mesa pregunta <b>sobre qué vas a trabajar</b>: un torneo de Pareo Integral, uno publicado en chess-results o, si diriges solo, sin adjuntos, la opción «Dirijo solo».</p>
+  <figure class="captura media"><img src="capturas/13-mesa-entrada.jpg" alt="La pantalla de entrada de la mesa del árbitro"><figcaption>La entrada: Pareo Integral o chess-results.</figcaption></figure>
+  <h3>Paso a paso, para el adjunto</h3>
+  <ol class="pasos">
+    <li>El principal crea al adjunto en el <b>Centro del evento</b> (o con «Enlace para un árbitro adjunto» en Rondas) y le pasa el enlace o el código de 8 letras.</li>
+    <li>El adjunto pega el enlace o escribe el código en <b>Enlace o código de árbitro</b> y toca <span class="boton">Conectar</span>. Quien no tiene la licencia entra con el código en <b>pareo.html#codigo</b>.</li>
+    <li>Aparecen sus mesas, con el torneo y la ronda. En cada una toca el resultado (<b>1-0</b>, <b>½-½</b>, <b>0-1</b> u otro). La mesa dice «Resultado aceptado por el árbitro principal» cuando ya entró al torneo.</li>
+    <li>Junto a cada jugador están <span class="boton">Ilegal</span> e <span class="boton">Irregularidad</span>. Con la segunda jugada ilegal del mismo jugador, la mesa avisa «Segunda ilegal: decide el resultado».</li>
+    <li>Debajo, el formulario de notas: mesa, tipo (incidencia o nota), artículo y qué pasó. Con «Anotar y avisar al principal» le llega a su pantalla.</li>
+  </ol>
+  <figure class="captura"><img src="capturas/14-mesa-mesas.jpg" alt="Las mesas del adjunto con un resultado aceptado"><figcaption>Las mesas 1 a 3 del adjunto, conectado al torneo: la mesa 1 ya tiene su resultado.</figcaption></figure>
+  <div class="box law"><span class="tag">Leyes 2023 · art. 7.5.5</span><p>La segunda jugada ilegal completada por el mismo jugador hace perder la partida, salvo que el rival no pueda dar mate por ninguna serie de jugadas legales: entonces son tablas. La mesa avisa, pero quien decide es el árbitro, mirando la posición.</p></div>
+  <div class="box"><p><b>La bitácora.</b> Cada cosa que anota el adjunto queda en su bitácora con la hora de Costa Rica y no se borra. Al final se baja en PDF o Word para el informe del torneo.</p></div>
+</section>
+
+<!-- ========== UN DÍA DE TORNEO ========== -->
+<section class="page">
+  <div class="kicker">Lista de control</div>
+  <h2 class="sec">Un día de torneo, de principio a fin</h2>
+  <div class="cols">
+    <h3>La víspera</h3>
+    <ul>
+      <li>Torneo creado, con el sistema, las rondas, los puntos y los desempates de las bases.</li>
+      <li>Jugadores inscritos y revisados: Elo, título, federación e ID FIDE si va para Elo.</li>
+      <li>Los adjuntos creados, cada uno con su grupo de mesas y su código.</li>
+      <li>Una copia del torneo (.json) guardada.</li>
+    </ul>
+    <h3>Cada ronda</h3>
+    <ul>
+      <li>Marcar byes y ausentes, y emparejar.</li>
+      <li>Imprimir el pareo para la pared y las planillas.</li>
+      <li>«Empezó la ronda» y, si alguien no está, «No ha llegado».</li>
+      <li>Resultados: los anota el principal o llegan de los adjuntos; revisar «Para confirmar».</li>
+      <li>Con todos los resultados, mirar la clasificación y bajar la copia.</li>
+    </ul>
+    <h3>Al terminar</h3>
+    <ul>
+      <li>Clasificación final y premios especiales.</li>
+      <li>El TRF para FIDE o para el Elo Nacional.</li>
+      <li>Las bitácoras de los adjuntos y el informe del torneo.</li>
+    </ul>
+    <div class="box ok"><p><b>Si algo no cuadra</b>, el comprobador de emparejamientos dice si una ronda salió como manda el Sistema Holandés, y el manual de Pareo Integral responde las dudas de cada ficha.</p></div>
+    <p class="small"><b>Fuentes de esta edición.</b> Pareo Integral y la mesa del árbitro tal como funcionan en noviembre de 2026 (manual de uso en pareo-manual.html). Reglas del Sistema Holandés de FIDE, C.04.3 (2026); Reglamento de Play-off y Desempates C.07, desde el 1-mar-2026; Leyes del Ajedrez FIDE, desde el 1-ene-2023. Los jugadores y el torneo de las capturas son inventados.</p>
+  </div>
+</section>
+
+<!-- rev bfb5bbb0d2d82f9f -->

@@ -429,9 +429,11 @@
     const ev = sesiones.filter((s) => s.tipo === "evaluacion");
     if (ev.length) cont.appendChild(tabla("Las clases de evaluación", ["Clase", "Día"], ev.map((s) => ["Clase " + s.numero + " · " + s.titulo, diaLargo(s.fecha)])));
     if (Array.isArray(guia.rubrica) && guia.rubrica.length) {
-      // Los mismos niveles que el anexo B del plan en Word.
-      const r = tabla("Anexo B · Rúbrica de la minilección y la microenseñanza", ["Criterio", "4 · Logrado", "3 · Casi logrado", "2 · En proceso", "1 · Inicial"], guia.rubrica);
-      r.appendChild(el("p", "text-xs text-brand-500 dark:text-brand-300 mt-3", "Cada criterio vale de 1 a 4 puntos; el total (máximo 20) se multiplica por 5 para llevarlo a 100. En las partes orales de las evaluaciones se usan solo los criterios 2 y 3. Primero un compañero dice qué funcionó y da una sugerencia; después el profesor completa con la pauta."));
+      // Los mismos niveles que el anexo B del plan en Word. Cada proyecto
+      // evalúa otra cosa: el título y la nota los puede traer su guía (si no,
+      // los de Campeones Colegiales, el primero).
+      const r = tabla(guia.rubrica_titulo || "Anexo B · Rúbrica de la minilección y la microenseñanza", ["Criterio", "4 · Logrado", "3 · Casi logrado", "2 · En proceso", "1 · Inicial"], guia.rubrica);
+      r.appendChild(el("p", "text-xs text-brand-500 dark:text-brand-300 mt-3", guia.rubrica_nota || "Cada criterio vale de 1 a 4 puntos; el total (máximo 20) se multiplica por 5 para llevarlo a 100. En las partes orales de las evaluaciones se usan solo los criterios 2 y 3. Primero un compañero dice qué funcionó y da una sugerencia; después el profesor completa con la pauta."));
       cont.appendChild(r);
     }
     if (Array.isArray(guia.portafolio) && guia.portafolio.length) cont.appendChild(tabla("Portafolio del instructor", ["Parte", "Qué lleva", "Puntos"], guia.portafolio));

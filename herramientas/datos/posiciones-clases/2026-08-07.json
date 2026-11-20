@@ -1,0 +1,19 @@
+{
+ "fecha": "2026-08-07",
+ "posiciones": [
+  {
+   "seg": 19,
+   "titulo": "Final de peones: oposición y el peón que viene",
+   "fen": "8/4p2p/2K5/7p/1k6/6P1/1P6/8 b - - 0 1",
+   "objetivo": "ganar",
+   "nota": "Gana la oposición y no dejes entrar al rey blanco. No hace falta correr por el peón de vela, y entre dos caminos iguales elige el que además frena al rey rival."
+  },
+  {
+   "seg": 1263,
+   "titulo": "Dos peones contra uno, con el rey lejos",
+   "fen": "5K2/1p6/8/5k2/1p6/8/P7/8 b - - 0 1",
+   "objetivo": "ganar",
+   "nota": "Acerca tu rey a los peones dominando al rey blanco. Uno de los peones habrá que entregarlo, pero solo en el momento justo."
+  }
+ ]
+}

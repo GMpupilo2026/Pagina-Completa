@@ -128,12 +128,26 @@ function turnoDe(f) {
 }
 
 const BASE = process.env.BASE_URL || process.env.BASE || "http://localhost:8777";
-const PARTIDAS = Math.max(1, parseInt(process.env.PARTIDAS || "50", 10));
+// Cuántas a la vez, según los núcleos que de verdad tiene la máquina que corre la
+// prueba: cada partida son dos pestañas de Chromium. Con 4 o más núcleos, las 50 de
+// siempre (100 pestañas); con menos, la mitad. Desde el 6/11/2026 el repositorio es
+// privado y GitHub le da al CI máquinas de 2 núcleos: con 100 pestañas, la propia
+// computadora de la prueba atrasaba los relojes hasta 6 s, la base recortaba cientos
+// y la prueba pasaba del tope de 10 minutos. Lo que se prueba es lo mismo (que
+// ninguna partida se pierda ni se trabe con la red mala); con PARTIDAS=50 se fuerzan
+// las 50 en cualquier máquina.
+// Y también la mitad con poca memoria: la máquina propia del CI (10 núcleos, pero
+// 10 GB para Ubuntu) con 100 pestañas tardaba 6,1 s en mostrar alguna jugada y
+// recortaba 47 relojes que habían llegado a tiempo; con 15 GB pasaba holgada.
+const NUCLEOS = require("os").availableParallelism ? require("os").availableParallelism() : require("os").cpus().length;
+const MEMORIA_GB = require("os").totalmem() / 2 ** 30;
+const POCOS_NUCLEOS = NUCLEOS < 4 || MEMORIA_GB < 12;
+const PARTIDAS = Math.max(1, parseInt(process.env.PARTIDAS || (POCOS_NUCLEOS ? "25" : "50"), 10));
 // La ronda que mide «al instante»: pocas, para que la computadora que corre la
 // prueba no sea el cuello de botella (ver la cabecera).
 const PARTIDAS_RAPIDAS = Math.min(PARTIDAS, 10);
 const JUGADAS = Math.max(4, parseInt(process.env.JUGADAS || "40", 10)); // medias jugadas por partida
-const MESAS4 = Math.max(1, parseInt(process.env.MESAS4 || "12", 10));     // partidas de Ajedrez para 4
+const MESAS4 = Math.max(1, parseInt(process.env.MESAS4 || (POCOS_NUCLEOS ? "6" : "12"), 10)); // partidas de Ajedrez para 4 (cuatro pestañas cada una)
 const INICIAL = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const INICIAL_ESTANDAR = INICIAL;
 
@@ -441,7 +455,14 @@ function crearServidor(red) {
         const error = trigger(vieja, nueva);
         // Una escritura que tardó en llegar se cobra entera en la base: el
         // navegador no la puede descontar, y eso no lo arregla el retraso.
-        if (lenta) recortes.slice(antes).forEach((x) => { x.lenta = true; });
+        // Tardó lo que pasó desde que la página la armó hasta acá: la demora
+        // que pone esta base a propósito y también la de la computadora que
+        // corre la prueba (de la pestaña a Node). Antes contaba solo la de la
+        // base, y en el CI de 2 núcleos, con 50 pestañas, una escritura que
+        // la computadora atrasó más de un segundo salía como «llegó a tiempo
+        // y hubo que recortarla» (17/11/2026). La raya es la misma: 0,8 s.
+        const tardo = pedido.creado ? Date.now() - pedido.creado : 0;
+        if (lenta || tardo > 800) recortes.slice(antes).forEach((x) => { x.lenta = true; });
         if (error) { rechazos.push(error); return { data: null, error: { message: error } }; }
         salas.set(nueva.id, nueva);
         tocadas.push(nueva);
@@ -502,7 +523,8 @@ function doble(usuario, pagina) {
       in(c, v) { pedido.filtros.push(["in", c, v]); return b; },
       is() { return b; }, not() { return b; }, or(x) { pedido.filtros.push(["or", x]); return b; }, gte() { return b; }, lte() { return b; },
       gt() { return b; }, lt() { return b; }, order() { return b; }, limit() { return b; }, range() { return b; },
-      update(cambio) { pedido.op = "update"; pedido.cambio = cambio; return b; },
+      // Cuándo armó la página lo que escribe (con el reloj adentro): la base de mentira mide cuánto tardó en llegarle.
+      update(cambio) { pedido.op = "update"; pedido.cambio = cambio; pedido.creado = Date.now(); return b; },
       insert() { pedido.op = "insert"; return b; }, upsert() { pedido.op = "insert"; return b; },
       delete() { pedido.op = "delete"; return b; },
       maybeSingle() { pedido.unica = true; return b; }, single() { pedido.unica = true; return b; },

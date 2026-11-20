@@ -188,6 +188,17 @@ def recortes_de_tipos():
     ]
 
 
+def recortes_de_finales_clases():
+    """Las posiciones de las clases (entreno/finales.html?banco=clases): cada
+    una es un recorte, con su id como clave, que la página guarda en
+    detail.theme al lograrla. El banco lo arma herramientas/finales-clases-generar.js."""
+    banco = json.loads((RAIZ / "entreno/data/finales-clases.json").read_text(encoding="utf-8"))
+    return [
+        {"clave": f["id"], "label": f["titulo"], "total": 1, "actividades": ["finales_clases"]}
+        for f in banco.get("finales", [])
+    ]
+
+
 def main():
     indice = {
         "_generado_por": "herramientas/metas-indice.py",
@@ -199,6 +210,7 @@ def main():
         "aperturas": recortes_de_aperturas(),
         "estudio": recortes_de_estudio(),
         "tipos": recortes_de_tipos(),
+        "finales-clases": recortes_de_finales_clases(),
     }
     SALIDA.write_text(
         json.dumps(indice, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")

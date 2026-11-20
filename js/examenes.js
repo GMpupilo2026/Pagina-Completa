@@ -116,11 +116,14 @@ async function traerTodo(consulta) {
 }
 /* ---------------- Profesor: armar ---------------- */
 async function cargarAlumnos() {
-  const { data } = await traerTodo(() => sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name").order("id"));
+  const { data, error } = await traerTodo(() => sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name").order("id"));
+  /* Con un error, «Todavía no tienes alumnos» mentía (o salían solo los
+     primeros mil, si falló la segunda página): se dice que falló. */
+  if (error) Avisos.avisar("No se pudo cargar la lista completa de alumnos: " + error.message + ". Recarga la página.", { tipo: "error" });
   alumnosDisponibles = window.AlumnosMios ? await AlumnosMios.sumarProfesores(sb, data || []) : (data || []);
   const cont = $("lista-alumnos");
   cont.innerHTML = "";
-  $("sin-alumnos").classList.toggle("hidden", !!alumnosDisponibles.length);
+  $("sin-alumnos").classList.toggle("hidden", !!alumnosDisponibles.length || !!error);
   alumnosDisponibles.forEach((a) => {
     const label = document.createElement("label");
     label.className = "flex items-center gap-2 text-sm px-2 py-1 rounded hover:bg-white dark:hover:bg-brand-900 cursor-pointer";
@@ -163,6 +166,7 @@ const FUENTES = [
   { valor: "linea",     texto: "Ejecutar una apertura o defensa" },
   { valor: "arbitraje", texto: "Reglamento (arbitraje)" },
   { valor: "libro",     texto: "Libro «Ponte a prueba»" },
+  { valor: "tactica",   texto: "Táctica de Entrenamiento (por tema)" },
 ];
 
 /* El libro se ofrece solo si su banco cargó: vive en material/ponte-a-prueba/,
@@ -176,6 +180,26 @@ function fuentesDisponibles() {
 
 let bloques = [];
 let seqBloque = 0;
+
+/* El banco de arbitraje (387 KB, 200 preguntas) se pide recién cuando un
+   bloque elige «Reglamento (arbitraje)»: casi ningún examen lo usa y antes lo
+   bajaba cada visita a esta página. El del libro sí va en el HTML: que cargue
+   o no (el worker se lo niega a quien no lo compró) es lo que decide si la
+   opción aparece. */
+let pidiendoArbitraje = null;
+function cargarBancoArbitraje() {
+  if (Array.isArray(window.ARBITRAJE_ITEMS)) return Promise.resolve();
+  if (!pidiendoArbitraje) {
+    pidiendoArbitraje = new Promise((ok, mal) => {
+      const s = document.createElement("script");
+      s.src = "js/arbitraje-items.js";
+      s.onload = () => (Array.isArray(window.ARBITRAJE_ITEMS) ? ok() : mal(new Error("el banco vino vacío")));
+      s.onerror = () => { pidiendoArbitraje = null; mal(new Error("no se pudo bajar el banco")); };
+      document.head.appendChild(s);
+    });
+  }
+  return pidiendoArbitraje;
+}
 
 function bloqueNuevo() {
   return { id: ++seqBloque, fuente: "curso", cual: "", areas: [], cantidad: 10, difMin: 1, difMax: 5 };
@@ -195,6 +219,7 @@ function opcionesDeCual(b) {
     return [{ valor: "", texto: "Las seis pruebas" }].concat(
       Array.from({ length: n }, (_, i) => ({ valor: String(i + 1), texto: "Prueba " + (i + 1) })));
   }
+  if (b.fuente === "tactica") return ExamenBanco.temasDeTactica();
   if (b.fuente === "linea") {
     return ((window.AperturasLineas && window.AperturasLineas.LINEAS) || []).map((l) => ({
       valor: l.id,
@@ -210,6 +235,7 @@ function opcionesDelBloque(b) {
     curso: b.fuente === "curso" ? b.cual : null,
     linea_id: b.fuente === "linea" ? b.cual : null,
     prueba: b.fuente === "libro" ? b.cual : null,
+    tema: b.fuente === "tactica" ? b.cual : null,
     areas: b.fuente === "areas" ? b.areas.slice() : [],
     cantidad: Math.max(1, b.cantidad || 1),
     dificultad: { min: b.difMin, max: b.difMax },
@@ -227,6 +253,7 @@ function nombreDeBloque(b) {
   if (b.fuente === "linea") return op ? op.texto.split(" — ")[0] : "una apertura";
   if (b.fuente === "arbitraje") return "reglamento";
   if (b.fuente === "libro") return "Ponte a prueba" + (b.cual ? ", prueba " + b.cual : "");
+  if (b.fuente === "tactica") return b.cual ? "táctica: " + ExamenBanco.nombreDeTema(b.cual).toLowerCase() : "táctica";
   return b.areas.length ? b.areas.join(", ") : "todas las áreas";
 }
 
@@ -248,11 +275,20 @@ function pintarBloque(b) {
     lab.className = ETIQUETA; lab.setAttribute("for", id); lab.textContent = etiqueta;
     const s = document.createElement("select");
     s.id = id; s.className = CAMPO;
+    // Si las opciones traen `grupo` (los temas de táctica), van en
+    // <optgroup>: setenta temas en una lista corrida no se encuentran.
+    let grupoActual = null, destino = s;
     opciones.forEach((o) => {
+      if (o.grupo && o.grupo !== grupoActual) {
+        grupoActual = o.grupo;
+        destino = document.createElement("optgroup");
+        destino.label = o.grupo;
+        s.appendChild(destino);
+      }
       const opt = document.createElement("option");
       opt.value = o.valor; opt.textContent = o.texto;
       if (String(o.valor) === String(valor)) opt.selected = true;
-      s.appendChild(opt);
+      destino.appendChild(opt);
     });
     s.addEventListener("change", () => { alCambiar(s.value); refrescarMedida(); });
     wrap.append(lab, s);
@@ -267,6 +303,15 @@ function pintarBloque(b) {
     const ops = opcionesDeCual(b);
     b.cual = ops.length ? ops[0].valor : "";
     pintarBloques();
+    if (v === "arbitraje" && !Array.isArray(window.ARBITRAJE_ITEMS)) {
+      cargarBancoArbitraje().then(() => {
+        // La previsión se guardó con el banco vacío y su clave (los bloques)
+        // no cambió: sin esto diría «0 preguntas» hasta tocar otra cosa.
+        prevision.clave = null;
+        pintarBloques();
+      }).catch((e) => Avisos.avisar("No se pudo cargar el banco de arbitraje (" + e.message + "). Revisa la conexión y vuelve a elegirlo.", { tipo: "error" }));
+    }
+    if (v === "tactica" && !ExamenBanco.tacticaCargada()) cargarTactica();
   }));
   const cuales = opcionesDeCual(b);
   if (cuales.length) {
@@ -354,6 +399,27 @@ function pintarBloque(b) {
   return caja;
 }
 
+/* Los ejercicios de táctica de Entrenamiento pesan casi 2 MB: se bajan
+   recién cuando alguien elige esa fuente, no cada vez que se abre la
+   página. Mientras tanto el bloque dice que está cargando (no «no hay
+   preguntas», que sería mentira), y al llegar se repinta y se vuelve a
+   sortear: la previsión guardada se calculó sin ellos. */
+function cargarTactica() {
+  ExamenBanco.cargarTactica().then(() => {
+    prevision.clave = null;
+    pintarBloques();
+    refrescarMedida();
+  }).catch((e) => {
+    bloques.filter((b) => b.fuente === "tactica").forEach((b) => {
+      const aviso = document.getElementById(`b${b.id}-hay`);
+      if (aviso) {
+        aviso.textContent = e.message || "No se pudieron cargar los ejercicios de táctica.";
+        aviso.className = "text-xs mt-1 text-red-600 dark:text-red-400";
+      }
+    });
+  });
+}
+
 /* Cuántas preguntas hay de verdad en cada bloque, y cuántos minutos hacen
    falta como mínimo. Las dos cosas se dicen ANTES de mandar: enterarse de
    que el examen salió más corto de lo pedido cuando el alumno ya lo rindió
@@ -366,6 +432,14 @@ function refrescarMedida() {
       if (s) s.value = String(b.difMax);
     }
     if (b.fuente === "linea") return;
+    if (b.fuente === "tactica" && !ExamenBanco.tacticaCargada()) {
+      const aviso = document.getElementById(`b${b.id}-hay`);
+      if (aviso && !/No se pudo/.test(aviso.textContent)) {
+        aviso.textContent = "Cargando los ejercicios de táctica…";
+        aviso.className = "text-xs mt-1 text-brand-450 dark:text-brand-350";
+      }
+      return;
+    }
     const hay = hayEnBloque(b);
     if (b.cantidad > hay && hay > 0) {
       b.cantidad = hay;

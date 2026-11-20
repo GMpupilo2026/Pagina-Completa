@@ -43,6 +43,10 @@
     if (m.pgn) x.pgn = String(m.pgn);
     // La eliminación directa: el lugar en el cuadro y, si fue tablas, quién pasó y cómo.
     if (m.ko) { x.ko = true; x.slot = m.slot; if (m.pasa) { x.pasa = m.pasa; x.desempate = String(m.desempate || ""); } }
+    // La doble eliminación (la llave, su fase y quién llegó a la final desde
+    // perdedores) y el partido por el tercer puesto.
+    if (m.ko && m.llave) { x.llave = m.llave; x.fase = m.fase; if (m.deP) x.deP = m.deP; }
+    if (m.ko && m.tercer) x.tercer = true;
     return x;
   };
 
@@ -85,7 +89,7 @@
     return {
       nombre: t.nombre || "", grupo: t.grupo || "", ciudad: t.ciudad || "", provincia: PROVINCIAS.includes(t.provincia) ? t.provincia : "", federacion: t.federacion || "",
       fechaInicio: t.fechaInicio || "", fechaFin: t.fechaFin || "", arbitro: t.arbitro || "", arbitroAdjunto: t.arbitroAdjunto || "", ritmo: t.ritmo || "", ritmoTipo: ritmoTipo(t), validoElo: t.validoElo || "",
-      sistema: t.sistema, dobleVuelta: !!t.dobleVuelta, rondasTotales: t.sistema === "scheveningen" || t.sistema === "eliminacion" ? modulo("PareoTorneo", "./torneo.js").rondasDelTorneo(t) : t.rondasTotales, tipo: t.tipo, tableros: t.tableros,
+      sistema: t.sistema, dobleVuelta: !!t.dobleVuelta, dobleEliminacion: t.sistema === "eliminacion" && !!t.dobleEliminacion, tercerPuesto: t.sistema === "eliminacion" && !t.dobleEliminacion && !!t.tercerPuesto, rondasTotales: t.sistema === "scheveningen" || t.sistema === "eliminacion" ? modulo("PareoTorneo", "./torneo.js").rondasDelTorneo(t) : t.rondasTotales, tipo: t.tipo, tableros: t.tableros,
       puntos: t.puntos, desempates: (t.desempates || []).slice(), mesaInicial: t.mesaInicial,
       evento: t.evento ? { nombre: t.evento.nombre || "" } : null,
       jugadores: (t.jugadores || []).map(persona),
@@ -98,6 +102,9 @@
       // Los códigos de los enlaces en vivo: un enlace que ya nadie transmite
       // lleva desde ellos al torneo publicado (js/pareo/ver.js).
       vivo: t.liveCodigo || undefined, codigoEvento: e.codigoEvento || undefined,
+      // El código de las cámaras de Notara (ya va en el QR de cada mesa): con
+      // él, la página del torneo lleva a «Partidas en vivo» (tablero-vivo.html).
+      camaras: t.camaras && t.camaras.activo && t.camaras.codigo ? t.camaras.codigo : undefined,
       resumen: resumenJugadores(t),
     };
   }
@@ -124,8 +131,12 @@
   // (guardarOrganizador): el torneo queda a su nombre.
   const conOrganizador = (cuerpo, extra) => (extra && extra.organizador && extra.organizador.id
     ? Object.assign(cuerpo, { organizador: { id: extra.organizador.id, clave: extra.organizador.clave } }) : cuerpo);
-  const crear = (t, extra) => llamar(conOrganizador({ accion: "crear", torneo: datosPublicos(t, extra) }, extra));
-  const actualizar = (t, extra) => llamar(conOrganizador({ accion: "actualizar", id: t.publicado.id, clave: t.publicado.clave, torneo: datosPublicos(t, extra) }, extra));
+  // Los enlaces de los árbitros adjuntos viajan aparte del torneo (no son
+  // públicos): la función los guarda en pareo_adjuntos para que cada adjunto
+  // anote con su código aunque esta pestaña esté cerrada.
+  const listaAdjuntos = (t) => (t.adjuntos || []).map((a) => ({ codigo: a.codigo, rango: a.rango, nombre: a.nombre || "", activo: !!a.activo }));
+  const crear = (t, extra) => llamar(conOrganizador({ accion: "crear", torneo: datosPublicos(t, extra), adjuntos: listaAdjuntos(t) }, extra));
+  const actualizar = (t, extra) => llamar(conOrganizador({ accion: "actualizar", id: t.publicado.id, clave: t.publicado.clave, torneo: datosPublicos(t, extra), adjuntos: listaAdjuntos(t) }, extra));
   // La organización: { nombre, logo } nueva, o con { id, clave } para
   // cambiarla. `logo` en null la quita; sin `logo`, se queda la que tenía.
   // `correo` en "" lo quita; un correo nuevo va con su `consentimiento`.
@@ -147,10 +158,11 @@
   const reportar = (id, motivo, detalle) => llamar({ accion: "reportar", id, motivo, detalle: detalle || "" });
   const borrar = (p) => llamar({ accion: "borrar", id: p.id, clave: p.clave });
   // La inscripción previa: mandarla (la página pública, sin clave), leerlas
-  // y marcarlas (quien organiza, con la clave de su torneo).
+  // y marcarlas (quien organiza, con la clave de su torneo), con un
+  // comentario que le llega por correo a quien inscribió si dejó un correo.
   const inscribir = (id, inscripcion) => llamar({ accion: "inscribir", id, inscripcion, consentimiento: true });
   const inscripciones = (p) => llamar({ accion: "inscripciones", id: p.id, clave: p.clave });
-  const marcar = (p, ids, estado) => llamar({ accion: "marcar", id: p.id, clave: p.clave, ids, estado });
+  const marcar = (p, ids, estado, comentario) => llamar({ accion: "marcar", id: p.id, clave: p.clave, ids, estado, comentario: comentario || "" });
   // Seguir a un jugador por correo (la página pública, sin cuenta): pedirlo,
   // confirmarlo y darse de baja con los enlaces que llegan por correo.
   const seguirCorreo = (nombre, ident, correo) => llamar({ accion: "seguir_correo", nombre, ident: ident || "", correo, consentimiento: true });
@@ -161,10 +173,37 @@
   const pushLlave = () => llamar({ accion: "push_llave" });
   const seguirPush = (nombre, ident, suscripcion) => llamar({ accion: "seguir_push", nombre, ident: ident || "", suscripcion });
   const seguirPushBaja = (nombre, ident, suscripcion) => llamar({ accion: "seguir_push_baja", nombre, ident: ident || "", suscripcion });
+  // Los árbitros adjuntos (ver «Pareo Integral: lo que anotan los adjuntos
+  // queda en la base»). El principal, con la clave: su lista de enlaces, lo
+  // que mandaron y borrar lo que ya pasó a su torneo.
+  const adjuntos = (t) => llamar({ accion: "adjuntos", id: t.publicado.id, clave: t.publicado.clave, adjuntos: listaAdjuntos(t) });
+  const cola = (p) => llamar({ accion: "cola", id: p.id, clave: p.clave });
+  const colaBorrar = (p, hasta) => llamar({ accion: "cola_borrar", id: p.id, clave: p.clave, hasta });
+  // El adjunto, con el código de su enlace: entrar y anotar.
+  const entrarAdjunto = (codigo) => llamar({ accion: "adjunto_entrar", codigo });
+  const anotarAdjunto = (codigo, evento, ronda, datos) => llamar({ accion: "adjunto_anotar", codigo, evento, ronda, datos });
+  // Mandar un resultado o una incidencia desde el celular del adjunto: primero
+  // a la base (queda guardado aunque el principal no esté conectado) y un
+  // toque por el canal para que lo lea ya; si la base no lo toma (sin
+  // internet hacia la función, un torneo sin publicar, un Pareo viejo del
+  // principal que todavía no mandó la lista), por el canal en vivo como
+  // antes. Devuelve "base" o "canal". Lo que la base rechaza por una regla
+  // (otra ronda, una mesa que no es suya, el enlace apagado) no se manda.
+  const RECHAZOS = new Set(["ronda", "mesa", "apagado", "forma"]);
+  // `ronda`: la que el adjunto tiene en pantalla (sin ella, solo el canal).
+  async function mandarAdjunto(canal, codigo, evento, ronda, payload) {
+    const datos = Object.assign({}, payload);
+    delete datos.ronda;
+    const r = ronda > 0 ? await anotarAdjunto(codigo, evento, ronda, datos) : { ok: false };
+    if (r.ok) { canal.send({ type: "broadcast", event: "cola", payload: {} }); return "base"; }
+    if (RECHAZOS.has(r.motivo)) return { rechazo: r.motivo, error: r.error || "" };
+    canal.send({ type: "broadcast", event: evento, payload });
+    return "canal";
+  }
   // La dirección pública de un torneo publicado (desde la página que llama).
   const enlace = (id) => new URL("torneos-pareo.html#t=" + encodeURIComponent(id), location.href).href;
 
-  const api = { datosPublicos, crear, actualizar, guardarOrganizador, estadoOrganizador, confirmarCorreo, recuperarOrganizador, recuperarConfirmar, pedirSello, reportar, borrar, inscribir, inscripciones, marcar, seguirCorreo, seguirConfirmar, seguirBaja, pushLlave, seguirPush, seguirPushBaja, enlace, URL_FUNCION };
+  const api = { datosPublicos, crear, actualizar, guardarOrganizador, estadoOrganizador, confirmarCorreo, recuperarOrganizador, recuperarConfirmar, pedirSello, reportar, borrar, inscribir, inscripciones, marcar, seguirCorreo, seguirConfirmar, seguirBaja, pushLlave, seguirPush, seguirPushBaja, enlace, adjuntos, cola, colaBorrar, entrarAdjunto, anotarAdjunto, mandarAdjunto, URL_FUNCION };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoPublicar = api;
 })(typeof self !== "undefined" ? self : this);

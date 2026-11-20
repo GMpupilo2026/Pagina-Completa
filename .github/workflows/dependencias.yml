@@ -22,7 +22,7 @@ permissions:
 jobs:
   auditoria:
     name: npm audit
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}  # ver «El CI en una máquina propia»
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7

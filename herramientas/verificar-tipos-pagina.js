@@ -52,9 +52,10 @@ function clienteFalso(conSesion) {
   function tabla(nombre) {
     let filas = ((window.__filas || {})[nombre] || []).slice();
     const filtros = [];
-    let orden = null, desde = 0, hasta = Infinity, borrar = false;
+    let orden = null, desde = 0, hasta = Infinity, borrar = false, campo = null;
     const api = {
-      select() { return api; }, limit() { return api; },
+      /* «detail->>puzzle_id» devuelve solo esa llave, como PostgREST. */
+      select(cols) { const m = /^(\\w+)->>(\\w+)$/.exec(cols || ""); if (m) campo = m; return api; }, limit() { return api; },
       eq(c, v) { filtros.push((f) => f[c] === v); return api; },
       neq(c, v) { filtros.push((f) => f[c] !== v); return api; },
       in(c, vs) { filtros.push((f) => vs.indexOf(f[c]) >= 0); return api; },
@@ -79,8 +80,10 @@ function clienteFalso(conSesion) {
           nueva = Object.assign({ id: "00000000-0000-4000-8000-" + String(window.__nId).padStart(12, "0"), student_id: "u-1", created_at: new Date().toISOString() }, fila);
           ((window.__filas = window.__filas || {})[nombre] = window.__filas[nombre] || []).push(nueva);
         }
-        const r = { select() { return r; }, single() { return Promise.resolve({ data: nueva, error: null }); },
-          then(res, rej) { return Promise.resolve({ error: null }).then(res, rej); } };
+        // window.__fallaInsert: la base dice que no (o el pedido no llegó).
+        const err = window.__fallaInsert ? { message: "sin red" } : null;
+        const r = { select() { return r; }, single() { return Promise.resolve({ data: err ? null : nueva, error: err }); },
+          then(res, rej) { return Promise.resolve({ error: err }).then(res, rej); } };
         return r;
       },
       delete() { borrar = true; return api; },
@@ -94,6 +97,7 @@ function clienteFalso(conSesion) {
         let d = filas.filter((f) => filtros.every((fn) => fn(f)));
         if (orden) d.sort((a, b) => (a[orden.c] < b[orden.c] ? -1 : a[orden.c] > b[orden.c] ? 1 : 0) * (orden.asc ? 1 : -1));
         d = d.slice(desde, hasta + 1);
+        if (campo) d = d.map((f) => ({ [campo[2]]: f[campo[1]] == null ? null : (f[campo[1]][campo[2]] == null ? null : String(f[campo[1]][campo[2]])) }));
         return Promise.resolve({ data: d, error: null }).then(res, rej);
       },
     };
@@ -1275,9 +1279,17 @@ window.PreparacionMotor = {
     await page.waitForFunction(() => /Leí|No se pudo|No encontré/.test(document.querySelector('#tipo-extra [role="status"]').textContent), null, { timeout: 10000 }).catch(() => {});
     ok("la foto va a ocr-scoresheet con la sesión de quien la sube", pedidos.length === 1 && pedidos[0].auth === "Bearer t" && pedidos[0].foto, JSON.stringify(pedidos));
     const texto = await page.getByLabel("Tus jugadas").inputValue();
-    ok("las jugadas caen en el cuadro, en orden y en español, con «?» en la que adivinó",
-      texto === "1. e4 e5 2. Cf3 Cc6 3. Ac4? Cd4 4. Cxe5 Dg5 5. Cxf7 Dxg2 6. Tf1 Dxe4+", texto);
-    ok("y dice cuál revisar", /^Leí 6 jugadas\. Una no se leía bien y va con «\?», la más parecida que es legal \(la 3 de las blancas\)/.test(await aviso(page)), await aviso(page));
+    /* La partida la arma js/planilla-reconstruir.js (el mismo lector del Lector de planilla y del
+       Centroamericano): las que no se leyeron tal cual (corregidas o dudosas) van con «?». */
+    const R = require(path.join(__dirname, "..", "js", "planilla-reconstruir.js"));
+    const { Chess: ChessN } = require("chess.js");
+    const rr = R.reconstruir(ChessN, R.hojasDeLaFoto(words).hojas);
+    const PO = require(path.join(__dirname, "..", "js", "planilla-ocr.js"));
+    const esperadoTxt = rr.jugadas.map((j, i) => (i % 2 === 0 ? (i / 2 + 1) + ". " : "") + PO.sanEnEspanol(j.san) + (j.estado === "leida" ? "" : "?")).join(" ");
+    ok("las jugadas caen en el cuadro, en orden y en español, con «?» en las que no se leyeron tal cual",
+      texto === esperadoTxt && texto.startsWith("1. e4 e5 2. Cf3 Cc6 3. Ac4? Cd4 4. Cxe5 Dg5 5. Cxf7"), texto + "\n      esperaba: " + esperadoTxt);
+    const nRev = rr.jugadas.filter((j) => j.estado !== "leida").length;
+    ok("y dice cuáles revisar, empezando por la 3 de las blancas", new RegExp("^Leí 6 jugadas\\. " + nRev + " no se leían tal cual y van con «\\?» \\(la 3 de las blancas").test(await aviso(page)), await aviso(page));
     ok("el cursor queda en las jugadas para revisarlas", await page.evaluate(() => document.activeElement && document.activeElement.tagName === "TEXTAREA"));
     ok("leer la foto no guarda nada todavía", (await page.evaluate(() => window.__escrituras.filter((e) => e.tabla === "partidas_torneo").length)) === 0);
     await (await page.$("#tipo-extra")).screenshot({ path: "/tmp/tipos-torneo-foto.png" }).catch(() => {});
@@ -1291,6 +1303,55 @@ window.PreparacionMotor = {
     await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "partidas_torneo"), null, { timeout: 10000 }).catch(() => {});
     const fila = await page.evaluate(() => (window.__escrituras.find((e) => e.tabla === "partidas_torneo") || {}).fila);
     ok("lo leído se guarda con las jugadas comprobadas", !!fila && fila.jugadas.join(" ") === "e4 e5 Nf3 Nc6 Bc4 Nd4 Nxe5 Qg5 Nxf7 Qxg2 Rf1 Qxe4+", JSON.stringify(fila && fila.jugadas));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== Mis partidas de torneo: una planilla en columnas y una manchada ===");
+  {
+    /* Antes se leía por filas de toda la foto: en una planilla de la Federación (1-20, 21-40,
+       41-60) la jugada 1 quedaba al lado de la 21 y la 41, y cada texto se cambiaba por la
+       jugada legal más parecida (el 17/11 salieron 109 «adivinadas» en el Lector de planilla).
+       Ahora la arma js/planilla-reconstruir.js. Ver «El Lector de planilla lee por columnas». */
+    const { palabrasDePlanillas } = require("./lib/planilla-sintetica.js");
+    const REALES = require("./lib/planillas-reales.js");
+    const R = require(path.join(__dirname, "..", "js", "planilla-reconstruir.js"));
+    const { Chess: ChessN } = require("chess.js");
+    const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+    const BASURA = ["~", "zz", "q#", "Kx", "77", "~~", "w", "p0", "##", "y", "~", "Q?"];
+    const fotos = [palabrasDePlanillas([REALES.mesa5.una], { giro: 3 }), palabrasDePlanillas([REALES.mesa11.blancas.slice(0, 30).concat(BASURA)])];
+    let n = 0;
+    const preparar = async (ctx) => {
+      await ctx.addInitScript(() => { window.__filas = { game_rooms: [], practice_games: [], practice_sessions: [], partidas_torneo: [] }; window.__guardan = ["partidas_torneo"]; window.SUPABASE_URL = "https://proyecto.supabase.co"; });
+      await ctx.route("https://proyecto.supabase.co/functions/v1/ocr-scoresheet", (r) => {
+        if (r.request().method() === "OPTIONS") return r.fulfill({ status: 200, headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*" }, body: "ok" });
+        return r.fulfill({ status: 200, contentType: "application/json", headers: { "Access-Control-Allow-Origin": "*" }, body: JSON.stringify({ words: fotos[n++] }) });
+      });
+    };
+    const aviso = (page) => page.textContent('#tipo-extra [role="status"]');
+    const { page, ctx, errores } = await abrir(browser, true, "#errores", preparar);
+    await page.waitForSelector("#vista-tipo:not(.hidden) #anotar-torneo summary");
+    await page.click("#anotar-torneo summary");
+    const leer = async () => {
+      await page.getByLabel("¿Prefieres tomarle una foto a tu planilla?").setInputFiles({ name: "planilla.png", mimeType: "image/png", buffer: PNG });
+      await page.getByLabel("Tus jugadas").fill("");
+      await page.getByRole("button", { name: "📷 Leer la foto" }).click();
+      await page.waitForFunction(() => /^(Leí|No se pudo|No encontré)/.test(document.querySelector('#tipo-extra [role="status"]').textContent), null, { timeout: 90000 });
+      return page.getByLabel("Tus jugadas").inputValue();
+    };
+    const sinMarcas = (t) => t.replace(/\d+\.\s*/g, "").replace(/\?/g, "").split(/\s+/).filter(Boolean);
+    const r1 = R.reconstruir(ChessN, R.hojasDeLaFoto(fotos[0]).hojas);
+    const t1 = await leer();
+    ok("una planilla de tres columnas sale en orden: " + r1.jugadas.length + " medias jugadas, las de reconstruir",
+      JSON.stringify(sinMarcas(t1)) === JSON.stringify(r1.jugadas.map((j) => require(path.join(__dirname, "..", "js", "planilla-ocr.js")).sanEnEspanol(j.san))), t1.slice(0, 200));
+    ok("y empieza como está escrita", t1.startsWith("1. e4 c6 2. d4 d5 3. e5 c5 4. c3 Cc6"), t1.slice(0, 80));
+    const r2 = R.reconstruir(ChessN, R.hojasDeLaFoto(fotos[1]).hojas);
+    const t2 = await leer();
+    ok("una planilla manchada llega solo hasta donde se entiende (" + r2.ilegibleDesde + " medias jugadas): no se inventa nada",
+      r2.ilegibleDesde !== null && sinMarcas(t2).length === r2.ilegibleDesde, t2);
+    const quien = "la " + (Math.floor(r2.ilegibleDesde / 2) + 1) + " de las " + (r2.ilegibleDesde % 2 ? "negras" : "blancas");
+    const av = await aviso(page);
+    ok("y el aviso dice desde dónde no se entiende y lo que dice ahí", av.includes("Desde " + quien + " la planilla no se entiende") && av.includes("zz q#"), av);
     ok("sin errores en consola", !errores.length, errores.join(" | "));
     await ctx.close();
   }
@@ -1417,8 +1478,14 @@ window.PreparacionMotor = {
     await esperarEstado(page, /Eso es lo que quiere/);
     ok("repasar un nivel ya completo no vuelve a festejar", (await aviso()) === "");
     const registros = () => page.evaluate(() => window.__escrituras.filter((e) => e.tabla === "training_progress").map((e) => [].concat(e.fila)[0].detail.puzzle_id));
-    ok("resolver otra vez el mismo ejercicio no lo registra dos veces", JSON.stringify(await registros()) === JSON.stringify(["amenaza:" + ultimo.id]), JSON.stringify(await registros()));
-    // El primero tenía estrellas de antes del registro: al resolverlo ahora, entra (una vez).
+    const cuantas = (lista, k) => lista.filter((x) => x === k).length;
+    // Las once de antes tenían estrellas pero no estaban en la base: al abrir
+    // la página se mandan solas (ver ponerAlDiaRegistros en js/entreno-tipos.js).
+    const r1 = await registros();
+    ok("lo resuelto antes que no está en la base entra al abrir la página, una vez cada uno",
+      nivel.slice(0, -1).every((x) => cuantas(r1, "amenaza:" + x.id) === 1), JSON.stringify(r1));
+    ok("resolver otra vez el mismo ejercicio no lo registra dos veces", cuantas(r1, "amenaza:" + ultimo.id) === 1, JSON.stringify(r1));
+    // El primero ya entró al abrir: resolverlo de nuevo no lo repite.
     const primero = nivel[0];
     await page.evaluate((id) => { location.hash = "#amenaza/1/" + id; }, primero.id);
     await page.waitForFunction((id) => /Ejercicio 1 de/.test(document.getElementById("juego-progreso").textContent), primero.id, { timeout: 8000 });
@@ -1426,10 +1493,64 @@ window.PreparacionMotor = {
     await page.press("#jugada-input", "Enter");
     await esperarEstado(page, /Eso es lo que quiere/);
     await page.waitForTimeout(300);
-    ok("lo resuelto antes de que existiera el registro entra la próxima vez que se resuelve",
-      (await registros()).includes("amenaza:" + primero.id), JSON.stringify(await registros()));
+    ok("y uno recuperado no se vuelve a registrar al resolverlo", cuantas(await registros(), "amenaza:" + primero.id) === 1, JSON.stringify(await registros()));
     ok("sin errores en consola", !errores.length, errores.join(" | "));
     await ctx.close();
+  }
+
+  console.log("\n=== Lo que no llegó a la base se recupera ===");
+  {
+    /* El caso real del 11/11: Con lo justo con estrellas en los 69 y la marca
+       de «registrado» puesta en todos, pero 18 que nunca llegaron a
+       training_progress (la red). La tarea decía 51/69 para siempre. */
+    const items = DATOS["con-lo-justo"].filter((x) => x.nivel === 5).slice(0, 3);
+    const k = (x) => "con-lo-justo:" + x.id;
+    const estrellas = {}, marcados = {};
+    items.forEach((x) => { estrellas[k(x)] = 2; marcados[k(x)] = true; });
+    const enLaBase = [{ student_id: "u-1", activity: "tipos", detail: { puzzle_id: k(items[0]), category: "con-lo-justo", nivel: 5 } },
+      // De otra persona: no cuenta como suyo.
+      { student_id: "u-2", activity: "tipos", detail: { puzzle_id: k(items[1]), category: "con-lo-justo", nivel: 5 } }];
+    const preparar = (fallar) => async (c) => {
+      await c.addInitScript((v) => {
+        window.__filas = { training_progress: v.enLaBase };
+        if (v.fallar) window.__fallaInsert = true;
+        if (!sessionStorage.getItem("__puesto")) {
+          localStorage.setItem("tipos_estrellas_v1", v.estrellas);
+          localStorage.setItem("tipos_registrados_v1", v.marcados);
+          sessionStorage.setItem("__puesto", "1");
+        }
+      }, { enLaBase, estrellas: JSON.stringify(estrellas), marcados: JSON.stringify(marcados), fallar });
+    };
+    const leerTodo = (page) => page.evaluate(() => ({
+      filas: window.__escrituras.filter((e) => e.tabla === "training_progress").map((e) => [].concat(e.fila)[0]),
+      marcados: JSON.parse(localStorage.getItem("tipos_registrados_v1") || "{}"),
+    }));
+    {
+      const { page, ctx, errores } = await abrir(browser, true, "", preparar(false));
+      await page.waitForSelector("#vista-fichas:not(.hidden)");
+      await page.waitForFunction(() => window.__escrituras.filter((e) => e.tabla === "training_progress").length >= 2, null, { timeout: 5000 }).catch(() => {});
+      await page.waitForTimeout(300);
+      const r = await leerTodo(page);
+      const ids = r.filas.map((f) => f.detail.puzzle_id).sort();
+      ok("manda solo los que faltan en la base, aunque la marca dijera «registrado»",
+        JSON.stringify(ids) === JSON.stringify([k(items[1]), k(items[2])].sort()), JSON.stringify(ids));
+      ok("con su tipo, su nivel, sus estrellas y `recuperado`",
+        r.filas.every((f) => f.activity === "tipos" && f.detail.category === "con-lo-justo" && f.detail.nivel === 5 && f.detail.estrellas === 2 && f.detail.recuperado === true), JSON.stringify(r.filas));
+      ok("y los deja marcados", items.every((x) => r.marcados[k(x)] === true), JSON.stringify(r.marcados));
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      // Si la base no lo guarda, NO queda marcado: la próxima vez se vuelve a intentar.
+      const { page, ctx } = await abrir(browser, true, "", preparar(true));
+      await page.waitForSelector("#vista-fichas:not(.hidden)");
+      await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "training_progress"), null, { timeout: 5000 }).catch(() => {});
+      await page.waitForTimeout(300);
+      const r = await leerTodo(page);
+      ok("si la base dice que no, intenta uno y para (no insiste con el resto)", r.filas.length === 1, JSON.stringify(r.filas.map((f) => f.detail.puzzle_id)));
+      ok("y lo que no entró queda SIN marcar, para la próxima", !r.marcados[k(items[1])] && !r.marcados[k(items[2])] && r.marcados[k(items[0])] === true, JSON.stringify(r.marcados));
+      await ctx.close();
+    }
   }
 
   /* ======================= todo desde el recuadro =======================

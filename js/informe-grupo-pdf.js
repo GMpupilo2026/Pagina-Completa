@@ -60,7 +60,7 @@
     const conDiag = alumnos.filter((a) => a.nivel);
     const lineas = [
       n === 1 ? "1 alumno." : n + " alumnos.",
-      tasas.length ? "Asistencia promedio: " + media(tasas) + " % de " + d.clasesCerradas + (d.clasesCerradas === 1 ? " clase" : " clases") + " (las faltas justificadas no cuentan en contra)." : "Todavía no hay clases cerradas en la plataforma.",
+      tasas.length ? "Asistencia promedio: " + media(tasas) + " %, sobre las clases que le tocaban a cada uno (las faltas justificadas no cuentan en contra)." : "Todavía no hay clases cerradas en la plataforma.",
       "Tiempo en la plataforma: " + duracion(minClase) + " en clase y " + duracion(minEj) + " en ejercicios, entre todos.",
       resp ? "Participación en clase: " + resp + (resp === 1 ? " respuesta" : " respuestas") + " a las preguntas del profesor, " + pct(bien, resp) + " % correctas." : "Todavía no hay respuestas a preguntas de la clase.",
       conDiag.length
@@ -93,7 +93,9 @@
       anchos: [3, 1.6, 1.8, 2, 2],
       filas: alumnos.map((a) => {
         const as = a.asistencia || { fue: 0, just: 0, tasa: 0 };
-        const asistencia = (d.clasesCerradas ? as.fue + "/" + d.clasesCerradas + " (" + as.tasa + " %)" : "—") + (as.just ? ", " + as.just + " just." : "");
+        // El «de N» de cada alumno: solo las clases que le tocaban (as.de).
+        const de = as.de != null ? as.de : d.clasesCerradas;
+        const asistencia = (d.clasesCerradas ? as.fue + "/" + de + " (" + as.tasa + " %)" : "—") + (as.just ? ", " + as.just + " just." : "");
         const tiempo = duracion((a.minutosClase || 0) + (a.minutosEjercicios || 0));
         const part = a.respuestas ? a.respuestas + " resp., " + pct(a.correctas || 0, a.respuestas) + " %" : "—";
         const nivel = a.nivel ? sinEmoji(a.nivel.etiqueta) + " (≈" + a.nivel.elo + ")" : "Sin diagnóstico";

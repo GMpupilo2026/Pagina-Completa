@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,29 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: La peor posición de partida: el método clásico</a></li>
+        <li><a href="#posicion-2">Posición 2: La trayectoria del caballo (diagrama 13.5)</a></li>
+        <li><a href="#posicion-3">Posición 3: El intento de fuga y la barrera (diagrama 13.6)</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Objetivo: Dar el mate de alfil y caballo con el método clásico y defender torre y alfil contra torre con Cochrane y la segunda fila, conociendo la maniobra de Philidor.</p>
 <p>Idea guía: En los dos finales manda el plan, no la memoria: el cajón y la W del caballo; la clavada de Cochrane y la torre en la segunda.</p>
@@ -66,7 +92,7 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>El rey activo en el final</dt>
   <dd>Cuando se van las damas, el rey deja de ser un problema y se vuelve una pieza de ataque que vale más o menos como una pieza menor. En el final se lleva al centro.</dd>
   <dd><strong>El error de siempre:</strong> Seguir escondiendo el rey por costumbre. La jugada más común que falta en los finales de club es simplemente acercar el rey.</dd>
@@ -74,48 +100,204 @@
   <dt>La posición de Philidor</dt>
   <dd>La defensa básica de torre y peón contra torre: el defensor pone su torre en la tercera fila para impedir que el rey rival avance, y cuando el peón llega a esa fila, baja la torre a la octava a dar jaques por detrás.</dd>
   <dd><strong>El error de siempre:</strong> Dar jaques desde el principio. Mientras el peón no ha pasado de la quinta, los jaques por detrás no sirven: el rey rival se esconde delante de su peón. Primero la tercera fila.</dd>
-  <dd><strong>Para verlo:</strong> Rey negro en e8, torre negra en a6, peón blanco en e5 y rey blanco en e6. Mientras la torre esté en la sexta fila —la tercera desde el lado blanco—, el rey blanco no puede avanzar.</dd>
+  <dd><strong>Para verlo:</strong> Rey negro en eva 8, torre negra en anna 6, peón blanco en eva 5 y rey blanco en eva 6. Mientras la torre esté en la sexta fila —la tercera desde el lado blanco—, el rey blanco no puede avanzar.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: La peor posición de partida: el método clásico</h3>
+  <h3 id="posicion-1">Posición 1 de 3: La peor posición de partida: el método clásico</h3>
   
-  <p>Piezas blancas: rey en g2; alfil en g1; caballo en h1.</p>
-  <p>Piezas negras: rey en e4.</p>
+  <h4>Piezas blancas: 3</h4>
+  <ul>
+    <li>Rey en gustav 2.</li>
+    <li>Alfil en gustav 1.</li>
+    <li>Caballo en hector 1.</li>
+  </ul>
+  <h4>Piezas negras: 1</h4>
+  <ul>
+    <li>Rey en eva 4.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 1. rey gustav 3, rey eva 5, 2. rey felix 3, rey david 5, 3. rey felix 4, rey david 6, 4. rey eva 4, rey cesar 6, 5. caballo gustav 3, rey david 6, 6. caballo felix 5 jaque, rey cesar 6, 7. rey eva 5, rey david 7, 8. rey david 5, rey cesar 7, 9. alfil cesar 5, rey bella 7, 10. rey david 6, rey bella 8, 11. rey cesar 6, rey anna 8, 12. caballo david 6, rey bella 8, 13. caballo bella 5, rey anna 8, 14. caballo cesar 7 jaque, rey bella 8, 15. alfil david 4, rey cesar 8, 16. alfil anna 7, rey david 8, 17. caballo david 5, rey eva 8, 18. rey david 6, rey felix 7, 19. caballo eva 7, rey felix 6, 20. alfil eva 3, rey felix 7, 21. alfil gustav 5, rey eva 8, 22. caballo cesar 6, rey felix 7, 23. caballo eva 5 jaque, rey eva 8, 24. rey eva 6, rey felix 8, 25. rey david 7, rey gustav 8, 26. rey eva 8, rey gustav 7, 27. rey eva 7, rey gustav 8, 28. alfil hector 6, rey hector 7, 29. alfil felix 8, rey gustav 8, 30. rey eva 8, rey hector 8, 31. rey felix 7, rey hector 7, 32. caballo gustav 4, rey hector 8, 33. alfil gustav 7 jaque, rey hector 7, 34. caballo felix 6 jaque mate</p>
+  <h4>La línea: 67 jugadas</h4>
+  <ul>
+    <li>1. Blancas: rey gustav 3.</li>
+    <li>1. Negras: rey eva 5.</li>
+    <li>2. Blancas: rey felix 3.</li>
+    <li>2. Negras: rey david 5.</li>
+    <li>3. Blancas: rey felix 4.</li>
+    <li>3. Negras: rey david 6.</li>
+    <li>4. Blancas: rey eva 4.</li>
+    <li>4. Negras: rey cesar 6.</li>
+    <li>5. Blancas: caballo gustav 3.</li>
+    <li>5. Negras: rey david 6.</li>
+    <li>6. Blancas: caballo felix 5 jaque.</li>
+    <li>6. Negras: rey cesar 6.</li>
+    <li>7. Blancas: rey eva 5.</li>
+    <li>7. Negras: rey david 7.</li>
+    <li>8. Blancas: rey david 5.</li>
+    <li>8. Negras: rey cesar 7.</li>
+    <li>9. Blancas: alfil cesar 5.</li>
+    <li>9. Negras: rey bella 7.</li>
+    <li>10. Blancas: rey david 6.</li>
+    <li>10. Negras: rey bella 8.</li>
+    <li>11. Blancas: rey cesar 6.</li>
+    <li>11. Negras: rey anna 8.</li>
+    <li>12. Blancas: caballo david 6.</li>
+    <li>12. Negras: rey bella 8.</li>
+    <li>13. Blancas: caballo bella 5.</li>
+    <li>13. Negras: rey anna 8.</li>
+    <li>14. Blancas: caballo cesar 7 jaque.</li>
+    <li>14. Negras: rey bella 8.</li>
+    <li>15. Blancas: alfil david 4.</li>
+    <li>15. Negras: rey cesar 8.</li>
+    <li>16. Blancas: alfil anna 7.</li>
+    <li>16. Negras: rey david 8.</li>
+    <li>17. Blancas: caballo david 5.</li>
+    <li>17. Negras: rey eva 8.</li>
+    <li>18. Blancas: rey david 6.</li>
+    <li>18. Negras: rey felix 7.</li>
+    <li>19. Blancas: caballo eva 7.</li>
+    <li>19. Negras: rey felix 6.</li>
+    <li>20. Blancas: alfil eva 3.</li>
+    <li>20. Negras: rey felix 7.</li>
+    <li>21. Blancas: alfil gustav 5.</li>
+    <li>21. Negras: rey eva 8.</li>
+    <li>22. Blancas: caballo cesar 6.</li>
+    <li>22. Negras: rey felix 7.</li>
+    <li>23. Blancas: caballo eva 5 jaque.</li>
+    <li>23. Negras: rey eva 8.</li>
+    <li>24. Blancas: rey eva 6.</li>
+    <li>24. Negras: rey felix 8.</li>
+    <li>25. Blancas: rey david 7.</li>
+    <li>25. Negras: rey gustav 8.</li>
+    <li>26. Blancas: rey eva 8.</li>
+    <li>26. Negras: rey gustav 7.</li>
+    <li>27. Blancas: rey eva 7.</li>
+    <li>27. Negras: rey gustav 8.</li>
+    <li>28. Blancas: alfil hector 6.</li>
+    <li>28. Negras: rey hector 7.</li>
+    <li>29. Blancas: alfil felix 8.</li>
+    <li>29. Negras: rey gustav 8.</li>
+    <li>30. Blancas: rey eva 8.</li>
+    <li>30. Negras: rey hector 8.</li>
+    <li>31. Blancas: rey felix 7.</li>
+    <li>31. Negras: rey hector 7.</li>
+    <li>32. Blancas: caballo gustav 4.</li>
+    <li>32. Negras: rey hector 8.</li>
+    <li>33. Blancas: alfil gustav 7 jaque.</li>
+    <li>33. Negras: rey hector 7.</li>
+    <li>34. Blancas: caballo felix 6 jaque mate.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
-  <p>Todas las piezas blancas están lejos del centro. Se juega con lógica, no a la perfección: primero rey y caballo al centro, después se empuja al rey negro a la banda y al rincón seguro (a8), el rey blanco ocupa la casilla pivote c6, caballo y alfil lo desalojan, y comienza el traslado hacia h8, el rincón del mate. La jugada 20. alfil eva 3 es la clave que impide la fuga.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/8/8/8/4k3/8/6K1/6BN w - - 0 1</p>
+  <p>Todas las piezas blancas están lejos del centro. Se juega con lógica, no a la perfección: primero rey y caballo al centro, después se empuja al rey negro a la banda y al rincón seguro (anna 8), el rey blanco ocupa la casilla pivote cesar 6, caballo y alfil lo desalojan, y comienza el traslado hacia hector 8, el rincón del mate. La jugada 20. alfil eva 3 es la clave que impide la fuga.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/8/8/8/4k3/8/6K1/6BN w - - 0 1</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: La trayectoria del caballo (diagrama 13.5)</h3>
+  <h3 id="posicion-2">Posición 2 de 3: La trayectoria del caballo (diagrama 13.5)</h3>
   
-  <p>Piezas blancas: rey en c6; alfil en a7; caballo en c7.</p>
-  <p>Piezas negras: rey en c8.</p>
+  <h4>Piezas blancas: 3</h4>
+  <ul>
+    <li>Rey en cesar 6.</li>
+    <li>Alfil en anna 7.</li>
+    <li>Caballo en cesar 7.</li>
+  </ul>
+  <h4>Piezas negras: 1</h4>
+  <ul>
+    <li>Rey en cesar 8.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 1… rey david 8, 2. caballo david 5, rey eva 8, 3. rey david 6, rey david 8, 4. caballo eva 7, rey eva 8, 5. rey eva 6, rey david 8, 6. alfil bella 6 jaque, rey eva 8, 7. alfil cesar 7, rey felix 8, 8. caballo felix 5, rey eva 8, 9. caballo gustav 7 jaque, rey felix 8, 10. rey felix 6, rey gustav 8, 11. rey gustav 6, rey felix 8, 12. alfil david 6 jaque, rey gustav 8, 13. caballo felix 5, rey hector 8, 14. alfil cesar 5, rey gustav 8, 15. caballo hector 6 jaque, rey hector 8, 16. alfil david 4 jaque mate</p>
+  <h4>La línea: 30 jugadas</h4>
+  <ul>
+    <li>1. Negras: rey david 8.</li>
+    <li>2. Blancas: caballo david 5.</li>
+    <li>2. Negras: rey eva 8.</li>
+    <li>3. Blancas: rey david 6.</li>
+    <li>3. Negras: rey david 8.</li>
+    <li>4. Blancas: caballo eva 7.</li>
+    <li>4. Negras: rey eva 8.</li>
+    <li>5. Blancas: rey eva 6.</li>
+    <li>5. Negras: rey david 8.</li>
+    <li>6. Blancas: alfil bella 6 jaque.</li>
+    <li>6. Negras: rey eva 8.</li>
+    <li>7. Blancas: alfil cesar 7.</li>
+    <li>7. Negras: rey felix 8.</li>
+    <li>8. Blancas: caballo felix 5.</li>
+    <li>8. Negras: rey eva 8.</li>
+    <li>9. Blancas: caballo gustav 7 jaque.</li>
+    <li>9. Negras: rey felix 8.</li>
+    <li>10. Blancas: rey felix 6.</li>
+    <li>10. Negras: rey gustav 8.</li>
+    <li>11. Blancas: rey gustav 6.</li>
+    <li>11. Negras: rey felix 8.</li>
+    <li>12. Blancas: alfil david 6 jaque.</li>
+    <li>12. Negras: rey gustav 8.</li>
+    <li>13. Blancas: caballo felix 5.</li>
+    <li>13. Negras: rey hector 8.</li>
+    <li>14. Blancas: alfil cesar 5.</li>
+    <li>14. Negras: rey gustav 8.</li>
+    <li>15. Blancas: caballo hector 6 jaque.</li>
+    <li>15. Negras: rey hector 8.</li>
+    <li>16. Blancas: alfil david 4 jaque mate.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
-  <p>El rey ha sido desalojado del rincón seguro. Si se empeña en quedarse en la banda, el caballo repite su recorrido de 7 a 5 y de 5 a 7 (la W) y el alfil, con jaques en las casillas negras, lo va empujando hacia el rincón del mate. Al llegar a h8 se pierde un tiempo con el alfil y se dan los dos jaques finales.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 2k5/B1N5/2K5/8/8/8/8/8 b - - 0 1</p>
+  <p>El rey ha sido desalojado del rincón seguro. Si se empeña en quedarse en la banda, el caballo repite su recorrido de 7 a 5 y de 5 a 7 (la W) y el alfil, con jaques en las casillas negras, lo va empujando hacia el rincón del mate. Al llegar a hector 8 se pierde un tiempo con el alfil y se dan los dos jaques finales.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 2k5/B1N5/2K5/8/8/8/8/8 b - - 0 1</p>
 </div>
 <div class="posicion">
-  <h3>Posición 3: El intento de fuga y la barrera (diagrama 13.6)</h3>
+  <h3 id="posicion-3">Posición 3 de 3: El intento de fuga y la barrera (diagrama 13.6)</h3>
   
-  <p>Piezas blancas: rey en d6; alfil en a7; caballo en e7.</p>
-  <p>Piezas negras: rey en f6.</p>
+  <h4>Piezas blancas: 3</h4>
+  <ul>
+    <li>Rey en david 6.</li>
+    <li>Alfil en anna 7.</li>
+    <li>Caballo en eva 7.</li>
+  </ul>
+  <h4>Piezas negras: 1</h4>
+  <ul>
+    <li>Rey en felix 6.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 1. alfil eva 3, rey felix 7, 2. alfil gustav 5, rey eva 8, 3. caballo cesar 6, rey felix 7, 4. caballo eva 5 jaque, rey eva 8, 5. rey eva 6, rey felix 8, 6. rey david 7, rey gustav 8, 7. rey eva 8, rey gustav 7, 8. rey eva 7, rey gustav 8, 9. alfil hector 6, rey hector 7, 10. alfil felix 8, rey gustav 8, 11. rey eva 8, rey hector 8, 12. rey felix 7, rey hector 7, 13. caballo gustav 4, rey hector 8, 14. alfil gustav 7 jaque, rey hector 7, 15. caballo felix 6 jaque mate</p>
+  <h4>La línea: 29 jugadas</h4>
+  <ul>
+    <li>1. Blancas: alfil eva 3.</li>
+    <li>1. Negras: rey felix 7.</li>
+    <li>2. Blancas: alfil gustav 5.</li>
+    <li>2. Negras: rey eva 8.</li>
+    <li>3. Blancas: caballo cesar 6.</li>
+    <li>3. Negras: rey felix 7.</li>
+    <li>4. Blancas: caballo eva 5 jaque.</li>
+    <li>4. Negras: rey eva 8.</li>
+    <li>5. Blancas: rey eva 6.</li>
+    <li>5. Negras: rey felix 8.</li>
+    <li>6. Blancas: rey david 7.</li>
+    <li>6. Negras: rey gustav 8.</li>
+    <li>7. Blancas: rey eva 8.</li>
+    <li>7. Negras: rey gustav 7.</li>
+    <li>8. Blancas: rey eva 7.</li>
+    <li>8. Negras: rey gustav 8.</li>
+    <li>9. Blancas: alfil hector 6.</li>
+    <li>9. Negras: rey hector 7.</li>
+    <li>10. Blancas: alfil felix 8.</li>
+    <li>10. Negras: rey gustav 8.</li>
+    <li>11. Blancas: rey eva 8.</li>
+    <li>11. Negras: rey hector 8.</li>
+    <li>12. Blancas: rey felix 7.</li>
+    <li>12. Negras: rey hector 7.</li>
+    <li>13. Blancas: caballo gustav 4.</li>
+    <li>13. Negras: rey hector 8.</li>
+    <li>14. Blancas: alfil gustav 7 jaque.</li>
+    <li>14. Negras: rey hector 7.</li>
+    <li>15. Blancas: caballo felix 6 jaque mate.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
-  <p>Parece que el rey escapa por f6, pero el caballo de e7 controla f5 y g6: al alfil le basta con controlar g5. Tras 1. alfil eva 3 el rey negro está encerrado entre la barrera de las piezas menores y el rey blanco. El alfil y el caballo construyen después el cajón (alfil gustav 5 y caballo eva 5) y el rey blanco entra tranquilamente hasta la casilla del mate f7.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/B3N3/3K1k2/8/8/8/8/8 w - - 0 1</p>
+  <p>Parece que el rey escapa por felix 6, pero el caballo de eva 7 controla felix 5 y gustav 6: al alfil le basta con controlar gustav 5. Tras 1. alfil eva 3 el rey negro está encerrado entre la barrera de las piezas menores y el rey blanco. El alfil y el caballo construyen después el cajón (alfil gustav 5 y caballo eva 5) y el rey blanco entra tranquilamente hasta la casilla del mate felix 7.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/B3N3/3K1k2/8/8/8/8/8 w - - 0 1</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
@@ -125,7 +307,7 @@
   <li>Practica la transición: parte de Philidor y deja que el peón avance, para ver el momento exacto de bajar la torre.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -178,7 +360,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «El mapa de los finales» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

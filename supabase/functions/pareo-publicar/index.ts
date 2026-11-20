@@ -8,9 +8,9 @@
 //   { accion: "crear", torneo }              → { ok, id, clave }
 //   { accion: "actualizar", id, clave, torneo } → { ok }
 //   { accion: "borrar", id, clave }           → { ok }
-//   { accion: "inscribir", id, inscripcion, consentimiento } → { ok }
+//   { accion: "inscribir", id, inscripcion, consentimiento } → { ok }  (inscripcion: nombre, institucion, categoria, elo, fideId, sexo?, nacimiento?, responsable, contacto, nota)
 //   { accion: "inscripciones", id, clave }    → { ok, inscripciones }
-//   { accion: "marcar", id, clave, ids, estado } → { ok }
+//   { accion: "marcar", id, clave, ids, estado, comentario? } → { ok, avisados, sinCorreo }
 //   { accion: "organizador", nombre, logo?, correo?, consentimiento?, id?, clave? } → { ok, id, clave?, correoPendiente? }
 //   { accion: "organizador_estado", id, clave } → { ok, verificado, correo, correoConfirmado, selloPendiente }
 //   { accion: "confirmar_correo", id, token } → { ok }
@@ -21,6 +21,20 @@
 //   { accion: "seguir_correo", nombre, ident, correo, consentimiento } → { ok } (siempre)
 //   { accion: "seguir_confirmar", id, token } → { ok, nombre }
 //   { accion: "seguir_baja", id, token }       → { ok }
+//   { accion: "adjuntos", id, clave, adjuntos } → { ok }   (los enlaces de árbitro adjunto del torneo)
+//   { accion: "cola", id, clave }              → { ok, cola, vistos, mesa }   (mesa: está en un evento de la Mesa del árbitro;
+//                                                  sus filas traen asignacion_id, nombre, desde y hasta en vez de codigo)
+//   { accion: "cola_borrar", id, clave, hasta } → { ok }
+//   { accion: "adjunto_entrar", codigo }       → { ok, id, nombre, arbitro, desde, hasta }
+//   { accion: "adjunto_anotar", codigo, evento, ronda, datos } → { ok, id }
+//
+// Los árbitros adjuntos: el principal manda la lista de sus enlaces
+// (pareo_adjuntos) con la clave del torneo, también dentro de «crear» y
+// «actualizar» (`adjuntos`). Con su código, el adjunto entra y anota; lo que
+// anota queda en pareo_cola hasta que el principal lo lee y lo pasa a su
+// torneo, y ahí se borra. Así nada se pierde si la pestaña del principal
+// está cerrada. Ver «Pareo Integral: lo que anotan los adjuntos queda en la
+// base».
 //
 // Seguir a un jugador por correo: quien mira un torneo deja su correo y,
 // después de confirmarlo, le llega un aviso cuando ese jugador queda
@@ -73,11 +87,12 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { cabeceraCorreo } from "./marca-correo.ts";
 import {
-  type Correo, correoAvisoFin, correoAvisoRonda, correoConfirmar, correoInscripcion, correoRecuperar, correoReporteAdmin, correoReporteOrganizador,
-  correoSeguirConfirmar, correoSelloAdmin,
+  type Correo, correoAvisoFin, correoAvisoRonda, correoConfirmar, correoDecision, correoInscripcion, correoRecuperar, correoReporteAdmin, correoReporteOrganizador,
+  correoSeguirConfirmar, correoSelloAdmin, esCorreo,
 } from "./correos.ts";
 import { esTorneoAviso, queAvisar, textoFin, textoRonda, type TorneoAviso } from "./avisos.ts";
 import { type LlavesVapid, mandar as mandarPush } from "./webpush.ts";
+import { type Adjunto, limpiarAdjuntos, limpiarCodigo, limpiarEnvio } from "./pareo-adjuntos.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -110,7 +125,7 @@ const CORREO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const cabecera = (titulo: string) => cabeceraCorreo(null, titulo);
 // Nunca lanza ni frena lo que se estaba haciendo: un aviso que no sale no
 // deshace una inscripción ni un reporte.
-async function mandar(para: string[], c: Correo): Promise<boolean> {
+async function mandar(para: string[], c: Correo, responderA?: string | null): Promise<boolean> {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   const destino = [...new Set(para.map((x) => x.trim()).filter((x) => CORREO.test(x)))];
   if (!apiKey || !destino.length) return false;
@@ -118,7 +133,8 @@ async function mandar(para: string[], c: Correo): Promise<boolean> {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: DE, to: destino, subject: c.asunto, html: c.html }),
+      body: JSON.stringify(Object.assign({ from: DE, to: destino, subject: c.asunto, html: c.html },
+        responderA && CORREO.test(responderA) ? { reply_to: responderA } : {})),
     });
     return res.ok;
   } catch {
@@ -252,6 +268,14 @@ function mesa(v: unknown) {
     m.ko = true;
     m.slot = Math.round(numero(v.slot, 0, 999));
     if (v.pasa != null && (v.pasa === v.b || v.pasa === v.n)) { m.pasa = v.pasa; m.desempate = texto(v.desempate, 30); }
+    // La doble eliminación: la llave (ganadores, perdedores o final), su fase
+    // y quién llegó a la final desde perdedores (uno de los dos de la mesa).
+    if (v.llave === "G" || v.llave === "P" || v.llave === "F") {
+      m.llave = v.llave;
+      m.fase = Math.round(numero(v.fase, 1, 99));
+      if (v.deP != null && (v.deP === v.b || v.deP === v.n)) m.deP = v.deP;
+    }
+    if (v.tercer === true) m.tercer = true;
   }
   const pgn = pgnLimpio(v.pgn);
   if (pgn) m.pgn = pgn;
@@ -281,7 +305,8 @@ function limpiar(v: unknown) {
     validoElo: ["fide", "nacional", "no"].includes(v.validoElo as string) ? v.validoElo as string : "",
     ritmoTipo: ["clasico", "rapido", "blitz"].includes(v.ritmoTipo as string) ? v.ritmoTipo as string : "",
     // Los sistemas que sabe pintar la página pública; cualquier otra cosa, suizo.
-    sistema: ["todos", "scheveningen", "eliminacion"].includes(v.sistema as string) ? v.sistema as string : "suizo", dobleVuelta: v.dobleVuelta === true,
+    sistema: ["todos", "scheveningen", "eliminacion", "keizer"].includes(v.sistema as string) ? v.sistema as string : "suizo", dobleVuelta: v.dobleVuelta === true,
+    dobleEliminacion: v.sistema === "eliminacion" && v.dobleEliminacion === true, tercerPuesto: v.sistema === "eliminacion" && v.dobleEliminacion !== true && v.tercerPuesto === true,
     rondasTotales: Math.round(numero(v.rondasTotales, 0, 99)),
     tipo: v.tipo === "equipos" ? "equipos" : undefined, tableros: v.tipo === "equipos" ? Math.round(numero(v.tableros, 1, 12)) : undefined,
     puntos: { victoria: numero(puntos.victoria, 0, 10), tablas: numero(puntos.tablas, 0, 10), derrota: numero(puntos.derrota, 0, 10), bye: numero(puntos.bye, 0, 10) },
@@ -299,6 +324,9 @@ function limpiar(v: unknown) {
     // Los códigos de los enlaces en vivo (ya van en sus QR): con ellos, un
     // enlace en vivo que ya nadie transmite lleva al torneo publicado.
     vivo: codigo(v.vivo), codigoEvento: codigo(v.codigoEvento),
+    // El código de las cámaras de Notara (también va en el QR de cada mesa):
+    // la página del torneo lleva con él a «Partidas en vivo».
+    camaras: codigo(v.camaras),
     // El resumen de cada jugador (puesto, puntos, rendimiento), de jugadores que existen.
     resumen: lista(v.resumen, 1000, filaResumen),
   };
@@ -312,6 +340,34 @@ async function sha256(s: string) {
   return [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 const claveNueva = () => [...crypto.getRandomValues(new Uint8Array(24))].map((b) => b.toString(16).padStart(2, "0")).join("");
+
+// La lista de enlaces de árbitro adjunto de un torneo queda exactamente como
+// llega: los que vienen se crean o se ponen al día, y los de este torneo que
+// ya no vienen se apagan. Un código que ya es de OTRO torneo no se toma.
+async function sincronizarAdjuntos(pid: string, lista: Adjunto[]) {
+  const codigos = lista.map((a) => a.codigo);
+  const { data: ajenos } = codigos.length
+    ? await admin.from("pareo_adjuntos").select("codigo").in("codigo", codigos).neq("publicado_id", pid)
+    : { data: [] };
+  const fuera = new Set((ajenos ?? []).map((x: { codigo: string }) => x.codigo));
+  const filas = lista.filter((a) => !fuera.has(a.codigo)).map((a) => ({ ...a, publicado_id: pid }));
+  if (filas.length) {
+    const { error } = await admin.from("pareo_adjuntos").upsert(filas, { onConflict: "codigo" });
+    if (error) return false;
+  }
+  let apagar = admin.from("pareo_adjuntos").update({ activo: false }).eq("publicado_id", pid).eq("activo", true);
+  if (filas.length) apagar = apagar.not("codigo", "in", "(" + filas.map((f) => f.codigo).join(",") + ")");
+  const { error } = await apagar;
+  return !error;
+}
+// La clave de un torneo publicado: null si sirve; si no, la respuesta.
+async function sinClave(pid: string, clave: string): Promise<Response | null> {
+  if (!/^[0-9a-f-]{36}$/.test(pid) || !clave) return json({ ok: false, error: "Falta la clave de este torneo." }, 400);
+  const { data: fila } = await admin.from("pareo_publicados").select("clave_hash").eq("id", pid).maybeSingle();
+  if (!fila) return json({ ok: false, error: "Ese torneo ya no está publicado.", noExiste: true }, 404);
+  if (fila.clave_hash !== await sha256(clave)) return json({ ok: false, error: "La clave no es la de este torneo." }, 403);
+  return null;
+}
 
 // Las columnas que se leen sin abrir el JSON (la lista del espacio público).
 function columnas(t: NonNullable<ReturnType<typeof limpiar>>) {
@@ -408,6 +464,18 @@ function enSegundoPlano(p: Promise<unknown>) {
   if (rt && typeof rt.waitUntil === "function") rt.waitUntil(seguro);
 }
 
+// Una fecha de nacimiento AAAA-MM-DD que existe (no el 31 de febrero), entre
+// 1900 y hoy en Costa Rica; si no, null.
+function fechaValida(s: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  // Que el día exista: el 31 de febrero se corre a marzo y deja de ser el mismo.
+  const [a, m, dia] = s.split("-").map(Number);
+  const d = new Date(Date.UTC(a, m - 1, dia));
+  if (d.getUTCFullYear() !== a || d.getUTCMonth() !== m - 1 || d.getUTCDate() !== dia) return null;
+  const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date());
+  return s >= "1900-01-01" && s <= hoy ? s : null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ ok: false, error: "Método no permitido" }, 405);
@@ -445,6 +513,9 @@ Deno.serve(async (req) => {
       if (esObj(body.organizador)) { const oid = await organizadorDe(body.organizador); if (oid) cambio.organizador_id = oid; }
       const { error } = await admin.from("pareo_publicados").update(cambio).eq("id", pid);
       if (error) return json({ ok: false, error: "No se pudo actualizar. Intenta de nuevo." }, 502);
+      // Los enlaces de los adjuntos, si vinieron (un Pareo viejo no los manda: se quedan como estaban).
+      const adjuntos = limpiarAdjuntos(body.adjuntos);
+      if (adjuntos) await sincronizarAdjuntos(pid, adjuntos);
       enSegundoPlano(avisarSeguidores(pid, fila.datos, t as unknown as TorneoAviso));
       return json({ ok: true, id: pid });
     }
@@ -456,6 +527,8 @@ Deno.serve(async (req) => {
     const organizador_id = await organizadorDe(body.organizador);
     const { data, error } = await admin.from("pareo_publicados").insert({ ...columnas(t), datos: t, clave_hash: await sha256(clave), organizador_id }).select("id").single();
     if (error || !data) return json({ ok: false, error: "No se pudo publicar. Intenta de nuevo." }, 502);
+    const adjuntos = limpiarAdjuntos(body.adjuntos);
+    if (adjuntos) await sincronizarAdjuntos(data.id, adjuntos);
     enSegundoPlano(avisarSeguidores(data.id, null, t as unknown as TorneoAviso));
     return json({ ok: true, id: data.id, clave });
   }
@@ -635,6 +708,10 @@ Deno.serve(async (req) => {
       elo: Number(x.elo) > 0 ? Math.min(3500, Math.round(Number(x.elo))) : null,
       fide_id: /^[0-9]{1,12}$/.test(texto(x.fideId, 12)) ? texto(x.fideId, 12) : "",
       responsable: texto(x.responsable, 100), contacto: texto(x.contacto, 120), nota: texto(x.nota, 300),
+      // El sexo y la fecha de nacimiento, si el formulario los pide (el de la
+      // Eliminatoria Cantonal JDN de Pérez Zeledón): M o F, y AAAA-MM-DD de verdad.
+      sexo: ["M", "F"].includes(texto(x.sexo, 1)) ? texto(x.sexo, 1) : "",
+      nacimiento: fechaValida(texto(x.nacimiento, 10)),
       consentimiento: new Date().toISOString(),
     };
     if (fila.nombre.length < 2) return json({ ok: false, error: "Escribe el nombre de quien juega." }, 400);
@@ -660,12 +737,12 @@ Deno.serve(async (req) => {
     const pid = texto(body.id, 40);
     const clave = texto(body.clave, 100);
     if (!/^[0-9a-f-]{36}$/.test(pid) || !clave) return json({ ok: false, error: "Falta la clave de este torneo." }, 400);
-    const { data: fila } = await admin.from("pareo_publicados").select("clave_hash").eq("id", pid).maybeSingle();
+    const { data: fila } = await admin.from("pareo_publicados").select("clave_hash, nombre, organizador_id").eq("id", pid).maybeSingle();
     if (!fila) return json({ ok: false, error: "Ese torneo ya no está publicado.", noExiste: true }, 404);
     if (fila.clave_hash !== await sha256(clave)) return json({ ok: false, error: "La clave no es la de este torneo." }, 403);
     if (accion === "inscripciones") {
       const { data, error } = await admin.from("pareo_preinscripciones")
-        .select("id, nombre, institucion, categoria, elo, fide_id, responsable, contacto, nota, estado, creado")
+        .select("id, nombre, institucion, categoria, elo, fide_id, sexo, nacimiento, responsable, contacto, nota, estado, comentario, avisado, creado")
         .eq("publicado_id", pid).order("creado").range(0, 999);
       if (error) return json({ ok: false, error: "No se pudieron leer las inscripciones." }, 502);
       return json({ ok: true, inscripciones: data || [] });
@@ -674,9 +751,112 @@ Deno.serve(async (req) => {
     if (!["aceptada", "rechazada", "pendiente"].includes(estado)) return json({ ok: false, error: "Estado inválido." }, 400);
     const cuales = Array.isArray(body.ids) ? body.ids.filter((x) => typeof x === "string" && /^[0-9a-f-]{36}$/.test(x)).slice(0, 400) : [];
     if (!cuales.length) return json({ ok: true });
-    const { error } = await admin.from("pareo_preinscripciones").update({ estado }).eq("publicado_id", pid).in("id", cuales);
+    // El comentario de quien organiza (el motivo, si la rechaza) queda con la
+    // inscripción y va en el aviso. Volver a «pendiente» lo borra.
+    const comentario = estado === "pendiente" ? "" : texto(body.comentario, 300);
+    const { data: marcadas, error } = await admin.from("pareo_preinscripciones")
+      .update({ estado, comentario, avisado: null }).eq("publicado_id", pid).in("id", cuales)
+      .select("id, nombre, responsable, contacto, institucion, categoria, sexo, nacimiento, elo, fide_id");
     if (error) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
+    // El aviso a quien inscribió, si dejó un correo como contacto (con un
+    // teléfono no se puede: Pareo le dice al árbitro que le avise él). Las
+    // respuestas le llegan a la organización si tiene su correo confirmado.
+    // Un correo que no sale no deshace la marca: queda sin `avisado`.
+    const avisados: string[] = [], sinCorreo: string[] = [];
+    if (estado !== "pendiente") {
+      const { data: org } = fila.organizador_id
+        ? await admin.from("pareo_organizadores").select("nombre").eq("id", fila.organizador_id).maybeSingle()
+        : { data: null };
+      const responderA = await correoDe(fila.organizador_id);
+      // Los datos del torneo para la bienvenida: la fecha, el lugar y el
+      // ritmo de la ficha Torneo, y la hora, el contacto y las bases del
+      // anuncio (lo que ya es público). Solo las rutas que hacen falta de
+      // `datos`, no el torneo entero.
+      const { data: ev } = await admin.from("pareo_publicados")
+        .select("lugar, fecha, rondas_total, ritmo:datos->>ritmo, fechaFin:datos->>fechaFin, anuncio:datos->anuncio")
+        .eq("id", pid).maybeSingle();
+      const anuncio = (ev?.anuncio && typeof ev.anuncio === "object" ? ev.anuncio : {}) as Record<string, unknown>;
+      const evento = {
+        fecha: ev?.fecha ?? null, fechaFin: (ev?.fechaFin as string) || null, lugar: ev?.lugar || "", ritmo: (ev?.ritmo as string) || "",
+        rondas: ev?.rondas_total || 0, hora: String(anuncio.hora || ""), contacto: String(anuncio.contacto || ""), bases: String(anuncio.texto || ""),
+        url: `${SITE_URL}/torneos-pareo.html#t=${pid}`,
+      };
+      for (const x of marcadas ?? []) {
+        if (!esCorreo(x.contacto)) { sinCorreo.push(x.id); continue; }
+        const salio = await mandar([x.contacto], correoDecision(cabecera(estado === "aceptada" ? "¡Bienvenida al torneo!" : "Inscripción rechazada"),
+          fila.nombre || "el torneo", org?.nombre || "", x, estado as "aceptada" | "rechazada", comentario, !!responderA, evento), responderA);
+        if (salio) avisados.push(x.id);
+      }
+      if (avisados.length) await admin.from("pareo_preinscripciones").update({ avisado: new Date().toISOString() }).in("id", avisados);
+    }
+    return json({ ok: true, avisados, sinCorreo });
+  }
+
+  // ---------- Los árbitros adjuntos ----------
+  // El principal, con la clave de su torneo: la lista de sus enlaces, leer lo
+  // que mandaron y borrar lo que ya pasó a su torneo.
+  if (accion === "adjuntos" || accion === "cola" || accion === "cola_borrar") {
+    const pid = texto(body.id, 40);
+    const falla = await sinClave(pid, texto(body.clave, 100));
+    if (falla) return falla;
+    if (accion === "adjuntos") {
+      const lista = limpiarAdjuntos(body.adjuntos);
+      if (!lista) return json({ ok: false, error: "Falta la lista de árbitros." }, 400);
+      if (!await sincronizarAdjuntos(pid, lista)) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
+      return json({ ok: true });
+    }
+    if (accion === "cola") {
+      const [{ data: cola, error }, { data: vistos }, { data: enMesa }] = await Promise.all([
+        admin.from("pareo_cola").select("id, codigo, asignacion_id, nombre, desde, hasta, evento, ronda, datos, creado").eq("publicado_id", pid).order("id").range(0, 499),
+        admin.from("pareo_adjuntos").select("codigo, visto").eq("publicado_id", pid).eq("activo", true),
+        // ¿Está en un evento de la Mesa del árbitro? Entonces su Pareo lee la cola aunque no tenga adjuntos propios.
+        admin.from("centroamericano_torneos").select("tnr").eq("pareo_id", pid).eq("archivado", false).limit(1),
+      ]);
+      if (error) return json({ ok: false, error: "No se pudo leer lo que mandaron los árbitros." }, 502);
+      return json({ ok: true, cola: cola ?? [], vistos: vistos ?? [], mesa: !!(enMesa && enMesa.length) });
+    }
+    const hasta = Number(body.hasta);
+    if (!Number.isSafeInteger(hasta) || hasta < 1) return json({ ok: false, error: "Falta hasta dónde borrar." }, 400);
+    const { error } = await admin.from("pareo_cola").delete().eq("publicado_id", pid).lte("id", hasta);
+    if (error) return json({ ok: false, error: "No se pudo borrar. Intenta de nuevo." }, 502);
     return json({ ok: true });
+  }
+
+  // El adjunto, sin cuenta, con el código de su enlace: entrar (saber de qué
+  // torneo es y cuáles son sus mesas) y anotar.
+  if (accion === "adjunto_entrar" || accion === "adjunto_anotar") {
+    const codigo = limpiarCodigo(body.codigo);
+    if (!codigo) return json({ ok: false, motivo: "formato", error: "Ese código no es válido: son 8 letras y números." }, 400);
+    const { data: freno, error: frenoError } = await admin.rpc("pareo_frenar", { p_ip: ipDe(req), p_crear: false });
+    if (frenoError) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
+    if (freno) return json({ ok: false, motivo: "demasiados", error: freno }, 429);
+    const { data: a } = await admin.from("pareo_adjuntos").select("publicado_id, nombre, desde, hasta, activo").eq("codigo", codigo).maybeSingle();
+    if (!a) return json({ ok: false, motivo: "no", error: "Ese código no es de ningún árbitro de un torneo publicado." }, 404);
+    if (!a.activo) return json({ ok: false, motivo: "apagado", error: "Este enlace de árbitro se apagó. Pídele uno nuevo al árbitro principal." }, 403);
+    const { data: pub } = await admin.from("pareo_publicados").select("nombre, rondas").eq("id", a.publicado_id).maybeSingle();
+    if (!pub) return json({ ok: false, motivo: "no", error: "Ese torneo ya no está publicado." }, 404);
+    const visto = () => admin.from("pareo_adjuntos").update({ visto: new Date().toISOString() }).eq("codigo", codigo);
+    if (accion === "adjunto_entrar") {
+      await visto();
+      return json({ ok: true, id: a.publicado_id, nombre: pub.nombre, arbitro: a.nombre, desde: a.desde, hasta: a.hasta });
+    }
+    const evento = texto(body.evento, 20);
+    const ronda = Number(body.ronda);
+    const datos = limpiarEnvio(evento, body.datos);
+    if (!datos || !Number.isInteger(ronda)) return json({ ok: false, motivo: "forma", error: "Lo que mandaste llegó incompleto." }, 400);
+    // La ronda en juego, a grandes rasgos: `rondas` cuenta las rondas
+    // COMPLETAS publicadas, así que la que se juega es la siguiente (o la de
+    // después, si el principal la emparejó hace menos de lo que tarda en
+    // publicarse sola); una corrección puede ser de la última completa. La
+    // regla fina (solo la última ronda) la pone el principal al leerla.
+    if (ronda < Math.max(1, pub.rondas) || ronda > pub.rondas + 2) return json({ ok: false, motivo: "ronda", error: "Esa ronda ya no está en juego." }, 409);
+    if (evento === "resultado" && ((datos.mesa as number) < a.desde || (datos.mesa as number) > a.hasta)) {
+      return json({ ok: false, motivo: "mesa", error: "Esa mesa no es de las tuyas." }, 403);
+    }
+    const { data: fila, error } = await admin.from("pareo_cola").insert({ publicado_id: a.publicado_id, codigo, evento, ronda, datos }).select("id").single();
+    if (error || !fila) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
+    await visto();
+    return json({ ok: true, id: fila.id });
   }
 
   // ---------- Seguir a un jugador por correo ----------

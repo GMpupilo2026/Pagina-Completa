@@ -32,6 +32,8 @@
             /* Su academia: quién está, su número y su correo, y qué puede
                hacer cada coordinador. */
             { emoji: "🏫", label: "Tu academia", desc: "Quién está en tu academia, sus datos de contacto y qué puede hacer cada coordinador", href: "academias.html", zona: "personas" },
+            { emoji: "🌱", label: "Interesados", desc: "Quién preguntó por clases en tu academia y a quién toca llamar hoy", href: "prospectos.html", zona: "personas" },
+            { emoji: "🎁", label: "Premios de tu academia", desc: "Lo que tus alumnos canjean con sus puntos y lo que tienes por entregar", href: "premios-academia.html", zona: "personas" },
         ] },
         /* Supervisar es, sobre todo, supervisar a los profesores: va antes
            que el detalle de los estudiantes. */
@@ -55,7 +57,7 @@
             { emoji: "🌐", label: "Diagnóstico de visitantes", desc: "Tu enlace para que alguien sin cuenta mida su nivel, y los resultados que te llegan", href: "informes.html?tema=diagnostico-publico", zona: "estudiantes" },
         ] },
         { title: "Cobros y formularios", tiles: [
-            { emoji: "💳", label: "Cobros", desc: "Mensualidades, pagos y morosidad de tus estudiantes", href: "cobros.html", zona: "cobros" },
+            { emoji: "💳", label: "Cobros", desc: "Mensualidades: quién está al día, registrar pagos y activar o apagar cuentas", href: "mensualidades.html", zona: "cobros" },
             /* Los cupos que compró su academia: los reparte ella entre sus
                miembros. Sin un paquete de su academia, la página se lo dice. */
             { emoji: "🎟️", label: "Cupos de tu academia", desc: "Reparte entre los alumnos de tu academia los cupos de acceso que compró", href: "accesos.html", zona: "cobros" },

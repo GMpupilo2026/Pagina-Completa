@@ -41,16 +41,20 @@ if (!window.sb && window.supabase) {
 // válida sin su material y sin ningún error a la vista:
 //   · al cargar, con lo que haya guardado (si no venció);
 //   · en cada cambio de sesión (entrar, renovar el token, salir);
-//   · justo antes de pedir un fragmento (SesionCursos.guardar(session)), para
-//     no depender del orden en que Supabase avisa de la renovación.
+//   · justo antes de pedir un fragmento (SesionCursos.renovar(), con la sesión
+//     de AHORA: una guardada al cargar la página vence en una hora y borra
+//     la cookie), para no depender del orden en que Supabase avisa de la
+//     renovación.
 window.SesionCursos = (function () {
   var NOMBRE = "ai_sesion_cursos";
   // Una cookie por carpeta que cuida el worker (PROTEGIDO en worker.js): con
   // un solo Path el navegador no la manda a la otra. Con solo /cursos/, todo lo
   // de /material/ (los libros y las fichas que se compran o se canjean por
   // puntos) contestaba «Hace falta iniciar sesión» a quien lo tenía pagado.
-  // verificar-worker.js comprueba que las dos listas no se separen.
-  var RUTAS = ["/cursos/", "/material/"];
+  // verificar-worker.js comprueba que las dos listas no se separen. /js/ es
+  // por el código de las herramientas con licencia (CODIGO_CON_LICENCIA en
+  // worker.js): solo lo baja quien tiene la licencia.
+  var RUTAS = ["/cursos/", "/material/", "/js/"];
   var seguro = location.protocol === "https:" ? "; Secure" : "";
   function borrar() {
     try {
@@ -70,7 +74,48 @@ window.SesionCursos = (function () {
       });
     } catch (e) { }
   }
-  return { guardar: guardar, borrar: borrar };
+  /* El código de una herramienta con licencia que el worker no entregó
+     (CODIGO_CON_LICENCIA en worker.js): en su lugar manda un aviso que anota
+     el archivo en window.__codigoNegado. Pasa cuando la cookie no llegó o
+     venció —la sesión dura una hora y la cookie se escribe al cargar—: el
+     navegador pide los <script> de la página antes de que supabase-js
+     renueve el token. Quien ya confirmó la licencia llama a esto con la
+     sesión renovada: escribe la cookie y recarga UNA vez. Devuelve "recarga"
+     (ya está recargando), "falta" (recargó hace poco y el código sigue sin
+     llegar: que la página lo diga) o "" (no faltaba nada). */
+  function recuperarCodigo(session) {
+    guardar(session);
+    var negado = window.__codigoNegado || [];
+    if (!negado.length) return "";
+    var clave = "codigo_con_licencia_recarga:" + location.pathname;
+    try {
+      var antes = Number(sessionStorage.getItem(clave) || 0);
+      if (Date.now() - antes < 60000) return "falta";
+      sessionStorage.setItem(clave, String(Date.now()));
+    } catch (e) { return "falta"; }
+    location.reload();
+    return "recarga";
+  }
+  /* La cookie escrita con la sesión de AHORA, no con una guardada al cargar
+     la página. Una clase en vivo dura horas y el token una: guardar() con la
+     sesión del arranque, ya vencida, BORRA la cookie, y el worker contesta 401
+     a la presentación del curso («Revisa tu conexión», en la clase de los
+     asesores). getSession() renueva el token si venció; con `forzar` (el
+     worker ya dijo 401), refreshSession() pide uno nuevo sí o sí. Devuelve la
+     sesión, o null. */
+  function renovar(forzar) {
+    try {
+      var auth = window.sb && window.sb.auth;
+      if (!auth || typeof auth.getSession !== "function") return Promise.resolve(null);
+      var pedido = forzar && typeof auth.refreshSession === "function" ? auth.refreshSession() : auth.getSession();
+      return Promise.resolve(pedido).then(function (r) {
+        var s = r && r.data && r.data.session;
+        if (s) guardar(s);
+        return s || null;
+      }, function () { return null; });
+    } catch (e) { return Promise.resolve(null); }
+  }
+  return { guardar: guardar, borrar: borrar, renovar: renovar, recuperarCodigo: recuperarCodigo };
 })();
 
 // El perfil propio, UNA lectura por página. En la hora pico del 29 de

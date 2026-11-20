@@ -64,6 +64,27 @@
     const hora = (iso) => window.HoraCR.hora(iso);
     const nombreDe = (tnr) => ((datos && datos.rondas.find((r) => r.tnr === tnr)) || { nombre: tnr }).nombre;
     const uno = (x) => Number(x).toLocaleString("es-CR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    // Las varas del índice, las del seminario de Fair Play de FIDE (Costa Rica, 2026): de 40 a 64 es normal, de 65 a 69 se
+    // vigila al jugador mientras juega y desde 70 se lo sigue y se prepara para actuar. Para probar la trampa con la
+    // estadística sola, el Reglamento de Fair Play (art. 1.6) pide 5 desviaciones sobre el tablero (índice 75); con otra
+    // prueba, 2,5 (62,5) sirve de apoyo. Ver «Las varas de FIDE» en docs/decisiones/juegos-y-torneos.md.
+    const fino = (x) => Number(x).toLocaleString("es-CR", { maximumFractionDigits: 3 });
+    const ROI_VIGILAR = 65, ROI_ACTUAR = 70, Z_SANCION = 5, Z_APOYO = 2.5;
+    // El nivel de un índice: «a mirar» desde 65, «muy alta» desde 70. Los dos ejemplos del seminario lo fijan en el
+    // verificador: 67,8 (que por la prueba completa jugó peor de lo esperado) es «a mirar», no «muy alta»; 89,0, «muy alta».
+    const nivelIndice = (r) => (r >= ROI_ACTUAR ? "alta" : r >= ROI_VIGILAR ? "a_mirar" : "normal");
+    const ESCALA = "De 40 a 64 es normal; de 65 a 69 se vigila al jugador mientras juega; desde 70 se lo sigue y se prepara para actuar (las varas de FIDE).";
+    // Cuántas veces pasaría por pura casualidad, a quien juega limpio, estar tantas desviaciones arriba: «1 de cada 44» con 2,
+    // como lo dice FIDE. La cola de la normal con la erfc de Chebyshev de Numerical Recipes (error relativo menor a 1,2e-7:
+    // da las cifras de FIDE: 1 de cada 44, 741 y 31 574; con 5, 3,49 millones).
+    function porAzar(z) {
+        z = Number(z);
+        if (!(z > 0)) return "";
+        const x = z / Math.SQRT2, t = 1 / (1 + 0.5 * x);
+        const cola = 0.5 * t * Math.exp(-x * x - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277)))))))));
+        const n = Math.round(1 / cola);
+        return n >= 2 ? "por azar, 1 de cada " + n.toLocaleString("es-CR") + " jugadores limpios" : "";
+    }
     const dos = (x) => Number(x).toLocaleString("es-CR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const conElo = (nombre, elo) => (nombre || "—") + (elo ? " (" + elo + ")" : "");
     // El evento que se está mirando (lo dice la función, de los torneos): «Centroamericano 2026», «Nacional 2027»…
@@ -99,8 +120,8 @@
             ? { alto: true, texto: "Trampas: tuvo " + x.trampas_n + " posiciones donde lo que parece mejor a primera vista es malo, y cayó en " + x.trampas_cayo + "; alguien de su nivel caería en unas " + uno(x.trampas_e) + " (" + masMenos(x.trampas_z) + " desviaciones). Esquivarlas así es como juega el motor. Señal para mirar." }
             : { alto: false, texto: "Trampas (lo que parece bueno a primera vista y es malo): cayó en " + x.trampas_cayo + " de " + x.trampas_n + "; se esperaban unas " + uno(x.trampas_e) + (x.trampas_z != null ? " (" + masMenos(x.trampas_z) + ")" : " (pocas para medir)") + "." });
         // Todas las señales en una cuenta, y la vara para el tamaño del torneo.
-        if (x.roi_combinado != null) out.push({ alto: Number(x.roi_combinado) >= 60, texto: "Con todas las señales juntas (el índice, el tiempo, las rachas y las trampas, sin contar dos veces lo que dicen igual): " + uno(x.roi_combinado) + "." });
-        if (x.umbral_z != null && x.z != null && Number(x.z) >= Number(x.umbral_z)) out.push({ alto: true, texto: "Raro aun para un torneo de este tamaño: pasa la vara de " + uno(50 + 5 * Number(x.umbral_z)) + " (lo que por azar pasaría un jugador de cada 20 torneos así)." + (Number(x.z) >= 4.5 ? " Y llega a lo que FIDE pide para sancionar sin prueba física (4,5 desviaciones)." : "") });
+        if (x.roi_combinado != null) out.push({ alto: Number(x.roi_combinado) >= ROI_VIGILAR, texto: "Con todas las señales juntas (el índice, el tiempo, las rachas y las trampas, sin contar dos veces lo que dicen igual): " + uno(x.roi_combinado) + "." });
+        if (x.umbral_z != null && x.z != null && Number(x.z) >= Number(x.umbral_z)) out.push({ alto: true, texto: "Raro aun para un torneo de este tamaño: pasa la vara de " + uno(50 + 5 * Number(x.umbral_z)) + " (lo que por azar pasaría un jugador de cada 20 torneos así)." + (Number(x.z) >= Z_SANCION ? " Y llega a la vara con que FIDE da por probada la trampa solo con la estadística (5 desviaciones sobre el tablero)." : "") });
         return out;
     }
 
@@ -120,7 +141,7 @@
         ctx.raiz.replaceChildren(...[ // sin la sección de los QR (solo del principal): un null suelto se pintaría como texto
             el("div", { class: "cam-fp-barra" },
                 el("p", { id: "fp-estado", class: "text-sm", role: "status" }),
-                el("button", { type: "button", id: "fp-actualizar", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => actualizar(true) }, el("span", { "aria-hidden": "true", texto: "🔄" }), " Leer chess-results ahora")),
+                el("button", { type: "button", id: "fp-actualizar", class: "cam-btn cam-btn-claro cam-btn-chico", onclick: () => actualizar(true) }, el("span", { "aria-hidden": "true", texto: "🔄" }), " Leer los emparejamientos ahora")),
 
             el("section", { id: "fp-novedades-caja", class: "cam-fp-novedades", "aria-labelledby": "fp-t-novedades", hidden: true },
                 el("div", { class: "cam-fp-barra" },
@@ -176,7 +197,7 @@
 
             el("section", { class: "cam-fp-seccion", "aria-labelledby": "fp-t-indice" },
                 el("h3", { id: "fp-t-indice", class: "cam-subtitulo" }, el("span", { "aria-hidden": "true", texto: "📊 " }), "Índice del torneo, jugador por jugador"),
-                el("p", { class: "cam-herramientas-nota", texto: "Como el que usa FIDE (el modelo de Ken Regan): en cada posición, la probabilidad de que alguien de su nivel elija cada jugada según lo que pierde con ella; sumando todas sus partidas, cuánto se aparta de eso. 50 es lo normal y cada 5 puntos es una desviación: desde 60 se mira, desde 62,5 es muy alto. Sin Elo, se compara con su categoría. Nunca es una prueba." }),
+                el("p", { class: "cam-herramientas-nota", texto: "Como el que usa FIDE (el modelo de Ken Regan): en cada posición, la probabilidad de que alguien de su nivel elija cada jugada según lo que pierde con ella; sumando todas sus partidas, cuánto se aparta de eso. 50 es lo normal y cada 5 puntos es una desviación. " + ESCALA + " Sin Elo, se compara con su categoría. Nunca es una prueba por sí solo." }),
                 el("p", { id: "fp-indice-vacio", class: "cam-herramientas-nota", texto: "Todavía no hay suficientes partidas analizadas para ajustar el modelo." }),
                 el("div", { class: "cam-tabla-envoltura mt-2" },
                     el("table", { id: "fp-indice-tabla", class: "cam-tabla cam-rejilla", hidden: true },
@@ -215,10 +236,22 @@
                 el("summary", { texto: "Lo que pide FIDE para la revisión" }),
                 el("ul", {},
                     el("li", {}, el("strong", { texto: "En privado y por alguien del mismo sexo" }), " (Leyes del Ajedrez, art. 11.3.3): la ropa, el bolso y lo que lleve el jugador. Solo entran quien revisa, el jugador y un testigo del mismo sexo; el jugador puede elegir un segundo testigo (con un menor, su mamá, su papá o su entrenador). El equipo de Fair Play de un abierto lleva al menos un hombre y una mujer."),
+                    el("li", {}, el("strong", { texto: "Con un menor, nunca a solas" }), ": antes de la partida se le explica con palabras de su edad, no se lo toca y se le pide permiso para pasarle el escáner; después de la partida, siempre con su mamá, su papá, su entrenador o su capitán presente (seminario de Fair Play de FIDE, 2026)."),
+                    el("li", {}, el("strong", { texto: "Nunca una sola persona" }), ": un segundo oficial confirma cada hallazgo. Se anota en el momento la hora, qué pasó, dónde y quién estaba; si se encuentra un aparato, se le toma una foto donde está antes de tocarlo, y la pantalla. Solo se mira la pantalla y las aplicaciones abiertas: nunca los mensajes ni las fotos."),
+                    el("li", {}, el("strong", { texto: "Si alguien denuncia durante la partida" }), ": que lo ponga por escrito (puede ser al terminar), se mira la partida y, si no es casi seguro que hay un aparato, se revisa a los dos jugadores al terminar. Quien denuncia no lo comenta con nadie; denunciar en público o sin fundamento también se sanciona."),
                     el("li", {}, el("strong", { texto: "Antes o apenas termina la partida" }), "; durante la partida, solo si la sospecha es muy fuerte o se pueden perder las pruebas (Manual del Árbitro de FIDE)."),
                     el("li", {}, el("strong", { texto: "No hace falta darle un motivo al jugador" }), ", pero las revisiones al azar tienen que estar ", el("strong", { texto: "anunciadas antes en las bases" }), " (Guías antitrampas de FIDE). Que se revisa al ganador y que nadie se puede ir sin revisarse también va en las bases: FIDE no lo fija."),
                     el("li", {}, el("strong", { texto: "Si se niega" }), ", o se va sin revisarse, el árbitro aplica el art. 12.9 (de la advertencia a perder la partida o la expulsión). Anótalo como «Se negó» o «Se fue sin revisarse», con lo que pasó."),
-                    el("li", {}, el("strong", { texto: "Una precisión alta no prueba nada" }), ": es una razón para mirar con más cuidado, nunca para acusar. Cada revisión va al informe del torneo con su resultado, y todo lo de Fair Play es confidencial.")))].filter(Boolean));
+                    el("li", {}, el("strong", { texto: "Una precisión alta no prueba nada" }), ": es una razón para mirar con más cuidado, nunca para acusar. Para FIDE, la estadística sola prueba la trampa desde 5 desviaciones sobre el tablero (índice 75); con otra prueba, desde 2,5 (62,5) sirve de apoyo. Cada revisión va al informe del torneo con su resultado, todo lo de Fair Play es confidencial y lo manda a FIDE una sola persona (el árbitro principal o el encargado), con el formulario de denuncia, a fairplay@fide.com."),
+                    el("li", {}, el("strong", { texto: "Dos ejemplos del seminario" }), " (Andy Howie, «Understanding Chess Statistics»): una jugadora de 1536 con 6,5 de 9 sacó 67,8 en la prueba rápida y parecía hacer trampa; la prueba completa dio z = −1,78, peor de lo esperado para su Elo: estaba limpia. Aquí 67,8 sale «a mirar», no «muy alta». Otra de 1458 con 6 de 9 sacó 89,0 (76,9 % de primera del motor) y en la prueba completa z = 7,11 (por azar, 1 de cada 1,7 billones) y una fuerza de juego de 2610 ± 212: trampa clara, y sí sale «muy alta»."),
+                    el("li", {}, el("strong", { texto: "Casos que enseñan" }), " (seminario de FIDE): ",
+                        el("strong", { texto: "Shevchenko" }), " (2024): dos celulares en el mismo baño, al que iba sin permiso, y la estadística sin llegar a la vara (z entre 2 y 2,5). Se habría probado aun sin su confesión, por lo que vieron y anotaron los árbitros. ",
+                        el("strong", { texto: "Docx" }), " (2022): el árbitro vio luz de un celular en el baño, no se encontró ninguno y se negó a la revisión. No se dio por probada la trampa (nadie lo vio con el aparato y su juego no era raro), pero se lo suspendió un año por no cooperar. ",
+                        el("strong", { texto: "Rausis" }), " (2019): no se le toman fotos a nadie en el baño; se espera a que salga y se le pide la revisión. ",
+                        el("strong", { texto: "Sandu" }), " (2015): una rival juntó firmas contra ella sin pruebas, una «cacería de brujas» que se sancionó. Toda denuncia va por escrito al árbitro, nunca en público. ",
+                        el("strong", { texto: "Carlsen y Niemann" }), " (2022): la acusación no se sancionó porque tenía motivos razonables (una denuncia puede estar fundada aunque no haya trampa), pero sí retirarse del torneo sin permiso. ",
+                        el("strong", { texto: "Kramnik" }), " (2026): acusar en redes sin pruebas, también a menores, se sancionó como acusación temeraria y acoso (fallo apelado). ",
+                        el("strong", { texto: "Candidatos de Toronto" }), ": la libreta del encargado, con tres notas en dos rondas y ninguna trampa; las tres valía la pena anotarlas, con la hora.")))].filter(Boolean));
     }
 
     // ---------------------------------------------------------------- leer y pintar
@@ -292,7 +325,7 @@
 
     function pintar() {
         const d = datos;
-        $("fp-estado").textContent = (d.nombre ? (ctx.token ? "Encargado: " : "") + d.nombre + " · " : "") + (d.actualizado ? "chess-results leído a las " + hora(d.actualizado) : "Todavía no se leyó chess-results");
+        $("fp-estado").textContent = (d.nombre ? (ctx.token ? "Encargado: " : "") + d.nombre + " · " : "") + (d.actualizado ? "emparejamientos leídos a las " + hora(d.actualizado) : "Todavía no se leyeron los emparejamientos");
         const sel = $("fp-categoria"), antes = sel.value;
         sel.replaceChildren(el("option", { value: "", texto: "Todas las categorías (" + d.rondas.length + ")" }),
             ...d.rondas.map((r) => el("option", { value: r.tnr, texto: r.nombre + " — ronda " + r.ronda })));
@@ -342,7 +375,7 @@
         const lista = (datos.indice || []).filter((x) => x.roi != null).sort((a, b) => b.roi - a.roi);
         $("fp-indice-vacio").hidden = lista.length > 0;
         $("fp-indice-tabla").hidden = lista.length === 0;
-        const nivel = (r) => (r >= 62.5 ? "alta" : r >= 60 ? "a_mirar" : "normal");
+        const nivel = nivelIndice;
         $("fp-indice").replaceChildren(...lista.slice(0, 60).map((x) => el("tr", { "data-nivel": nivel(x.roi) },
             el("td", {}, el("strong", { texto: conElo(x.jugador, x.elo) }), x.comparado === "categoria" ? el("span", { class: "cam-fp-detalle", texto: "Sin Elo: comparado con su categoría" }) : null,
                 el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico cam-fp-informe-jugador", "data-accion": "informe-jugador", onclick: (e) => informeJugador(x, e.currentTarget) },
@@ -359,11 +392,11 @@
             const det = (f) => v.deteccion && v.deteccion[f] ? uno(v.deteccion[f].a_mirar) + " % (" + uno(v.deteccion[f].alta) + " % muy alto)" : "—";
             $("fp-confianza-texto").replaceChildren(
                 el("p", { texto: "Medido con " + (v.jugadores === 1 ? "el único jugador que tiene" : "los " + v.jugadores + " jugadores que tienen") + " 30 jugadas o más analizadas." }),
-                el("p", { texto: "Alarmas falsas: " + uno(v.falsas_a_mirar) + " % pasa de 60 y " + uno(v.falsas_alta) + " % de 62,5. Por pura casualidad se esperaría " + uno(v.esperadas_a_mirar) + " % y " + uno(v.esperadas_alta) + " %. Como casi todos juegan limpio, esto es lo más que se equivoca." }),
+                el("p", { texto: "Alarmas falsas: " + uno(v.falsas_a_mirar) + " % pasa de 65 y " + uno(v.falsas_alta) + " % de 70. Por pura casualidad se esperaría " + fino(v.esperadas_a_mirar) + " % y " + fino(v.esperadas_alta) + " %. Como casi todos juegan limpio, esto es lo más que se equivoca." }),
                 el("p", { texto: "Si alguien usara el motor en 1 de cada 10 jugadas, lo marcaría el " + det("0.1") + " de las veces; en 2 de cada 10, el " + det("0.2") + "; en 3 de cada 10, el " + det("0.3") + "." }),
                 v.casos ? el("p", { texto: "Con casos de prueba (partidas donde se sabe quién usó el motor): marcó a " + uno(v.casos.marcados_a_mirar) + " % de los " + v.casos.con_trampa + " que hicieron trampa" + (v.casos.ic_marcados ? " (con estos casos, entre " + uno(v.casos.ic_marcados[0]) + " % y " + uno(v.casos.ic_marcados[1]) + " %)" : "") + ", " + uno(v.casos.marcados_alta) + " % muy alto, y a " + uno(v.casos.falsos_a_mirar) + " % de sus " + v.casos.sin_trampa + " rivales, que jugaron limpio" + (v.casos.ic_falsos ? " (entre " + uno(v.casos.ic_falsos[0]) + " % y " + uno(v.casos.ic_falsos[1]) + " %)" : "") + "." + (v.casos.auc != null ? " Separa a unos de otros con un AUC de " + dos(v.casos.auc) + " (0,5 es al azar; 1, siempre)." : "") }) : el("p", { class: "cam-fp-detalle", texto: "Todavía no hay casos de prueba: se cargan en «Partidas de referencia» como «De prueba»." }),
                 v.casos && v.casos.por_porcentaje ? el("p", { texto: "Por cuánto usaron el motor: " + Object.keys(v.casos.por_porcentaje).sort((a, b) => a - b).map((k) => { const x = v.casos.por_porcentaje[k]; return "en " + k + " de cada 100 jugadas, marcó " + uno(x.marcados_a_mirar) + " % de " + x.casos; }).join("; ") + "." }) : null,
-                m.validacion.grupos && m.validacion.grupos.clasico && m.validacion.grupos.clasico.umbral ? el("p", { texto: "Con " + m.validacion.grupos.clasico.jugadores + " jugadores medidos en las clásicas, la vara para que sea raro aun por el tamaño del torneo es " + uno(50 + 5 * m.validacion.grupos.clasico.umbral) + "; para sancionar sin prueba física, FIDE pide alrededor de 72,5 (4,5 desviaciones)." }) : null,
+                m.validacion.grupos && m.validacion.grupos.clasico && m.validacion.grupos.clasico.umbral ? el("p", { texto: "Con " + m.validacion.grupos.clasico.jugadores + " jugadores medidos en las clásicas, la vara para que sea raro aun por el tamaño del torneo es " + uno(50 + 5 * m.validacion.grupos.clasico.umbral) + "; para dar por probada la trampa solo con la estadística, FIDE pide 75 (5 desviaciones) sobre el tablero, y con otra prueba, 62,5 (2,5) sirve de apoyo." }) : null,
                 v.rapido ? el("p", { texto: "En las rápidas (con su propio ajuste, " + v.rapido.jugadores + " jugadores): alarmas falsas " + uno(v.rapido.falsas_a_mirar) + " % y " + uno(v.rapido.falsas_alta) + " %." }) : null,
                 el("p", { class: "cam-fp-detalle", texto: "El modelo se ajustó con " + m.movimientos + " jugadas de jugadores con Elo" + (m.referencia ? " (" + m.referencia + " de partidas de referencia)" : "") + (m.ajustado ? " a las " + hora(m.ajustado) : "") + ". La gente real varía " + uno(m.factor) + " veces lo que dice el modelo, y la mitad queda en " + uno(50 + 5 * Number(m.centro)) + " antes de centrarla en 50." }));
         }
@@ -387,12 +420,12 @@
                     : f.estado === "aprobada" ? (leido ? "✓ " + (f.arbitro || "Su árbitro") + " lo leyó a las " + hora(leido) : "⏳ " + (f.arbitro || "Su árbitro") + " todavía no lo ha leído")
                         + (f.revisar_color && f.resultado_mesa ? (f.retenido_en ? " · ✋ Retenido a las " + hora(f.retenido_en) + (f.retenido_por ? " (" + f.retenido_por + ")" : "") : " · ⏳ Terminó: falta que su árbitro confirme que lo retuvo") : "")
                         : f.estado === "sin_efecto" ? "Su árbitro ya recibió el aviso" : "";
-            const acciones = f.estado === "sorteada"
+            const acciones = (f.estado === "sorteada"
                 ? [el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "aprobar", onclick: () => aprobar(f) }, "Aprobar y avisar a su árbitro"),
                     el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "descartar", onclick: () => descartar(f) }, "Descartar")]
                 : f.estado === "aprobada" || f.estado === "revisada"
                     ? [el("button", { type: "button", class: "cam-btn cam-btn-chico" + (f.estado === "revisada" ? " cam-btn-claro" : ""), "data-accion": "revisar", onclick: () => revisar(f) }, f.estado === "revisada" ? "Corregir la revisión" : "Anotar la revisión")]
-                    : [];
+                    : []).concat(el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "borrar", "aria-label": "Borrar la mesa " + f.mesa + " de " + nombreDe(f.tnr) + ", ronda " + f.ronda, onclick: () => borrar(f) }, el("span", { "aria-hidden": "true", texto: "🗑 " }), "Borrar"));
             return el("tr", { "data-id": f.id, "data-estado": f.estado },
                 el("td", { texto: nombreDe(f.tnr) }),
                 el("td", { texto: String(f.ronda) }),
@@ -518,6 +551,18 @@
         await cargar();
     }
 
+    // Borrar: para una mesa de prueba o puesta por error. No es «Descartar» (que queda en el acta): la saca de la lista,
+    // deja de contar para el descanso y el tope, y puede volver a salir. Lo borrado queda copiado en la base con el motivo.
+    async function borrar(f) {
+        const motivo = await Avisos.pedir("La mesa " + f.mesa + " de " + nombreDe(f.tnr) + " (ronda " + f.ronda + ") sale de la lista y del registro: deja de contar para el descanso de 2 rondas y el tope de 3 revisiones, y puede volver a salir. Es para las de prueba o las que se pusieron por error; si la revisión fue de verdad, mejor corrígela." + (f.estado === "aprobada" ? " Su árbitro recibe un aviso de que ya no hay que retener a nadie." : "") + " ¿Por qué se borra? (queda anotado)",
+            { titulo: "Borrar la mesa " + f.mesa, etiqueta: "Motivo", aceptar: "🗑 Borrar la mesa" });
+        if (motivo === null) return;
+        if (!String(motivo).trim()) { avisar("Para borrar una mesa hace falta el motivo.", true); return; }
+        try { await llamar("borrar", { id: f.id, motivo: String(motivo).trim() }); avisar("La mesa " + f.mesa + " de " + nombreDe(f.tnr) + " ya no está en la lista."); }
+        catch (e) { avisar("No se pudo borrar: " + (e.message || e), true); }
+        await cargar();
+    }
+
     async function descartar(f) {
         const motivo = await Avisos.pedir("La mesa " + f.mesa + " no vuelve a salir en esta ronda. ¿Por qué se descarta? (queda anotado)", { titulo: "Descartar la mesa " + f.mesa, etiqueta: "Motivo", aceptar: "Descartar" });
         if (motivo === null) return;
@@ -543,7 +588,7 @@
     }
 
     // Una revisión ya hecha sin sorteo (las de las rondas 1 y 2): primero la categoría, la ronda y la mesa; después, con
-    // los dos jugadores de esa mesa leídos de chess-results, a quién se revisó, cómo terminó y qué pasó.
+    // los dos jugadores de esa mesa leídos de los emparejamientos (chess-results o Pareo Integral), a quién se revisó, cómo terminó y qué pasó.
     async function anotarAMano() {
         if (!datos || !datos.rondas.length) { avisar("No hay categorías con árbitros.", true); return; }
         const tope = Math.max(...datos.rondas.map((r) => r.ronda));
@@ -574,7 +619,7 @@
             { nombre: "nota", etiqueta: "Qué pasó (obligatorio si no fue «Sin novedad»)", tipo: "textarea", valor: "", max: 500 });
         const b = await Avisos.formulario({
             titulo: nombreDe(a.tnr) + ", ronda " + ronda + ", mesa " + mesa,
-            texto: pareo ? "Los jugadores salen de los emparejamientos de chess-results." : "No se encontraron los emparejamientos de esa mesa: escribe el nombre como aparece en chess-results.",
+            texto: pareo ? "Los jugadores salen de los emparejamientos." : "No se encontraron los emparejamientos de esa mesa: escribe el nombre como aparece en los emparejamientos.",
             campos, aceptar: "Guardar la revisión",
         });
         if (!b) return;
@@ -606,7 +651,7 @@
         if (aMano) $("fp-actualizar").disabled = true;
         try {
             const r = await llamar("actualizar");
-            if (aMano) avisar(r.saltado ? "Ya se leyó hace menos de un minuto y medio: se muestra eso." : "Leídas " + r.pareos + " mesas de chess-results." + (r.errores && r.errores.length ? " Hubo " + r.errores.length + " problemas: " + r.errores[0] : ""), !!(r.errores && r.errores.length && !r.pareos));
+            if (aMano) avisar(r.saltado ? "Ya se leyó hace menos de un minuto y medio: se muestra eso." : "Leídas " + r.pareos + " mesas de los emparejamientos." + (r.errores && r.errores.length ? " Hubo " + r.errores.length + " problemas: " + r.errores[0] : ""), !!(r.errores && r.errores.length && !r.pareos));
         } catch (e) { if (aMano) avisar("No se pudo leer: " + (e.message || e), true); }
         finally { if (aMano) $("fp-actualizar").disabled = false; await cargar(); }
     }
@@ -619,7 +664,7 @@
                 titulo: "Fair Play: mesas sorteadas — " + evento(),
                 subtitulo: window.HoraCR.fechaHora(new Date()),
                 pie: evento() + " · ajedrez-integral.com · Documento confidencial del equipo de Fair Play",
-                bloques: [{ tipo: "tabla", encabezados: ["Categoría", "Ronda", "Mesa", "Peso y por qué", "Jugadores", "Estado", "Sorteó / decidió", "Resultado o motivo"], anchos: [1.4, 0.5, 0.7, 2, 2.2, 1, 1.5, 2.4],
+                bloques: [{ tipo: "tabla", envolver: true, cebra: true, negritas: [2], encabezados: ["Categoría", "Ronda", "Mesa", "Peso y por qué", "Jugadores", "Estado", "Sorteó / decidió", "Resultado o motivo"], anchos: [1.4, 0.5, 0.7, 2, 2.2, 1, 1.5, 2.4],
                     filas: lista.map((f) => [nombreDe(f.tnr), String(f.ronda), f.mesa + " de " + f.mesas_en_sorteo, Number(f.peso || 1) + (f.motivos && f.motivos.length ? ": " + f.motivos.join("; ") : ""),
                         conElo(f.blancas, f.elo_b) + " – " + conElo(f.negras, f.elo_n) + (f.no_aplica ? " (" + f.no_aplica + ")" : ""), ESTADOS[f.estado] || f.estado,
                         (f.sorteada_por || "—") + (f.decidida_por_nombre ? " / " + f.decidida_por_nombre : ""),
@@ -654,26 +699,26 @@
                 "Alertas de los tableros electrónicos: " + alertas.length + " partidas (" + alertas.filter((a) => a.estado === "vista").length + " miradas, " + alertas.filter((a) => a.estado === "seguir").length + " en seguimiento, " + alertas.filter((a) => a.estado === "nueva").length + " sin mirar)" + ((datos.acumulado || []).length ? "; " + datos.acumulado.length + " jugadores por encima de lo esperable sumando sus partidas" : "") + ".",
             ] },
             { tipo: "titulo", texto: "Por categoría" },
-            { tipo: "tabla", encabezados: ["Categoría", "Ronda actual", "Sorteadas", "Revisadas", "Sin efecto", "Descartadas", "Por revisar", "Alertas"], anchos: [2.2, 0.9, 0.9, 0.9, 0.9, 1, 0.9, 0.9],
+            { tipo: "tabla", envolver: true, cebra: true, negritas: [0], encabezados: ["Categoría", "Ronda actual", "Sorteadas", "Revisadas", "Sin efecto", "Descartadas", "Por revisar", "Alertas"], anchos: [2.2, 0.9, 0.9, 0.9, 0.9, 1, 0.9, 0.9],
                 filas: datos.rondas.map((r) => { const de = todos.filter((f) => f.tnr === r.tnr); return [r.nombre, String(r.ronda), String(de.filter((f) => f.origen !== "manual").length), String(cuenta(de, "revisada")), String(cuenta(de, "sin_efecto")), String(cuenta(de, "descartada")), String(cuenta(de, "aprobada")), String(alertas.filter((a) => a.tnr === r.tnr).length)]; }) },
             { tipo: "titulo", texto: "Las revisiones" },
-            revisadas.length ? { tipo: "tabla", encabezados: ["Ronda", "Categoría", "Mesa", "Jugador revisado", "Resultado", "Qué pasó", "Retenido por", "Revisó"], anchos: [0.6, 1.5, 0.6, 1.8, 1.3, 2.4, 1.4, 1.4],
+            revisadas.length ? { tipo: "tabla", envolver: true, cebra: true, negritas: [3], encabezados: ["Ronda", "Categoría", "Mesa", "Jugador revisado", "Resultado", "Qué pasó", "Retenido por", "Revisó"], anchos: [0.6, 1.5, 0.6, 1.8, 1.3, 2.4, 1.4, 1.4],
                 filas: revisadas.map((f) => [String(f.ronda), nombreDe(f.tnr), String(f.mesa) + (f.origen === "manual" ? " (a mano)" : f.origen === "elegida" ? " (elegida)" : ""), f.jugador || "—", RESULTADOS[f.resultado] || "", f.nota || "—", f.retenido_por ? f.retenido_por + " · " + hora(f.retenido_en) : "—", f.revisada_por_nombre || "—"]) }
                 : { tipo: "parrafo", texto: "Todavía no se ha revisado a nadie." },
             { tipo: "titulo", texto: "Las mesas que no llegaron a revisión" },
-            todos.some((f) => f.estado === "descartada" || f.estado === "sin_efecto") ? { tipo: "tabla", encabezados: ["Ronda", "Categoría", "Mesa", "Qué pasó", "Decidió"], anchos: [0.6, 1.6, 0.6, 4, 1.6],
+            todos.some((f) => f.estado === "descartada" || f.estado === "sin_efecto") ? { tipo: "tabla", envolver: true, cebra: true, negritas: [2], encabezados: ["Ronda", "Categoría", "Mesa", "Qué pasó", "Decidió"], anchos: [0.6, 1.6, 0.6, 4, 1.6],
                 filas: todos.filter((f) => f.estado === "descartada" || f.estado === "sin_efecto").map((f) => [String(f.ronda), nombreDe(f.tnr), String(f.mesa), f.estado === "descartada" ? "Descartada: " + (f.motivo || "") : "Sin efecto: " + (f.revisar_color ? "ganó " + ((f.revisar_color === "blancas" ? f.blancas : f.negras) || COLOR[f.revisar_color]) + ", que no aplicaba (" + (f.no_aplica || "ya se había revisado") + ")" : "no se jugó"), f.decidida_por_nombre || "—"]) }
                 : { tipo: "parrafo", texto: "Ninguna." },
             (datos.indice || []).some((x) => x.roi != null) ? { tipo: "titulo", texto: "Índice del torneo, jugador por jugador" } : null,
-            (datos.indice || []).some((x) => x.roi != null) ? { tipo: "nota", texto: "Como el que usa FIDE (el modelo de Ken Regan): 50 es lo normal y cada 5 puntos es una desviación; desde 60 se mira. Sin Elo, comparado con su categoría." } : null,
-            (datos.indice || []).some((x) => x.roi != null) ? { tipo: "tabla", encabezados: ["Jugador", "Categoría", "Partidas", "Índice", "Primera del motor (jugó / esperable)", "Difíciles (acertó / esperable)"], anchos: [2.2, 1.5, 0.8, 0.8, 1.6, 1.6],
+            (datos.indice || []).some((x) => x.roi != null) ? { tipo: "nota", texto: "Como el que usa FIDE (el modelo de Ken Regan): 50 es lo normal y cada 5 puntos es una desviación. " + ESCALA + " Sin Elo, comparado con su categoría." } : null,
+            (datos.indice || []).some((x) => x.roi != null) ? { tipo: "tabla", envolver: true, cebra: true, negritas: [0], encabezados: ["Jugador", "Categoría", "Partidas", "Índice", "Primera del motor (jugó / esperable)", "Difíciles (acertó / esperable)"], anchos: [2.2, 1.5, 0.8, 0.8, 1.6, 1.6],
                 filas: [...datos.indice].filter((x) => x.roi != null && x.roi >= 55).sort((a, b) => b.roi - a.roi).map((x) => [conElo(x.jugador, x.elo) + (x.comparado === "categoria" ? " (sin Elo)" : ""), nombreDe(x.tnr), String(x.partidas), uno(x.roi), x.t1 + " / " + uno(x.e_t1), x.dificiles ? x.t1_dif + " de " + x.dificiles + " / " + uno(x.e_t1_dif) : "—"]) } : null,
-            datos.modelo && datos.modelo.validacion ? { tipo: "nota", texto: "Qué tan confiable es (con " + datos.modelo.validacion.jugadores + " jugadores): alarmas falsas " + datos.modelo.validacion.falsas_a_mirar + " % desde 60 (por azar, 2,3 %); si alguien usara el motor en 2 de cada 10 jugadas, lo marcaría el " + uno(((datos.modelo.validacion.deteccion || {})["0.2"] || {}).a_mirar || 0) + " % de las veces." } : null,
+            datos.modelo && datos.modelo.validacion ? { tipo: "nota", texto: "Qué tan confiable es (con " + datos.modelo.validacion.jugadores + " jugadores): alarmas falsas " + datos.modelo.validacion.falsas_a_mirar + " % desde 65 (por azar, 0,13 %); si alguien usara el motor en 2 de cada 10 jugadas, lo marcaría el " + uno(((datos.modelo.validacion.deteccion || {})["0.2"] || {}).a_mirar || 0) + " % de las veces." } : null,
             { tipo: "titulo", texto: "Alertas de los tableros electrónicos" },
             { tipo: "nota", texto: "La precisión de cada jugador en las partidas transmitidas, contra la esperable para su Elo en el mismo torneo. Una alerta es una razón para mirar con más cuidado, nunca una prueba ni una acusación." },
-            (datos.acumulado || []).length ? { tipo: "tabla", encabezados: ["Jugador", "Categoría", "Partidas (rondas)", "Precisión media", "Esperable", "Desviaciones", "Decisión"], anchos: [2, 1.5, 1.3, 1, 1, 1, 1.3],
+            (datos.acumulado || []).length ? { tipo: "tabla", envolver: true, cebra: true, negritas: [0], encabezados: ["Jugador", "Categoría", "Partidas (rondas)", "Precisión media", "Esperable", "Desviaciones", "Decisión"], anchos: [2, 1.5, 1.3, 1, 1, 1, 1.3],
                 filas: datos.acumulado.map((x) => [conElo(x.jugador, x.elo), nombreDe(x.tnr), x.partidas + " (" + x.rondas + ")", uno(x.precision_media) + " %", x.esperada_media != null ? uno(x.esperada_media) + " %" : "—", uno(x.z), x.sin_mirar > 0 ? "Sin mirar" : x.seguir ? "En seguimiento" : "Mirado"]) } : null,
-            alertas.length ? { tipo: "tabla", encabezados: ["Ronda", "Categoría", "Mesa", "Jugador", "Precisión", "Esperable", "Desviaciones", "Decisión y nota"], anchos: [0.6, 1.4, 0.6, 2, 0.9, 0.9, 0.9, 2.4],
+            alertas.length ? { tipo: "tabla", envolver: true, cebra: true, negritas: [3], encabezados: ["Ronda", "Categoría", "Mesa", "Jugador", "Precisión", "Esperable", "Desviaciones", "Decisión y nota"], anchos: [0.6, 1.4, 0.6, 2, 0.9, 0.9, 0.9, 2.4],
                 filas: alertas.map((a) => [String(a.ronda), nombreDe(a.tnr), String(a.mesa), conElo(a.jugador, a.elo) + " (" + COLOR[a.color].toLowerCase() + ")", uno(a.precision) + " %", a.esperada != null ? uno(a.esperada) + " %" : "—", a.z != null ? uno(a.z) : "—", decision(a) + (a.vista_por_nombre ? " (" + a.vista_por_nombre + ")" : "") + (a.nota ? ": " + a.nota : "")]) }
                 : { tipo: "parrafo", texto: "Ninguna partida se salió de lo esperable." },
             alertas.filter((a) => a.nivel !== "normal" || a.estado === "seguir").length ? { tipo: "titulo", texto: "Por qué se marcó cada alerta" } : null,
@@ -721,7 +766,8 @@
                 ] },
                 { tipo: "titulo", texto: "El índice (como el de FIDE)" },
                 { tipo: "lista", items: [
-                    "Índice del torneo: " + (ix.roi != null ? uno(ix.roi) : "—") + ". Lo normal es 50 y cada 5 puntos es una desviación; desde 60 se mira y desde 62,5 es muy alto.",
+                    "Índice del torneo: " + (ix.roi != null ? uno(ix.roi) + (ix.z != null && Number(ix.z) > 0 ? " (" + uno(ix.z) + " desviaciones; " + porAzar(ix.z) + ")" : "") : "—") + ". Lo normal es 50 y cada 5 puntos es una desviación. " + ESCALA,
+                    "Para FIDE (Reglamento de Fair Play, art. 1.6), la estadística sola prueba la trampa desde 5 desviaciones (índice 75) en partidas sobre el tablero; con otra prueba —un aparato encontrado, lo que vio un oficial—, desde 2,5 (62,5) sirve de apoyo. " + (ix.z != null ? (Number(ix.z) >= Z_SANCION ? "Este índice llega a la primera." : Number(ix.z) >= Z_APOYO ? "Este índice sirve de apoyo solo si hay otra prueba." : "Este índice no llega a ninguna de las dos.") : ""),
                     "Primera del motor: jugó " + ix.t1 + " de " + ix.jugadas + "; lo esperable para su nivel, " + uno(ix.e_t1) + " (" + nivel(ix.z_t1) + " desviaciones).",
                     "Lo que perdió por jugada: " + uno(ix.dj / Math.max(1, ix.jugadas)) + " puntos de probabilidad de ganar; lo esperable, " + uno(ix.e_dj / Math.max(1, ix.jugadas)) + " (" + nivel(ix.z_dj) + " desviaciones; menos es más preciso).",
                     ix.dificiles ? "Posiciones de una sola jugada buena: acertó " + ix.t1_dif + " de " + ix.dificiles + "; lo esperable, " + uno(ix.e_t1_dif) + " (" + nivel(ix.z_dif) + ")." : "No tuvo posiciones de una sola jugada buena que medir.",
@@ -729,7 +775,7 @@
                 { tipo: "titulo", texto: "Lo que se tuvo en cuenta" },
                 { tipo: "lista", items: notasDe(ix).map((n) => (n.alto ? "[ALTA] " : "") + n.texto).concat(notasDe(ix).length ? [] : ["Nada más que su Elo y sus partidas."]) },
                 { tipo: "titulo", texto: "Partida por partida" },
-                partidas.length ? { tipo: "tabla", encabezados: ["Ronda", "Mesa", "Color", "Rival", "Resultado", "Jugadas", "Primera del motor (jugó / esperable)", "Índice", "De dónde"], anchos: [0.6, 0.6, 0.8, 2, 0.9, 0.8, 1.6, 0.7, 1.6],
+                partidas.length ? { tipo: "tabla", envolver: true, cebra: true, negritas: [3], encabezados: ["Ronda", "Mesa", "Color", "Rival", "Resultado", "Jugadas", "Primera del motor (jugó / esperable)", "Índice", "De dónde"], anchos: [0.6, 0.6, 0.8, 2, 0.9, 0.8, 1.6, 0.7, 1.6],
                     filas: partidas.map((a) => [String(a.ronda), String(a.mesa), COLOR[a.color] || a.color, conElo(a.rival, a.rival_elo), a.resultado || "—", String(a.m_jugadas || a.jugadas), a.m_jugadas ? a.m_t1 + " / " + uno(a.m_e_t1) : "—", a.roi != null ? uno(a.roi) : "—", FUENTE[a.fuente] || a.fuente || "—"]) }
                     : { tipo: "parrafo", texto: "No hay partidas medidas." },
                 ...partidas.filter((a) => a.roi != null && Number(a.roi) >= 55 || a.nivel !== "normal").flatMap((a) => [
@@ -739,7 +785,7 @@
                 ]),
                 { tipo: "titulo", texto: "Cómo se midió" },
                 { tipo: "parrafo", texto: "Cada jugada desde que termina la teoría (las partidas de maestros) se analiza con Stockfish, o con la evaluación más honda de la nube de Lichess cuando la tiene, y se compara con lo que elegiría alguien de su nivel según un modelo por jugada como el de Ken Regan (el que usa FIDE): en cada posición, la probabilidad de cada jugada según cuánto peor es que la mejor. El modelo se ajusta con las jugadas de los jugadores con Elo del torneo y de partidas de referencia de otros torneos, cada ritmo por separado. No cuentan las jugadas forzadas, las de posiciones ya decididas (6 peones o más) ni, en las partidas leídas de la foto de las planillas, las que la lectura dejó dudosas." },
-                v ? { tipo: "parrafo", texto: "Qué tan confiable es, con los " + v.jugadores + " jugadores medidos: alarmas falsas, " + uno(v.falsas_a_mirar) + " % desde 60 (por azar, " + uno(v.esperadas_a_mirar) + " %); si alguien usara el motor en 2 de cada 10 jugadas, lo marcaría el " + uno(((v.deteccion || {})["0.2"] || {}).a_mirar || 0) + " % de las veces." + (v.casos ? " Con " + v.casos.con_trampa + " casos de prueba donde se sabe quién usó el motor, marcó al " + uno(v.casos.marcados_a_mirar) + " %." : "") } : null,
+                v ? { tipo: "parrafo", texto: "Qué tan confiable es, con los " + v.jugadores + " jugadores medidos: alarmas falsas, " + uno(v.falsas_a_mirar) + " % desde 65 (por azar, " + fino(v.esperadas_a_mirar) + " %); si alguien usara el motor en 2 de cada 10 jugadas, lo marcaría el " + uno(((v.deteccion || {})["0.2"] || {}).a_mirar || 0) + " % de las veces." + (v.casos ? " Con " + v.casos.con_trampa + " casos de prueba donde se sabe quién usó el motor, marcó al " + uno(v.casos.marcados_a_mirar) + " %." : "") } : null,
                 { tipo: "nota", texto: NO_SIGNIFICA },
                 { tipo: "nota", texto: "Documento confidencial del equipo de Fair Play y del árbitro principal. Lo bajó " + (datos.nombre || "—") + " el " + window.HoraCR.fechaHora(new Date()) + "." },
             ].filter(Boolean);
@@ -808,7 +854,7 @@
         const alto = (z) => z != null && Number(z) >= 2;
         const nivelDe = a.comparado === "categoria" ? "alguien de su categoría" : "alguien de su Elo";
         if (a.roi != null) {
-            out.push({ alto: Number(a.roi) >= 60, texto: "Índice como el de FIDE: " + uno(a.roi) + " (lo normal es 50; cada 5 puntos es una desviación; desde 60 se mira)." });
+            out.push({ alto: Number(a.roi) >= ROI_VIGILAR, texto: "Índice como el de FIDE: " + uno(a.roi) + " (lo normal es 50; cada 5 puntos es una desviación; desde 65 se vigila y desde 70 se actúa)." });
             if (a.m_jugadas) out.push({ alto: alto(a.m_z_t1), texto: "Según lo difícil de cada posición, " + nivelDe + " jugaría la primera del motor unas " + uno(a.m_e_t1) + " de " + a.m_jugadas + " veces; la jugó " + a.m_t1 + "." });
             if (a.m_jugadas) out.push({ alto: alto(a.m_z_dj), texto: "Perdió en promedio " + uno(a.m_dj / a.m_jugadas) + " puntos de probabilidad de ganar por jugada; lo esperable para " + nivelDe.replace("alguien de ", "") + ": " + uno(a.m_e_dj / a.m_jugadas) + "." });
         }
@@ -831,7 +877,7 @@
     // La frase de arriba: cuántas señales salieron altas y cuáles.
     function resumenAlerta(a) {
         const altas = [a.z >= 2 && "precisión", a.z_t1 >= 2 && "primera del motor", a.z_dif >= 2 && "posiciones difíciles"].filter(Boolean);
-        if (a.roi != null) return "Índice " + uno(a.roi) + ": " + (Number(a.z_modelo) > 0 ? uno(a.z_modelo) + (Number(a.z_modelo) === 1 ? " desviación" : " desviaciones") + " arriba de lo normal para su nivel" : "dentro de lo normal para su nivel") + "." + (altas.length ? " Otras señales altas: " + altas.join(", ") + "." : "");
+        if (a.roi != null) return "Índice " + uno(a.roi) + ": " + (Number(a.z_modelo) > 0 ? uno(a.z_modelo) + (Number(a.z_modelo) === 1 ? " desviación" : " desviaciones") + " arriba de lo normal para su nivel (" + porAzar(a.z_modelo) + ")" : "dentro de lo normal para su nivel") + "." + (altas.length ? " Otras señales altas: " + altas.join(", ") + "." : "");
         if (a.senales == null && a.consideradas == null) return "Solo con la precisión (analizada antes de las señales jugada por jugada).";
         return (altas.length ? altas.length + (altas.length === 1 ? " señal alta" : " señales altas") + " de 3: " + altas.join(", ") : "Ninguna señal pasa de 2 desviaciones") + (a.tiempo_raro ? ", y el tiempo" : "") + ".";
     }
@@ -1091,7 +1137,7 @@
         }, LEER_MS);
     }
 
-    window.CentroamericanoFairPlay = { iniciar, cargar, ESTADOS, RESULTADOS, puntaje, opcionesDe, explicar, resumenAlerta, partidasDePgn };
+    window.CentroamericanoFairPlay = { iniciar, cargar, ESTADOS, RESULTADOS, puntaje, opcionesDe, explicar, resumenAlerta, partidasDePgn, nivelIndice, porAzar };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

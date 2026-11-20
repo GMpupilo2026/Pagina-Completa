@@ -463,6 +463,17 @@ async function pruebaCoordinacion(browser) {
     plan && { nombre: plan.datos.nombre, monto: plan.datos.monto, moneda: plan.datos.moneda, periodicidad: plan.datos.periodicidad },
     { nombre: "Mensualidad nueva", monto: 30000, moneda: "CRC", periodicidad: "trimestral" });
 
+  // Un doble clic en «Crear plan» con la red lenta: un solo plan, no dos
+  // iguales en el catálogo.
+  await page.fill("#p-nombre", "Plan del doble clic");
+  await page.fill("#p-monto", "1000");
+  await page.evaluate(() => { window.__llamadas = []; window.__demora = 150; });
+  await page.dblclick("#p-guardar");
+  await page.waitForTimeout(1200);
+  await page.evaluate(() => { window.__demora = 0; });
+  igual("un doble clic en «Crear plan» crea un solo plan",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "planes_cobro" && l.verbo === "insert").length), 1);
+
   // -------- poner alumnos en un plan: la lista con casillas
   await page.click('[data-ficha="suscripciones"]');
   const casilla = (id) => '#s-alumnos input[value="' + id + '"]';
@@ -970,6 +981,17 @@ async function pruebaCoordinacion(browser) {
   igual("y el momento es el de verdad, en hora de Costa Rica",
     programado && new Date(programado.programado_para).toISOString().slice(0, 16),
     "2027-01-15T14:30");
+
+  // Un doble clic en «Programar» con la red lenta: un solo recordatorio. Con
+  // dos, la familia recibía DOS correos.
+  await page.selectOption("#rp-alumno", "u-ana");
+  await page.fill("#rp-cuando", "2027-01-16T08:30");
+  await page.evaluate(() => { window.__llamadas = []; window.__demora = 150; });
+  await page.dblclick("#rp-guardar");
+  await page.waitForTimeout(1200);
+  await page.evaluate(() => { window.__demora = 0; });
+  igual("un doble clic en «Programar» deja un solo recordatorio",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "cobros_recordatorios_programados" && l.verbo === "insert").length), 1);
 
   // Un correo mal escrito no se manda, y se dice por qué.
   await page.fill("#rp-correos", "esto no es un correo");

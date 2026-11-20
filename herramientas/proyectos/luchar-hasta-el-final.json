@@ -1,0 +1,635 @@
+{
+ "slug": "luchar-hasta-el-final",
+ "nombre": "Luchar hasta el final",
+ "descripcion": "Unidad de entrenamiento de cuatro clases para aprender a pelear una partida peor, con ocho remontadas del Centroamericano y del Caribe Juvenil 2026 (San José, 1 al 9 de noviembre). Cada posición sale de una partida real y su jugada clave está comprobada con Stockfish.",
+ "periodo": "Noviembre y diciembre de 2026",
+ "grupos": [
+  {
+   "slug": "remontadas",
+   "nombre": "Remontadas del Centroamericano",
+   "nivel": "intermedio",
+   "horario": "Cada sábado, 2 horas (las fechas son una propuesta: muévelas a los días de tu grupo)",
+   "orden": 0,
+   "profesor_sugerido": "Profe Oscar",
+   "guia": {
+    "intro": "«Luchar hasta el final» enseña a pelear una partida peor. Sale de las 530 partidas clásicas del Centroamericano y del Caribe Juvenil 2026: en 128 ganó quien llegó a estar peor. De esas se eligieron ocho en las que la vuelta la dio el mérito y no un regalo: quien remontaba casi no se equivocó y el rival falló porque le plantearon problemas. Sus posiciones van al tablero de la clase en vivo con la pregunta, el tiempo, la respuesta y el porqué, y todas las jugadas clave se comprobaron con Stockfish. Las fechas son una propuesta: muévelas a los días de tu grupo y conserva el orden de las clases.",
+    "objetivos": [
+     "Entender que estar peor no es estar perdido: cuántas partidas se dan vuelta y por qué.",
+     "Encontrar el recurso táctico que aparece cuando el rival, con ventaja, mueve un defensor o saca la dama a comer.",
+     "Defender una posición peor con método: rey a salvo, cambios a favor, peones pasados y paciencia.",
+     "Revisar una partida propia en la que se estuvo peor y decir qué se hizo y qué se pudo hacer."
+    ],
+    "partida": [
+     [
+      "Para quién",
+      "Jugadores de Sub-12 en adelante que ya resuelven táctica básica. Las partidas 2 y 3 sirven también para Sub-10."
+     ],
+     [
+      "El material",
+      "Ocho partidas del torneo clásico del Centroamericano 2026, de Sub-10 a Sub-18. Los jugadores van con su apellido; las partidas completas están en la transmisión del torneo en Lichess (categoría, ronda y mesa en cada ejercicio)."
+     ],
+     [
+      "Cómo se eligieron",
+      "Con la evaluación de Lichess se buscaron las partidas que ganó quien estuvo 1,5 peones abajo o más; Stockfish revisó cada una jugada por jugada y se descartaron las que la desventaja duró una sola jugada o el rival regaló la partida en una posición fácil."
+     ]
+    ],
+    "unidades": [
+     [
+      "Clases 1 a 3 · Las ocho remontadas",
+      "14 – 28 nov",
+      "3 clases"
+     ],
+     [
+      "Clase 4 · Juega el lado peor",
+      "5 dic",
+      "Evaluación"
+     ]
+    ],
+    "estructura": [
+     [
+      "0–15'",
+      "🔥 Calentamiento",
+      "Dos ejercicios del banco con la variante escrita completa."
+     ],
+     [
+      "15–70'",
+      "📘 Contenido",
+      "Las posiciones de las partidas, en orden: el peor momento (¿qué plan?) y la jugada que dio la vuelta (¿cuál es?)."
+     ],
+     [
+      "70–100'",
+      "🎉 Actividad recreativa",
+      "La clase vota contra el motor, partidas temáticas desde el peor momento o un duelo de equipos."
+     ],
+     [
+      "100–112'",
+      "✅ Cierre",
+      "Pregunta de salida y resumen."
+     ],
+     [
+      "112–120'",
+      "📨 Tarea",
+      "La tarea de la semana, con ejercicios de defensa y un juego."
+     ]
+    ],
+    "reglas": [
+     "En las partidas de práctica nadie se rinde: la gracia es aguantar.",
+     "Al comentar, primero se dice qué hizo bien quien iba perdiendo; después, el error del otro.",
+     "Antes de rendirse por dentro, las seis preguntas: ¿mi rey está a salvo?, ¿cuál es mi peor pieza?, ¿hay un blanco cerca del rey rival?, ¿qué me conviene cambiar?, ¿tengo o puedo crear un peón pasado?, ¿qué jugada natural del rival sería un error?"
+    ],
+    "evaluacion": [
+     [
+      "Ejercicios de las clases 1 a 3 (cinco, con la variante escrita)",
+      "5 de diciembre",
+      "50 %"
+     ],
+     [
+      "Juega el lado peor (rúbrica)",
+      "5 de diciembre",
+      "40 %"
+     ],
+     [
+      "Partida propia revisada con las seis preguntas",
+      "Hasta el 7 de diciembre",
+      "10 %"
+     ]
+    ],
+    "rubrica_titulo": "Rúbrica de «Juega el lado peor»",
+    "rubrica_nota": "Cada criterio vale de 1 a 4 puntos; el total (máximo 20) se multiplica por 2 para llevarlo a los 40 puntos de esta parte. No se evalúa el resultado de la partida: se evalúa cómo pelea quien va perdiendo.",
+    "rubrica": [
+     [
+      "1. El rey a salvo",
+      "Lo pone a salvo antes que cualquier otra cosa",
+      "Lo pone a salvo, pero tarde",
+      "Lo deja expuesto un momento",
+      "Lo deja expuesto toda la partida"
+     ],
+     [
+      "2. Un plan",
+      "Elige un blanco o un plan y lo sigue",
+      "Tiene un plan, pero lo cambia sin motivo",
+      "Juega jugada a jugada, sin plan",
+      "No sabe qué hacer y se rinde por dentro"
+     ],
+     [
+      "3. Los cambios",
+      "Cambia las piezas activas del rival y conserva las suyas de ataque",
+      "Acierta en la mayoría de los cambios",
+      "Cambia sin pensar a quién le conviene",
+      "Cambia todo y se queda sin chances"
+     ],
+     [
+      "4. Resistir",
+      "Cada jugada le exige algo al rival; no regala nada",
+      "Comete un descuido",
+      "Comete varios descuidos",
+      "Pierde rápido por un descuido"
+     ],
+     [
+      "5. La trampa",
+      "Deja puesta una trampa natural y la aprovecha si llega",
+      "Ve la ocasión pero no la aprovecha",
+      "No busca recursos",
+      "Ni mira lo que juega el rival"
+     ]
+    ]
+   },
+   "sesiones": [
+    {
+     "numero": 1,
+     "fecha": "2026-11-14",
+     "dia": "Sábado 14 de noviembre",
+     "titulo": "Táctica cuando estás peor",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Encontrar el recurso táctico que aparece cuando el rival, con ventaja, mueve un defensor o saca la dama a comer.",
+      "bloques": [
+       [
+        "Calentamiento (15')",
+        "Dos posiciones de táctica con la variante escrita completa antes de discutir."
+       ],
+       [
+        "Contenido (55')",
+        "Estar peor no es estar perdido: en el Centroamericano 2026, 128 de las 530 partidas clásicas las ganó quien llegó a estar peor. Con la posición peor, elige un blanco cerca del rey rival y junta piezas contra él. Cada vez que el rival mueve una pieza, pregúntate qué casilla dejó de defender. Antes de comer un peón, mira qué deja de defender tu pieza. Si el rival saca la dama a comer peones, ataca a su rey."
+       ],
+       [
+        "Práctica (15')",
+        "Por parejas, desde el peor momento de la partida 1 (negras, jugada 25): quien lleva negras junta piezas contra c2; después cambian de color."
+       ],
+       [
+        "Cierre (12'): pregunta de salida",
+        "¿Qué te preguntas cada vez que el rival mueve una pieza?"
+       ]
+      ],
+      "divertido": "«🗳️ La clase juega» contra el motor desde la posición de la partida 3 después de 34.Dxa6, cuando ya se resolvió el ejercicio: la clase lleva las negras, vota cada jugada y tiene que rematar el ataque contra el rey blanco.",
+      "sitio": "Las posiciones de las partidas 1, 2 y 3 van en este plan, con su paso a paso. Para practicar: Ejercicios por tema «Movimiento defensivo» y la Habilidad «¿Qué quiere el rival?», en la pestaña Entrenamientos de la clase en vivo."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": [
+       {
+        "fuente": "partida",
+        "titulo": "Partida 1 · Ravelo Lobaina–Montufar Porcell (Sub-14, ronda 3, mesa 1) · peor momento (25…)",
+        "fen": "2rr2k1/2q1npbp/p3p1p1/1p2P3/2n1NPPP/3R4/PPP3Q1/1KB2B1R b - - 2 25",
+        "q": "Llevas negras y vas peor (−4): el caballo blanco domina desde e4. No hay cómo atacar el centro. ¿Contra qué casilla juntas tus piezas?",
+        "min": 4,
+        "respuesta": "Contra c2, al lado del rey blanco: el caballo de c4, otro caballo a b4 y la dama en la columna c. En la partida: 25…Cd5 26.De2 Cb4",
+        "porque": "Con la posición peor, se elige un blanco cerca del rey rival y se juntan piezas contra él. La táctica llega cuando el rival mueve un defensor."
+       },
+       {
+        "fuente": "partida",
+        "titulo": "Partida 1 · Ravelo Lobaina–Montufar Porcell (Sub-14, ronda 3, mesa 1) · la jugada clave (28…)",
+        "fen": "3r2k1/2q2pbp/p3p1p1/1p2P3/1nn1NPPP/8/PPP1Q1B1/1KB4R b - - 1 28",
+        "solucion": [
+         "Rd2",
+         "Qxd2",
+         "Nxd2+",
+         "Bxd2",
+         "Qxc2+",
+         "Ka1",
+         "Nd3"
+        ],
+        "q": "El alfil blanco acaba de ir de f1 a g2. ¿Cómo aprovechas que ya no vigila d3?",
+        "min": 5,
+        "respuesta": "28…Td2! 29.Dxd2 Cxd2+ 30.Axd2 Dxc2+ 31.Ra1 Cd3, con amenaza de mate en b2. Si 29.Df3, 29…Td3. Es la única jugada que deja a las negras mejor",
+        "porque": "La torre se ofrece en una casilla defendida tres veces: es un desvío. 28.Ag2 dejó d3 sin cuidar, y ahí llega el caballo."
+       },
+       {
+        "fuente": "partida",
+        "titulo": "Partida 2 · De Gracia Mera–Cabrera Lemus (Sub-10, ronda 9, mesa 1) · la jugada clave (27.)",
+        "fen": "8/ppp2r1k/2n4p/4p3/3pP1b1/3P1N2/PPP1N1PK/5R2 w - - 0 27",
+        "solucion": [
+         "Ng5+",
+         "hxg5",
+         "Rxf7+"
+        ],
+        "q": "Las negras acaban de comer en g4 con el alfil. ¿Qué dejó de defender ese alfil y cómo lo castigas?",
+        "min": 3,
+        "respuesta": "27.Cg5+! hxg5 28.Txf7+: el caballo da jaque y destapa la torre de f1 contra la de f7. Las blancas ganan la calidad",
+        "porque": "Ataque a la descubierta: al salir el caballo de f3, la torre de f1 ataca. El alfil de e6 era el único defensor de f7. Las blancas habían estado −5 y se defendieron con lo simple: desarrollo, enroque y cambio de damas."
+       },
+       {
+        "fuente": "partida",
+        "titulo": "Partida 3 · Shergil–Reinhard Moller (Sub-12, ronda 6, mesa 5) · la jugada clave (34…)",
+        "fen": "8/4r1kp/Q2p4/P4pq1/1P3p2/8/1P4PP/5RK1 b - - 0 34",
+        "solucion": [
+         "f3",
+         "Rxf3",
+         "Re1+",
+         "Kf2",
+         "Qd2+",
+         "Kg3",
+         "Re2"
+        ],
+        "q": "La dama blanca acaba de comer en a6, lejísimos de su rey. ¿Cómo atacas al rey que se quedó sin ella?",
+        "min": 5,
+        "respuesta": "34…f3! 35.Txf3 Te1+ 36.Rf2 Dd2+ 37.Rg3 Te2 y el ataque decide. Es la única jugada: con cualquier otra, las blancas quedan ganando",
+        "porque": "Cada peón que come la dama cuesta tiempo. Las negras guardaron la dama y la torre, las piezas que atacan al rey, y el peón pasado de f4 abrió las columnas."
+       }
+      ]
+     }
+    },
+    {
+     "numero": 2,
+     "fecha": "2026-11-21",
+     "dia": "Sábado 21 de noviembre",
+     "titulo": "Paciencia y peones pasados",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Defender una posición peor sin contraataque y convertir los peones pasados en la pieza más fuerte del tablero.",
+      "bloques": [
+       [
+        "Calentamiento (15')",
+        "Dos posiciones con la variante escrita completa antes de discutir."
+       ],
+       [
+        "Contenido (55')",
+        "Cuando estás peor y no hay contraataque, no lo inventes. Pon el rey a salvo, conecta las torres y mejora tu peor pieza. Cambia las piezas activas del rival: si su mejor pieza desaparece, su ventaja se achica. Al primer descuido, abre una columna y crea un peón pasado. Con una pieza menos, cambiar las damas puede ayudar si tus peones pasados avanzan juntos con la torre detrás. El caballo es la pieza que peor frena peones pasados en el otro flanco."
+       ],
+       [
+        "Práctica (15')",
+        "Por parejas, desde el peor momento de la partida 4 (negras, jugada 19): quien lleva negras tiene que aguantar 15 jugadas sin perder material; después cambian de color."
+       ],
+       [
+        "Cierre (12'): pregunta de salida",
+        "¿Qué tres cosas haces cuando estás peor y no tienes contraataque?"
+       ]
+      ],
+      "divertido": "Partidas temáticas desde el peor momento de la partida 5 (negras, jugada 20: un caballo menos por dos peones pasados): cada pareja juega con los dos colores, 10 minutos cada uno.",
+      "sitio": "Las posiciones de las partidas 4 y 5 van en este plan, con su paso a paso. Para practicar: la Habilidad «Aguanta» y Ejercicios por tema «Peón avanzado», en la pestaña Entrenamientos de la clase en vivo."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": [
+       {
+        "fuente": "partida",
+        "titulo": "Partida 4 · Bobadilla–Ponciano Gonzalez (Sub-16 femenino, ronda 2, mesa 3) · peor momento (19…)",
+        "fen": "r2q1k1r/1p2n1pp/4bpn1/p2p4/P1B5/NQP1B2P/1P3PP1/R2R2K1 b - - 3 19",
+        "q": "Llevas negras, sin enroque y peor (+2 para las blancas, llegó a +5). No hay contraataque. ¿Qué haces en las próximas jugadas?",
+        "min": 5,
+        "respuesta": "Mejorar sin arriesgar: el rey a f7, conectar las torres, cambiar el alfil más activo de las blancas y llevar los caballos a f5, g6 y f8. En la partida: …Rf7, 23…Thd8 y 25…Axb5",
+        "porque": "Una ventaja sin plan se gasta sola. Durante quince jugadas las negras no arriesgaron nada y la ventaja blanca bajó de +5 a menos de +1."
+       },
+       {
+        "fuente": "partida",
+        "titulo": "Partida 4 · Bobadilla–Ponciano Gonzalez (Sub-16 femenino, ronda 2, mesa 3) · la jugada clave (35…)",
+        "fen": "r4n2/1p1rnkpp/1Bq2p2/p2p4/P1P2P2/1PN3PP/3R1Q2/3R2K1 b - - 2 35",
+        "solucion": [
+         "dxc4",
+         "Rxd7",
+         "Nxd7",
+         "Bd4",
+         "cxb3"
+        ],
+        "q": "Las blancas acaban de jugar 35.Cc3, que deja de presionar d5. ¿Cómo lo aprovechas?",
+        "min": 4,
+        "respuesta": "35…dxc4! abre la columna d. Si 36.bxc4 Txd2 37.Txd2 Dxc4, igualdad. En la partida, 36.Txd7 Cxd7 37.Ad4 cxb3 dejó un peón pasado en b3 que decidió",
+        "porque": "Al primer descuido, se abre una columna y se crea un peón pasado. El peón de b3, con …Dc4 y …b2, ganó la partida."
+       },
+       {
+        "fuente": "partida",
+        "titulo": "Partida 5 · Alvarado Machado–Ayerdi Hurtado (Sub-18 femenino, ronda 1, mesa 4) · peor momento (20…)",
+        "fen": "5rk1/ppp1qppp/8/4p3/1bPr4/6NP/P3QPP1/R1B2RK1 b - - 5 20",
+        "q": "Llevas negras: diste un caballo por dos peones y vas peor (+5). ¿Cuál es tu plan para el resto de la partida?",
+        "min": 5,
+        "respuesta": "Cambiar las damas y avanzar los peones del flanco de dama con la torre detrás o atacando a2 desde la primera fila: 20…Dd7, …Td3, 23…Dxd3, …a5-a4-a3, …b6 y …c5",
+        "porque": "En el final, los peones pasados unidos valen más que un caballo que tiene que frenarlos en el otro flanco."
+       },
+       {
+        "fuente": "partida",
+        "titulo": "Partida 5 · Alvarado Machado–Ayerdi Hurtado (Sub-18 femenino, ronda 1, mesa 4) · la jugada clave (50…)",
+        "fen": "8/6pp/1pk5/1R3p2/2P2P2/p1K2N1P/Pp4P1/1r6 b - - 3 50",
+        "solucion": [
+         "Rc1+",
+         "Kd2",
+         "b1=Q"
+        ],
+        "q": "La torre blanca acaba de ir a b5, atacando la casilla de coronación. ¿Cómo coronas igual?",
+        "min": 3,
+        "respuesta": "50…Tc1+! 51.Rd2 b1=D. Después de 52.Txb1 Txb1 las negras quedan con una torre de más. Es la única jugada que gana",
+        "porque": "El jaque saca al rey del camino y la torre de b5 ya no alcanza a cubrir b1: la torre detrás del peón pasado empuja hasta el final."
+       }
+      ]
+     }
+    },
+    {
+     "numero": 3,
+     "fecha": "2026-11-28",
+     "dia": "Sábado 28 de noviembre",
+     "titulo": "Jaques, desvíos y la defensa de los finales",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Castigar al rival que come de más con jaques y desvíos, atacar con dama, caballo y peón pasado, y defender un final peor con las piezas juntas.",
+      "bloques": [
+       [
+        "Calentamiento (15')",
+        "Dos posiciones con la variante escrita completa antes de discutir."
+       ],
+       [
+        "Contenido (55')",
+        "Cuando el rival come con la dama lejos de su rey, busca jaques. Desvío: ofrecer una pieza para que la del rival deje de hacer su trabajo. Con la dama contra torres, sigue dando jaques: tarde o temprano una torre queda sin defensa. Dama y caballo son la mejor pareja de ataque: el caballo da los jaques que la dama no alcanza. Para defender un final peor, el rey va delante de los peones pasados y las piezas se protegen entre ellas."
+       ],
+       [
+        "Práctica (15')",
+        "Por parejas, desde el peor momento de la partida 8 (blancas, jugada 53): quien lleva blancas defiende con el rey delante de los peones pasados; después cambian de color."
+       ],
+       [
+        "Cierre (12'): pregunta de salida",
+        "¿Qué buscas primero cuando el rival saca la dama a comer peones?"
+       ]
+      ],
+      "divertido": "Duelo de equipos: los dos equipos se turnan en las posiciones de las partidas 6, 7 y 8; el vocero dice la jugada y la variante y cada acierto vale un punto, dos si la variante está completa.",
+      "sitio": "Las posiciones de las partidas 6, 7 y 8 van en este plan, con su paso a paso. Para practicar: Ejercicios por tema «Desviación» y «Final de damas», y la Habilidad «Salva las tablas», en la pestaña Entrenamientos de la clase en vivo."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": [
+       {
+        "fuente": "partida",
+        "titulo": "Partida 6 · Garcia Marroquin–Patel (Sub-14 femenino, ronda 2, mesa 5) · la jugada clave (29…)",
+        "fen": "1k4r1/1pp2Qp1/p2q4/4r3/6PN/1P1P3P/P5K1/R4R2 b - - 0 29",
+        "solucion": [
+         "Re2+",
+         "Rf2",
+         "Rf8",
+         "Qxf8+",
+         "Qxf8",
+         "Rxe2",
+         "Qf6"
+        ],
+        "q": "Llevas negras con una pieza menos. La dama blanca acaba de comer en f7. Solo una jugada salva la partida. ¿Cuál?",
+        "min": 5,
+        "respuesta": "29…Te2+! 30.Tf2 Tf8! 31.Dxf8+ Dxf8 32.Txe2 Df6, y la ventaja blanca baja de +4 a +1. Con cualquier otra jugada, las blancas quedan con +3 o más",
+        "porque": "El jaque obliga a responder y da tiempo para el desvío: 30…Tf8 ofrece la torre para sacar a la dama blanca."
+       },
+       {
+        "fuente": "partida",
+        "titulo": "Partida 6 · Garcia Marroquin–Patel (Sub-14 femenino, ronda 2, mesa 5) · la jugada clave (64…)",
+        "fen": "8/8/p3k3/3R4/4K1P1/1P2R3/P3q3/8 b - - 30 64",
+        "solucion": [
+         "Qxg4+",
+         "Kd3+",
+         "Kxd5"
+        ],
+        "q": "Dama contra dos torres, después de muchos jaques. ¿Cómo ganas una torre?",
+        "min": 3,
+        "respuesta": "64…Dxg4+! 65.Rd3+ Rxd5: el jaque obliga al rey blanco a moverse y la torre de d5 queda sin defensa",
+        "porque": "Con la dama contra torres, las torres tienen que protegerse entre ellas. 64.Te3 dejó la de d5 colgando; 64.Rd4 o 64.Rf4 todavía daban ventaja a las blancas."
+       },
+       {
+        "fuente": "partida",
+        "titulo": "Partida 7 · Garcia Medina–Castillo Beitia (Sub-18 femenino, ronda 9, mesa 2) · la jugada clave (49…)",
+        "fen": "8/8/1Q6/4q2p/6pk/P3p2P/3n2P1/4R1K1 b - - 1 49",
+        "solucion": [
+         "Nf3+",
+         "Kf1",
+         "e2+",
+         "Rxe2",
+         "Qa1+",
+         "Qb1",
+         "Qxb1+",
+         "Re1",
+         "Qxe1#"
+        ],
+        "q": "Llevas negras con la calidad menos. La dama blanca acaba de ir a b6. ¿Cómo atacas al rey blanco?",
+        "min": 4,
+        "respuesta": "49…Cf3+! 50.Rf1 (si 50.gxf3 Dg3+ y mate) 50…e2+ 51.Txe2 Da1+ 52.Db1 Dxb1+ 53.Te1 Dxe1#. Es la única jugada que gana",
+        "porque": "Dama, caballo y peón pasado contra un rey sin escudo. La dama blanca persiguió al rey negro (46.Df7+, 47.Db7, 48.Db4) en vez de frenar el peón de e3. Ojo: en la jugada 41 las negras rechazaron un jaque perpetuo, una decisión objetivamente mala que solo tiene sentido en la última ronda."
+       },
+       {
+        "fuente": "partida",
+        "titulo": "Partida 8 · Jiménez Leyva–Mayorga Araya (Sub-18, ronda 9, mesa 4) · la jugada clave (61.)",
+        "fen": "8/8/5bp1/5p2/pk6/N3BPP1/K7/4n3 w - - 8 61",
+        "solucion": [
+         "Bd2+",
+         "Bc3",
+         "Bxe1",
+         "Bxe1",
+         "Nc2+",
+         "Kc3",
+         "Nxe1"
+        ],
+        "q": "Llevas blancas, peor (−3,5). El caballo negro acaba de ir a e1. ¿Cómo lo atrapas?",
+        "min": 4,
+        "respuesta": "61.Ad2+! Ac3 62.Axe1 Axe1 63.Cc2+ Rc3 64.Cxe1, y la partida queda pareja. Es la única jugada que salva a las blancas",
+        "porque": "Las piezas juntas crean tácticas: el alfil y el caballo blancos se protegían, y el caballo da un ataque doble al rey y al alfil."
+       },
+       {
+        "fuente": "partida",
+        "titulo": "Partida 8 · Jiménez Leyva–Mayorga Araya (Sub-18, ronda 9, mesa 4) · la jugada clave (65.)",
+        "fen": "8/8/6p1/5p2/p7/5PP1/K2k4/4N3 w - - 1 65",
+        "solucion": [
+         "Ng2",
+         "g5",
+         "f4",
+         "g4",
+         "Nh4"
+        ],
+        "q": "Caballo contra peones. El rey negro acaba de ir a d2. ¿Adónde va el caballo?",
+        "min": 3,
+        "respuesta": "65.Cg2! vigila f4 y h4 y frena los peones: 65…g5 66.f4 g4 67.Ch4 y el rey blanco va a comer en a4. Cualquier otra jugada pierde",
+        "porque": "En los finales de caballo contra peones, el caballo se pone delante de los peones, en las casillas por donde tienen que pasar."
+       }
+      ]
+     }
+    },
+    {
+     "numero": 4,
+     "fecha": "2026-12-05",
+     "dia": "Sábado 5 de diciembre",
+     "titulo": "Evaluación: juega el lado peor",
+     "tipo": "evaluacion",
+     "detalle": {
+      "objetivo": "Comprobar que cada estudiante sabe pelear una posición peor y encontrar los recursos de las ocho remontadas.",
+      "bloques": [
+       [
+        "0–10'",
+        "Instrucciones: sin motor; en los ejercicios, la jugada y la variante escritas; en el juego, nadie se rinde."
+       ],
+       [
+        "10–50'",
+        "Juega el lado peor: por parejas, cada estudiante toma el lado que va perdiendo en dos de las posiciones de abajo (sorteadas) y juega 15 minutos contra su compañero; después cambian. Tú pasas por las partidas con la rúbrica (40 puntos)."
+       ],
+       [
+        "50–80'",
+        "Ejercicios: cinco de las jugadas clave de las clases 1 a 3, con la jugada y la variante escritas (10 puntos cada una)."
+       ],
+       [
+        "80–90'",
+        "Tarea final: una partida propia en la que estuviste peor, revisada con las seis preguntas (10 puntos)."
+       ]
+      ],
+      "divertido": "Torneo relámpago al final: cada ronda empieza desde una de las posiciones de peor momento, y quien lleva el lado que va perdiendo suma doble si gana.",
+      "sitio": "Las posiciones de peor momento de las partidas 2, 3, 6, 7 y 8 van en este plan, para jugarlas desde la práctica entre alumnos de la clase en vivo. La parte de ejercicios se arma en Exámenes, con nota e informe por alumno."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": [
+       {
+        "fuente": "partida",
+        "titulo": "Partida 2 · De Gracia Mera–Cabrera Lemus (Sub-10, ronda 9, mesa 1) · peor momento (11.)",
+        "fen": "r1b3kr/ppp3p1/2nb1q1p/3pp3/8/3P1N2/PPP2PPP/R1BQK1NR w KQ - 4 11",
+        "q": "Llevas blancas y vas perdiendo (−3): las negras tienen el centro y tu rey sigue en e1. Juega el lado peor 15 minutos: ¿cuál es tu plan?",
+        "min": 15,
+        "respuesta": "Sin trucos: termina el desarrollo, enroca y cambia las piezas activas del rival. En la partida: 12.Ae3 Axe3 13.fxe3, 14.Ce2, 15.O-O y 21.Dh4 para cambiar damas",
+        "porque": "Cuando vas perdiendo, la defensa más simple suele ser la mejor. Las negras no encontraron …e4 a tiempo y para la jugada 15 la partida estaba pareja."
+       },
+       {
+        "fuente": "partida",
+        "titulo": "Partida 3 · Shergil–Reinhard Moller (Sub-12, ronda 6, mesa 5) · peor momento (19…)",
+        "fen": "r1bq2k1/2p1nr1p/pn1p2p1/N2PppB1/PP2P3/3B4/1P3PPP/2RQ1RK1 b - - 0 19",
+        "q": "Llevas negras con menos espacio (+3 para las blancas, llegó a +5,6). Juega el lado peor 15 minutos: ¿dónde está tu juego?",
+        "min": 15,
+        "respuesta": "En el flanco de rey: mantener …f5 y …e5, abrir con …exf4 y quedarse con un peón pasado en f4; cambiar piezas menores, pero no la dama ni las torres",
+        "porque": "Las piezas pesadas contra un rey con poca defensa siempre dan chances, sobre todo si el rival saca la dama a comer."
+       },
+       {
+        "fuente": "partida",
+        "titulo": "Partida 6 · Garcia Marroquin–Patel (Sub-14 femenino, ronda 2, mesa 5) · peor momento (26…)",
+        "fen": "2k1r1r1/1pp2pp1/p7/3qn3/4Q1PN/1P1P3P/PB4K1/R4R2 b - - 1 26",
+        "q": "Llevas negras con una pieza menos (+7). Juega el lado peor 15 minutos: ¿qué haces?",
+        "min": 15,
+        "respuesta": "Mantener las piezas activas cerca del rey blanco (la dama en el centro, el caballo en e5, las torres en la columna e) y esperar que el rival coma de más: en la partida llegó 29.Dxf7? Te2+!",
+        "porque": "Una pieza de más no sirve si el rey que la tiene está expuesto."
+       },
+       {
+        "fuente": "partida",
+        "titulo": "Partida 7 · Garcia Medina–Castillo Beitia (Sub-18 femenino, ronda 9, mesa 2) · peor momento (45…)",
+        "fen": "8/1Q6/6pp/4q2k/8/P3p2P/3n2P1/4R1K1 b - - 1 45",
+        "q": "Llevas negras con la calidad menos (+5). Juega el lado peor 15 minutos: ¿con qué piezas juegas?",
+        "min": 15,
+        "respuesta": "Con el peón pasado de e3, la dama y el caballo cerca del rey blanco y el rey escondido en h5-h4: …g5, …Rh4, …g4. En la partida, la dama blanca se distrajo y llegó 49…Cf3+!",
+        "porque": "En los finales de dama, el peón pasado avanzado manda y el rey se puede esconder cerca de los peones del rival."
+       },
+       {
+        "fuente": "partida",
+        "titulo": "Partida 8 · Jiménez Leyva–Mayorga Araya (Sub-18, ronda 9, mesa 4) · peor momento (53.)",
+        "fen": "8/8/2k2bp1/1p1n1p2/p7/P4PP1/1K1N1B2/8 w - - 2 53",
+        "q": "Llevas blancas con un peón menos y dos peones pasados en contra (−5). Juega el lado peor 15 minutos: ¿cómo defiendes?",
+        "min": 15,
+        "respuesta": "El rey delante de los peones pasados (Rb1 y Ra2), el alfil y el caballo juntos, sin dejar entrar al rey negro, y atento a los ataques dobles del caballo",
+        "porque": "Quien defiende bien obliga al rival a encontrar un plan; en la partida, las negras se equivocaron dos veces."
+       }
+      ]
+     }
+    }
+   ],
+   "tareas": [
+    {
+     "semana": 1,
+     "desde": "2026-11-09",
+     "vence": "2026-11-16",
+     "titulo": "Semana 1 · Busca el recurso",
+     "instrucciones": "Esta semana entrenas lo que hace falta cuando vas peor: ver qué quiere el rival y encontrar la jugada que lo frena. Para descansar, dos partidas de Batalla naval.",
+     "items": [
+      {
+       "herramienta": "temas",
+       "recorte": "defensiveMove",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "tipos",
+       "recorte": "amenaza",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "batalla-naval",
+       "recorte": null,
+       "cantidad": 2,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 2,
+     "desde": "2026-11-16",
+     "vence": "2026-11-23",
+     "titulo": "Semana 2 · Aguanta y empuja",
+     "instrucciones": "Aguanta las posiciones peores sin regalar nada y empuja tus peones pasados. Para descansar, dos partidas del Sonar.",
+     "items": [
+      {
+       "herramienta": "tipos",
+       "recorte": "aguanta",
+       "cantidad": 8,
+       "meta": null
+      },
+      {
+       "herramienta": "temas",
+       "recorte": "advancedPawn",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "sonar",
+       "recorte": null,
+       "cantidad": 2,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 3,
+     "desde": "2026-11-23",
+     "vence": "2026-11-30",
+     "titulo": "Semana 3 · Jaques y desvíos",
+     "instrucciones": "Desvíos, finales de damas y posiciones donde hay que salvar las tablas. Para descansar, dos rondas de los Confites del caballo.",
+     "items": [
+      {
+       "herramienta": "temas",
+       "recorte": "deflection",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "temas",
+       "recorte": "queenEndgame",
+       "cantidad": 8,
+       "meta": null
+      },
+      {
+       "herramienta": "tipos",
+       "recorte": "tablas",
+       "cantidad": 5,
+       "meta": null
+      },
+      {
+       "herramienta": "confites",
+       "recorte": null,
+       "cantidad": 2,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 4,
+     "desde": "2026-11-30",
+     "vence": "2026-12-07",
+     "titulo": "Semana 4 · Tu propia remontada",
+     "instrucciones": "Busca una partida tuya en la que estuviste peor y repásala en «Tus propios errores». Después, ejercicios de ataque doble y dos rondas de Memoria.",
+     "items": [
+      {
+       "herramienta": "tipos",
+       "recorte": "errores",
+       "cantidad": 3,
+       "meta": null
+      },
+      {
+       "herramienta": "temas",
+       "recorte": "fork",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "memoria",
+       "recorte": null,
+       "cantidad": 2,
+       "meta": null
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

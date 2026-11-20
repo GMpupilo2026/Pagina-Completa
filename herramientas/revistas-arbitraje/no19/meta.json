@@ -1,0 +1,18 @@
+{
+  "numero": 19,
+  "especial": {
+    "edicion": "Edición especial · noviembre 2026",
+    "sello": "Guía paso a paso de las herramientas"
+  },
+  "titulo_presentacion": "Editorial",
+  "temas": [
+    { "titulo": "Pareo Integral en cinco pasos", "desc": "Del torneo nuevo a la ronda emparejada" },
+    { "titulo": "Resultados, byes y la ronda en juego", "desc": "Sistema Holandés C.04.3 · Leyes 2023" },
+    { "titulo": "Clasificación, desempates y el TRF", "desc": "C.07 (2026) · el archivo para FIDE" },
+    { "titulo": "El centro del evento y los adjuntos", "desc": "La ronda de un vistazo" },
+    { "titulo": "La mesa del árbitro", "desc": "Resultados, ilegales y la bitácora desde el celular" },
+    { "titulo": "Un día de torneo, de principio a fin", "desc": "La lista para no olvidar nada" }
+  ],
+  "presentacion": "<div class=\"cols\"><p>Las dieciocho revistas anteriores hablan de las reglas: qué dice cada artículo, cómo se calcula cada desempate, qué hace el árbitro cuando algo se sale del guion. Este número especial es distinto: es una guía de las herramientas con las que se dirige un torneo en Ajedrez Integral.</p><p><b>Pareo Integral</b> empareja con el Sistema Holandés de FIDE, anota los resultados, arma la clasificación con los desempates del C.07 y baja el TRF para el informe de Elo. <b>La mesa del árbitro</b> es la herramienta de los árbitros adjuntos: desde un celular o una tablet anotan los resultados de sus mesas, las jugadas ilegales y las irregularidades, y todo le llega al árbitro principal.</p><p>Cada sección va paso a paso, con las pantallas tal como se ven. Los jugadores de los ejemplos son inventados: el torneo de las capturas se jugó entero en un navegador de prueba, sin publicar nada.</p><p>La herramienta no reemplaza al árbitro. Empareja, cuenta y ordena, pero quien decide un reclamo, una sanción o un resultado dudoso sigue siendo el árbitro, con las Leyes del Ajedrez en la mano.</p><p style=\"text-align:left\"><b>IA Oscar Angulo Cubero</b><br>Árbitro Internacional · Ajedrez Integral</p></div>",
+  "cambios": []
+}

@@ -39,8 +39,10 @@ function pruebaPaginas() {
     const s = fs.readFileSync(path.join(RAIZ, p), "utf8");
     (s.includes("js/aviso-profe.js") ? con : sin).push(p);
   });
-  igual("solo examen.html se queda sin la ventana", sin, ["examen.html"]);
-  igual("y son todas las demás (" + con.length + ")", con.length, lista.length - 1);
+  // arbitro.html es el panel de una cuenta de árbitro: no tiene profe (ver
+  // «Las cuentas de árbitro» en docs/decisiones/permisos-y-roles.md).
+  igual("solo examen.html y arbitro.html se quedan sin la ventana", sin.slice().sort(), ["arbitro.html", "examen.html"]);
+  igual("y son todas las demás (" + con.length + ")", con.length, lista.length - 2);
 }
 
 const AVISOS = [

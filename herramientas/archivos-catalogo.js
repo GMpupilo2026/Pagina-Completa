@@ -55,6 +55,7 @@ const ignorada = (rel) => IGNORADAS.some((i) => rel === i || rel.startsWith(i + 
 /* El nombre de cada libro de material/ (y de los PDF sueltos), por archivo. Uno nuevo sin entrada
    aparece igual, con el nombre sacado del archivo; conviene sumarlo acá. */
 const TITULOS = {
+  "cursos/recursos/formacion-ajedrez/simulador-logistica-ajedrez-jde.xlsx": "Simulador de logística de un torneo JDE (Sesión 5)",
   "material/ponte-a-prueba/ponte-a-prueba.pdf": "Ponte a prueba — examen y guía de entrenamiento",
   "material/mide-tu-fuerza/mide-tu-fuerza.pdf": "Mide tu fuerza — banco de ejercicios tácticos",
   "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf": "Rompe el estancamiento — los errores que frenan tu progreso",
@@ -85,6 +86,11 @@ const TITULOS = {
   "instrucciones-adaptadas.pdf": "Instrucciones adaptadas (para quien ve poco o no ve)",
   "documentos/centroamericano-2026/bases-cac-2026.pdf": "Bases del XXI Festival Centroamericano y del Caribe de la Juventud, Costa Rica 2026",
   "documentos/centroamericano-2026/cartel-centroamericano-2026.pdf": "Centroamericano 2026: cartel con código QR a la página, para pegar en los hoteles y en la sala",
+  "documentos/jdn-pz-2026/bases-eliminatoria-cantonal-jdn-pz-2026.pdf": "Bases de la Eliminatoria Cantonal JDN CCDRPZ – ADAPZ 2026 (Pérez Zeledón)",
+  "documentos/tacho-chess-2/bases-tacho-chess-2.pdf": "Bases del Torneo Intereducativo Tacho Chess 2 (Liceo Anastasio Alfaro, 2026), interpretadas del afiche",
+  "img/tacho-chess-2/mascota.png": "Tacho Chess 2: Tacho, la mascota del torneo, recortada del afiche",
+  "img/tacho-chess-2/logo-liceo.png": "Tacho Chess 2: el escudo del Liceo Anastasio Alfaro, recortado del afiche",
+  "img/tacho-chess-2/sala.jpg": "Tacho Chess 2: la sala de juego, el Gimnasio del Centro del Liceo Anastasio Alfaro con las mesas listas",
   "documentos/jdn/consentimiento-jdn-2027.docx": "Consentimiento informado JDN 2027 — atleta",
   "documentos/jdn/consentimiento-entrenador-jdn-2027.docx": "Consentimiento informado JDN 2027 — entrenador",
   "img/fca-logo.png": "Logo de la Federación Costarricense de Ajedrez (de las bases del Centroamericano 2026)",
@@ -177,6 +183,7 @@ function tituloDe(ruta) {
    las imágenes. Van en este orden; una nueva sin entrada aparece al final con
    el nombre de la carpeta. */
 const CARPETAS = {
+  "cursos/recursos/formacion-ajedrez": ["Formación Ajedrez", "Carpetas"],
   "documentos/jdn": ["Juegos Deportivos Nacionales 2027", "Carpetas"],
   "material/programas-de-estudio": ["Programas de Estudio de Ajedrez (1.° a 11.°)", "Carpetas"],
   // Los cuentos de Peonita: su versión adaptada en Word.
@@ -193,6 +200,7 @@ const CARPETAS = {
   "img/app": ["Íconos de la app", "El sitio"],
   "img/banderas": ["Banderas de los gafetes (flag-icons)", "El sitio"],
   "img/avatar-profe-oscar": ["El avatar del profe Oscar (los stickers de la clase en vivo y más)", "El sitio"],
+  "img/avatar-profe-pame": ["El avatar de la profe Pame (lo ve CCDR POCOCI en vez del profe Oscar)", "El sitio"],
   "img/jdn": ["Ejemplos del formulario de los JDN", "El sitio"],
   ".": ["En la raíz del sitio", "Carpetas"],
 };

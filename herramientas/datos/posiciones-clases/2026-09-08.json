@@ -1,0 +1,33 @@
+{
+ "fecha": "2026-09-08",
+ "posiciones": [
+  {
+   "seg": 889,
+   "titulo": "Dama contra peón de torre: sin el peón de a no se gana",
+   "fen": "7Q/8/8/8/K7/8/6kp/8 w - - 0 1",
+   "objetivo": "tablas",
+   "nota": "Cada vez que la dama se acerca, el rey negro se mete en h1 y, si traes tu rey, queda ahogado. La dama sola no da mate."
+  },
+  {
+   "seg": 1367,
+   "titulo": "Dama contra dos peones, con el rey blanco lejos",
+   "fen": "K7/1Q6/8/8/7p/8/6p1/7k w - - 0 1",
+   "objetivo": "tablas",
+   "nota": "Con el rey blanco tan lejos, el negro se salva con trucos de ahogado. Juega las blancas y comprueba cómo se defiende el negro."
+  },
+  {
+   "seg": 1848,
+   "titulo": "Dama contra dos peones, con el rey blanco cerca",
+   "fen": "8/1Q6/5K2/8/7p/8/6p1/7k w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "Es casi la misma posición, pero con tu rey cerca aparecen los mates. Usa la dama para que el rey negro no pueda subir."
+  },
+  {
+   "seg": 2327,
+   "titulo": "Dama contra dama: rey activo contra rey escondido",
+   "fen": "8/8/8/8/8/k2K4/2Q5/q7 w - - 0 1",
+   "objetivo": "ganar",
+   "nota": "El material es igual, pero el rey negro está arrinconado. Con jaques en zigzag no lo dejas salir, y acercas tu rey solo cuando la dama negra ya no tiene jaques útiles."
+  }
+ ]
+}

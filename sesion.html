@@ -79,8 +79,14 @@
                 <p id="clase-estado-texto" class="text-sm font-semibold" aria-live="polite"></p>
                 <div class="flex items-center gap-2 flex-wrap">
                     <button type="button" id="clase-abrir-btn" class="hidden bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Abrir la clase</button>
+                    <!-- Quién entra a la clase en curso (clase_asignados, js/clase-asignados.js). -->
+                    <button type="button" id="clase-asignados-btn" aria-expanded="false" aria-controls="clase-asignar" class="hidden bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">👥 </span>Quién entra</button>
                     <button type="button" id="clase-cerrar-btn" class="hidden bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cerrar la clase</button>
                 </div>
+                <!-- ¿Quién entra? Se pide al abrir la clase y se cambia con la clase en
+                     curso: solo entran los de la lista (ver «A la clase entran solo los
+                     asignados»). -->
+                <div id="clase-asignar" hidden class="w-full"></div>
                 <!-- Ponerle nombre y dejar la nota se hace acá mismo al cerrar:
                      mandarlo al panel a escribirlas es mandarlo a otra página
                      justo cuando acaba de terminar y se va. -->
@@ -123,6 +129,7 @@
                 <!-- Lo que dijo la pregunta de salida de la clase anterior: se recuerda al empezar. -->
                 <p id="salida-pasada" hidden class="w-full text-sm text-brand-700 dark:text-brand-200"></p>
             </div>
+
 
             <div class="proyector-contenido grid lg:grid-cols-[1fr_320px] gap-8 items-start">
                 <div class="proyector-columna">
@@ -561,6 +568,181 @@
                             <button id="pensar-elegir-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Elegir a alguien para responder</button>
                         </div>
                     </div>
+
+                    <!-- La llamada de voz de la clase (js/clase-llamada.js): en la misma página que
+                         el tablero, para no saltar entre pestañas con el lector de pantalla. La
+                         palabra es el turno de la clase («Darle la palabra»). Ver «La llamada de voz
+                         de la clase» en docs/decisiones/clase-en-vivo.md.
+                         Va DEBAJO del tablero, no arriba: en el celular el tablero tiene que entrar
+                         entero sin bajar (verificar-clase-movil.js), y los atajos sirven desde
+                         cualquier lado. Después del turno y del tiempo para pensar, que van pegados. -->
+                    <section id="llamada" hidden aria-labelledby="llamada-titulo" class="max-w-[560px] mx-auto mt-3 rounded-xl px-5 py-3 bg-brand-100 dark:bg-brand-900">
+                        <h2 id="llamada-titulo" class="text-sm font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🎧 </span>Llamada de la clase</h2>
+                        <!-- Mientras se graba lo ven todos, escrito y no solo con el punto rojo
+                             (game_state.llamada_grabando; ver «La grabación de la llamada»). -->
+                        <p id="llamada-grabando" hidden class="mt-1 text-sm font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🔴 </span>Se está grabando la clase</p>
+                        <!-- El micrófono, que es lo principal, a todo lo ancho; debajo «Quién está» y «Quién habla»
+                             parejos, y «Salir» aparte. Así ningún texto se parte en el celular. -->
+                        <div class="mt-2 grid grid-cols-2 gap-2">
+                            <button id="llamada-entrar" type="button" class="col-span-2 w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🎧 Entrar a la llamada</button>
+                            <button id="llamada-mic" type="button" hidden aria-pressed="false" class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🔇 Micrófono apagado</button>
+                            <!-- Solo el profe: quién puede hablar (game_state.llamada_modo). El elegido
+                                 lleva aria-pressed y además su texto lo dice («✓»), no solo el color. -->
+                            <div id="llamada-modos" hidden role="group" aria-labelledby="llamada-modos-titulo" class="col-span-2">
+                                <p id="llamada-modos-titulo" class="text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Quién puede hablar</p>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button type="button" data-modo="turno" aria-pressed="true" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-2 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Con turno</button>
+                                    <button type="button" data-modo="libre" aria-pressed="false" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-2 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Todos</button>
+                                    <button type="button" data-modo="bloqueada" aria-pressed="false" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-2 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Nadie</button>
+                                </div>
+                            </div>
+                            <!-- Solo el alumno: decirle algo al profe sin interrumpir (Alt+1 a Alt+4). «Sí» y «No»
+                                 contestan la pregunta del profe si hay una abierta. Ver «Reacciones y preguntas de sí o no». -->
+                            <div id="llamada-reacciones" hidden role="group" aria-labelledby="llamada-reacciones-titulo" class="col-span-2">
+                                <p id="llamada-reacciones-titulo" class="text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Decirle a tu profe</p>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    <button type="button" data-reaccion="no_entendi" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-2 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">No entendí</button>
+                                    <button type="button" data-reaccion="lento" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-2 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Más lento</button>
+                                    <button type="button" data-reaccion="si" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-2 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Sí</button>
+                                    <button type="button" data-reaccion="no" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-2 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">No</button>
+                                </div>
+                            </div>
+                            <!-- Solo el profe: una pregunta de sí o no a toda la clase. El conteo no es región viva:
+                                 se anuncia cuando contestaron todos y al cerrarla. -->
+                            <div id="llamada-pregunta" hidden class="col-span-2">
+                                <button id="llamada-pregunta-btn" type="button" aria-pressed="false" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">❓ Preguntar sí o no</button>
+                                <p id="llamada-pregunta-estado" class="mt-1 text-sm text-brand-800 dark:text-brand-100"></p>
+                            </div>
+                            <!-- Solo el profe, dentro o fuera de la llamada: los turnos. «Siguiente mano» (Alt+N) da la
+                                 palabra a la primera mano de la fila; el tiempo de cada turno lo cuenta sesion.js.
+                                 Ver «Siguiente mano y el tiempo de cada turno». -->
+                            <div id="llamada-turnos" hidden role="group" aria-labelledby="llamada-turnos-titulo" class="col-span-2">
+                                <p id="llamada-turnos-titulo" class="text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Turnos</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <button id="llamada-siguiente" type="button" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">✋ Siguiente mano</button>
+                                    <button id="llamada-ronda" type="button" aria-pressed="false" class="sm:col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🔄 Ronda (todos, por turno)</button>
+                                    <label class="flex flex-col gap-1 text-sm text-brand-800 dark:text-brand-100">
+                                        <span>Tiempo para cada turno</span>
+                                        <select id="llamada-turno-tiempo" class="w-full min-h-[44px] sm:min-h-[2.25rem] rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                            <option value="0">Sin límite</option>
+                                            <option value="30">30 segundos</option>
+                                            <option value="60">1 minuto</option>
+                                            <option value="120">2 minutos</option>
+                                            <option value="180">3 minutos</option>
+                                        </select>
+                                    </label>
+                                </div>
+                            </div>
+                            <!-- Solo el profe, mientras le habla en privado a un alumno. Ver «Hablarle en privado a un alumno». -->
+                            <button id="llamada-privado-fin" type="button" hidden class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🔊 Volver a hablarle a todos</button>
+                            <!-- Decir una jugada por voz (Alt+J): Whisper en el aparato, y al cuadro de comandos. -->
+                            <button id="llamada-dictar" type="button" hidden class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🗣️ Decir una jugada (Alt+J)</button>
+                            <!-- Marcar este momento (Alt+K): la marca lleva la grabación ahí en «Repasar mis clases». -->
+                            <button id="llamada-marcar" type="button" hidden class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">📌 Marcar este momento</button>
+                            <!-- Solo el profe: los grupos de voz (game_state.llamada_grupos; ver «Grupos en la llamada»).
+                                 La sala donde está él lleva aria-pressed y «✓ … (estás aquí)», no solo el color. -->
+                            <div id="llamada-grupos" hidden role="group" aria-labelledby="llamada-grupos-titulo" class="col-span-2">
+                                <p id="llamada-grupos-titulo" class="text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Grupos</p>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <label class="flex items-center gap-2 text-sm text-brand-800 dark:text-brand-100">
+                                        <span>De a</span>
+                                        <select id="llamada-grupos-tam" class="flex-1 min-h-[44px] sm:min-h-[2.25rem] rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                            <option value="2">2 (parejas)</option>
+                                            <option value="3">3</option>
+                                            <option value="4">4</option>
+                                        </select>
+                                    </label>
+                                    <button id="llamada-grupos-armar" type="button" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Armar grupos</button>
+                                </div>
+                                <div id="llamada-grupos-lista" class="mt-2 grid grid-cols-1 gap-2"></div>
+                                <button id="llamada-grupos-terminar" type="button" hidden class="mt-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Terminar los grupos (todos a la sala grande)</button>
+                            </div>
+                            <!-- Solo el profe: pausar la grabación o volver a grabar. -->
+                            <button id="llamada-grabar" type="button" hidden aria-pressed="true" class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⏸ Pausar la grabación</button>
+                            <button id="llamada-quien" type="button" hidden class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quién está</button>
+                            <button id="llamada-habla" type="button" hidden class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quién habla</button>
+                            <!-- La guía de atajos (Alt+H), de a un grupo por vez. -->
+                            <button id="llamada-guia" type="button" class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⌨️ Atajos (Alt+H)</button>
+                            <button id="llamada-salir" type="button" hidden class="col-span-2 w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Salir de la llamada</button>
+                        </div>
+                        <!-- «Mantener para hablar»: el micrófono suena solo mientras se aprieta (botón o Alt+P). -->
+                        <label id="llamada-ptt-caja" hidden class="mt-2 flex items-start gap-2 text-sm text-brand-800 dark:text-brand-100">
+                            <input id="llamada-ptt" type="checkbox" class="mt-1 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <span>Mantener para hablar: el micrófono suena solo mientras mantienes apretado el botón del micrófono o <kbd>Alt</kbd>+<kbd>P</kbd>, y al soltar se apaga.</span>
+                        </label>
+                        <!-- Dos volúmenes aparte: el de la llamada y el de la voz que dice las jugadas. -->
+                        <div id="llamada-volumenes" hidden class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm text-brand-800 dark:text-brand-100">
+                            <label class="flex flex-col gap-1">
+                                <span>Volumen de la llamada: <output id="llamada-vol-llamada-valor">100 %</output></span>
+                                <input id="llamada-vol-llamada" type="range" min="0" max="100" step="10" value="100" class="w-full accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </label>
+                            <label class="flex flex-col gap-1">
+                                <span>Volumen de la voz de las jugadas: <output id="llamada-vol-voz-valor">100 %</output></span>
+                                <input id="llamada-vol-voz" type="range" min="0" max="100" step="10" value="100" class="w-full accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </label>
+                        </div>
+                        <!-- El micrófono que se usa, probarlo antes de entrar, y las voces en su lugar (con audífonos).
+                             Se recuerdan en el aparato. Ver «El micrófono, la señal y las voces». -->
+                        <div id="llamada-ajustes" class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm text-brand-800 dark:text-brand-100">
+                            <label class="flex flex-col gap-1">
+                                <span>Micrófono</span>
+                                <select id="llamada-microfono" class="w-full min-h-[44px] sm:min-h-[2.25rem] rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                    <option value="">El del aparato (el de siempre)</option>
+                                </select>
+                            </label>
+                            <button id="llamada-probar" type="button" class="self-end w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🎙️ Probar el micrófono</button>
+                            <label class="flex flex-col gap-1">
+                                <span>Tonos de los avisos</span>
+                                <select id="llamada-tonos" class="w-full min-h-[44px] sm:min-h-[2.25rem] rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                    <option value="1">Normales</option>
+                                    <option value="0.5">Más bajos</option>
+                                    <option value="2">Más altos</option>
+                                    <option value="0">Apagados</option>
+                                </select>
+                            </label>
+                            <label class="self-end flex items-start gap-2">
+                                <input id="llamada-vibrar" type="checkbox" checked class="mt-1 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <span>Que el celular vibre con los avisos</span>
+                            </label>
+                            <label hidden class="sm:col-span-2 flex items-start gap-2">
+                                <input id="llamada-concentracion" type="checkbox" class="mt-1 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <span>Modo concentración: no avisar quién entra, quién sale ni quién habla (la palabra, las preguntas y tu profe sí).</span>
+                            </label>
+                            <label hidden class="sm:col-span-2 flex items-start gap-2">
+                                <input id="llamada-solo-profe" type="checkbox" class="mt-1 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <span>Solo oír al profe: tus compañeros quedan en silencio en tu aparato (nadie más se entera).</span>
+                            </label>
+                            <label class="sm:col-span-2 flex items-start gap-2">
+                                <input id="llamada-decir-quien" type="checkbox" class="mt-1 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <span>Decir quién empieza a hablar (su nombre, cuando la voz pasa a otra persona).</span>
+                            </label>
+                            <label class="sm:col-span-2 flex items-start gap-2">
+                                <input id="llamada-espacial" type="checkbox" class="mt-1 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <span>Cada voz en su lugar (con audífonos): el profe al centro y cada compañero un poco a la izquierda o a la derecha.</span>
+                            </label>
+                        </div>
+                        <p id="llamada-estado" role="status" aria-live="polite" class="mt-2 text-sm font-semibold text-brand-800 dark:text-brand-100"></p>
+                        <!-- Quiénes están, un renglón por persona y siempre en el mismo orden (tú, el
+                             profe, los demás por nombre). No es región viva: lo que cambia se anuncia
+                             en #llamada-estado, y «Quién está» lo dice entero. -->
+                        <div id="llamada-gente" hidden class="mt-2">
+                            <h3 id="llamada-gente-titulo" class="text-xs font-semibold text-brand-600 dark:text-brand-300"></h3>
+                            <ul id="llamada-lista" aria-labelledby="llamada-gente-titulo" class="mt-1 divide-y divide-brand-100 dark:divide-brand-700 rounded-lg bg-white dark:bg-brand-950 text-sm"></ul>
+                        </div>
+                        <!-- Solo el profe: quién tiene la clase abierta y no entró a la llamada, con «Avisarle».
+                             Ver «Quién no entró a la llamada y quién se cayó». -->
+                        <div id="llamada-faltan" hidden class="mt-2">
+                            <h3 id="llamada-faltan-titulo" class="text-xs font-semibold text-brand-600 dark:text-brand-300">En la clase pero no en la llamada</h3>
+                            <ul id="llamada-faltan-lista" aria-labelledby="llamada-faltan-titulo" class="mt-1 divide-y divide-brand-100 dark:divide-brand-700 rounded-lg bg-white dark:bg-brand-950 text-sm"></ul>
+                        </div>
+                        <p class="mt-2 text-xs text-brand-600 dark:text-brand-300">Atajos: <kbd>Alt</kbd>+<kbd>M</kbd> micrófono, <span id="llamada-atajo-mano"><kbd>Alt</kbd>+<kbd>Y</kbd> levantar la mano, </span><kbd>Alt</kbd>+<kbd>Q</kbd> quién está, <kbd>Alt</kbd>+<kbd>W</kbd> quién habla (o quién habló último), <kbd>Alt</kbd>+<kbd>K</kbd> marcar este momento, <kbd>Alt</kbd>+<kbd>J</kbd> decir una jugada, <kbd>Alt</kbd>+<kbd>T</kbd> saltar entre la llamada y el tablero, <kbd>Alt</kbd>+<kbd>H</kbd> esta lista, de a poco<span id="llamada-atajo-siguiente" hidden>, <kbd>Alt</kbd>+<kbd>N</kbd> siguiente mano</span><span id="llamada-atajo-reacciones">, <kbd>Alt</kbd>+<kbd>1</kbd> a <kbd>4</kbd> no entendí, más lento, sí y no</span>. Usa audífonos para que no haya eco.</p>
+                        <div id="llamada-audios" hidden></div>
+                    </section>
+                    <!-- Solo el alumno, mientras no hay llamada: practicar los atajos sin nadie más
+                         y sin conectarse a nada. Ver «La sala de práctica». -->
+                    <div id="llamada-practicar-caja" hidden class="max-w-[560px] mx-auto mt-3">
+                        <button id="llamada-practicar" type="button" class="w-full bg-white hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-3 py-2 min-h-[44px] sm:min-h-[2.25rem] rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🎧 Practicar la llamada (sin nadie más)</button>
+                    </div>
                     <p id="pensar-voz" class="sr-only" aria-live="polite"></p>
 
                     <!-- Cómo abrir el control remoto: la dirección, para escribirla o copiarla en el celular. -->
@@ -729,6 +911,15 @@
                         </div>
                         <div id="formacion-pasos" role="group" aria-label="Láminas de la práctica" class="flex flex-wrap gap-1.5 mt-2"></div>
                         <p id="formacion-fin" hidden role="status" class="text-sm font-semibold text-green-800 dark:text-green-200 mt-2"></p>
+                    </section>
+
+                    <!-- El reloj de práctica (game_state.reloj, js/clase-reloj.js): el profe lo pone para la
+                         Sesión 4 de Formación Ajedrez y cada alumno maneja SU reloj aquí, sin salir de la clase.
+                         Lo que hace cada uno no va a la base. El reloj va en un Shadow DOM (#reloj-host). -->
+                    <section id="reloj-tarjeta" hidden aria-labelledby="reloj-titulo" class="max-w-[820px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-white dark:bg-brand-900 px-3 sm:px-4 py-3">
+                        <h2 id="reloj-titulo" class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">⏱️ </span>Reloj de práctica</h2>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-0.5">Es tuyo: configúralo con − + ▶‖ ✓ y ponlo en marcha con la palanca. Lo que hagas aquí no lo ve nadie más.</p>
+                        <div id="reloj-host" class="mt-2"></div>
                     </section>
 
                     <!-- El podio de la clase (game_state.podio): una foto de los puntos que manda el
@@ -1122,6 +1313,24 @@
                         </div>
                     </div>
 
+                    <!-- Explorador de aperturas (solo profesor, js/clase-explorador.js): qué
+                         jugaron los maestros en la posición del tablero. Junto al motor
+                         porque se consulta igual que él; arranca apagado porque cada
+                         posición es un pedido a Lichess. Ver «El explorador de aperturas
+                         en la clase» en docs/decisiones/clase-en-vivo.md. -->
+                    <section id="explorador-panel" aria-labelledby="explorador-titulo" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                        <div class="flex items-center justify-between mb-2 gap-2">
+                            <h2 id="explorador-titulo" class="font-serif font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📚</span> Aperturas de maestros</h2>
+                            <button id="explorador-toggle-btn" type="button" aria-pressed="false" aria-controls="explorador-salida" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Activar</button>
+                        </div>
+                        <p id="explorador-estado" role="status" aria-live="polite" class="text-xs text-brand-450 dark:text-brand-350">Solo lo ves tú. Muestra qué jugaron los maestros en la posición del tablero.</p>
+                        <div id="explorador-salida" hidden class="mt-3">
+                            <p id="explorador-apertura" class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-2 empty:hidden"></p>
+                            <ol id="explorador-jugadas" class="space-y-1.5 list-none p-0 m-0" aria-label="Jugadas de los maestros en esta posición"></ol>
+                            <p class="mt-2 text-[0.6875rem] text-brand-450 dark:text-brand-350">Fuente: explorador de Lichess, partidas de maestros.</p>
+                        </div>
+                    </section>
+
                     <!-- Alumnos conectados (solo profesor): siempre a la vista, no es una pestaña.
                          Es a quien se le está dando la clase: quién llegó, quién pide la
                          palabra, a quién darle el control. Primero la lista; lo demás
@@ -1501,6 +1710,63 @@
                                 </div>
                             </div>
                         </details>
+                        <!-- El reloj de práctica (js/clase-reloj.js): lo pone arriba del tablero de todos. Solo lo
+                             ve quien puede mandar lo de Formación Ajedrez (puede_bajar). -->
+                        <details id="reloj-caja" hidden class="mb-3 rounded-lg border border-brand-100 dark:border-brand-800">
+                            <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">⏱️ </span>Reloj de práctica: cada alumno configura y maneja un reloj digital en su pantalla, o resuelve situaciones de árbitro</summary>
+                            <div class="px-3 pb-3 space-y-2">
+                                <p class="text-xs text-brand-450 dark:text-brand-350">Para la sesión del reloj. A cada alumno le aparece arriba del tablero un reloj digital que funciona como uno real, con la guía paso a paso y los retos de la práctica. Elige con qué control arranca (uno de la lista o «Personalizado», con el modo y los tiempos que quieras: Fischer, demora, sin incremento o por períodos); después cada uno lo puede cambiar con los botones del reloj.</p>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <label for="reloj-select" class="text-xs text-brand-700 dark:text-brand-200">Arranca con</label>
+                                    <select id="reloj-select" class="flex-1 min-w-0 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200"></select>
+                                </div>
+                                <!-- Personalizado: el profe elige el modo y los tiempos (js/clase-reloj.js, pintarManual). -->
+                                <fieldset id="reloj-manual" hidden class="rounded-lg border border-brand-100 dark:border-brand-800 px-3 py-2 space-y-2">
+                                    <legend class="px-1 text-xs font-semibold text-brand-700 dark:text-brand-200">Reloj personalizado</legend>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <label for="reloj-m-modo" class="text-xs text-brand-700 dark:text-brand-200">Modo</label>
+                                        <select id="reloj-m-modo" class="flex-1 min-w-0 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200"></select>
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-2" role="group" aria-labelledby="reloj-m-base-et">
+                                        <span id="reloj-m-base-et" class="text-xs text-brand-700 dark:text-brand-200">Tiempo base</span>
+                                        <label class="flex items-center gap-1 text-xs text-brand-700 dark:text-brand-200"><input id="reloj-m-bh" type="number" inputmode="numeric" min="0" max="9" step="1" value="0" class="w-14 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200">h</label>
+                                        <label class="flex items-center gap-1 text-xs text-brand-700 dark:text-brand-200"><input id="reloj-m-bm" type="number" inputmode="numeric" min="0" max="59" step="1" value="10" class="w-14 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200">min</label>
+                                        <span id="reloj-m-bs-fila"><label class="flex items-center gap-1 text-xs text-brand-700 dark:text-brand-200"><input id="reloj-m-bs" type="number" inputmode="numeric" min="0" max="59" step="1" value="0" class="w-14 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200">s</label></span>
+                                    </div>
+                                    <div id="reloj-m-inc-fila">
+                                        <label class="flex items-center gap-1 text-xs text-brand-700 dark:text-brand-200"><input id="reloj-m-inc" type="number" inputmode="numeric" min="0" max="60" step="1" value="5" class="w-14 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200">s de incremento por jugada (Fischer)</label>
+                                    </div>
+                                    <div id="reloj-m-dly-fila">
+                                        <label class="flex items-center gap-1 text-xs text-brand-700 dark:text-brand-200"><input id="reloj-m-dly" type="number" inputmode="numeric" min="0" max="60" step="1" value="5" class="w-14 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200">s de demora por jugada (delay)</label>
+                                    </div>
+                                    <div id="reloj-m-per-fila"><div class="flex flex-wrap items-center gap-2" role="group" aria-labelledby="reloj-m-per-et">
+                                        <span id="reloj-m-per-et" class="text-xs text-brand-700 dark:text-brand-200">Primer período</span>
+                                        <label class="flex items-center gap-1 text-xs text-brand-700 dark:text-brand-200"><input id="reloj-m-mv" type="number" inputmode="numeric" min="1" max="99" step="1" value="40" class="w-14 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200">jugadas</label>
+                                        <span class="text-xs text-brand-700 dark:text-brand-200">· luego se suman</span>
+                                        <label class="flex items-center gap-1 text-xs text-brand-700 dark:text-brand-200"><input id="reloj-m-ah" type="number" inputmode="numeric" min="0" max="9" step="1" value="0" class="w-14 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200">h</label>
+                                        <label class="flex items-center gap-1 text-xs text-brand-700 dark:text-brand-200"><input id="reloj-m-am" type="number" inputmode="numeric" min="0" max="59" step="1" value="30" class="w-14 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200">min</label>
+                                    </div></div>
+                                    <p id="reloj-m-resumen" class="text-xs font-semibold text-brand-700 dark:text-brand-200" aria-live="polite"></p>
+                                </fieldset>
+                                <button id="reloj-mandar-btn" type="button" class="w-full text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Poner el reloj en la clase</button>
+                                <p id="reloj-enviado" class="text-xs text-brand-600 dark:text-brand-300"></p>
+                                <div class="border-t border-brand-100 dark:border-brand-800 pt-2 space-y-2">
+                                    <p class="text-xs text-brand-450 dark:text-brand-350">Situaciones de árbitro, una a la vez: a cada alumno le sale solo el reloj y la situación, sin lo demás. Cuando terminen, pon la siguiente.</p>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <label for="reloj-sit-select" class="text-xs text-brand-700 dark:text-brand-200">Situación</label>
+                                        <select id="reloj-sit-select" class="flex-1 min-w-0 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200"></select>
+                                    </div>
+                                    <button id="reloj-sit-btn" type="button" class="w-full text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Poner esta situación a todos</button>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <h3 class="text-xs font-semibold text-brand-700 dark:text-brand-200">Cómo van</h3>
+                                        <button id="reloj-avance-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Actualizar</button>
+                                    </div>
+                                    <div id="reloj-avance"></div>
+                                </div>
+                                <button id="reloj-quitar-btn" type="button" hidden class="w-full text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quitar el reloj de la clase</button>
+                                <p id="reloj-aviso" class="text-xs font-semibold text-brand-700 dark:text-brand-200" aria-live="polite"></p>
+                            </div>
+                        </details>
                         <div id="active-question" class="hidden">
                             <div class="flex items-center justify-between mb-2">
                                 <p class="text-xs text-brand-500 dark:text-brand-300">Pregunta activa <span id="question-tiempo-profe" class="font-semibold text-brand-700 dark:text-brand-200"></span></p>
@@ -1786,9 +2052,11 @@
     <script src="js/tipos-catalogo.js"></script>
     <script src="js/tipos-reglas.js"></script>
     <script src="js/pdf-diagramas.js"></script>
+    <script src="js/clase-explorador.js"></script>
     <script src="js/avisos.js"></script>
     <script src="js/main.js"></script>
     <script src="js/clase-elegida.js"></script>
+    <script src="js/clase-asignados.js"></script>
     <!-- Partes de la clase en vivo con vida propia: van ANTES que sesion.js (ver «sesion.js en partes»). -->
     <script src="js/clase-votacion.js"></script>
     <script src="js/clase-mapa.js"></script>
@@ -1797,6 +2065,7 @@
     <script src="js/clase-tanda.js"></script>
     <script src="js/clase-formacion.js"></script>
     <script src="js/clase-formacion-respuestas.js"></script>
+    <script src="js/clase-reloj.js"></script>
     <script src="js/clase-entrenamientos.js"></script>
     <script src="js/clase-puntos.js"></script>
     <script src="js/clase-ronda.js"></script>
@@ -1806,6 +2075,8 @@
     <script src="js/clase-qr.js"></script>
     <script src="js/clase-invitados.js"></script>
     <script src="js/clase-sacar.js"></script>
+    <script src="js/reporte-transcribir.js"></script>
+    <script src="js/clase-llamada.js"></script>
     <script src="js/clase-herramientas-grandes.js"></script>
     <script src="js/clase-buscar.js"></script>
     <script src="js/clase-presentacion.js"></script>

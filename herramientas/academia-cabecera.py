@@ -55,18 +55,18 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PAGINAS = [
     "admin-jugador.html", "admin-pareo.html", "pareo-dgt.html", "admin.html", "gafetes.html", "metropolitano-inscritos.html", "metropolitano-acreditacion.html", "arbitraje.html", "asistencia.html",
     "cartas.html",
-    "ciegos.html", "clases.html", "cobros.html", "concentracion.html",
+    "ciegos.html", "clases.html", "cobros.html", "mensualidades.html", "concentracion.html",
     "configuracion.html", "crazyhouse.html", "cuatro-jugadores.html",
     "duelo.html", "estandar.html", "formularios.html", "ilumina-tablero.html",
     "informes.html", "inscripciones.html", "sala-admin.html", "juegos.html", "competir.html",
     "lector-planilla.html", "logros.html", "puntos-tienda.html", "cuaderno.html", "calendario.html", "reto-ejercicios.html", "niebla.html", "partidas.html",
     "examen.html", "examenes.html",
-    "planes.html", "proyecto.html", "cuestionarios.html", "cuestionario-tarea.html", "racha-tactica.html", "reportes.html", "sesion.html",
-    "coordinacion.html", "subgrupos.html", "alumno-nuevo.html", "tareas.html",
-    "informe-mensual.html", "supervision.html", "supervisor.html", "academias.html", "tablero-academias.html",
-    "novedades.html", "repasar-clases.html", "camaras.html",
+    "planes.html", "proyecto.html", "cuestionarios.html", "tablero-preguntas.html", "maestros-dijeron.html", "cuestionario-tarea.html", "racha-tactica.html", "reportes.html", "sesion.html",
+    "coordinacion.html", "subgrupos.html", "alumno-nuevo.html", "tareas.html", "temporada.html",
+    "informe-mensual.html", "supervision.html", "supervisor.html", "academias.html", "tablero-academias.html", "prospectos.html", "premios-academia.html",
+    "novedades.html", "repasar-clases.html", "audios-clases.html", "camaras.html",
     "tienda.html", "accesos.html",
-    "licencias.html", "seleccion-codicader.html", "desempates.html", "variacion-elo.html", "normas-titulo.html", "acta-jde.html", "mesa-arbitro.html", "jdn-comites.html", "universidades.html", "torneos-universitarios.html", "jdn-proyeccion.html", "arbitros-cr.html",
+    "licencias.html", "mis-arbitros.html", "arbitro.html", "seleccion-codicader.html", "desempates.html", "variacion-elo.html", "normas-titulo.html", "acta-jde.html", "mesa-arbitro.html", "jdn-comites.html", "universidades.html", "torneos-universitarios.html", "jdn-proyeccion.html", "arbitros-cr.html",
     "encuesta-profesor.html", "satisfaccion.html", "encuestas-curso.html",
     "justificaciones.html",
     "preparacion-rivales.html", "plan-rival.html", "libreta-torneos.html",
@@ -76,7 +76,7 @@ PAGINAS = [
     "entreno/mates.html", "entreno/practicas.html", "entreno/temas.html",
     "entreno/visualizacion.html", "entreno/aperturas.html", "entreno/sin-internet.html",
     "entreno/precision-posicional.html", "entreno/tipos.html", "entreno/finales.html",
-    "entreno/memoria.html", "entreno/mis-estudios.html", "entreno/estilo.html",
+    "entreno/memoria.html", "entreno/mis-estudios.html", "entreno/estilo.html", "entreno/oido.html",
     "sonar.html", "batalla-naval.html", "ajedrez-4x8.html",
     "cursos/academia/aperturas-y-defensas.html",
     "cursos/academia/arbitro-nacional.html",
@@ -121,7 +121,10 @@ JUEGO_AVISO_FIN = "<!-- juego-aviso: fin -->"
 #     de ella y no se podía apretar. No daba ningún error —se veía perfecto— y
 #     lo habría descubierto quien quisiera comprar. Encima, "0 alumnos en
 #     línea" no tiene nada que decir en una página de venta.
-SIN_BURBUJA = {"sesion.html", "examen.html", "tienda.html"}
+SIN_BURBUJA = {"sesion.html", "examen.html", "tienda.html", "arbitro.html"}
+# arbitro.html es el panel de una cuenta de árbitro, que no es de la Academia:
+# no tiene profesor a quien anunciarse, ni partidas, ni avisos del profe. Ver
+# «Las cuentas de árbitro» en docs/decisiones/permisos-y-roles.md.
 
 # Pero en sesion.html el script SÍ va, con `data-solo-anunciar`: no se pinta
 # nada, y el alumno que está en la clase se anuncia a sus profesores. Sin esa
@@ -136,7 +139,7 @@ SOLO_ANUNCIA = {"sesion.html"}
 # te asignó una partida en Juegos" no tiene nada que ver con la clase en vivo
 # que ya ocupa esa pantalla — la única razón por la que sesion.html no lleva
 # burbuja es que YA tiene su propia lista de conectados, y eso no aplica acá.
-SIN_JUEGO_AVISO = {"examen.html"}
+SIN_JUEGO_AVISO = {"examen.html", "arbitro.html"}
 
 # El control del acceso (js/acceso-vigente.js) va en todas menos dos, y las dos
 # por lo mismo: son las que alguien con el acceso vencido TIENE que poder abrir.
@@ -207,7 +210,7 @@ AYUDA_GUIA = {
     "partidas.html": "archivos", "lector-planilla.html": "archivos",
     "ciegos.html": "accesibilidad",
     "coordinacion.html": "coordinacion", "formularios.html": "coordinacion",
-    "cobros.html": "coordinacion", "reportes.html": "coordinacion",
+    "cobros.html": "coordinacion", "mensualidades.html": "coordinacion", "reportes.html": "coordinacion",
     "admin.html": "administracion", "inscripciones.html": "administracion", "sala-admin.html": "administracion",
     "accesos.html": "administracion",
     "asistencia.html": "clase-en-vivo", "subgrupos.html": "tareas",
@@ -216,12 +219,13 @@ AYUDA_GUIA = {
     # Las del día a día del profe que la guía ya cuenta (ver «El «?» de la
     # guía, para el equipo docente»).
     "alumno-nuevo.html": "empezar",
-    "cuestionarios.html": "clase-en-vivo",
+    "cuestionarios.html": "clase-en-vivo", "tablero-preguntas.html": "clase-en-vivo", "maestros-dijeron.html": "clase-en-vivo",
     "proyecto.html": "planes",
     "cuaderno.html": "informes", "libreta-torneos.html": "informes",
     "calendario.html": "tareas",
     "preparacion-rivales.html": "juegos",
     "repasar-clases.html": "archivos",
+    "audios-clases.html": "archivos",
 }
 AYUDA_CARPETAS = {"entreno/": "entrenamiento", "cursos/academia/": "cursos"}
 AYUDA_INICIO = "<!-- ayuda: inicio -->"
@@ -353,7 +357,7 @@ def juego_aviso(ruta):
 # antitrampa evita. El aviso lo ve al salir del examen, en la página que abra.
 AVISO_PROFE_INICIO = "<!-- aviso-profe: inicio -->"
 AVISO_PROFE_FIN = "<!-- aviso-profe: fin -->"
-SIN_AVISO_PROFE = {"examen.html"}
+SIN_AVISO_PROFE = {"examen.html", "arbitro.html"}
 
 
 def poner_aviso_profe(ruta, s):
@@ -660,7 +664,8 @@ NOMBRE_Y_PADRE = {
     "arbitraje.html": ("Examen de arbitraje", "clases.html"),
     "asistencia.html": ("Asistencia presencial", "clases.html"),
     "ciegos.html": ("Ciegos", "clases.html"),
-    "cobros.html": ("Cobros", "clases.html"),
+    "mensualidades.html": ("Cobros", "clases.html"),
+    "cobros.html": ("Recibos y cobros anteriores", "mensualidades.html"),
     "configuracion.html": ("Configuración", "clases.html"),
     "formularios.html": ("Formularios de inscripción", "clases.html"),
     "informes.html": ("Informes", "clases.html"),
@@ -674,11 +679,14 @@ NOMBRE_Y_PADRE = {
     "reto-ejercicios.html": ("Retos de ejercicios", "competir.html"),
     "partidas.html": ("Archivos", "clases.html"),
     "repasar-clases.html": ("Repasar mis clases", "clases.html"),
+    "audios-clases.html": ("Audios de las clases", "clases.html"),
     "examenes.html": ("Exámenes", "clases.html"),
     "examen.html": ("Examen", "examenes.html"),
     "planes.html": ("Planes de clase", "clases.html"),
     "proyecto.html": ("Proyecto", "clases.html"),
     "cuestionarios.html": ("Cuestionarios", "clases.html"),
+    "tablero-preguntas.html": ("Tablero de preguntas", "cuestionarios.html"),
+    "maestros-dijeron.html": ("100 maestros dijeron", "cuestionarios.html"),
     "racha-tactica.html": ("Racha táctica", "clases.html"),
     "reportes.html": ("Reportes de actividades", "clases.html"),
     "sesion.html": ("Sesión en vivo", "clases.html"),
@@ -686,14 +694,19 @@ NOMBRE_Y_PADRE = {
     "subgrupos.html": ("Subgrupos", "clases.html"),
     "alumno-nuevo.html": ("Crear cuenta de alumno", "clases.html"),
     "tareas.html": ("Tareas", "clases.html"),
+    "temporada.html": ("Plan de temporada", "tareas.html"),
     "informe-mensual.html": ("Informe mensual", "clases.html"),
     "supervision.html": ("Supervisión", "clases.html"),
     "supervisor.html": ("Panel de supervisión", "clases.html"),
     "academias.html": ("Academias", "clases.html"),
+    "prospectos.html": ("Interesados", "clases.html"),
+    "premios-academia.html": ("Premios de la academia", "clases.html"),
     "tablero-academias.html": ("Tablero por academia", "clases.html"),
     "tienda.html": ("Tienda", "clases.html"),
     "accesos.html": ("Accesos y cupos", "clases.html"),
     "licencias.html": ("Licencias de herramientas", "clases.html"),
+    "mis-arbitros.html": ("Mis árbitros", "clases.html"),
+    "arbitro.html": ("Mis herramientas", "clases.html"),
     "seleccion-codicader.html": ("Selección por parámetros", "clases.html"),
     "desempates.html": ("Desempates explicados", "clases.html"),
     "variacion-elo.html": ("Variación de Elo del torneo", "clases.html"),
@@ -752,6 +765,7 @@ NOMBRE_Y_PADRE = {
     "entreno/tipos.html": ("Habilidades", "clases.html"),
     "entreno/finales.html": ("Finales contra la máquina", "clases.html"),
     "entreno/memoria.html": ("Memoria", "clases.html"),
+    "entreno/oido.html": ("De oído", "clases.html"),
     "entreno/estilo.html": ("Tu estilo de juego", "clases.html"),
     "cursos/academia/index.html": ("Mis cursos", "clases.html"),
 }

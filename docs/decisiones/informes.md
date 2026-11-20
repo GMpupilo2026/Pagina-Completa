@@ -941,6 +941,23 @@ cero diferencias. Leer `profiles` pasó de ~200 ms a menos de 10 ms, y con eso
 `informes_inactivos()` bajó a 27 ms y `mis_clases()` a 14 ms. Quedan con
 función por fila solo tablas chicas que no crecen con cada alumno.
 
+**Cobros se había quedado afuera** hasta el 10/11/2026: `cobros`, `recibos`,
+`pagos`, `avisos_cobro`, `suscripciones`, `cobros_contacto`,
+`datos_facturacion` y `cobros_recordatorios_programados` preguntaban
+`bajo_mi_coordinacion(student_id)` fila por fila, y las cinco primeras crecen
+cada mes con cada alumno. La migración `cobros_rls_conjunto_una_vez` pasó sus
+22 políticas a `student_id in (select interno.bajo_mi_coordinacion_conjunto())`
+y `(select coordinador_puede('cobros'))` (y de `public` a `authenticated`: anon
+no tiene permisos en esas tablas). Comprobado igual que `profiles`: la función
+y el conjunto, pareja por pareja (81 510, más sin sesión), cero diferencias; la
+vista de cada una de las 286 cuentas en las ocho tablas, con la RLS de verdad,
+dio la misma huella antes y después; y 125 inserciones de prueba (las cuentas
+que coordinan y dos alumnos, sobre 25 personas) dieron lo mismo que la regla
+vieja. Leer las ocho tablas con todas las cuentas pasó de ~20 s a ~2 s
+(`cobros`, de 5,3 s a 0,35 s). **Para que no vuelva:**
+`verificar-rls-conjunto.js` falla si una política nueva sobre una tabla que
+crece llama a una función de permiso con una columna adentro.
+
 **«Tablas chicas» no quería decir «baratas»** (30 de setiembre). Con una
 cuenta de coordinación que también supervisa, `panel_profesor()` seguía en
 ~530 ms. Medido parte por parte con `EXPLAIN ANALYZE`, no eran
@@ -1359,6 +1376,35 @@ de arbitraje).
   bajarla, editarla a ciegas y volver a subirla, sin que quedara rastro de qué
   cambió ni cuándo.
 
+### La bienvenida, antes del primer informe
+
+**El primer correo que recibe una persona encargada es una bienvenida, no un
+informe.** Lo pidió el dueño para CCDR POCOCI: las 22 cuentas se acababan de
+crear, solo un alumno había entrado, y el primer informe semanal iba a salir
+al día siguiente diciéndoles a casi todas las familias que su hijo «no entró a
+practicar». Lo primero que lee una familia no puede ser eso.
+
+- La tanda (`informes-encargados`) manda `bienvenidaHtml()` cuando
+  `ultimo_envio_at` está vacío, y lo marca como un envío más: el primer informe
+  de verdad llega un periodo después, ya con algo que contar. «Enviar ahora»
+  desde Informes sigue mandando el informe: ahí lo pidió una persona.
+- **Cuenta lo que de verdad trae cada informe** (si practicó lo suficiente, el
+  tiempo y en qué, tareas y exámenes, la comparación, los mensajes de su profe,
+  los premios y el Elo, el nivel y el plan) **y cuándo llega**, dicho como en la
+  casa (`cuandoLlega()`: «todos los lunes a la 1 p. m.»), con el día y la hora
+  que tiene puestos esa persona encargada. Si se agrega o se quita una sección
+  del informe, se cambia también aquí.
+- Va con la marca de la academia (la misma cabecera del informe) y sin la foto
+  del alumno: no hay nada que mostrar todavía.
+- Vale para todas las academias: cualquier encargado nuevo la recibe primero.
+- Los de CCDR POCOCI quedaron todos los lunes a la 1 p. m. (`dia_semana` 1,
+  `hora_envio` 13), a pedido del dueño; la profe lo puede cambiar en Informes.
+
+Lo prueba `verificar-bienvenida-casa.js` (la plantilla con Node, sin red: el
+texto que lee la familia, la hora bien dicha, la marca, el nombre escapado, y
+que la tanda la mande solo la primera vez). Roto a propósito (sin la
+bienvenida en la tanda), salta.
+
 ### Lo que la casa de verdad quiere saber: si está trabajando o no
 
 Ninguna de las cifras que el informe traía contestaba eso. Media hora puede ser
@@ -1598,6 +1644,62 @@ contenido. En esos cinco no escondía nada —sus 200 y tantas comprobaciones
 comparan textos y números—, pero la primera que comparara un objeto habría
 pasado siempre. (El `cmp` de los dobles de otros verificadores compara valores
 de columnas, no objetos, y está bien.)
+
+### La página de la familia
+
+Salió de comparar la Academia con otras plataformas (18/11/2026): un portal
+para la casa era lo que más tenían y nosotros no. El dueño vio primero una
+vista de ejemplo y pidió construirla. Es lo mismo que el informe por correo,
+pero vivo y con una cosa para hacer: avisar una ausencia.
+
+- **Un enlace secreto por encargado, sin cuenta**: `familia.html#t=<64 hex>`,
+  como el de corregir la inscripción del Metropolitano. El secreto va detrás
+  del `#`, que no viaja al servidor. La tabla `familia_enlaces` (encargado,
+  token, `visto_at`) no tiene políticas y nadie la lee desde afuera; lleva el
+  trigger de auditoría, porque reparte acceso.
+- **Está apagada hasta que alguien la enciende.** En Informes, debajo de cada
+  encargado, «Página de la familia de …»: encender y copiar el enlace,
+  cambiarlo (el anterior deja de servir) o apagarla. Lo puede hacer un
+  profesor del alumno o quien administra (`familia_enlace()`,
+  `familia_enlace_apagar()`, `familia_enlaces_de()`). No se enciende sola para
+  las 137 familias: quien tenga el enlace ve datos de un menor, y eso lo
+  decide quien conoce a la familia.
+- **Todo llega de una vez de `familia_pagina(token)`**, para `anon`: el
+  informe de la semana (el mismo `informe_de_alumno()` del correo, desde el
+  lunes de Costa Rica), las clases de los próximos 28 días, la asistencia de
+  35 días, las tareas, los cobros y recibos y las ausencias avisadas. La
+  página no filtra nada.
+- **Las faltas que muestra son solo las seguras**: la clase a la que fue, o
+  una clase CON lista en la que estaba y no fue. Una clase sin lista de otro
+  grupo del mismo profe no es una falta suya, y decírselo a una familia sería
+  mentirle. Por eso el título dice «a las que fue de N», no «asistencia
+  perfecta».
+- **Los pedidos van sin sesión** (`fetch` con la clave pública, no
+  `window.sb`). Un profe que prueba el enlace en su navegador mandaría su
+  identidad: la base le exigiría los dos pasos antes de mirar el token, y
+  `mensajes_casa_de()` lo rechazaría por no ser profesor de ese alumno. Por
+  si alguien llama la función con sesión igual, `familia_pagina()` vacía la
+  identidad del pedido (`request.jwt.claims`) antes de armar el informe: ahí
+  adentro quien manda es el token, como en la tanda de los correos.
+- **Avisar una ausencia** (`familia_avisar_ausencia()`): deja una
+  justificación `pendiente` con «Avisada por su familia (nombre)», de un solo
+  día, de hoy a 28 días. Pasa por el freno de los envíos sin cuenta (tipo
+  `familia_ausencia`: seis al día por encargado) y pide la casilla de la
+  política de privacidad, cuya versión guarda. Le llega al celular al profe, a
+  quien coordina y a quien supervisa, y se acepta donde siempre
+  (`justificaciones.html`).
+- **Los pagos se ven, pero no se cobra nada**: lo pendiente, cuándo vence y
+  los recibos, con cómo se paga de verdad (SINPE, transferencia o efectivo).
+  Con los cobros en pausa (ver «Cobros en pausa desde el 4/11/2026») la
+  sección entera se esconde si el alumno no tiene cobros ni recibos.
+- **El correo todavía no lleva el enlace**: se manda a mano (copiar y pegar).
+  Ponerlo al pie del informe es sumar un dato a la tanda de
+  `informes-encargados`; quedó para después.
+
+Al tocar esto, `node herramientas/verificar-todo.js familia` (con
+`FOTOS=<carpeta>` deja capturas en computadora y en celular oscuro, para
+mirar la pantalla). Rompiendo a propósito la casilla de privacidad del aviso o
+pintando el nombre con `innerHTML`, salta.
 
 ### Lo que juega en Lichess y Chess.com
 

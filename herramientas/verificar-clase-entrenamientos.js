@@ -99,7 +99,7 @@ async function pruebaDelProfe(browser) {
   igual("la pestaña se llama Entrenamientos", (await page.textContent("#teacher-tab-tipos")).trim(), "🧠 Entrenamientos");
   const slugs = await page.$$eval("#entrenos-body [data-entreno]", (b) => b.map((x) => x.dataset.entreno));
   igual("están los que pidieron", ["mates", "aprender", "coordenadas", "desafios", "estudio", "aperturas", "4x4", "visualizacion",
-    "precision-posicional", "finales", "memoria", "tipos", "estilo"].filter((x) => !slugs.includes(x)), []);
+    "precision-posicional", "finales", "finales-clases", "memoria", "tipos", "estilo"].filter((x) => !slugs.includes(x)), []);
 
   /* Todos los ejercicios de todos los entrenamientos con lista: la posición
      la acepta el tablero de la clase y la solución se juega. */
@@ -258,6 +258,24 @@ async function pruebaDelProfe(browser) {
     [true, empiezaMaquina, true, "entreno/finales.html?final=lucena"]);
   igual("Finales: están todos los del archivo", finales,
     JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "finales.json"), "utf8")).finales.length);
+
+  /* Posiciones de las clases: todas, un grupo por día con el más reciente
+     arriba (el entrenamiento de hoy, lo primero), y cada una va contra la
+     máquina de la clase (el alumno juega siempre el color que mueve) y abre
+     esa posición en su página. */
+  const clasesBanco = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "finales-clases.json"), "utf8")).finales;
+  const diasBanco = [...new Set(clasesBanco.map((f) => f.clase.fecha))].sort().reverse();
+  const cl = await page.evaluate(async () => {
+    const g = await ADAPTADORES_ENTRENO["finales-clases"].cargar();
+    return { ids: g.map((x) => x.id), titulo0: g[0].titulo, total: g.reduce((n, x) => n + x.items.length, 0),
+      todasFinal: g.every((x) => x.items.every((it) => it.final && it.practica.enlace === it.id && !/^\d+\. \d\d\/\d\d/.test(it.titulo))),
+      href: EntrenosClase.enlaceDe(herramientasDelSitio(), "finales-clases", g[0].items[0].id).href, primera: g[0].items[0].id };
+  });
+  const [aa, mm, dd] = diasBanco[0].split("-");
+  igual("Posiciones de las clases: todas, un grupo por día (el más reciente arriba), contra la máquina y con su enlace",
+    [cl.ids, cl.titulo0, cl.total, cl.todasFinal, cl.href],
+    [diasBanco.map((d) => "clase-" + d), "Clase del " + dd + "/" + mm + "/" + aa, clasesBanco.length, true,
+      "entreno/finales.html?banco=clases&final=" + cl.primera]);
 
   /* Practicar: sus 9 series y sus 45 posiciones, con la jugada en SAN, y «Que la
      practiquen» abre esa posición sola («serie:índice», como la nombra la página). */

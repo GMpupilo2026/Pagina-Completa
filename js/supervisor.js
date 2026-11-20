@@ -462,6 +462,11 @@
 
     /* ================= Arranque ================= */
     async function init() {
+        // Cerrar sesión: lo mismo que el botón de clases.html.
+        $("logout-btn").addEventListener("click", async () => {
+            try { await sb.auth.signOut(); } catch (e) { /* la sesión local se borra igual */ }
+            location.href = "index.html";
+        });
         const { data } = await sb.auth.getSession();
         session = data.session;
         if (!session) { location.href = "login.html?next=supervisor.html"; return; }

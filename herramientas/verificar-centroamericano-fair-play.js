@@ -198,9 +198,9 @@ function pruebasDelCalculo() {
     igual("las 3 mejores que manda la pantalla: una lista por posición, jugadas UCI y centipeones; si no, se rechaza entera", d.opciones, [[null, [["e2e4", 30], ["d2d4", 10]]], null, null, null, null]);
     igual("cada jugada con cuánto peor es cada opción que la mejor, en puntos de probabilidad de ganar (la fórmula de Lichess), las jugadas legales y lo que perdió lo jugado", d.deltas16, [[0, 13.7], 2, 0]);
     igual("el modelo por jugada: las probabilidades suman 1 y van de la mejor a la peor; con menos de 8 jugadores no hay centro ni factor", [d.modelo.suma, d.modelo.orden, d.modelo.pocos], [1, true, { centro: 0, factor: 1 }]);
-    igual("con 80 jugadores inventados que juegan según el modelo: el ajuste encuentra que con más Elo se escapan menos diferencias (b < 0), casi nadie honesto pasa de 62,5, y quien usa el motor en 3 de cada 10 jugadas sale marcado más de la mitad de las veces (más que con 1 de cada 10)",
-        [d.modelo.b < -0.2, d.modelo.honestosAltos <= 3, d.modelo.deteccion30 > 50, d.modelo.deteccion30 > d.modelo.deteccion10], [true, true, true, true]);
-    igual("y quien juega siempre la del motor sale muy por encima de 62,5", d.modelo.tramposo > 75, true);
+    igual("con 80 jugadores inventados que juegan según el modelo: el ajuste encuentra que con más Elo se escapan menos diferencias (b < 0), casi nadie honesto pasa de 70 (la vara de FIDE para actuar), y quien usa el motor en 3 de cada 10 jugadas sale desde 65 más de 3 de cada 10 veces (y mucho más que con 1 de cada 10): con las varas de FIDE se marca menos, a cambio de casi no acusar a nadie limpio",
+        [d.modelo.b < -0.2, d.modelo.honestosAltos <= 1, d.modelo.deteccion30 > 30, d.modelo.deteccion30 > 3 * d.modelo.deteccion10], [true, true, true, true]);
+    igual("y quien juega siempre la del motor sale muy por encima de 70", d.modelo.tramposo > 75, true);
     igual("los casos de prueba: de 21 partidas donde se sabe la respuesta, marca al que usó el motor y casi a ninguno de los 20 que jugaron limpio",
         [d.modelo.casos.con_trampa, d.modelo.casos.marcados_a_mirar, d.modelo.casos.marcados_alta, d.modelo.casos.sin_trampa, d.modelo.casos.falsos_a_mirar <= 10], [1, 100, 100, 20, true]);
     console.log("\n=== Más precisión ===");
@@ -241,7 +241,7 @@ function pruebasDelCalculo() {
         c.ctx, [{ v: 0.5, r: 1 }, { v: 1, r: 0 }, { v: 0, r: 0 }, 1.35]);
     igual("las trampas: quien no cae en ninguna, con lo que atraen de verdad, sale alto; cayendo en algunas, menos; con menos de 5 no se mide; la que no es trampa no cuenta; la atracción se mide en la gente (y sin datos, 1)",
         c.trampas, [10, 0, true, true, null, 0, 4, 1]);
-    igual("la vara para el tamaño del torneo (Bonferroni al 5 %): nunca menos de 2; con 10 jugadores, 2,6; con 300, 3,6", c.umbral, [2, 2.58, 3.59, 1.96]);
+    igual("la vara para el tamaño del torneo (Bonferroni al 5 %): nunca menos de «vigilar» (3, el 65 de FIDE); con 10 jugadores, 3; con 300, 3,6", c.umbral, [3, 3, 3.59, 1.96]);
     igual("todas las señales en una cuenta: la correlación medida (nunca negativa; sin datos, 0), independientes suman más, parecidas no cuentan doble, y sin el índice no hay",
         c.combinada, [4, 0.95, 0, 2.83, 2, null]);
     igual("los casos de prueba con su margen (Wilson), cuánto separan (AUC) y por proporción de uso del motor", c.casos, [[49, 94.3], [1, 0.5, null], 2, true, 1]);
@@ -258,6 +258,8 @@ function pruebasDelCalculo() {
     const fn = leerArchivo("supabase/functions/centroamericano-fair-play/index.ts");
     igual("la función no mide la copia de la ronda anterior (ni al darla ni al guardarla)", (fn.match(/copiaDeOtra\(g\.moves/g) || []).length, 2);
     igual("la función ya no lee la transmisión de Lichess (de Lichess solo usa el explorador de maestros, para la teoría), y nunca devuelve el enlace de LiveChess (torneo_id) a la pantalla", [/lichess\.org\/(api|broadcast)/.test(fn) || (fn.match(/lichess\.org\/[a-z]+/g) || []).some((u) => u !== "lichess.org/masters"), (fn.match(/return \{[^;]*\}/g) || []).some((x) => /torneo_id/.test(x)) || /partidas\.push\(\{[^}]*torneo_id/.test(fn)], [false, false]);
+    // Fair Play es uno solo para todo el sitio: sin enlace, de la casa; no basta la licencia (ver «Cada evento de la Mesa del árbitro tiene dueño»).
+    igual("sin enlace, hace falta ser de la casa (centroamericano_soy_casa), no solo la licencia", /comoQuienLlama\.rpc\("centroamericano_soy_casa"\)/.test(fn) && !/rpc\("tengo_herramienta"/.test(fn), true);
     igual("la función compara los DOS nombres con LiveChess antes de tomar una partida", /mismoJugador\(f\.blancas, nombreLc\(p\.white\)\) && mismoJugador\(f\.negras, nombreLc\(p\.black\)\)/.test(fn), true);
 
     console.log("\n=== El puntaje de Stockfish, para las blancas ===");
@@ -288,14 +290,23 @@ function pruebasDelCalculo() {
     const conIndice = Object.assign({}, alerta, { roi: 66.4, z_modelo: 3.28, m_jugadas: 30, m_t1: 25, m_e_t1: 15.2, m_dj: 36, m_e_dj: 135, m_z_t1: 3.1, m_z_dj: 2.4, desde_jugada: 11, profunda: true });
     igual("con el modelo: el índice como el de FIDE, lo esperable según lo difícil de cada posición, lo perdido, desde dónde se midió (la teoría) y si se confirmó a fondo",
         X(conIndice).slice(0, 5).map((x) => [!!x.alto, x.texto]), [
-        [true, "Índice como el de FIDE: 66,4 (lo normal es 50; cada 5 puntos es una desviación; desde 60 se mira)."],
+        [true, "Índice como el de FIDE: 66,4 (lo normal es 50; cada 5 puntos es una desviación; desde 65 se vigila y desde 70 se actúa)."],
         [true, "Según lo difícil de cada posición, alguien de su Elo jugaría la primera del motor unas 15,2 de 30 veces; la jugó 25."],
         [true, "Perdió en promedio 1,2 puntos de probabilidad de ganar por jugada; lo esperable para su Elo: 4,5."],
         [false, "Se midió desde la jugada 11: lo de antes era teoría (partidas de maestros) o apertura."],
         [false, "Confirmado con el análisis hondo (profundidad 20)."]]);
     igual("la frase de arriba, con el índice", [Rz(conIndice), Rz(Object.assign({}, conIndice, { roi: 48, z_modelo: -0.4, z: 0, z_t1: 0, z_dif: 0 })), X(Object.assign({}, conIndice, { comparado: "categoria" }))[1].texto],
-        ["Índice 66,4: 3,3 desviaciones arriba de lo normal para su nivel. Otras señales altas: precisión, primera del motor, posiciones difíciles.", "Índice 48,0: dentro de lo normal para su nivel.",
+        ["Índice 66,4: 3,3 desviaciones arriba de lo normal para su nivel (por azar, 1 de cada 1\u00a0927 jugadores limpios). Otras señales altas: precisión, primera del motor, posiciones difíciles.", "Índice 48,0: dentro de lo normal para su nivel.",
          "Según lo difícil de cada posición, alguien de su categoría jugaría la primera del motor unas 15,2 de 30 veces; la jugó 25."]);
+    // Los dos ejemplos del seminario de FIDE (Andy Howie, «Understanding Chess Statistics»): XXX, 67,8 en la prueba rápida y
+    // z = −1,78 en la completa (estaba limpia); yyy, 89,0 y z = 7,11 («1 in 1,723,536,022,721»).
+    const { nivelIndice, porAzar } = window.CentroamericanoFairPlay;
+    const enCifras = (t) => Number((t.match(/1 de cada ([\d\s\u00a0.]+) jugadores/) || [, "0"])[1].replace(/[^\d]/g, ""));
+    igual("los ejemplos de FIDE: 67,8 es «a mirar» (no «muy alta»), 89,0 «muy alta»; las varas justas en 65 y 70",
+        [nivelIndice(67.8), nivelIndice(89), nivelIndice(64.9), nivelIndice(65), nivelIndice(69.9), nivelIndice(70)],
+        ["a_mirar", "alta", "normal", "a_mirar", "a_mirar", "alta"]);
+    igual("lo que pasaría por azar con z = 7,11 da la cifra de FIDE (1 de cada 1 723 536 022 721, a menos de 0,01 %); con z negativo (−1,78, jugó peor de lo esperado) no se dice nada",
+        [Math.abs(enCifras(porAzar(7.11)) / 1723536022721 - 1) < 1e-4, porAzar(-1.78)], [true, ""]);
     delete global.window; delete global.document;
 
     console.log("\n=== La banda dorada de la tablet (fairPlayDeMesa) ===");
@@ -386,6 +397,11 @@ const SERVIDOR_FP = `
       if (!f || f.estado !== "sorteada") return err(400, "Ese sorteo ya se decidió");
       const av = { id: "av-" + (++n), leido_en: null, mesa: f.mesa, texto: "🛡 FAIR PLAY · mesa " + f.mesa }; S.avisos.push(av);
       Object.assign(f, { estado: "aprobada", aviso_id: av.id, arbitro: "Ana Árbitra", decidida_por_nombre: quien }); return ok({ sorteo: f });
+    }
+    if (b.action === "borrar") {
+      if (!String(b.motivo || "").trim()) return err(400, "Para borrar una mesa hace falta el motivo: queda anotado");
+      if (!f) return err(400, "Esa mesa ya no está en la lista");
+      S.sorteos.splice(S.sorteos.indexOf(f), 1); (S.borrados = S.borrados || []).push({ fila: f, motivo: b.motivo, por: quien }); return ok({ sorteo: f });
     }
     if (b.action === "descartar") { if (!String(b.motivo || "").trim()) return err(400, "Para descartar una mesa hace falta el motivo"); Object.assign(f, { estado: "descartada", motivo: b.motivo }); return ok({ sorteo: f }); }
     if (b.action === "revisar") {
@@ -515,7 +531,7 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         e = await abrir(browser, "centroamericano-fair-play.html", DOBLE_ENCARGADO, { hash: "d".repeat(64) });
         const p = e.p;
         await p.waitForFunction(() => document.getElementById("fp-categoria") && document.getElementById("fp-categoria").options.length > 1);
-        igual("dice quién es el encargado, y el título de la pestaña lleva su nombre", await p.evaluate(() => [document.getElementById("fp-estado").textContent.startsWith("Encargado: Laura Mora · chess-results leído a las "), document.title.startsWith("Fair Play de Laura Mora")]), [true, true]);
+        igual("dice quién es el encargado, y el título de la pestaña lleva su nombre", await p.evaluate(() => [document.getElementById("fp-estado").textContent.startsWith("Encargado: Laura Mora · emparejamientos leídos a las "), document.title.startsWith("Fair Play de Laura Mora")]), [true, true]);
         igual("las categorías con su ronda, sin las de ensayo", await p.$$eval("#fp-categoria option", (l) => l.map((o) => o.textContent)), ["Todas las categorías (2)", "Sub-12 Absoluto — ronda 3", "Sub-14 Femenino — ronda 3"]);
         igual("el encargado NO ve la sección de los QR de los encargados y no lee ninguna tabla directo: todo pasa por la función", await p.evaluate(() => [!!document.getElementById("fp-t-encargados"), window.__directo]), [false, []]);
         igual("la pantalla no tiene texto suelto («null») de una sección que no va", await p.evaluate(() => [...document.getElementById("fp-app").childNodes].filter((n) => n.nodeType === 3 && n.textContent.trim()).length), 0);
@@ -542,7 +558,7 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         igual("después dice que está al día, cuántas analizó aquí y la casilla queda encendida", await p.evaluate(() => [document.getElementById("fp-motor-estado").textContent, document.getElementById("fp-motor-si").checked]),
             ["Al día: ninguna partida terminada por analizar · 2 analizadas en esta computadora · 2 de 18 posiciones salieron de la nube de Lichess (más hondas). Se vuelve a mirar cada 45 s.", true]);
         igual("el índice del torneo: del más alto al más bajo, con su chip, lo jugado contra lo esperable y, sin Elo, contra su categoría", await p.$$eval("#fp-indice tr", (l) => l.map((tr) => [tr.dataset.nivel, ...[...tr.children].slice(0, 6).map((td) => { const c = td.cloneNode(true); c.querySelectorAll(".cam-fp-informe-jugador").forEach((b) => b.remove()); return c.textContent; })])),
-            [["alta", "Pérez, Luis (1500)", "Sub-12 Absoluto", "3 (rondas 1, 2, 3) · 90 jugadas", "66,4 Muy alta", "70 / 45,2 (+3,1)", "8 de 8 / 3,4"],
+            [["a_mirar", "Pérez, Luis (1500)", "Sub-12 Absoluto", "3 (rondas 1, 2, 3) · 90 jugadas", "66,4 A mirar", "70 / 45,2 (+3,1)", "8 de 8 / 3,4"],
              ["normal", "Niña, Sin EloSin Elo: comparado con su categoría", "Sub-14 Femenino", "2 (rondas 2, 3) · 50 jugadas", "51,2", "22 / 21,5 (+0,1)", "—"]]);
         igual("y lo que se tuvo en cuenta de cada uno, una frase por línea: el Elo que se le reconoció, su historia en otros eventos, el tiempo (la señal alta en negrita) y el ritmo",
             await p.$$eval("#fp-indice tr", (l) => l.map((tr) => [...tr.children[6].querySelectorAll(":scope > .cam-fp-detalle")].map((n) => [n.textContent.slice(0, 40), getComputedStyle(n).fontWeight >= 700, getComputedStyle(n).display]))),
@@ -555,7 +571,7 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         await p.click("#fp-confianza summary");
         igual("«¿Qué tan confiable es?»: las alarmas falsas contra las del azar y cuánto detectaría", await p.$$eval("#fp-confianza-texto p", (l) => l.map((x) => x.textContent).slice(0, 3)), [
             "Medido con los 140 jugadores que tienen 30 jugadas o más analizadas.",
-            "Alarmas falsas: 3,1 % pasa de 60 y 0,7 % de 62,5. Por pura casualidad se esperaría 2,3 % y 0,6 %. Como casi todos juegan limpio, esto es lo más que se equivoca.",
+            "Alarmas falsas: 3,1 % pasa de 65 y 0,7 % de 70. Por pura casualidad se esperaría 2,3 % y 0,6 %. Como casi todos juegan limpio, esto es lo más que se equivoca.",
             "Si alguien usara el motor en 1 de cada 10 jugadas, lo marcaría el 30,0 % (20,0 % muy alto) de las veces; en 2 de cada 10, el 62,0 % (50,0 % muy alto); en 3 de cada 10, el 85,0 % (74,0 % muy alto)."]);
         igual("y con los casos de prueba (se sabe quién usó el motor) y las rápidas, aparte", await p.$$eval("#fp-confianza-texto p", (l) => l.map((x) => x.textContent).slice(3, 5)), [
             "Con casos de prueba (partidas donde se sabe quién usó el motor): marcó a 83,3 % de los 6 que hicieron trampa, 66,7 % muy alto, y a 0,0 % de sus 6 rivales, que jugaron limpio.",
@@ -673,7 +689,7 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         await p.fill('dialog[open] input:not([type="hidden"])', "3");
         await p.click("dialog[open] [data-avisos-aceptar]");
         await p.waitForFunction(() => { const d = document.querySelector("dialog[open]"); return d && /ronda 1, mesa 3/.test(d.textContent); });
-        igual("sin los emparejamientos de esa mesa, pide escribir el nombre (y con qué color jugaba)", await p.evaluate(() => [/escribe el nombre como aparece en chess-results/.test(document.querySelector("dialog[open]").textContent), !!document.querySelector('dialog[open] input:not([type="hidden"])')]), [true, true]);
+        igual("sin los emparejamientos de esa mesa, pide escribir el nombre (y con qué color jugaba)", await p.evaluate(() => [/escribe el nombre como aparece en los emparejamientos/.test(document.querySelector("dialog[open]").textContent), !!document.querySelector('dialog[open] input:not([type="hidden"])')]), [true, true]);
         await p.fill('dialog[open] input:not([type="hidden"])', "Ana Pérez");
         await p.click("dialog[open] [data-avisos-aceptar]");
         await p.waitForFunction(() => document.querySelectorAll("#fp-lista tr").length === 4);
@@ -702,6 +718,25 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         await p.click("#fp-elegir");
         await p.waitForFunction(() => /no queda ninguna mesa por elegir/.test(document.body.textContent));
         igual("una mesa ya elegida no se vuelve a ofrecer", await p.evaluate(() => !document.querySelector("dialog[open]")), true);
+        console.log("\n=== Borrar una mesa que no correspondía ===");
+        const filaElegida = '#fp-lista tr[data-id="' + await p.evaluate(() => window.__fp.sorteos.find((f) => f.origen === "elegida").id) + '"]';
+        igual("cada mesa de la lista tiene su «Borrar», con el nombre de la mesa para el lector de pantalla", await p.$$eval("#fp-lista tr", (l) => l.every((tr) => !!tr.querySelector('[data-accion="borrar"]'))), true);
+        await p.click(filaElegida + ' [data-accion="borrar"]');
+        await p.waitForSelector("dialog[open] input:not([type=hidden])");
+        igual("avisa qué pasa al borrar (sale del registro y su árbitro recibe el aviso) y pide el motivo", await p.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [/deja de contar para el descanso/.test(t), /ya no hay que retener a nadie/.test(t), /Borrar la mesa/.test(t)]; }), [true, true, true]);
+        await p.click("dialog[open] [data-avisos-aceptar]");
+        await p.waitForFunction(() => /hace falta el motivo/.test(document.body.textContent));
+        igual("sin motivo no se borra", await p.evaluate(() => window.__fp.sorteos.some((f) => f.origen === "elegida")), true);
+        await p.click(filaElegida + ' [data-accion="borrar"]');
+        await p.waitForSelector("dialog[open] input:not([type=hidden])");
+        await p.fill("dialog[open] input:not([type=hidden])", "Era de prueba");
+        await p.click("dialog[open] [data-avisos-aceptar]");
+        await p.waitForFunction((s) => !document.querySelector(s), filaElegida);
+        igual("borrada: llega a la función con su motivo y sale de la lista", await p.evaluate(() => [window.__fp.llamadas.filter((l) => l.action === "borrar").map((l) => l.motivo).pop(), window.__fp.sorteos.some((f) => f.origen === "elegida")]), ["Era de prueba", false]);
+        await p.click("#fp-elegir");
+        await p.waitForFunction(() => { const d = document.querySelector("dialog[open]"); return d && /Elegir una mesa a mano/.test(d.textContent); });
+        igual("y la mesa se puede volver a elegir", await p.$$eval("dialog[open] select >> nth=0", (l) => [...l[0].options].map((o) => o.value)), ["1"]);
+        await p.click("dialog[open] [data-avisos-cancelar]");
         await p.selectOption("#fp-categoria", "");
 
         const [bajada] = await Promise.all([p.waitForEvent("download"), p.click("#fp-pdf")]);
@@ -711,6 +746,7 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         const ib = fs.readFileSync(await informe.path()).toString("latin1");
         igual("el informe de Fair Play del torneo en PDF: con la marca de agua, el resumen, las revisiones, el acumulado y las alertas", [informe.suggestedFilename(), ib.startsWith("%PDF"), /\/SMask \d+ 0 R/.test(ib), ...["Resumen", "Por categor", "Las revisiones", "Tenia un papel|Ten\\355a un papel|Ten.a un papel", "P.rez, Luis", "Castro, Alana"].map((x) => new RegExp(x).test(ib))],
             ["informe-fair-play-centroamericano-2026.pdf", true, true, true, true, true, true, true, true]);
+        igual("en el informe ninguna celda ni encabezado sale cortado con «...»: parten en renglones", /\.\.\.\) Tj/.test(ib), false);
         // El informe de UN jugador (para presentar un caso): sus partidas, sus señales y el método.
         const [deJugador] = await Promise.all([p.waitForEvent("download"), p.click("#fp-indice tr >> nth=0 >> [data-accion='informe-jugador']")]);
         const jb = fs.readFileSync(await deJugador.path()).toString("latin1");
@@ -724,6 +760,10 @@ const TEXTO_PANEL = "#fp-app p, #fp-app td, #fp-app td span, #fp-app .cam-chip, 
         const o = await abrir(browser, "centroamericano-fair-play.html", DOBLE_ENCARGADO, { hash: "d".repeat(64), esquema: "dark" });
         await o.p.waitForSelector(".cam-fp-alerta");
         await o.p.evaluate(() => { document.querySelector(".cam-fp-reglas").open = true; });
+        igual("la guía de FIDE trae los dos ejemplos del seminario y los casos que enseñan", await o.p.evaluate(() => {
+            const t = document.querySelector(".cam-fp-reglas").textContent;
+            return ["Dos ejemplos del seminario", "z = −1,78", "z = 7,11", "2610 ± 212", "Shevchenko", "Docx", "Rausis", "Sandu", "Carlsen y Niemann", "Kramnik", "Toronto"].filter((x) => !t.includes(x));
+        }), []);
         igual("en oscuro, todo el texto da 4,5 o más", await o.p.evaluate(CONTRASTE, TEXTO_PANEL), []);
         await o.ctx.close();
 

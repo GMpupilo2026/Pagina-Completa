@@ -65,6 +65,62 @@ const DESPUES = {
   },
 };
 
+/* Los que no aguantan compartir la máquina: con --paralelo corren al final,
+   de a uno y sin nadie más. Probado el 9/11/2026 con los 272 de navegador de
+   a cuatro: estos dos fallaban (cámara: la calibración no llegaba a tiempo;
+   simultáneas: 25 partidas a la vez pasaban de los 10 minutos) y solos pasan. */
+const SOLOS = new Set(["verificar-camara-tablero.js", "verificar-partidas-simultaneas.js"]);
+
+/* Cuánto tarda cada verificador LENTO en el CI (segundos, en las máquinas de
+   GitHub; sacado de la corrida del 18/11/2026). Con esto se reparten las
+   tandas parejas. Antes iban de a uno por turno (el 1.º a la tanda 1, el 2.º
+   a la 2…) y la 4 juntó por casualidad a cámara y simultáneas: 43 minutos
+   contra 19 de la 1, y se cortaba en el límite de 45 aunque todo pasara (el
+   CI quedaba en «cancelado», sin ningún verificador en rojo). Los que no
+   están acá tardan unos 10 s. No hace falta tenerla al día al segundo: solo
+   importa que los lentos estén. */
+const DURACION = {
+  "verificar-admin.js": 84,
+  "verificar-bromas.js": 61,
+  "verificar-camara-tablero.js": 448,
+  "verificar-carga-tablero.js": 51,
+  "verificar-centroamericano-fair-play.js": 72,
+  "verificar-centroamericano-mesas-pagina.js": 173,
+  "verificar-centroamericano.js": 55,
+  "verificar-clase-invitados.js": 40,
+  "verificar-cobros.js": 50,
+  "verificar-csp-navegador.js": 67,
+  "verificar-css.js": 177,
+  "verificar-cuadro-comandos.js": 53,
+  "verificar-encabezado-scroll.js": 46,
+  "verificar-entreno-accesible.js": 53,
+  "verificar-entreno-arreglos.js": 46,
+  "verificar-entreno-escribiendo.js": 46,
+  "verificar-entreno-repaso.js": 52,
+  "verificar-estudio.js": 197,
+  "verificar-examenes.js": 44,
+  "verificar-grabacion-interactiva.js": 42,
+  "verificar-informes.js": 46,
+  "verificar-juegos-accesible.js": 144,
+  "verificar-juegos-nuevos-en-vivo.js": 53,
+  "verificar-lector-planilla-pagina.js": 112,
+  "verificar-metropolitano.js": 120,
+  "verificar-panel-taller.js": 71,
+  "verificar-panel.js": 205,
+  "verificar-pareo-dgt-lector.js": 75,
+  "verificar-pareo-jde-dia.js": 42,
+  "verificar-partidas-modalidades.js": 139,
+  "verificar-partidas-simultaneas.js": 488,
+  "verificar-piezas-ciego.js": 75,
+  "verificar-preparacion-rivales.js": 103,
+  "verificar-tablero-cuadrado.js": 43,
+  "verificar-temas-plataforma.js": 41,
+  "verificar-tipos-pagina.js": 220,
+  "verificar-torneo-jugado.js": 116,
+  "verificar-torneo-modos.js": 68
+};
+const DURACION_COMUN = 10;
+
 // ------------------------------------------------------------ argumentos
 const args = process.argv.slice(2);
 const bandera = (n) => args.includes(n);
@@ -108,7 +164,17 @@ if (soloNavegador) lista = lista.filter((v) => v.navegador);
 if (parte) {
   const [i, n] = parte.split("/").map((x) => parseInt(x, 10));
   if (!(i >= 1 && n >= 1 && i <= n)) { console.error("--parte va como 2/4"); process.exit(2); }
-  lista = lista.filter((_, k) => k % n === i - 1);
+  // El más lento primero, cada uno a la tanda que va más liviana. Lo mismo en
+  // las cuatro máquinas: la lista y el orden salen de la carpeta, igual en todas.
+  const tandas = Array.from({ length: n }, () => ({ total: 0, items: [] }));
+  const peso = (v) => DURACION[v.archivo] || DURACION_COMUN;
+  [...lista].sort((a, b) => peso(b) - peso(a) || a.archivo.localeCompare(b.archivo)).forEach((v) => {
+    const t = tandas.reduce((m, x) => (x.total < m.total ? x : m));
+    t.total += peso(v);
+    t.items.push(v);
+  });
+  const mia = new Set(tandas[i - 1].items);
+  lista = lista.filter((v) => mia.has(v));
 }
 
 // ------------------------------------------------------------ correr
@@ -185,7 +251,8 @@ async function asegurarSitio() {
 
   console.log("Corriendo " + lista.length + " verificador(es)" + (paralelo > 1 ? ", de a " + paralelo : "") + "\n");
   const resultados = [];
-  const cola = lista.slice();
+  const aparte = paralelo > 1 ? lista.filter((v) => SOLOS.has(v.archivo)) : [];
+  const cola = lista.filter((v) => !aparte.includes(v));
   async function obrero() {
     while (cola.length) {
       const res = await uno(cola.shift());
@@ -194,7 +261,12 @@ async function asegurarSitio() {
       console.log((res.codigo === 0 ? "  ✓ " : "  ✗ ") + seg + "  " + res.v.archivo);
     }
   }
-  await Promise.all(Array.from({ length: Math.min(paralelo, lista.length) }, obrero));
+  if (cola.length) await Promise.all(Array.from({ length: Math.min(paralelo, cola.length) }, obrero));
+  if (aparte.length) {
+    console.log("\nLos que corren solos (" + aparte.length + "):");
+    cola.push(...aparte);
+    await obrero();
+  }
   if (servidor) servidor.kill();
 
   const malos = resultados.filter((r) => r.codigo !== 0);
@@ -204,7 +276,7 @@ async function asegurarSitio() {
     // Las líneas que dicen QUÉ falló, aunque queden antes de las últimas 40:
     // con solo la cola, un fallo temprano de un verificador largo no se veía.
     // También el «esperaba:»/«salió:» que algunos ponen en las líneas de abajo.
-    const marcadas = lineas.slice(0, -40).filter((l, i, ls) => /✗|FALLA/.test(l) || (/^\s+(esperaba|salió):/.test(l) && /✗|esperaba:/.test(ls[i - 1] || "")));
+    const marcadas = lineas.slice(0, -40).filter((l, i, ls) => /✗|❌|FALLA/.test(l) || (/^\s+(esperaba|salió):/.test(l) && /✗|esperaba:/.test(ls[i - 1] || "")));
     const antes = marcadas.length ? "(fallos antes del final)\n" + marcadas.join("\n") + "\n…\n" : "";
     console.log("\n──────── " + r.v.archivo + " (salida " + r.codigo + ") ────────\n" + antes + cola);
   }

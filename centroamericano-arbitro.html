@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/centroamericano.css">
     <link rel="stylesheet" href="css/centroamericano-mesas.css">
+    <link rel="stylesheet" href="css/guia-planillas.css">
     <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
     <script src="js/modo-liviano.js"></script>
     <script src="js/adaptive-mode.js"></script>
@@ -34,20 +35,23 @@
     <!-- La portada es la de las bases (morado, hojas de monstera, pildora roja),
          más baja: en el celular lo que importa son las mesas. La mascota es una de
          las dos imágenes de las bases, sin tocar. Lo que dice cada dato lo pone
-         js/centroamericano-arbitro.js al leer el enlace. -->
+         js/centroamericano-arbitro.js al leer el enlace. La píldora «XXI Campeonato»
+         es del Centroamericano: nace escondida y solo se muestra con su enlace de
+         chess-results; en un torneo de Pareo no va, y uno de Tacho Chess trae su mascota. -->
     <section class="cac-portada cam-portada" aria-labelledby="titulo-pagina">
         <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-ai">
         <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-bd">
         <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 md:pt-8 md:pb-8">
             <div class="cam-cabeza-fila">
                 <div class="min-w-0">
-                    <p><span class="cac-pildora text-sm md:text-base">XXI Campeonato</span></p>
+                    <p id="pildora-evento" hidden><span class="cac-pildora text-sm md:text-base">XXI Campeonato</span></p>
                     <h1 id="titulo-pagina" class="cac-titulo text-2xl sm:text-3xl md:text-4xl mt-3">Mis mesas<span id="titulo-torneo" class="block text-lg sm:text-xl md:text-2xl mt-1"></span></h1>
                 </div>
-                <div class="cam-logo-centro" role="img" aria-label="Ajedrez Integral"><img src="img/logo-marca.png" width="155" height="96" alt=""><span aria-hidden="true">Ajedrez <span>Integral</span></span></div>
-                <!-- El pizote es un botón: abre los emparejamientos de TODAS las categorías, para decirle a un atleta dónde sentarse. -->
+                <!-- En el medio, el nombre del torneo (lo pone js/centroamericano-arbitro.js). -->
+                <p id="torneo-centro" class="cam-torneo-centro"></p>
+                <!-- El logo de Ajedrez Integral es un botón: abre los emparejamientos de TODAS las categorías, para decirle a un atleta dónde sentarse. -->
                 <button type="button" id="ver-todas-mesas" class="cam-mascota-boton shrink-0" aria-haspopup="dialog" aria-label="Buscar dónde juega un atleta, en todas las categorías">
-                    <img src="img/centroamericano-2026/mascota-tablero.png" width="266" height="231" alt="" aria-hidden="true" class="cam-mascota">
+                    <img id="mascota-evento" src="img/logo-marca.png" width="155" height="96" alt="" aria-hidden="true" class="cam-mascota cam-mascota-logo">
                     <span class="cam-mascota-pista" aria-hidden="true">Todas las mesas</span>
                 </button>
             </div>
@@ -116,22 +120,33 @@
                     <label class="cam-ir"><span class="sr-only">Ir a la mesa</span><input id="ir-mesa" type="number" inputmode="numeric" min="1" max="9999" placeholder="Ir a la mesa…" class="cam-campo" aria-label="Ir a la mesa número"></label>
                     <label class="cam-check"><input id="solo-faltan" type="checkbox" class="w-5 h-5"> <span>Solo las que faltan</span></label>
                     <button type="button" id="actualizar" class="cam-btn cam-btn-claro"><span aria-hidden="true">🔄</span> Actualizar</button>
-                    <button type="button" id="abrir-tiempos" class="cam-btn cam-btn-claro"><svg class="cam-icono-boton" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Control de tiempos</button>
                     <button type="button" id="ver-vivo" class="cam-btn cam-btn-claro" hidden><span aria-hidden="true">📡</span> Mis mesas en vivo</button>
                     <button type="button" id="horarios" class="cam-btn cam-btn-claro"><span aria-hidden="true">⏰</span> Horarios</button>
+                    <!-- Sin internet también funcionan: la copia la arma esta página en la tablet (js/centroamericano-respaldo.js). -->
+                    <button type="button" id="bajar-copia" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">💾</span> Copia de seguridad</button>
+                    <button type="button" id="cargar-copia" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">📂</span> Cargar copia</button>
+                    <input type="file" id="archivo-copia" accept=".txt,text/plain" class="sr-only" tabindex="-1" aria-hidden="true">
                     <!-- Cómo ve cada árbitro sus mesas: un botón chico que despliega las dos opciones (mismas funciones). La tablet recuerda la elegida. -->
                     <span class="cam-desplegable" id="vista-mesas" data-vista="">
                         <button type="button" id="vista-boton" class="cam-btn cam-btn-claro cam-btn-chico" aria-haspopup="menu" aria-expanded="false" aria-controls="vista-menu"><span aria-hidden="true">👁</span> Vista <span aria-hidden="true" class="cam-desplegable-flecha">▾</span></button>
                         <div id="vista-menu" class="cam-desplegable-lista" role="menu" aria-label="Cómo ver tus mesas" hidden></div>
                     </span>
-                    <button type="button" id="concluir" class="cam-btn cam-btn-claro"><span aria-hidden="true">🏁</span> Ya terminé mis labores</button>
-                    <button type="button" id="pedir-ayuda" class="cam-btn cam-btn-rojo"><span aria-hidden="true">🆘</span> Necesito ayuda (para mí)</button>
                 </div>
                 <p id="espera" class="cam-espera" role="status"></p>
                 <button type="button" id="ir-corregir" class="cam-btn cam-btn-claro cam-btn-chico" hidden><span aria-hidden="true">✎</span> Corregir la hora de inicio de la ronda</button>
                 <p id="presencia-resumen" class="cam-espera" role="status"></p>
                 <button type="button" id="presencia-todos" class="cam-btn cam-btn-claro cam-btn-chico" hidden><span aria-hidden="true">✓</span> Marcar que llegaron todos</button>
                 <p id="estado-ayuda" class="cam-estado-ayuda" role="status" hidden></p>
+                <!-- El pie de la barra, aparte de los controles de arriba para no tocar nada por accidente: «Ayuda» (para ti) abajo en el centro, chico y con icono y una
+                     palabra; «Ya terminé mis labores» abajo a la derecha (además pregunta antes). -->
+                <div class="cam-pie-barra">
+                    <div class="cam-pie-centro">
+                        <button type="button" id="pedir-ayuda" class="cam-btn cam-btn-rojo cam-btn-chico" aria-label="Necesito ayuda (para mí)" title="Necesito ayuda (para mí)"><span aria-hidden="true">🆘</span> Ayuda</button>
+                    </div>
+                    <div id="fin-labores" class="cam-fin">
+                        <button type="button" id="concluir" class="cam-btn cam-btn-chico cam-btn-fin" aria-label="Terminé mi ronda completa: ya terminé todas mis mesas y todo lo de esta ronda" title="Úsalo solo cuando ya terminaste TODO lo de esta ronda: todas tus mesas, planillas y anotaciones. Se vuelve a habilitar solo en la ronda siguiente."><span aria-hidden="true">🏁</span> Terminé mi ronda completa</button>
+                    </div>
+                </div>
             </section>
 
             <!-- La hora REAL en que empezó la ronda en tu categoría (cada categoría puede empezar a una hora distinta): desde ahí corre el tiempo de espera. -->
@@ -155,9 +170,9 @@
             <!-- Antes de iniciar la ronda: la lista previa, paso a paso (la arma la página). -->
             <section id="lista-previa" class="cam-lista-previa" aria-labelledby="lista-titulo" hidden></section>
 
-            <!-- Cuando el árbitro toca «Ya terminé mis labores»: se le cierran los resultados y puede bajar su bitácora en PDF. -->
+            <!-- Cuando el árbitro toca «Terminé mi ronda completa»: se le cierran los resultados (hasta la ronda siguiente) y puede bajar su bitácora en PDF. -->
             <section id="concluido" class="cam-concluido" aria-labelledby="concluido-titulo" hidden>
-                <h2 id="concluido-titulo" class="font-bold text-lg"><span aria-hidden="true">✓</span> Concluiste tus labores</h2>
+                <h2 id="concluido-titulo" class="font-bold text-lg"><span aria-hidden="true">✓</span> Terminaste tu ronda completa</h2>
                 <p id="concluido-texto" class="text-sm mt-1"></p>
                 <div class="cam-acciones mt-3"><button type="button" id="bajar-bitacora" class="cam-btn"><span aria-hidden="true">📄</span> Descargar mi bitácora (PDF)</button></div>
                 <div class="cam-bit-correo mt-3">
@@ -228,6 +243,8 @@
     <script src="js/main.js"></script>
     <script src="js/guia-planillas.js"></script>
     <script src="js/centroamericano-cola.js"></script>
+    <script src="js/centroamericano-respaldo.js"></script>
+    <script src="js/centroamericano-terminar.js"></script>
     <script src="js/lichess-transmision.js"></script>
     <script src="js/centroamericano-transmision-reloj.js"></script>
     <script src="js/centroamericano-reloj-apagado.js"></script>

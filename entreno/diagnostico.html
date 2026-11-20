@@ -163,13 +163,18 @@
                     <div id="q-bar" class="h-full bg-accent-500 transition-[width] duration-300" style="width:0%"></div>
                 </div>
 
-                <h2 id="q-text" class="font-serif text-lg md:text-xl font-bold text-brand-800 dark:text-white mb-4"></h2>
+                <!-- tabindex="-1": al pasar de pregunta con «Siguiente» el foco viene
+                     acá (enfocarPregunta en js/entreno-diagnostico.js). Se quedaba en
+                     el botón, ya deshabilitado, y el lector no decía la pregunta nueva. -->
+                <h2 id="q-text" tabindex="-1" class="font-serif text-lg md:text-xl font-bold text-brand-800 dark:text-white mb-4 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"></h2>
 
                 <div id="q-board-wrap" class="hidden justify-center mb-4">
                     <div id="q-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[380px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
                 </div>
 
-                <p id="q-hint" class="text-center text-xs text-brand-450 dark:text-brand-350 mb-3 min-h-[1.2em]"></p>
+                <!-- Región viva: «Elegiste eva 4», «Anotado: no lo sabías» y sobre todo
+                     «No se pudo enviar tu respuesta» cambiaban sin que el lector dijera nada. -->
+                <p id="q-hint" aria-live="polite" class="text-center text-xs text-brand-450 dark:text-brand-350 mb-3 min-h-[1.2em]"></p>
                 <div id="q-options" class="space-y-2"></div>
                 <!-- El cuadro de comandos del Modo Adaptado (js/cuadro-comandos.js).
                      Va DESPUÉS de las opciones a propósito: primero se oyen las

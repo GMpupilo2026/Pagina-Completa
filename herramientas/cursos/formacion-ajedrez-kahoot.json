@@ -2075,6 +2075,420 @@
           }
         }
       ]
+    },
+    {
+      "sesion": 3,
+      "titulo": "Formación Ajedrez · Tarea inicial de la Sesión 3: ritmos y sistemas de juego",
+      "preguntas": [
+        {
+          "texto": "Un torneo se juega a 3 minutos + 2 s por jugada. ¿Qué ritmo es?",
+          "correcta": "Relámpago: 3 + 2 = 5 minutos",
+          "distractores": [
+            "Rápidas: el incremento lo sube",
+            "Clásico: tiene incremento",
+            "Ninguno: con incremento no se clasifica"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE B.1"
+        },
+        {
+          "texto": "Un torneo se juega a 15 minutos + 10 s por jugada. ¿Qué ritmo es?",
+          "correcta": "Rápidas: 15 + 10 = 25 minutos",
+          "distractores": [
+            "Relámpago: 10 s por jugada es poco",
+            "Clásico: pasa de 15 minutos",
+            "Ninguno: con incremento no se clasifica"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE A.1"
+        },
+        {
+          "texto": "Para la FIDE, ¿desde cuántos minutos por jugador (base + 60 × incremento) una partida es clásica?",
+          "correcta": "60 minutos o más",
+          "distractores": [
+            "30 minutos o más",
+            "45 minutos o más",
+            "90 minutos o más"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE A.1"
+        },
+        {
+          "texto": "En un torneo de ajedrez, ¿cuánto vale una victoria, unas tablas y una derrota?",
+          "correcta": "1, ½ y 0",
+          "distractores": [
+            "3, 1 y 0",
+            "2, 1 y 0",
+            "1, 0 y 0"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE C.04.1"
+        },
+        {
+          "texto": "¿Para qué sirven los desempates?",
+          "correcta": "Para ordenar a quienes terminan con los mismos puntos",
+          "distractores": [
+            "Para emparejar la ronda 1",
+            "Para dar puntos a quien perdió",
+            "Para decidir el color en cada ronda"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE C.07"
+        },
+        {
+          "texto": "En el desempate Buchholz, ¿qué se suma?",
+          "correcta": "Los puntos de todos los rivales del jugador",
+          "distractores": [
+            "Solo los puntos de los rivales vencidos",
+            "Las partidas ganadas con negras",
+            "Los puntos propios de cada ronda"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE C.07"
+        },
+        {
+          "texto": "¿Qué cuenta el desempate «número de victorias»?",
+          "correcta": "Cuántas partidas ganó",
+          "distractores": [
+            "Cuántas rondas jugó",
+            "Cuántas veces llevó blancas",
+            "Cuántos rivales le ganaron"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE C.07"
+        },
+        {
+          "texto": "En un sistema suizo, ¿con quién se empareja, en general, a cada jugador?",
+          "correcta": "Con un rival de igual puntaje o el más cercano",
+          "distractores": [
+            "Con el líder del torneo",
+            "Siempre con el siguiente de la lista inicial",
+            "Por sorteo, sin mirar los puntos"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE C.04.1"
+        },
+        {
+          "texto": "En un suizo, ¿qué se busca con los colores a lo largo del torneo?",
+          "correcta": "Que cada jugador alterne blancas y negras",
+          "distractores": [
+            "Que el de más puntos lleve blancas",
+            "Que cada jugador elija su color",
+            "Que repita color para no confundirse"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE C.04.1"
+        },
+        {
+          "texto": "En un todos contra todos, ¿contra quién juega cada participante?",
+          "correcta": "Contra todos los demás, una vez",
+          "distractores": [
+            "Solo contra los de su mismo puntaje",
+            "Contra la mitad, por sorteo",
+            "Contra todos, dos veces seguidas"
+          ],
+          "tiempo": 60,
+          "fuente": "Tablas de Berger"
+        },
+        {
+          "texto": "¿Cuántas rondas tiene un todos contra todos de 10 jugadores?",
+          "correcta": "9",
+          "distractores": [
+            "10",
+            "5",
+            "8"
+          ],
+          "tiempo": 60,
+          "fuente": "Tablas de Berger"
+        },
+        {
+          "texto": "JDE: ¿en qué reunión se acuerdan con las delegaciones el sistema de juego y otros detalles de la etapa?",
+          "correcta": "En el congresillo técnico",
+          "distractores": [
+            "En la premiación",
+            "En la primera ronda",
+            "En una reunión después del torneo"
+          ],
+          "tiempo": 60,
+          "fuente": "Normativa art. 33 y 34"
+        }
+      ]
+    },
+    {
+      "sesion": 4,
+      "titulo": "Formación Ajedrez · Tarea inicial de la Sesión 4: el reloj de ajedrez",
+      "preguntas": [
+        {
+          "texto": "Al empezar la partida, ¿qué reloj se pone en marcha?",
+          "correcta": "El de las blancas",
+          "distractores": [
+            "El de las negras",
+            "Los dos a la vez",
+            "El de quien llegue primero"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 6.5"
+        },
+        {
+          "texto": "Después de hacer su jugada, ¿quién presiona el reloj?",
+          "correcta": "El mismo jugador que movió",
+          "distractores": [
+            "El rival, para empezar a pensar",
+            "La persona árbitra",
+            "Cualquiera de los dos"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 6.2"
+        },
+        {
+          "texto": "¿Qué quiere decir que «cayó la bandera» de un jugador?",
+          "correcta": "Que se le acabó el tiempo",
+          "distractores": [
+            "Que abandonó la partida",
+            "Que pausó el reloj",
+            "Que se le terminó el incremento"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 6.1"
+        },
+        {
+          "texto": "¿Qué significa un ritmo de «90 min + 30 s»?",
+          "correcta": "90 minutos de base y 30 s más por jugada",
+          "distractores": [
+            "90 minutos en total para los dos",
+            "90 jugadas en 30 minutos",
+            "30 s por jugada, sin tiempo de base"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 6.3"
+        },
+        {
+          "texto": "Un reloj está configurado a 5 min + 3 s. ¿Cuánto se le suma a un jugador después de cada jugada?",
+          "correcta": "3 segundos",
+          "distractores": [
+            "5 segundos",
+            "3 minutos",
+            "Nada hasta la jugada 40"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 6.3"
+        },
+        {
+          "texto": "Una partida se juega a 60 minutos por jugador, sin incremento. ¿Cómo se configura el reloj?",
+          "correcta": "60:00 en cada lado, sin incremento",
+          "distractores": [
+            "30:00 en cada lado",
+            "60:00 solo del lado de las blancas",
+            "60:00 y 60 s de incremento"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 6.3"
+        },
+        {
+          "texto": "Un jugador mueve y olvida presionar el reloj. ¿Qué pasa?",
+          "correcta": "Su tiempo sigue corriendo hasta que lo presione",
+          "distractores": [
+            "Pierde la partida",
+            "La persona árbitra lo presiona por él",
+            "La jugada se anula"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 6.2"
+        },
+        {
+          "texto": "¿Se permite golpear el reloj con fuerza al presionarlo?",
+          "correcta": "No: el reloj se trata con cuidado",
+          "distractores": [
+            "Sí, en relámpago está permitido",
+            "Sí, si el rival también lo hace",
+            "Solo en el último minuto"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 6.2"
+        },
+        {
+          "texto": "Durante la partida, el reloj se daña y deja de funcionar. ¿Qué hace la persona árbitra?",
+          "correcta": "Lo cambia y ajusta los tiempos con su criterio",
+          "distractores": [
+            "Declara tablas la partida",
+            "Manda a repetir la partida",
+            "Deja que sigan sin reloj"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 6.10"
+        },
+        {
+          "texto": "Un jugador detuvo el reloj para llamar a la persona árbitra. ¿Quién decide cuándo sigue la partida?",
+          "correcta": "La persona árbitra",
+          "distractores": [
+            "El jugador que lo detuvo",
+            "El rival",
+            "El primero que toque el reloj"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 6.11"
+        },
+        {
+          "texto": "¿Qué ventaja da el incremento a los jugadores?",
+          "correcta": "Siempre reciben unos segundos por cada jugada",
+          "distractores": [
+            "Pueden pausar el reloj cuando quieran",
+            "No se les puede caer la bandera",
+            "No tienen que anotar las jugadas"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 6.3"
+        },
+        {
+          "texto": "Un torneo usa incremento por jugada. ¿Qué tipo de reloj hace falta?",
+          "correcta": "Un reloj digital",
+          "distractores": [
+            "Un reloj analógico de agujas",
+            "Cualquier reloj de pared",
+            "Un cronómetro por jugador"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 6.3"
+        }
+      ]
+    },
+    {
+      "sesion": 5,
+      "titulo": "Formación Ajedrez · Tarea inicial de la Sesión 5: organizar un torneo",
+      "preguntas": [
+        {
+          "texto": "¿Qué conviene tener listo antes de que lleguen los jugadores?",
+          "correcta": "Mesas numeradas, tableros, piezas y relojes",
+          "distractores": [
+            "La lista de premios y las medallas, nada más",
+            "Los resultados de la ronda 1",
+            "Las fotos para las redes"
+          ],
+          "tiempo": 60,
+          "fuente": "Buenas prácticas de organización"
+        },
+        {
+          "texto": "¿Qué documento dice quién juega contra quién en cada ronda?",
+          "correcta": "El emparejamiento publicado",
+          "distractores": [
+            "La planilla de cada jugador",
+            "El acta final",
+            "La boleta de inscripción"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE C.04.2"
+        },
+        {
+          "texto": "Antes de empezar la ronda, ¿qué conviene anunciar en la sala?",
+          "correcta": "El ritmo, la tolerancia y las reglas de la sala",
+          "distractores": [
+            "El nombre de quien va a ganar",
+            "Los resultados del año pasado",
+            "Nada: cada jugador ya conoce las reglas"
+          ],
+          "tiempo": 60,
+          "fuente": "Buenas prácticas de organización"
+        },
+        {
+          "texto": "Durante la ronda, ¿dónde debe estar la persona árbitra?",
+          "correcta": "En la sala, observando las partidas",
+          "distractores": [
+            "En la oficina, lejos de la sala",
+            "Afuera, conversando con las familias del público",
+            "Jugando una partida amistosa"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 12.2"
+        },
+        {
+          "texto": "Durante la ronda, ¿quién puede estar junto a las mesas de juego?",
+          "correcta": "Los jugadores y el personal del torneo",
+          "distractores": [
+            "Cualquier persona del público que quiera mirar de cerca",
+            "Las familias de los jugadores",
+            "Los entrenadores, para ayudar"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 11.2"
+        },
+        {
+          "texto": "¿Puede un jugador tener el celular encendido en la sala de juego?",
+          "correcta": "No",
+          "distractores": [
+            "Sí, si no es su turno",
+            "Sí, en silencio",
+            "Sí, para anotar las jugadas"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 11.3.2"
+        },
+        {
+          "texto": "A un jugador le surge una duda sobre una regla. ¿A quién se la plantea?",
+          "correcta": "A la persona árbitra",
+          "distractores": [
+            "A su entrenador en el público",
+            "A su rival",
+            "A un jugador de otra mesa"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 11.9"
+        },
+        {
+          "texto": "Dos jugadores discuten fuerte en su mesa. ¿Qué haces primero?",
+          "correcta": "Detienes el reloj y escuchas a los dos",
+          "distractores": [
+            "Le das la razón al que habló primero",
+            "Esperas a que terminen la partida",
+            "Anulas la partida"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 12.1 y 12.2"
+        },
+        {
+          "texto": "Un jugador pide ir al baño durante su partida. ¿Qué pasa con el reloj?",
+          "correcta": "No se detiene: sigue corriendo",
+          "distractores": [
+            "Se detiene hasta que vuelva a sentarse en su mesa",
+            "Se le suman 5 minutos",
+            "Pierde la partida"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 11.2"
+        },
+        {
+          "texto": "Termina una partida. ¿Qué se hace con el resultado?",
+          "correcta": "Los dos lo firman y se entrega a la mesa arbitral",
+          "distractores": [
+            "Se dice en voz alta y no se anota",
+            "Lo anota solo quien ganó",
+            "Se espera al final del torneo"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 8.7"
+        },
+        {
+          "texto": "¿Para qué sirve el acta de un torneo?",
+          "correcta": "Para dejar por escrito lo que pasó y se decidió",
+          "distractores": [
+            "Para inscribir a los jugadores",
+            "Para emparejar la ronda siguiente",
+            "Para anotar las jugadas de una partida"
+          ],
+          "tiempo": 60,
+          "fuente": "Método del curso"
+        },
+        {
+          "texto": "Al terminar la última ronda, ¿cuándo se entregan los premios?",
+          "correcta": "Cuando la tabla final, con desempates, está revisada",
+          "distractores": [
+            "Antes de la última ronda",
+            "Apenas termina la primera partida de la última ronda",
+            "Una semana después, sin revisar nada"
+          ],
+          "tiempo": 60,
+          "fuente": "Buenas prácticas de organización"
+        }
+      ]
     }
   ]
 }

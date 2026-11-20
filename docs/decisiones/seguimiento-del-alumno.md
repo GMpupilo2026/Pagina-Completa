@@ -194,6 +194,83 @@ errores (`material_slug` `plan-rival`, en el catálogo de
 `js/material-plataforma.js` con `noSeElige`: no se ofrece en Tareas, porque
 cada plan es de un alumno). Ver «Entrenar el plan: etapa 7».
 
+### Nadie se queda sin tarea
+
+Arriba de «Asignar una tarea», el profe ve cuántos de sus alumnos **no tienen
+ninguna tarea abierta**, con sus nombres, y un botón «Marcarlos para
+mandarles una tarea» que los deja marcados en la lista (`avisarSinTarea()` en
+`js/tareas.js`). Es la idea de Chessgora «0 alumnos sin rutina»: con veinte
+alumnos nadie se acuerda de a quién le falta, y el que se queda sin nada que
+hacer deja de entrenar sin que se note.
+
+- **«Abierta» es que todavía no vence**, programada o no, y de CUALQUIER
+  profe: la RLS de `tareas` ya le deja leer al profe las de sus alumnos que
+  mandó un colega, y a quien administra, todas. Se lee `alumno_id` de
+  `tareas` con `vence_at > ahora`, de mil en mil.
+- **No se usa `tareas_con_avance()`**: para quien administra recorre todas las
+  tareas del sitio (8-9 s, ver arriba) y podría caerse por statement timeout.
+  El precio es que una tarea terminada antes de su fecha cuenta como abierta;
+  el texto dice exactamente lo que mide («Todas las que tenían ya vencieron, o
+  nunca les mandaron una»).
+- Con un error no se muestra nada (un aviso a medias diría que alumnos con
+  tarea no tienen ninguna), y no frena la carga: se pide sin `await`.
+- `verificar-tareas.js` (prueba «1 ter») siembra una tarea abierta para Ana y
+  una vencida para Beto: el aviso tiene que verse, nombrar solo a Beto y dejarlo
+  marcado; con las dos abiertas no aparece.
+
+### Tareas que llegan solas
+
+En «Asignar una tarea», **«Cuándo le llega: sola, cuando junte cierta cantidad
+de Puntos Ajedrez»** («Llegaste a 3000 puntos: te toca Combinaciones»; la idea
+salió de Chessgora). No se manda una tarea: se guarda la REGLA en
+`tareas_por_puntos` (`crear_tarea_por_puntos()`), y la base le arma a cada
+alumno **la tarea de siempre**, en `tareas` y `tarea_items`, el día que llega
+al umbral. Así se llena sola, sale en su lista y en «Tareas enviadas», y manda
+su aviso push con `avisar_tarea_asignada`. Migración
+`20261118054205_tareas_por_puntos`.
+
+- **Cuentan los puntos GANADOS, no el saldo** (`interno.puntos_ganados()`:
+  clase, entrenamiento, tarea, examen, racha, reto semanal y tema terminado).
+  Con el saldo, canjear un premio le quitaría la tarea que ya se ganó o se la
+  daría dos veces; regalos, bromas, robos y ajustes a mano no son trabajo del
+  alumno. La misma función servirá para los rangos.
+- **Una vez por alumno, y lo garantiza la llave primaria** de
+  `tareas_por_puntos_entregas` (regla, alumno), no un `if`. Borrar la tarea que
+  le llegó no se la vuelve a mandar.
+- **Quien ya tiene los puntos la recibe al crear la regla** (y al reanudarla,
+  quien llegó mientras estaba en pausa). La regla dice «quien llegue a N»; si
+  dijera «quien cruce N desde hoy», al que ya pasó nunca le llegaría. La
+  pantalla lo dice antes de guardar.
+- **El disparo es un trigger AFTER INSERT en `puntos_ajustes`**, solo para filas
+  positivas de esos orígenes. Lo primero que mira es si el alumno está en
+  alguna regla activa (índice GIN sobre `alumnos`): sin ninguna, ni suma. Va
+  dentro de un bloque de excepción: una falla al armar la tarea **no puede
+  tumbar los puntos** del ejercicio que la disparó.
+- **La fecha límite son «días desde que le llega»** (1 a 90), no una fecha: no
+  se sabe cuándo va a llegar. Por eso, con esta opción, «Disponible desde» y
+  «Vence» se esconden y «Vence» deja de ser obligatorio (si no, el navegador no
+  dejaría mandar el formulario).
+- **El permiso se mira dos veces**: al crear (los alumnos tienen que ser del
+  profe, por `interno.alumnos_de()`; quien administra, cualquiera, igual que
+  `tareas_insert`) y al entregar (si el alumno ya no es de ese profe, no le
+  llega: la regla no es una puerta trasera). Las tablas no tienen política de
+  escritura salvo borrar la regla propia; crear y pausar pasan por funciones.
+- «Tareas que llegan solas», encima de «Tareas enviadas»: cada regla con su
+  umbral, sus días y cuántos alumnos; **«Quién va cerca»**
+  (`tareas_por_puntos_avance()`) dice escrito cuántos puntos lleva cada uno y
+  cuánto le falta, o «✔ Ya le llegó el …»; «Pausar»/«Reanudar» y «Eliminar»
+  (lo que ya les llegó se queda).
+
+Comprobado impersonando roles en SQL, dentro de una transacción que se
+revierte: con dos alumnos (20 989 y 19 827 puntos ganados) y umbral 20 000, al
+crear le llega solo al primero; el segundo gana 200 entrenando y el trigger le
+arma la tarea (del profe, con su renglón, vence en 7 días); 50 puntos más no
+la repiten; otro profe no puede programársela («Solo puedes programarles
+tareas a tus alumnos»), no ve la regla, no la pausa ni la borra; el alumno no
+ve reglas ni entregas, no puede crear y el insert directo da «permission
+denied»; `anon` no puede llamar a la función. `verificar-tareas.js` (prueba «1
+quater») revisa la pantalla con el doble.
+
 ### El diagnóstico de nivel se pide como tarea, y solo cuenta el nuevo
 
 El profe le pide el diagnóstico a un alumno con un renglón «Diagnóstico de
@@ -295,6 +372,134 @@ permiso. `tareas_con_avance()` de quien administra siguió en ~70 ms.
 cuestionario-tarea tareas`.** Está probado que falla de verdad: sin el
 `&item=` en el enlace, sin escribir cuál era la correcta, con «— todo —» en
 la lista de cuestionarios o mandando 0 en vez de `null` por una en blanco.
+
+## Las direcciones del entrenamiento: en qué se reparte el trabajo
+
+La idea es de la escuela cubana. Allí la preparación del ajedrecista se baja a
+«direcciones» concretas (aperturas, medio juego, finales, solución de
+ejercicios, análisis de partidas, práctica de partidas…) para repartir el
+tiempo, dosificarlo y controlar el plan. La fuente es Dorges Heredia
+Guilarte, «Los componentes y direcciones del entrenamiento ajedrecístico»,
+EFDeportes n.º 144 (2010), que parte de los planes de las EIDE y ESPA.
+
+`js/direcciones-entrenamiento.js` dice a qué dirección va cada cosa, y se ve
+en dos lugares:
+
+- **Informes, debajo de «En qué usó su tiempo»:** el mismo tiempo de
+  `tiempo_por_seccion()`, sumado por dirección y con su porcentaje escrito (no
+  solo la barra). Lo pinta `js/tiempo-secciones.js` cuando la página carga el
+  módulo; hoy solo Informes lo carga (Logros usa la misma tabla y no lo
+  muestra).
+- **El armado de una tarea:** cada renglón dice su dirección y, con más de
+  un renglón, se escribe el reparto de la tarea entera («Solución de
+  ejercicios: 2 · Finales: 1»).
+
+Las decisiones:
+
+- **La dirección no se guarda: se deduce.** De un renglón, por su material y
+  su recorte; del tiempo, por la sección. Una columna aparte sería una
+  segunda copia que el profesor tendría que mantener y que podría
+  contradecir al material. No hubo migración.
+- **El reparto es por contenido, no por herramienta.** Un ejercicio de
+  «Final de torres» en Ejercicios por tema es Finales, no Solución de
+  ejercicios; «Tus propios errores» es Análisis de partidas, porque sale de
+  sus partidas. Los recortes que cambian la dirección están en
+  `POR_RECORTE`; las fichas de Estudio van por su grupo de `metas.json`.
+- **Lo que mezcla no se reparte a la fuerza.** La clase en vivo, los cursos y
+  el tiempo en Estudio (la sección no dice qué ficha) quedan aparte y se
+  nombran debajo del reparto, con su tiempo. Si no se nombraran, un alumno
+  con mucha clase parecería entrenar poco. Las pruebas (diagnóstico, prueba
+  de estilo, exámenes, cuestionarios) tampoco entran: miden, no entrenan.
+- **Dos cambios a la lista cubana.** «Visión del tablero» va aparte (allí es
+  una habilidad práctica), porque la plataforma tiene ocho herramientas para
+  eso y metidas en Ejercicios esconderían ese tiempo. «Historia» y «Cultura
+  integral» no están: ningún material de la plataforma es de eso; llegan por
+  la clase o por un curso.
+- **Con la granularidad que hay.** `tiempo_por_seccion()` da el tiempo por
+  sección, no por tema: todo el tiempo de Ejercicios por tema cuenta como
+  Solución de ejercicios aunque haya sido de finales. El renglón de una tarea
+  sí distingue el recorte. Afinarlo pediría que la función devolviera el
+  tema, y eso es otro cambio.
+- **El correo a la casa no lo trae todavía.** `informe-html.ts` tiene su
+  propia tabla de secciones; sumarle el reparto es un paso aparte.
+
+`verificar-direcciones.js` (sin navegador) exige que toda herramienta de
+`MaterialPlataforma` y toda sección de `TiempoSecciones` estén en las tablas,
+aunque sea con `null`, y que cada recorte nombrado exista en `metas.json`: una
+herramienta nueva sin dirección hace fallar el CI. Lo que se ve en pantalla lo
+miran `verificar-informes.js` y `verificar-tareas.js`.
+
+## El plan de temporada: de hoy a la competencia, por etapas
+
+`temporada.html` es la planificación por etapas de la escuela cubana
+(macrociclo y mesociclos): de una fecha a una competencia, el trabajo pasa por
+etapas, y cada una reparte el tiempo entre las direcciones del entrenamiento
+(ver la sección de arriba) de otra manera. Quien da clase la arma; el alumno
+ve en qué etapa va y cómo va. Se llega desde Tareas.
+
+- **Una fila por alumno** en `temporadas` (migración `20261110150638`), como
+  `tareas` y `notas_alumno`: la RLS es la de siempre y no hace falta una
+  tabla de alumnos por temporada. Los alumnos que comparten el plan (un grupo
+  que va al mismo torneo) llevan el mismo `lote`, y la página guarda el lote
+  entero de una vez: cambia los datos de todos, crea las filas de los que se
+  suman y borra (con confirmación) las de los que se sacan.
+- **Las etapas van en `etapas` (jsonb)**: nombre, desde, hasta, énfasis
+  (`{ dirección: porcentaje }`) y nota. La base exige solo que sea una lista
+  de hasta 12; la forma la revisa `Temporada.problemas()` antes de guardar
+  (fechas seguidas sin encimarse, cada etapa suma 100, direcciones que
+  existen, nada después de la competencia) y la página dice qué falta.
+- **«Proponer etapas»** reparte las fechas en cuatro: preparación general
+  (≈45 % de los días antes de la última semana), específica (≈35 %),
+  precompetitiva (lo que queda) y competitiva (la última semana). Con menos de
+  cuatro semanas, solo específica y competitiva; con menos de 14 días, nada.
+  **Los porcentajes de cada etapa NO salen de una fuente**: son un punto de
+  partida, y la página lo dice. Lo que sí sale de la fuente es la forma: de lo
+  general a lo específico.
+- **«Cómo va» se calcula, no se guarda**: el tiempo del alumno en la etapa en
+  curso (`tiempo_por_seccion()` del primer día de la etapa a hoy, con la hora
+  de Costa Rica en los límites: sin ella el día se cortaría a las 6 de la
+  tarde), repartido por dirección y comparado con lo planeado. El veredicto
+  va escrito («por debajo», «en línea», «por encima», con 10 puntos de
+  margen), no solo en color. **Con menos de una hora repartida no se juzga**:
+  tres ejercicios no son un reparto, y decir «en línea» de quien no hizo nada
+  sería mentirle. Lo que hizo sin estar en el plan también sale.
+- La clase en vivo, los cursos y Estudio no entran en el reparto (mezclan
+  direcciones), y se dice debajo de la tabla.
+- El alumno ve las temporadas que vencen desde hace un mes en adelante; las
+  más viejas ya no guían nada.
+- **Cada etapa lleva sus planes de clase** (`planes`: ids de `planes_clase`,
+  hasta 30, sin repetir; lo revisa `problemas()`). Se eligen de los que el
+  profe puede ver: los suyos y los que le comparten (`PlanClase`, la misma
+  lectura de `planes.html`), con un filtro, porque los de arranque son más de
+  cincuenta. En «Cómo va» salen los de la etapa en curso, con su enlace a
+  `planes.html?plan=`. No hizo falta migración: van dentro de la etapa, en el
+  mismo jsonb.
+  - **Un plan que ya no se ve** (lo borraron o dejaron de compartirlo) se
+    dice con esas palabras y **no se saca solo de la etapa**: guardar la
+    temporada por otra cosa no puede borrar en silencio lo que el profe
+    eligió. Lo quita él, desmarcándolo.
+  - **El alumno no ve los planes**: son el material del profe (y la RLS de
+    `planes_clase` tampoco se los deja leer).
+
+**Permisos** (las mismas reglas que `tareas`): leen el profesor que la
+escribió, el alumno, los demás profesores del alumno (el conjunto
+`interno.alumnos_de`, armado una vez) y quien administra. Crea solo un
+profesor, a su nombre y para un alumno suyo (o quien administra). Cambia y
+borra solo quien la escribió, y el `with check` vuelve a pedir que el alumno
+sea suyo: si no, se podría pasar una temporada a un alumno ajeno cambiando
+`alumno_id`. **Comprobado impersonando roles en SQL, 14 casos** (10/11/2026):
+el profe crea para su alumno y no para uno ajeno, no firma por otro, no pasa
+la temporada a un ajeno, la base rechaza etapas que no son lista; el alumno
+la ve pero no la edita ni crea; otro profe y un alumno ajeno no la ven; anon
+no tiene permiso; el profe la borra. No reparte permisos ni dinero: no lleva
+auditoría.
+
+`verificar-temporada.js`: la cuenta sin navegador (300 temporadas al azar sin
+huecos ni días encimados, la revisión, la situación y la comparación) y la
+pantalla con un doble que filtra en el resolver: la lista por lote, el tiempo
+pedido con la hora de Costa Rica, el veredicto escrito, que no se guarde lo
+que no suma 100, que un nombre no se lea como HTML y que el celular no se
+desborde.
 
 ## El plan de clase: preparar la clase antes de darla
 
@@ -911,11 +1116,18 @@ Salen de bancos que ya estaban verificados, vía `js/examen-banco.js`:
   preguntas "sobre un tema de un curso": `AREAS_DEL_CURSO` dice qué áreas cubre
   cada curso, y es una decisión editorial escrita, no deducida. Un curso que no
   esté ahí **lo dice** en vez de devolver un examen vacío.
-- **`js/arbitraje-items.js`** — 200 de reglamento.
+- **`js/arbitraje-items.js`** — 200 de reglamento. `examenes.html` no lo trae
+  en el HTML: lo pide al elegir «Reglamento (arbitraje)» en un bloque
+  (387 KB que antes bajaba cada visita) y, al llegar, borra la previsión,
+  cuya clave son los bloques y no cambió. `verificar-examenes.js` comprueba
+  que no venga antes y que las preguntas aparezcan igual.
 - **`js/aperturas-lineas.js`** — las 40 líneas, para "ejecuta la italiana de
   una vez": el rival contesta solo y el alumno da sus jugadas **sin pistas y
   sin deshacer**. Es la misma línea que en `entreno/aperturas.html` se practica
   con ayuda y repaso espaciado; acá se demuestra.
+
+- **`entreno/data/temas.json`** — los ejercicios de táctica de Entrenamiento
+  («Ejercicios por tema»), tema por tema. Ver la sección siguiente.
 
 **Las opciones se barajan al armar el examen** y la clave guarda el índice ya
 barajado, así que el número que queda en la base no dice nada por sí solo. Eso
@@ -926,6 +1138,46 @@ nadie se entera — los alumnos reprueban y no hay ningún error.
 Y `clave.correcta` se guarda como **texto**, no como número: en la base se
 compara con `->>'opcion'`, que también es texto. Un número contra un texto en
 jsonb da `false` siempre.
+
+### La táctica de Entrenamiento como fuente de examen
+
+«Táctica de Entrenamiento (por tema)» deja armar «10 de clavadas» o «5 de
+mate del pasillo» con los mismos ejercicios de Lichess que el alumno practica
+en `entreno/temas.html`. Antes, la táctica solo entraba como un área entera
+del diagnóstico (96 preguntas, mezcladas), sin poder elegir el tema.
+
+- **Se pide la primera jugada de la solución**, como pregunta `jugada`. En un
+  ejercicio de Lichess esa jugada es la única que gana; la base ya calificaba
+  este tipo (`clave.jugadas`, por casilla de salida y de llegada), así que no
+  hizo falta ninguna migración. **Además vale cualquier jugada que dé mate**,
+  igual que en Entrenamiento (`EjercicioTablero.esAcierto`): un mate nunca es
+  una respuesta mala.
+- **Qué temas entran**: los grupos Recomendado, Temas, Avanzado, Mates y Temas
+  de mate. Las fases, los objetivos, la duración y el origen quedan fuera: no
+  son un tema que se examine sino otra forma de cortar los mismos ejercicios.
+  También queda fuera «Táctica de ataque» (los 148 de la casa): no traen
+  rating y su dificultad habría que ponerla a ojo.
+- **La dificultad sale del rating de Lichess**, en tramos de 400 (menos de
+  1000 → 1; 1000-1399 → 2; 1400-1799 → 3; 1800-2199 → 4; 2200 o más → 5).
+- **Una subpromoción no entra**: como la base califica por casillas, coronar
+  dama donde había que coronar caballo contaría como buena.
+- **El archivo pesa casi 2 MB** y se baja recién cuando el profesor elige esa
+  fuente (`ExamenBanco.cargarTactica()`, que trae también chess.js y
+  `comandos-tablero.js`). Mientras carga, el bloque dice «Cargando…», no «no
+  hay preguntas». Al llegar se tira la previsión: se había calculado sin ellos.
+- **El área del informe es el nombre del tema** («Clavada»), así que el
+  desglose por áreas dice tema por tema cómo le fue.
+- **La misma fuga que el libro y el reglamento, un poco más ancha**: las
+  soluciones están en un archivo público (el alumno las usa para practicar).
+  Un alumno podría buscar la posición dentro de ese archivo durante el examen,
+  a pantalla completa, con el reloj corriendo y las salidas contadas. Queda
+  anotado; esconderlo exigiría servir el banco desde la base como el del
+  diagnóstico.
+- `verificar-examenes.js` pasa a pregunta **cada uno** de los más de 5000
+  ejercicios de esos temas y comprueba que la clave lleve la primera jugada,
+  que toda jugada de la clave sea legal, que lo visible no traiga la solución,
+  que el tema y la dificultad pedidos se respeten y que en un mate en uno
+  valga cualquier mate. En la pantalla, que «Clavada» dé siete clavadas.
 
 ### Un examen se arma sumando bloques, como los renglones de una tarea
 

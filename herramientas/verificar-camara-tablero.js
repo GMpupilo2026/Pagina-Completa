@@ -268,6 +268,23 @@ const CAMARA_FALSA = { f: () => {
   navigator.mediaDevices.getUserMedia = async () => flujo();
   navigator.mediaDevices.enumerateDevices = async () => [{ kind: "videoinput", deviceId: "falsa", label: "Cámara de prueba" }];
 } };
+/* Una cámara que tarda en abrir: getUserMedia no contesta hasta que la prueba
+ * llama a window.__darCamara(). Así se prueba, sin depender de lo que tarde
+ * la máquina, qué pasa si llega DESPUÉS de elegir una foto. */
+const CAMARA_LENTA = { f: () => {
+  let dar;
+  const lista = new Promise((r) => { dar = r; });
+  window.__darCamara = () => dar();
+  navigator.mediaDevices.getUserMedia = async () => {
+    await lista;
+    const c = document.createElement("canvas"); c.width = 640; c.height = 480;
+    const g = c.getContext("2d"); g.fillStyle = "#888"; g.fillRect(0, 0, 640, 480);
+    setInterval(() => { g.fillStyle = "rgba(0,0,0,0.01)"; g.fillRect(0, 0, 1, 1); }, 100);
+    window.__flujoLento = c.captureStream(10);
+    return window.__flujoLento;
+  };
+  navigator.mediaDevices.enumerateDevices = async () => [{ kind: "videoinput", deviceId: "lenta", label: "Cámara lenta" }];
+} };
 async function fotoEnCamara(page, opc) {
   const b64 = await page.evaluate(([src, opc]) => new Function("return " + src)()(opc), [dibujarFoto.toString(), opc]);
   await page.evaluate((b) => window.__ponerFoto(b), b64);
@@ -287,11 +304,64 @@ const TABLEROS = {
 };
 
 async function tocar(page, puntos) {
-  // A la vista entero y lejos del encabezado fijo: un toque fuera no llega.
-  await page.locator("#lienzo").evaluate((c) => c.scrollIntoView({ block: "center", behavior: "instant" }));
-  const caja = await page.locator("#lienzo").boundingBox();
-  const k = caja.width / 640;
-  for (const [x, y] of puntos) await page.mouse.click(caja.x + x * k, caja.y + y * k);
+  // Con la cámara todavía sin cuadro el lienzo no escucha los toques (sin
+  // «fuente»), y al llegar el primero cambia de tamaño: medido antes, los
+  // toques caían en otro lado. Pasaba con la máquina ocupada (el CI de a
+  // cuatro) y siempre en la máquina propia del CI. Se espera a que la cámara
+  // esté (el botón de marcar esquinas se habilita con ella).
+  await page.waitForFunction(() => { const b = document.getElementById("btn-esquinas"); return b && !b.disabled; }, null, { timeout: 20000 });
+  const caja = () => page.locator("#lienzo").evaluate((c) => { const r = c.getBoundingClientRect(); return [r.x, r.y, r.width, r.height].join(","); });
+  const esquinas = () => page.evaluate(() => Number(document.getElementById("lienzo").dataset.esquinas || 0));
+  /* Y que el lienzo no se mueva entre medirlo y tocarlo. Se movía: en la mesa
+   * por QR la página abre la cámara sola, y el aviso de cómo le fue («No se
+   * pudo abrir la cámara…» o «…transmitiendo») llega cuando llega, cambia de
+   * alto el recuadro de arriba y corre el lienzo. Con la máquina ocupada
+   * llegaba en medio de los cuatro toques, caían fuera y «Calibrar» seguía
+   * apagado (CI, 17/11/2026). Se espera a que el lienzo esté quieto (lugar y
+   * tamaño, dos veces seguidas), se mide antes de CADA toque y se compara con
+   * dónde estaba en el instante del toque (anotado al llegar el pointerdown,
+   * antes que la página lo atienda: después del toque el aviso cambia y el
+   * lienzo se corre, y eso está bien). Si no coincide, se borran esas
+   * esquinas y se vuelve a tocar: lo que se prueba es la página, no la
+   * puntería en una pantalla que se corre. */
+  await page.evaluate(() => {
+    if (window.__vigilaToques) return;
+    window.__vigilaToques = true;
+    window.addEventListener("pointerdown", (e) => {
+      const c = document.getElementById("lienzo"), r = c.getBoundingClientRect();
+      window.__cajaAlTocar = e.target === c ? [r.x, r.y, r.width, r.height].join(",") : "fuera del lienzo";
+    }, true);
+  });
+  for (let intento = 1; ; intento++) {
+    await page.locator("#lienzo").evaluate((c) => c.scrollIntoView({ block: "center", behavior: "instant" }));
+    await page.waitForFunction(() => {
+      const r = document.getElementById("lienzo").getBoundingClientRect();
+      const ahora = [r.x, r.y, r.width, r.height].join(","), antes = window.__medidaLienzo;
+      window.__medidaLienzo = ahora;
+      return r.width > 0 && ahora === antes;
+    }, null, { timeout: 10000, polling: 300 });
+    const n0 = await esquinas();
+    let movido = false;
+    for (const [x, y] of puntos) {
+      const antes = await caja();
+      const [cx, cy, w] = antes.split(",").map(Number), k = w / 640;
+      await page.evaluate(() => { window.__cajaAlTocar = "sin toque"; });
+      await page.mouse.click(cx + x * k, cy + y * k);
+      if (await page.evaluate(() => window.__cajaAlTocar) !== antes) movido = true;
+    }
+    if (!movido) {
+      // Cada toque lejos de las esquinas que ya había pone una nueva (hasta cuatro).
+      const esperadas = Math.min(4, n0 + puntos.length);
+      await page.waitForFunction((n) => Number(document.getElementById("lienzo").dataset.esquinas || 0) >= n, esperadas, { timeout: 5000 }).catch(() => {});
+      const hay = await esquinas();
+      // Sin moverse el lienzo, un toque que no llega es de la página: no se repite.
+      if (n0 === 0 && hay < esperadas) throw new Error("se tocaron " + puntos.length + " esquinas sin que se moviera el lienzo y llegaron " + hay);
+      return;
+    } else if (n0 !== 0 || intento >= 3) {
+      throw new Error("el lienzo se movió mientras se tocaban las esquinas (intento " + intento + ")");
+    } else console.log("  (el lienzo se movió mientras se tocaban las esquinas: se vuelven a tocar)");
+    await page.evaluate(() => document.getElementById("btn-esquinas").click()); // borra las esquinas del tablero elegido
+  }
 }
 
 const aviso = (p) => p.textContent("#aviso");
@@ -1097,7 +1167,7 @@ async function esperarJugadas(p, n) {
     igual("al volver, el mismo código: los QR impresos siguen sirviendo", [await pa.textContent("#amistosas-codigo"), await pa.inputValue("#amistosas-nombre")], [codigo, "Amistosos del club"]);
 
     // El celular de la mesa 2, SIN CUENTA, por su QR.
-    const M = await abrir(browser, enlace2.replace(/^.*?camara-tablero/, "camara-tablero"), { sinSesion: true }, { width: 412, height: 900 });
+    const M = await abrir(browser, enlace2.replace(/^.*?camara-tablero/, "camara-tablero"), { sinSesion: true }, { width: 412, height: 900 }, CAMARA_LENTA);
     const pm = M.page;
     await pm.waitForFunction(() => !document.getElementById("vivo-encendido").hidden, null, { timeout: 8000 }).catch(() => {});
     igual("sin cuenta, por el QR: su mesa, transmitiendo con el código de las amistosas",
@@ -1112,6 +1182,13 @@ async function esperarJugadas(p, n) {
     await foto(pm, new Chess().fen(), ESQ0);
     await esperarAviso(pm, /esquinas/);
     await tocar(pm, aLienzo(ESQ0));
+    // Por el QR la página abre la cámara sola; ésta llega ahora, con la foto ya puesta y las esquinas tocadas.
+    await pm.evaluate(() => window.__darCamara());
+    await pm.waitForFunction(() => window.__flujoLento && (window.__flujoLento.getVideoTracks()[0].readyState === "ended" || document.getElementById("video").srcObject === window.__flujoLento), null, { timeout: 8000 }).catch(() => {});
+    await pm.waitForTimeout(300); // lo que la página haga después de tener el flujo
+    igual("una cámara que termina de abrir después de elegir la foto no le gana: la foto y las esquinas se quedan, y la cámara se suelta",
+      await pm.evaluate(() => [document.getElementById("lienzo").dataset.esquinas, document.getElementById("video").srcObject === window.__flujoLento, window.__flujoLento.getVideoTracks()[0].readyState, document.getElementById("btn-calibrar").disabled]),
+      ["4", false, "ended", false]);
     await pm.click("#btn-calibrar");
     await esperarAviso(pm, /Calibrado/);
     const W = await abrir(browser, "tablero-vivo.html#" + codigo, null, { width: 1280, height: 1000 });
@@ -1622,7 +1699,10 @@ async function esperarJugadas(p, n) {
     // Una partida con todas las piezas en juego (cada jugada, una foto con su posición).
     const partida = ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4", "Nf6", "O-O", "Be7", "Re1", "b5", "Bb3", "d6", "c3", "O-O", "h3", "Nb8", "d4", "Nbd7", "Nbd2", "Bb7", "Bc2", "Re8"];
     for (const m of partida) { j.move(m); await conFormas(j.fen()); await esperarJugadas(pm, j.history().length); }
-    await pm.waitForFunction(() => /^\d+ fotos guardadas\.$/.test(document.getElementById("muestras-cuenta").textContent) && !document.getElementById("btn-modelo-entrenar").disabled, null, { timeout: 8000 }).catch(() => {});
+    // Espera el número EXACTO: cada foto se guarda después de anotar su jugada, y con
+    // «cualquier número» se leía la cuenta mientras la última todavía se guardaba
+    // (23 de 24 en el CI de 2 núcleos, el 6/11/2026).
+    await pm.waitForFunction((n) => document.getElementById("muestras-cuenta").textContent === n + " fotos guardadas." && !document.getElementById("btn-modelo-entrenar").disabled, partida.length, { timeout: 8000 }).catch(() => {});
     igual("cada jugada dejó su foto, y con 10 o más se puede entrenar", [await pm.textContent("#muestras-cuenta"), await pm.isEnabled("#btn-modelo-entrenar")], [partida.length + " fotos guardadas.", true]);
     await pm.click("#btn-modelo-entrenar");
     await pm.waitForFunction(() => /^Hay un modelo de las piezas en este aparato/.test(document.getElementById("modelo-estado").textContent), null, { timeout: 60000 }).catch(() => {});
@@ -1980,6 +2060,20 @@ async function esperarJugadas(p, n) {
     // que cae: al árbitro le llega el aviso con el color y la foto.
     const adelantar = (pg) => pg.evaluate(() => { if (window.__mas === undefined) { const real = Date.now; window.__mas = 0; Date.now = () => real() + window.__mas; } });
     await adelantar(pbb); await adelantar(pw);
+    /* Los dos relojes QUIETOS (el de quien transmite y el de quien mira)
+     * hasta mirar el «0:30»: quien mira muestra lo que le quedaba al
+     * mandarlo menos lo que pasó desde que llegó, redondeado hacia arriba, y
+     * quien transmite puede volver a mandarlo cuando quiera. Con los relojes
+     * corriendo, si entre el arranque y la lectura pasaba más de un segundo
+     * de verdad (el CI ocupado), salía «0:29» (17/11/2026). Quietos, lo que
+     * pasa es exactamente lo adelantado. */
+    const quieto = (pg) => pg.evaluate(() => {
+      const corre = Date.now, desde = corre(), mas0 = window.__mas;
+      Date.now = () => desde + window.__mas - mas0; // solo avanza lo adelantado
+      window.__soltar = () => { const desfase = Date.now() - corre(); Date.now = () => corre() + desfase; };
+    });
+    const soltar = (pg) => pg.evaluate(() => window.__soltar()); // corre otra vez, desde donde quedó
+    await quieto(pbb); await quieto(pw);
     await pbb.selectOption("#reloj-ritmo", "3+2");
     await pbb.click("#btn-reloj");
     await pw.waitForFunction(() => /Negras 3:00 \(corre\)/.test(document.querySelector('#mesas-lista [data-clave] [data-reloj]:not([hidden])')?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
@@ -1989,10 +2083,11 @@ async function esperarJugadas(p, n) {
     // Al frente: Chrome frena los temporizadores de una pestaña de fondo (en el CI, a uno por minuto).
     await pw.bringToFront();
     await pw.evaluate(() => { window.__mas += 150000; });
-    await pw.waitForFunction(() => !document.getElementById("poco-tiempo").hidden, null, { timeout: 4000 }).catch(() => {});
+    await pw.waitForFunction(() => !document.getElementById("poco-tiempo").hidden, null, { timeout: 10000 }).catch(() => {});
     igual("con menos de un minuto: arriba, qué mesa y quién, y en su tarjeta, escrito (no solo el color)",
       [await pw.textContent("#poco-tiempo"), await pw.evaluate(() => document.querySelectorAll("#mesas-lista [data-reloj]")[1].textContent)],
       ["⏱ Con poco tiempo: Mesa 6 (las negras, 0:30).", "⏱ Blancas 3:00 · Negras 0:30 (corre) · ¡Poco tiempo para las negras!"]);
+    await soltar(pbb); await soltar(pw);
     const antesBandera = eventos.length;
     await pbb.bringToFront();
     await pbb.evaluate(() => { window.__mas += 181000; });

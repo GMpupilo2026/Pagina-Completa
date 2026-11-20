@@ -58,10 +58,23 @@ Cuando la variable se perdió, dejó afuera a **todos**, incluido el profesor.
   propias cabeceras de seguridad.
 - **Si Supabase no contesta (red, 5xx), se deja pasar**, la misma regla que
   `acceso-vigente.js`: una caída no puede dejar sin su material a todos los que
-  pagaron. En ese caso solo pasa un token que dice ser de este proyecto y no
-  venció; una cookie cualquiera no se cuela. **Cuando Supabase contesta, decide
+  pagaron. En ese caso solo pasa un token de este proyecto, sin vencer y **con
+  su firma comprobada en el worker** (`firmaValida()`, con la clave pública ES256
+  de Supabase escrita en `CLAVES_PUBLICAS`). **Cuando Supabase contesta, decide
   solo Supabase**: si el formato del token cambiara algún día, el worker no
   puede repetir el error del candado anterior y dejar afuera a todo el mundo.
+- **Hasta el 10/11/2026 la firma no se miraba**: con Supabase caído o lento
+  (más de 4 s), un JSON escrito a mano con el `iss` del proyecto, `role`
+  y `exp` abría `cursos/protegido/`, `material/` y el código con licencia. La
+  clave pública va escrita en el worker y no se pide al `jwks.json` porque el
+  caso que importa es Supabase caído, y ahí tampoco contestaría. Comprobado en
+  los registros de Supabase: los 44 476 pedidos con sesión de un día venían
+  firmados con ES256 y esa clave. **Si Supabase rota la clave**, se copia la
+  nueva de `/auth/v1/.well-known/jwks.json` a `CLAVES_PUBLICAS`; mientras no,
+  con Supabase arriba no cambia nada, y caído un token con la clave nueva no
+  pasa (queda anotado en el registro del worker). `verificar-worker.js` firma
+  tokens de verdad con una clave de prueba y comprueba que uno inventado, uno
+  alterado o uno con otra clave no pasen.
 - **`run_worker_first` en `wrangler.jsonc` es la mitad del candado.** Con
   Workers Assets, un archivo que existe se sirve directo, **sin pasar por el
   worker**: sin esa línea el código está perfecto y el candado no existe, sin
@@ -250,6 +263,38 @@ pregunta mientras el tablero ya muestra la jugada. Fuera del Modo Adaptado sigue
 el SVG de siempre, y al cambiar el modo en caliente se repinta. `sesion.html` no
 carga `curso-adaptado.js`: ahí los visores siguen con el SVG.
 
+**6. Los diagramas avanzan sin escribir, y de uno se pasa al siguiente.** La
+queja de los alumnos ciegos era «los diagramas no avanzan», y eran tres cosas,
+ninguna con un error en pantalla:
+
+- **Con el recuadro vacío, Intro no hacía nada.** En «Repasar mis clases» y en
+  el tablero de Estudio, Intro o → avanzan una jugada (`recorrer` de
+  `js/cuadro-comandos.js`); en los cursos había que escribir «siguiente» en
+  cada jugada, y quien venía de allá apretaba Intro y el recuadro se quedaba
+  callado. Ahora los tres visores (diagrama, partida y ejercicio) llevan su
+  `recorrer`: Intro o →, la siguiente; ←, la anterior; Inicio y Fin, las
+  puntas. Va por las mismas palabras que se escriben (`pasoVacio`), así dice
+  lo mismo: que la solución está tapada, que ya es la última. Al adivinar las
+  jugadas clave, Intro es «seguir» cuando toca.
+- **Al terminar la línea no había cómo seguir.** «siguiente» contestaba «Ya
+  estás en la última jugada» y para llegar al otro diagrama había que salir del
+  recuadro y buscarlo con el lector. **«diagrama siguiente» / «diagrama
+  anterior»** (también «ejercicio», «partida») llevan el foco al recuadro del
+  otro visor de la MISMA lección y dicen cuál es: «Diagrama 2 de 14: Final 1 ·
+  diagrama 2: El cuadrado dibujado. Ganan blancas.». El nombre sale de lo que
+  la lección escribe justo encima del visor. Y el aviso de la última jugada
+  dice cómo seguir. Está una vez, en `CursoAdaptado.otroVisor()`, para los dos
+  módulos; a mitad de una práctica contesta que primero se termine.
+- **La tecla H saltaba por encima de los diagramas.** Una lección trae hasta
+  veinticuatro, y el único encabezado era el de la lección. El rótulo de cada
+  visor («Final 1 · diagrama 2», «Jálifman – Svéshnikov») lleva ahora
+  `role="heading"`, un nivel por debajo del encabezado de la lección que lo
+  precede (sin contar los de otro visor: la ayuda del recuadro trae sus `h3`).
+  Con `role` y no cambiando la etiqueta: a quien ve la página no le cambia nada.
+
+Para poner la posición en un tablero de verdad está «dictar» (ver «El dictado:
+la posición pieza por pieza, y la voz más lenta»).
+
 **Lo que decide qué se ve es el CSS** (`html.adaptive-mode` en `css/styles.css`),
 no el JavaScript: así encender y apagar el modo surte efecto al instante, sin
 volver a recorrer el contenido del curso.
@@ -277,7 +322,10 @@ que la posición escrita esté pegada al cuadro de comandos y **se vea de verdad
 en Modo Adaptado (se mide el `position` que calcula el navegador, no la clase), y
 que no quede ningún plural inventado ni en los generadores ni en los archivos ya
 generados, que ningún fragmento de curso vuelva a traer un enlace de video y que
-ninguna página de curso de la Academia vuelva a repetir el temario.
+ninguna página de curso de la Academia vuelva a repetir el temario. Y «Avanzar
+con Intro y pasar de un diagrama al siguiente»: Intro, las flechas, Inicio y
+Fin en un diagrama y en una partida, «diagrama siguiente» y «anterior» (se mira
+dónde quedó el foco y qué dice el aviso) y que cada diagrama sea un encabezado.
 
 ### Los cursos ya no ofrecen video, y dentro de la plataforma no repiten el temario
 
@@ -362,6 +410,35 @@ dentro del pie, como párrafo — dos `<nav>` con el mismo nombre se anuncian co
 dos regiones iguales y no se sabe cuál es cuál. Va en los dos extremos porque el
 documento es largo: quien termina de leerlo no tendría que subir de nuevo para
 salir.
+
+**Lo mismo en todas las demás versiones accesibles** (los libros de
+`material/`, el libro del diagnóstico, las fichas de estudio, los cuentos de
+Peonita y los doce tomos de «Una clase al día»): la posición iba en un párrafo
+(`<p class="posicion">… Piezas blancas: rey en g1; torres en a1, f1…`). Ahora
+es un bloque con una pieza por renglón, escrito por **una sola función**,
+`posicionHtml()` de `herramientas/lib/posicion-accesible.js`, que usan los doce
+generadores (y `piezasHtml()`, la de las lecciones). Ahí el rótulo «Piezas
+blancas: 14» va en negrita y no como encabezado: cada libro ya tiene su árbol
+de encabezados. Las casillas sueltas de la prosa también van dichas. Los PDF,
+los Word y los EPUB no se tocaron.
+
+**Y las líneas de jugadas de los libros, igual.** «Solución. 32… torre eva 1,
+33. dama captura eva 1, …» iba en un párrafo; ahora cada jugada es un renglón
+(«32. Negras: torre eva 1.») bajo «Solución: 5 jugadas». Lo escribe
+`lineaHtml()` del mismo módulo, que parte la línea ya dicha
+(`jugadasDeLinea()`, la que también usan las lecciones). Una línea de UNA
+jugada se queda en su renglón de texto («Solución. 10, negras: alfil bella 4
+jaque mate.»), y lo que no tiene forma de línea no se parte: mejor corrida que
+mal partida. En los tomos de «Una clase al día», las **partidas comentadas**
+van con una jugada por renglón y su comentario al lado (`<ul class="jugadas">`),
+y las soluciones de los ejercicios también.
+
+`verificar-posicion-accesible.js` recorre **todos** los «-accesible» del sitio
+(434 archivos, más de 8000 posiciones y casi 9000 líneas): ninguno trae la
+posición corrida; en cada bloque con su FEN hay un renglón por cada pieza; y
+ninguna línea de varias jugadas ni partida comentada sigue en un párrafo. Un
+generador nuevo que vuelva a escribirlas corridas salta ahí. Probado que falla
+con una pieza de menos y con la línea de un libro devuelta a su párrafo.
 
 ### De dónde sale el contenido (y por qué importa)
 
@@ -704,6 +781,12 @@ los nombres, los correos y el progreso de **menores de edad**, y eso no se
 arregla después: el video ya salió. Por eso el generador **no sabe abrir el
 sitio**; solo sabe leer esa carpeta.
 
+**`img/guia/` se publica a propósito** (3,6 MB, 28 JPG) aunque ninguna página
+la pida con un `<img>`: la usa la pantalla «Archivos» de administración (por
+`data/archivos.json`), además de los generadores. No va a `.assetsignore`:
+confirmado con el dueño el 10/11/2026, en una revisión que la había marcado
+como peso que nadie pide.
+
 - **La salida no se commitea.** `promo/` está en `.gitignore` **y** en
   `.assetsignore`: el worker sirve todo el directorio, así que un mp4 suelto
   quedaría publicado en el sitio sin que nadie lo pidiera. Es el mismo par de
@@ -839,6 +922,8 @@ cualquiera compruebe, sin cuenta, que es auténtico.
   como en el encabezado (el caballo y el nombre sobre el azul): el caballo es
   claro y sobre el papel blanco no se vería. `logo-completo-*.png` es la marca
   personal de Oscar, no la del sitio.
+- **El diploma de un rango** usa esta misma página y este mismo código, pero
+  con otro papel (ver «El diploma de rango» en `puntos-y-premios.md`).
 - **En Informes** (`cursoCertificado` en `js/informes.js`): con el curso
   completo, el profe ve «🎓 Dar certificado» (con confirmación) y, si ya lo dio,
   «Ver certificado» y «Anular». El alumno ve el suyo, o «Cuando tu profe lo
@@ -2425,8 +2510,10 @@ sesión**. Lo pinta `js/admin-asesores.js`.
   ritmo, el orden cambiado) y se cuidó que la correcta **no sea siempre la
   opción más larga**: en un Kahoot eso se aprende rápido y se contesta sin
   leer.
-- **Las tareas de nivel inicial** van en el mismo archivo, en `tareas` (hoy la
-  de la Sesión 1 y la de la 2: 14 y 12 preguntas): más simples que el Kahoot,
+- **Las tareas de nivel inicial** van en el mismo archivo, en `tareas` (hoy de
+  la Sesión 1 a la 5: 14, 12, 12, 12 y 12 preguntas; las de la 3, 4 y 5, de
+  solo texto, se mandaron el 16/11/2026 a los 30 asesores con fecha límite el
+  1 de diciembre): más simples que el Kahoot,
   para mandar a la casa a quien recién empieza con el reglamento, y **ninguna
   repite una pregunta del Kahoot** (`verificar-formacion.js` lo revisa). Se
   llaman «Formación Ajedrez · Tarea inicial de la Sesión N: …», y la ficha las
@@ -2492,12 +2579,61 @@ sesión**. Lo pinta `js/admin-asesores.js`.
   presentaciones (`herramientas/formacion-practicas.js`); la Sesión 1 tiene la
   suya (`presentaciones/practica-01/`, dibujada con `formacion-laminas.js`).
 
+- **Los ejercicios de un tema**: una sesión puede traer, además de su
+  presentación, presentaciones cortas de ejercicios (`presentaciones/ejercicio-*/`,
+  con `"sesion": N` en su `diapositivas.json`), que `sesiones.json` lista en
+  `ejercicios` y la ficha ofrece con «🧩». Hoy, el del tablero mal colocado en
+  la Sesión 1 (ver «El ejercicio del tablero mal colocado» en
+  `clase-en-vivo.md`).
+
 El curso en sí **no** se esconde: se vende en la tienda y el proyecto Campeones
 Colegiales usa dos de sus lecciones. Lo que se reparte es el kit del taller
 (las presentaciones para la clase y los cuestionarios). Los archivos de
 `cursos/recursos/formacion-ajedrez/` los sigue sirviendo el worker a quien
 tiene acceso a la Academia, así que a los alumnos de la clase les llegan las
 diapositivas que el profe muestra.
+
+### El fondo para grabar el curso con OBS
+
+Para grabar las clases de Formación Ajedrez (la pantalla de la clase, como en
+los videos de YouTube del curso) sin que el video flote sobre negro,
+`node herramientas/obs-fondo.js` dibuja en `img/obs/` un fondo de 1920 × 1080
+con la paleta del sitio y la marca de Ajedrez Integral (la copia única de
+`herramientas/lib/marca-agua.js`, en blanco):
+
+- `formacion-ajedrez-fondo.png` va como la capa de abajo en OBS, y la pantalla
+  encima, en el recuadro: **X = 200, Y = 136, 1520 × 855** (16:9 exacto).
+- `formacion-ajedrez-marco.png` es opcional y va arriba de todo: la misma
+  imagen con el recuadro transparente, que le redondea las esquinas al video y
+  tapa el borde si no calza al píxel.
+
+Se dibuja con un script y no a mano por lo mismo que `og-imagen.js`: si cambia
+la paleta o el recuadro (`RECUADRO`), se vuelve a correr y sale igual.
+
+**A las grabaciones que ya se subieron sin él** (las sesiones 1, 2 y 3) se lo
+pone `node herramientas/video-con-fondo.js <grabación> [salida.mp4]`, en la
+computadora del dueño: desde el contenedor no se llega a YouTube (ni bajar ni
+subir) y los originales de Teams pesan varios GB. Solo pide ffmpeg.
+
+- **El video es la entrada principal y el marco va encima**: el marco ya es el
+  fondo entero con el recuadro transparente. Con las imágenes en bucle como
+  entrada principal (fondo, video, marco), ffmpeg no escribía ni un cuadro.
+- **La duración no cambia, a propósito**, y el script la compara al terminar.
+  Los capítulos (`herramientas/datos/formacion-grabaciones.json`) son segundos
+  del video, y lo que vio cada asesor (`grabaciones_vistas`) se guarda por
+  clase (horario + fecha), no por id de video: con la misma duración siguen
+  valiendo los dos. Probado con un video 16:9 con audio y uno 4:3 sin audio:
+  la misma duración al milésimo, los mismos cuadros por segundo, y el 4:3 con
+  franjas del azul del recuadro, no negras.
+- **Para cambiar el video de una sesión**: YouTube no deja reemplazar el
+  archivo de un video, así que el nuevo se sube aparte («No listado», con
+  «Permitir inserción») y se pone con `grabacion_clase_poner()` con el enlace
+  nuevo. Esa función hace `on conflict … do update` y no borra la fila, así
+  que lo visto se conserva; **nunca mandar antes el enlace vacío**: eso borra
+  la grabación y, en cascada, lo que vio cada uno. Después se cambia el
+  `youtube_id` en `formacion-grabaciones.json` y se corre
+  `node herramientas/formacion-grabaciones.js`. El video viejo se puede dejar
+  como privado.
 
 ## La sección Archivos
 
@@ -2552,10 +2688,12 @@ publica da 404.
 Los Word (`.docx`, `.doc`, `.odt`) y los Excel (`.xlsx`, `.xlsm`, `.xls`,
 `.ods`) son pocos y sueltos: van por carpeta, con el nombre de `CARPETAS` en el
 generador, y solo se bajan (el navegador no los abre). Hoy hay dos Word (los
-consentimientos de los JDN 2027) y **ningún Excel guardado**: los Excel de la
+consentimientos de los JDN 2027) y **un solo Excel guardado**: el simulador
+de logística de la Sesión 5 de Formación Ajedrez, que arma
+`herramientas/formacion-simulador-logistica.py`. Los demás Excel de la
 plataforma (el mes de cada profesor en Supervisión, los reportes) se arman en
-el navegador con los datos del momento, así que no son archivos del sitio. La
-ficha lo dice en vez de quedar vacía.
+el navegador con los datos del momento, así que no son archivos del sitio. Sin
+ningún Excel, la ficha lo dice en vez de quedar vacía.
 
 ### La vista previa
 

@@ -149,22 +149,6 @@
         };
     }
 
-    let hilo = null, pedido = 0;
-    function reconstruirEnHilo(hojas, alProgresar) {
-        if (!hilo) hilo = new Worker("js/planilla-reconstruir-worker.js");
-        const id = ++pedido;
-        return new Promise((resolve, reject) => {
-            const oir = (e) => {
-                if (e.data.id !== id) return;
-                if (e.data.progreso !== undefined) { alProgresar(e.data.progreso); return; }
-                hilo.removeEventListener("message", oir);
-                if (e.data.error) reject(new Error(e.data.error)); else resolve(e.data.resultado);
-            };
-            hilo.addEventListener("message", oir);
-            hilo.postMessage({ id, hojas });
-        });
-    }
-
     async function deLaFoto(p, decir) {
         decir("Bajando la foto…");
         const { data, error } = await window.sb.storage.from("centroamericano-planillas").createSignedUrl(p.ruta, 120);
@@ -188,7 +172,7 @@
         const { hojas, metodo } = window.PlanillaReconstruir.hojasDeLaFoto(words);
         if (!hojas.length) throw new Error("No se encontró nada escrito en la foto.");
         decir("Armando la partida… 0 %");
-        const resultado = await reconstruirEnHilo(hojas, (x) => decir("Armando la partida… " + Math.round(x * 100) + " %"));
+        const resultado = await window.PlanillaReconstruir.enHilo(hojas, (x) => decir("Armando la partida… " + Math.round(x * 100) + " %"));
         // `palabras`: lo que devolvió Google Vision tal cual (texto y caja de cada palabra), para «Descargar la lectura»
         // compactas ([texto, x0, y0, x1, y1]): se guardan en el navegador con la lectura, y así caben cien fotos
         const palabras = (words || []).map((w) => [w.text, w.bbox.x0, w.bbox.y0, w.bbox.x1, w.bbox.y1]);
@@ -350,26 +334,12 @@
         ir(js.length);
     }
 
-    /* «Descargar la lectura»: lo que leyó Google Vision de la foto (cada palabra con su caja) y lo que salió de eso
-       (las celdas de cada planilla y la partida), para revisar con datos de verdad por qué una partida se leyó mal y
-       afinar js/planilla-reconstruir.js. Trae lo que está escrito en la planilla, también los nombres del
-       encabezado: es para quien organiza y para revisar, nunca para el repositorio. */
+    /* «Descargar la lectura»: lo arma PlanillaReconstruir.lectura() (una sola copia con el Lector de planilla).
+       Trae lo que está escrito en la planilla, también los nombres del encabezado: es para quien organiza y para
+       revisar, nunca para el repositorio. */
     function lecturaParaRevisar(p, datos, ctx) {
-        const r = datos.resultado;
-        return {
-            que: "Lectura de la foto de las planillas («Generar PGN», Centroamericano 2026)",
-            version: 1,
-            torneo: ctx.nombreTorneo(p.tnr), tnr: p.tnr, ronda: p.ronda, mesa: p.mesa,
-            subida: p.subida, leida: datos.leida,
-            metodo: datos.metodo,
-            hojas: datos.hojas,
-            partida: {
-                jugadas: r.jugadas.map((j) => ({ san: j.san, estado: j.estado, escrito: j.escrito || [], alternativa: j.alternativa || null })),
-                ilegibleDesde: r.ilegibleDesde, resto: r.resto || [], costo: r.costo,
-            },
-            // como las devuelve ocr-scoresheet: se pueden pasar tal cual a PlanillaReconstruir.hojasDeLaFoto()
-            palabras: datos.palabras.map((w) => ({ text: w[0], bbox: { x0: w[1], y0: w[2], x1: w[3], y1: w[4] } })),
-        };
+        return window.PlanillaReconstruir.lectura("Lectura de la foto de las planillas («Generar PGN», Centroamericano 2026)",
+            { torneo: ctx.nombreTorneo(p.tnr), tnr: p.tnr, ronda: p.ronda, mesa: p.mesa, subida: p.subida }, datos);
     }
 
     async function generar(p, caja, ctx, opciones) {

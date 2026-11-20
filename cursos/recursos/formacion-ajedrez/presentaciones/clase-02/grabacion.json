@@ -1,0 +1,455 @@
+{
+ "_comentario": "Generado por herramientas/formacion-grabaciones.js desde herramientas/datos/formacion-grabaciones.json: no se edita a mano.",
+ "duracion": 14518,
+ "capitulos": [
+  {
+   "t": 0,
+   "titulo": "Bienvenida y pendiente de la Sesión 1: anotación"
+  },
+  {
+   "t": 2466,
+   "titulo": "Práctica: dictado de la planilla"
+  },
+  {
+   "t": 3210,
+   "titulo": "Trabajo en salas: posiciones y casos de árbitro"
+  },
+  {
+   "t": 6594,
+   "titulo": "Receso"
+  },
+  {
+   "t": 7445,
+   "titulo": "Revisión: mate, ahogado, dictado y casos"
+  },
+  {
+   "t": 8939,
+   "titulo": "Errores frecuentes y quiz de repaso"
+  },
+  {
+   "t": 9432,
+   "titulo": "Sesión 2: objetivos, conducta y zona de juego"
+  },
+  {
+   "t": 9746,
+   "titulo": "Dispositivos electrónicos"
+  },
+  {
+   "t": 9906,
+   "titulo": "Irregularidades: jugada ilegal y piezas desplazadas"
+  },
+  {
+   "t": 10020,
+   "titulo": "Sanciones: de menor a mayor"
+  },
+  {
+   "t": 10201,
+   "titulo": "Reclamos y apelaciones"
+  },
+  {
+   "t": 10383,
+   "titulo": "Casos: ¿qué decide la persona árbitra?"
+  },
+  {
+   "t": 10899,
+   "titulo": "Receso"
+  },
+  {
+   "t": 11244,
+   "titulo": "Práctica: simulación de reclamos en salas"
+  },
+  {
+   "t": 12727,
+   "titulo": "Revisión de los ejercicios y preguntas"
+  },
+  {
+   "t": 13776,
+   "titulo": "Quiz de la sesión y cierre"
+  }
+ ],
+ "laminas": [
+  {
+   "t": 0,
+   "lamina": 33,
+   "clase": "clase-01"
+  },
+  {
+   "t": 1148,
+   "lamina": 34,
+   "clase": "clase-01"
+  },
+  {
+   "t": 1505,
+   "lamina": 35,
+   "clase": "clase-01"
+  },
+  {
+   "t": 1759,
+   "lamina": 36,
+   "clase": "clase-01"
+  },
+  {
+   "t": 1856,
+   "lamina": 37,
+   "clase": "clase-01"
+  },
+  {
+   "t": 1906,
+   "lamina": 38,
+   "clase": "clase-01"
+  },
+  {
+   "t": 2460,
+   "lamina": 41,
+   "clase": "clase-01"
+  },
+  {
+   "t": 2500,
+   "lamina": 45,
+   "clase": "clase-01"
+  },
+  {
+   "t": 3929,
+   "lamina": 42,
+   "clase": "clase-01"
+  },
+  {
+   "t": 4713,
+   "lamina": 43,
+   "clase": "clase-01"
+  },
+  {
+   "t": 5146,
+   "lamina": 46,
+   "clase": "clase-01"
+  },
+  {
+   "t": 6064,
+   "lamina": 47,
+   "clase": "clase-01"
+  },
+  {
+   "t": 7445,
+   "lamina": 44,
+   "clase": "clase-01"
+  },
+  {
+   "t": 8066,
+   "lamina": 45,
+   "clase": "clase-01"
+  },
+  {
+   "t": 8358,
+   "lamina": 46,
+   "clase": "clase-01"
+  },
+  {
+   "t": 8554,
+   "lamina": 47,
+   "clase": "clase-01"
+  },
+  {
+   "t": 8939,
+   "lamina": 48,
+   "clase": "clase-01"
+  },
+  {
+   "t": 9341,
+   "lamina": 49,
+   "clase": "clase-01"
+  },
+  {
+   "t": 9432,
+   "lamina": 2
+  },
+  {
+   "t": 9460,
+   "lamina": 3
+  },
+  {
+   "t": 9467,
+   "lamina": 4
+  },
+  {
+   "t": 9746,
+   "lamina": 5
+  },
+  {
+   "t": 9906,
+   "lamina": 6
+  },
+  {
+   "t": 9993,
+   "lamina": 7
+  },
+  {
+   "t": 10035,
+   "lamina": 9
+  },
+  {
+   "t": 10201,
+   "lamina": 10
+  },
+  {
+   "t": 10383,
+   "lamina": 11
+  },
+  {
+   "t": 10472,
+   "lamina": 12
+  },
+  {
+   "t": 10487,
+   "lamina": 13
+  },
+  {
+   "t": 10495,
+   "lamina": 14
+  },
+  {
+   "t": 10683,
+   "lamina": 17
+  },
+  {
+   "t": 10727,
+   "lamina": 18
+  },
+  {
+   "t": 10759,
+   "lamina": 19
+  },
+  {
+   "t": 10838,
+   "lamina": 20
+  },
+  {
+   "t": 10851,
+   "lamina": 21
+  },
+  {
+   "t": 10861,
+   "lamina": 22
+  },
+  {
+   "t": 10899,
+   "lamina": 23
+  },
+  {
+   "t": 11257,
+   "lamina": 24
+  },
+  {
+   "t": 11574,
+   "lamina": 25
+  },
+  {
+   "t": 11715,
+   "lamina": 26
+  },
+  {
+   "t": 11826,
+   "lamina": 27
+  },
+  {
+   "t": 11920,
+   "lamina": 28
+  },
+  {
+   "t": 12029,
+   "lamina": 29
+  },
+  {
+   "t": 12421,
+   "lamina": 30
+  },
+  {
+   "t": 12727,
+   "lamina": 25
+  },
+  {
+   "t": 12805,
+   "lamina": 26
+  },
+  {
+   "t": 12906,
+   "lamina": 27
+  },
+  {
+   "t": 13010,
+   "lamina": 28
+  },
+  {
+   "t": 13525,
+   "lamina": 29
+  },
+  {
+   "t": 13559,
+   "lamina": 30
+  },
+  {
+   "t": 13776,
+   "lamina": 31
+  },
+  {
+   "t": 13784,
+   "lamina": 32
+  },
+  {
+   "t": 13791,
+   "lamina": 33
+  },
+  {
+   "t": 14119,
+   "lamina": 34
+  },
+  {
+   "t": 14252,
+   "lamina": 37
+  }
+ ],
+ "aclaraciones": [
+  {
+   "t": 5120,
+   "avatar": "arbitro",
+   "titulo": "Las 50 jugadas: cómo se cuentan",
+   "texto": "Son 50 jugadas de cada jugador sin ninguna captura ni movimiento de peón, no «50 movimientos sin ganar». Y esas tablas hay que reclamarlas; son automáticas recién a las 75.",
+   "fuente": "Leyes de la FIDE, art. 9.3 y 9.6"
+  },
+  {
+   "t": 6240,
+   "avatar": "arbitro",
+   "titulo": "La jugada ilegal: 2 minutos o 1",
+   "texto": "Los 2 minutos para el rival son del ritmo clásico. En rápidas y relámpago, como en las etapas regional e interregional de los JDE, es 1 minuto. Se aclara más adelante en este video.",
+   "fuente": "Leyes de la FIDE, art. 7.5.5 y Apéndice A.3"
+  },
+  {
+   "t": 9510,
+   "avatar": "arbitro",
+   "titulo": "Salir de la zona de juego",
+   "texto": "Salir de la zona de juego sin permiso está prohibido, pero no hace perder la partida por sí solo: la sanción la decide la persona árbitra o la fija el reglamento del torneo.",
+   "fuente": "Leyes de la FIDE, art. 11.2.3 y 12.9"
+  }
+ ],
+ "preguntas": [
+  {
+   "t": 1148,
+   "n": 1,
+   "texto": "Un jugador ofrece tablas una y otra vez, pese a las negativas del rival. ¿Qué es?",
+   "opciones": [
+    "Su derecho: puede ofrecerlas cuantas veces quiera",
+    "Una molestia al rival, que se puede sancionar",
+    "Una jugada ilegal",
+    "Motivo para declarar tablas"
+   ],
+   "fuente": "FIDE 11.5 y 12.9"
+  },
+  {
+   "t": 5277,
+   "n": 2,
+   "texto": "Un jugador toca a propósito su caballo, que tiene jugada legal, y después quiere mover el alfil. ¿Qué corresponde?",
+   "opciones": [
+    "Puede mover el alfil si no soltó el caballo",
+    "Puede mover el alfil, con una advertencia",
+    "Debe mover el caballo solo si el rival lo exige",
+    "Debe mover el caballo: pieza tocada"
+   ],
+   "fuente": "FIDE 4.3.1"
+  },
+  {
+   "t": 9745,
+   "n": 3,
+   "texto": "Durante su partida, ¿puede un jugador salir del recinto de juego (sala, baños y zona de descanso)?",
+   "opciones": [
+    "Solo con permiso del árbitro",
+    "Sí, si su reloj no está en marcha",
+    "Sí, si le avisa a su rival",
+    "Nunca, ni con permiso"
+   ],
+   "fuente": "FIDE 11.2"
+  },
+  {
+   "t": 9993,
+   "n": 4,
+   "texto": "¿En qué momento queda completada una jugada ilegal, a efectos de sanción?",
+   "opciones": [
+    "Cuando suelta la pieza en la casilla",
+    "Cuando el rival hace su jugada siguiente",
+    "Cuando la persona árbitra la ve",
+    "Cuando el jugador presiona el reloj"
+   ],
+   "fuente": "FIDE 7.5.1"
+  },
+  {
+   "t": 10200,
+   "n": 5,
+   "texto": "¿Cuál es la sanción más leve de la lista del art. 12.9?",
+   "opciones": [
+    "Sumarle tiempo al rival",
+    "Quitarle medio punto",
+    "La advertencia",
+    "Declarar perdida la partida"
+   ],
+   "fuente": "FIDE 12.9"
+  },
+  {
+   "t": 10382,
+   "n": 6,
+   "texto": "Un jugador firmó la planilla con el resultado y después quiere apelar una decisión. ¿Puede?",
+   "opciones": [
+    "No: al firmar aceptó el resultado",
+    "Sí: firmar no quita el derecho a apelar",
+    "Solo si el rival firma la apelación",
+    "Solo si no había árbitro presente"
+   ],
+   "fuente": "FIDE 8.7 y 11.10"
+  },
+  {
+   "t": 10898,
+   "n": 7,
+   "texto": "En apuro de tiempo, un jugador vuelca varias piezas al mover. ¿Con qué tiempo las repone?",
+   "opciones": [
+    "Con el tiempo del rival",
+    "Con los relojes detenidos por el árbitro",
+    "Con su propio tiempo",
+    "Las repone el árbitro, sin parar el reloj"
+   ],
+   "fuente": "FIDE 7.4"
+  },
+  {
+   "t": 12905,
+   "n": 8,
+   "texto": "Segunda jugada ilegal completada de un jugador, pero a su rival solo le queda el rey. ¿Resultado?",
+   "opciones": [
+    "Tablas: el rival no puede dar mate",
+    "Pierde quien hizo la segunda ilegal",
+    "El rival recibe dos minutos y sigue",
+    "La partida se juega de nuevo"
+   ],
+   "fuente": "FIDE 7.5.5"
+  },
+  {
+   "t": 13229,
+   "n": 9,
+   "texto": "El reglamento permite el celular completamente apagado en el bolso. Durante la partida vibra dentro del bolso. ¿Qué corresponde?",
+   "opciones": [
+    "Nada: estaba en el bolso, como se permite",
+    "La sanción del reglamento o, si no prevé otra, perder",
+    "Una advertencia: no sonó, solo vibró",
+    "Dos minutos más para el rival"
+   ],
+   "fuente": "FIDE 11.3.2"
+  },
+  {
+   "t": 13558,
+   "n": 10,
+   "texto": "A las 12 jugadas de cada bando se descubre que los colores estaban invertidos. ¿Qué se hace?",
+   "opciones": [
+    "La partida sigue con esos colores",
+    "Se juega de nuevo con los colores correctos",
+    "Se cambian los colores y se sigue",
+    "Se declaran tablas"
+   ],
+   "fuente": "FIDE 7.3"
+  }
+ ]
+}

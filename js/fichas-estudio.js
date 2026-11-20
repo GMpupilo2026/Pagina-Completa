@@ -2533,6 +2533,45 @@
       ],
     },
     {
+      id: "colle-zukertort",
+      categoria: "apertura",
+      titulo: "Sistema Colle-Zukertort",
+      subtitulo: "El Colle con b3: dos alfiles contra el enroque",
+      nivel: 2,
+      pieza: "b",
+      lineaId: "colle-zukertort",
+      resumen: "El Colle con b3 en vez de c3: el alfil de c1 sale a b2 y los dos alfiles apuntan al rey negro.",
+      diagrama: "El caballo blanco saltó a e5; el alfil de d3 mira a h7, el alfil de b2 espera que se abra la gran diagonal y la dama negra salió a e7.",
+      centro: [
+        "b3 en vez de c3: el alfil de c1 sale a b2 y no queda encerrado detrás de e3",
+        "Dos alfiles contra el enroque: el de d3 apunta a h7 y el de b2 a g7",
+        "El mismo plan contra casi todo: Ce5, f4 y la torre por f3 hacia h3",
+      ],
+      bloques: [
+        [
+          "d4, Cf3, e3, Ad3, b3, Ab2, enroque y Cbd2",
+          "Ce5, y después f4 para sostener el caballo",
+          "La torre sube por f3 a h3 o a g3",
+          "Si el negro saca el alfil a f5 antes de e6: Ad3 igual; si lo cambia, se recaptura con la dama y se prepara e4",
+        ],
+        [
+          "El sacrificio en h7: el alfil de d3 ya apunta ahí",
+          "Si el caballo de f6 se va, h7 se queda sin su defensor",
+          "Si el negro cambia el caballo de e5, se recaptura con el peón de d4 y el caballo de f6 tiene que irse",
+        ],
+        [
+          "dxc5 o c4 para abrir la diagonal del alfil de b2",
+          "Si el negro no cambia en d3 y juega e6, Axf5: al recapturar con el peón de e6 le quedan los peones doblados",
+          "Contra un fianchetto de rey (g6 y Ag7) el ataque pierde fuerza: conviene otro plan",
+        ],
+        [
+          "El alfil de b2 sigue fuerte en la gran diagonal",
+          "Con f4 jugado, la casilla e4 queda débil: cuidado con un caballo negro ahí",
+          "Si se cambian las piezas temprano, el final queda parejo: el sistema es para el medio juego",
+        ],
+      ],
+    },
+    {
       id: "alapin",
       categoria: "apertura",
       titulo: "Ataque Alapin",
