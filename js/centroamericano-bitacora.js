@@ -159,18 +159,27 @@
         b.push(tablaDe(sueltas));
       }
     }
+    // El espacio para firmarla, como en la bitácora de la mesa de «Dirijo solo» (retirada el 19/11/2026: una sola Mesa del árbitro).
+    b.push({ tipo: "titulo", texto: "Firma" });
+    b.push({ tipo: "parrafo", texto: "______________________________   Árbitro: " + (d.arbitro || "") });
     b.push({ tipo: "nota", texto: "La hora de cada línea es la de Costa Rica. «Enviado» quiere decir que chess-results confirmó el resultado al volver a leerlo. Las anotaciones anuladas quedan en el registro marcadas como «anulada»: la bitácora no se edita ni se borra." });
     return {
       titulo: "Bitácora del árbitro",
-      subtitulo: (d.arbitro || "Árbitro") + " · Centroamericano 2026 · generada el " + F.fechaHora(d.generado),
-      pie: "Centroamericano 2026 · Ajedrez Integral · ajedrez-integral.com",
+      subtitulo: (d.arbitro || "Árbitro") + (evento(F) ? " · " + evento(F) : "") + " · generada el " + F.fechaHora(d.generado),
+      pie: (evento(F) ? evento(F) + " · " : "Mesa del árbitro · ") + "Ajedrez Integral · ajedrez-integral.com",
       bloques: b, fotos: [],
     };
   }
 
-  function nombreArchivo(d) {
+  // El evento que dice la bitácora: el que pasa la tablet (F.evento; "" en un evento con la cara neutra de Ajedrez Integral,
+  // donde no se sabe su nombre) o, si no pasa nada, el Centroamericano, para el que se hizo. Antes decía «Centroamericano 2026»
+  // siempre, también en la Eliminatoria de PZ.
+  const evento = (F) => (F && typeof F.evento === "string" ? F.evento.trim() : "Centroamericano 2026");
+
+  function nombreArchivo(d, F) {
     const base = String((d && d.arbitro) || "arbitro").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "arbitro";
-    return "bitacora-arbitro-" + base + "-centroamericano-2026.pdf";
+    const ev = evento(F).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+    return "bitacora-arbitro-" + base + (ev ? "-" + ev : "") + "." + ((F && F.extension) || "pdf");
   }
 
   const api = { armar, nombreArchivo, detalleDe, reloj };

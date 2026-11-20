@@ -1074,6 +1074,29 @@ const CONTRASTE = `(sel) => {
     const [bitacora] = await Promise.all([pc.waitForEvent("download"), pc.click("#bajar-bitacora")]);
     const bytesB = fs.readFileSync(await bitacora.path());
     igual("«Descargar mi bitácora» baja un PDF con el nombre del árbitro y la MARCA DE AGUA de Ajedrez Integral", [bitacora.suggestedFilename(), bytesB.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(bytesB.toString("latin1"))], ["bitacora-arbitro-ana-arbitra-centroamericano-2026.pdf", true, true]);
+    // En Word también (lo traía la bitácora de la mesa de «Dirijo solo», retirada el 19/11/2026): un .docx (un ZIP) con la
+    // marca de agua en el encabezado y el espacio para la firma.
+    const [bitWord] = await Promise.all([pc.waitForEvent("download"), pc.click("#bajar-bitacora-word")]);
+    const bytesW = fs.readFileSync(await bitWord.path()).toString("latin1");
+    igual("«En Word» baja la misma bitácora en .docx, con la marca de agua y el espacio para firmar",
+        [bitWord.suggestedFilename(), bytesW.startsWith("PK"), /word\/header\d*\.xml/.test(bytesW), /Firma/.test(bytesW)],
+        ["bitacora-arbitro-ana-arbitra-centroamericano-2026.docx", true, true, true]);
+    // «📖 Consultar»: el reglamento y el reloj, sin anotar (ya concluyó: el reloj no ofrece mesas).
+    await pc.click("#consultar");
+    await pc.waitForSelector('dialog[open] select[name="que"]');
+    await pc.selectOption('dialog[open] select[name="que"]', "reglamento");
+    await pc.click("dialog[open] [data-avisos-aceptar]");
+    await pc.waitForSelector('dialog[open] select[name="tipo"]');
+    await pc.click("dialog[open] [data-avisos-aceptar]");
+    await pc.waitForFunction(() => /Lo que se suele aplicar/.test((document.querySelector("dialog[open]") || {}).textContent || ""));
+    await pc.click("dialog[open] [data-avisos-aceptar]");
+    await pc.click("#consultar");
+    await pc.waitForSelector('dialog[open] select[name="que"]');
+    await pc.click("dialog[open] [data-avisos-aceptar]");
+    await pc.waitForSelector('dialog[open] select[name="caso"]');
+    const sinMesa = await pc.evaluate(() => !document.querySelector('dialog[open] select[name="mesa"]'));
+    await pc.click("dialog[open] [data-avisos-cancelar]");
+    igual("«Consultar» dice el reglamento y abre el corrector del reloj (con la ronda terminada, sin ofrecer anotarlo en una mesa)", sinMesa, true);
     // La tabla del PDF: sin `envolver` recorta con «...» (como siempre, para los demás informes); con `envolver` parte el texto y no pierde nada.
     const tablaLarga = await pc.evaluate(async () => {
       const largo = "palabra ".repeat(40) + "FINAL";

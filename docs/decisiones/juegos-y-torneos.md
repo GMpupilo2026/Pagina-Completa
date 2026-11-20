@@ -19059,6 +19059,55 @@ Centroamericano sirve en todos, pero cada evento funciona solo en la Mesa del á
 
 Lo prueba `verificar-centroamericano-mesas-eventos.js`.
 
+### Una sola Mesa del árbitro
+
+Lo pidió el dueño el 19/11/2026: «la mesa del árbitro: unificar ambas, que exista solo una general». Había dos: la del
+evento (la organización en `centroamericano-mesas.html` y la tablet de cada árbitro en `centroamericano-arbitro.html`) y,
+aparte, la de «Dirijo solo» (`mesa-arbitro.html#solo`: un árbitro que anotaba él mismo en chess-results con la clave, o
+que entraba con el código de un adjunto de Pareo, con su propia bitácora en `arbitro_bitacora`). Quedó **la del evento**,
+que ya hacía casi todo y para cualquier evento. La otra se usaba casi nada: en la base había 6 líneas de bitácora, de una
+sola persona, la última del 1/11 (una prueba).
+
+- **Quien dirige solo usa el mismo evento y la misma tablet.** En la organización, «Árbitros y mesas» tiene
+  **«Soy el único árbitro»**: elige el torneo, su nombre y el último día, y se crea un enlace a su nombre con todas las
+  mesas (de la primera, o de la `mesaInicial` de un torneo de Pareo ya leído, a la 9999) que se abre en otra pestaña.
+  Queda en la lista con su QR, por si lo abre en otra tablet. La clave de chess-results la pone una vez en el evento,
+  como cualquier organizador (antes no se guardaba: era la única diferencia de fondo, y se aceptó por ser el modelo que
+  ya usan los eventos).
+- **`mesa-arbitro.html` quedó como la entrada**: la licencia, «¿Sobre qué vas a trabajar?» (Pareo Integral o
+  chess-results), **«¿Te dieron mesas?»** y **«Consultar sin anotar»** (`js/mesa-arbitro-entrada.js`).
+  - «¿Te dieron mesas?» entiende el enlace de la tablet, la puerta corta (`/m/K7M2-9QXA`), el enlace de adjunto de Pareo
+    (`pareo.html#adjunto=…`) y el código suelto. **Los dos códigos tienen la misma forma** (8 letras del alfabeto
+    `A-HJKMNP-Z2-9`), así que se prueba primero como código de la tablet (`centroamericano-codigo`) y, si no existe,
+    como adjunto de Pareo (`pareo-publicar`, `adjunto_entrar`), que abre la vista del adjunto en Pareo. **De un enlace
+    pegado se toma solo el dato** (el token, la cadena del adjunto): la dirección la arma la página, siempre de este sitio.
+  - **Los enlaces viejos siguen sirviendo**: `#adjunto=…` y `#codigo=…` van a `pareo.html` con lo mismo (es lo que
+    hacía la mesa vieja: hablar con el Pareo del principal), antes de pedir la licencia, porque un adjunto no la tiene;
+    `#solo` explica dónde quedó y enfoca el aviso.
+- **Lo que solo tenía la mesa vieja pasó a la tablet**, para no perder nada:
+  - **«📖 Consultar»** (`js/mesa-arbitro-consultas.js`, `MesaConsultas`): corregir un reloj (art. 6.10, con las cuentas a la
+    vista), lo que dice el reglamento de una irregularidad y el ritmo del torneo. El ritmo lo escribe el árbitro y se
+    recuerda en el aparato (`mesa_arbitro_ritmo_v1`, la misma clave de antes; en la tablet, por torneo). El reloj se puede
+    anotar como incidencia de una de sus mesas (`anotar`, tipo `incidencia`, con el artículo); con la ronda terminada,
+    solo se consulta. La entrada ofrece las mismas consultas a cualquiera, sin torneo.
+  - **La bitácora en Word** («En Word», junto al PDF; `ReporteDOCX` con el mismo documento y la marca de agua) y **el
+    espacio para la firma** (`CentroamericanoBitacora.armar`). La bitácora decía **«Centroamericano 2026» siempre**,
+    también en la Eliminatoria de PZ: ahora lo dice solo en sus eventos, y con la cara neutra no nombra ninguno
+    (`F.evento`). Se sigue bajando después de «Terminé mi ronda completa» (lo exige la función; cambiarlo pedía volver a
+    desplegar `centroamericano-mesa`, y no hacía falta).
+- **Lo que se retiró**: `js/mesa-arbitro-pagina.js`, `js/mesa-arbitro-pareo.js` y sus verificadores. Quedan, sin
+  pantalla, la tabla `arbitro_bitacora` (sus 6 líneas no se borran) y la Edge Function `mesa-arbitro` (la de la clave de
+  chess-results directa, que ya nadie llama): borrarla es decisión aparte. `herramientas/revistas-arbitraje/no19/capturas.js`
+  tomaba el doble de `verificar-mesa-arbitro-pareo.js`; la revista ya salió, y volver a armar sus capturas pediría otro doble.
+- **El doble de la organización** (`herramientas/lib/doble-centroamericano-organizacion.js`) aprendió `single()` y a
+  devolver la fila creada en `insert(...).select().single()`, que es como la página recibe el token del enlace nuevo.
+
+Lo prueban `verificar-mesa-arbitro-entrada.js` (la licencia, los enlaces viejos, cada forma de «¿Te dieron mesas?» con los
+dos códigos, las consultas sin anotar y que no quede nada de la mesa vieja) y `verificar-centroamericano-mesas-pagina.js`
+(«Soy el único árbitro»: sin nombre no crea nada, el enlace con todas las mesas y su vencimiento, y la tablet que se abre;
+«En Word» con la marca y la firma; «Consultar»). Rotos a propósito el paso al código de Pareo y la redirección de
+`#adjunto=`, salta.
+
 ### Fair Play y Transmisión en cualquier evento
 
 Lo pidió el dueño el 14/11/2026, en pleno Tacho Chess 2: en la Mesa del árbitro de un evento que no es el
