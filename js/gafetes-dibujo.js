@@ -205,10 +205,21 @@
     // imprimir por ambos lados en casa el dorso puede quedar corrido unos
     // milímetros, y al cortar se iba un pedazo de la franja.
     const sube = Number((diseno.dorso || {}).subir) || 0;
+    // `franjaAbajo`: la franja del frente justo en el borde de abajo, y con
+    // `fotoCentro` la foto lo más grande posible. `dorso.lineaArriba`: un
+    // renglón arriba del horario del dorso (el lugar del torneo).
+    const abajo = !!diseno.franjaAbajo, linea = !!(diseno.dorso && diseno.dorso.lineaArriba);
+    // `dorso.grande`: el dorso aprovecha todo el espacio (lo pidió el dueño
+    // con los gafetes cortados en la mano): la tabla del horario más ancha y
+    // con letra más grande, el QR y la ilustración más grandes, y el texto de
+    // lado de arriba abajo.
+    const grande = !!(diseno.dorso && diseno.dorso.grande);
+    const ladoQr = (grande ? 30 : 25) * s;
     return {
       W, H, s, sx, sy,
       logoIzq: caja(5, 4, 30, 15), logoDer: caja(65, 4, 30, 15),
-      titulo: { y: 27.5 * sy, paso: 4.4 * sy, tam: 9.2 * s },
+      // `tituloEntreLogos`: el título en el hueco entre los dos logos.
+      titulo: diseno.tituloEntreLogos ? { y: 10.8 * sy, paso: 5 * sy, tam: 8 * s, max: 52 * sx } : { y: 27.5 * sy, paso: 4.4 * sy, tam: 9.2 * s },
       nombre: { y1: 54 * sy, y2: 63 * sy, solo: 58.5 * sy, tam: 21 * s, max: 90 * sx },
       detalles: { x: 6 * sx, y: 73.5 * sy, paso: 5.2 * sy, tam: 10 * s, max: 46 * sx },
       bandera: caja(6, 88, 16, 12), paisTexto: { x: 25 * sx, y: 96.3 * sy, tam: 10 * s },
@@ -217,27 +228,30 @@
       // Con `fotoCentro` (la Eliminatoria JDN de PZ): la foto en el medio, el
       // nombre debajo y los detalles centrados debajo del nombre.
       // (más grande desde el 20/11: aprovecha el espacio entre el título y el nombre)
-      fotoCentro: caja(30, 38, 40, 48),
-      nombreCentro: { y1: 92 * sy, y2: 100 * sy, solo: 96 * sy, tam: 18 * s, max: 90 * sx },
-      detallesCentro: { y: 106 * sy, paso: 4.4 * sy, tam: 8.5 * s, max: 88 * sx },
-      franja: caja(0, 115.5, 100, 14),
+      fotoCentro: abajo ? caja(19, 22, 62, 72) : caja(30, 38, 40, 48),
+      nombreCentro: abajo ? { y1: 101.5 * sy, y2: 109.5 * sy, solo: 105.5 * sy, tam: 18 * s, max: 90 * sx } : { y1: 92 * sy, y2: 100 * sy, solo: 96 * sy, tam: 18 * s, max: 90 * sx },
+      detallesCentro: abajo ? { y: 115.5 * sy, paso: 4.4 * sy, tam: 8.5 * s, max: 88 * sx } : { y: 106 * sy, paso: 4.4 * sy, tam: 8.5 * s, max: 88 * sx },
+      franja: abajo ? caja(0, 126, 100, 14) : caja(0, 115.5, 100, 14),
       icono: { lado: 10 * s, margen: 3 * sx },
-      dorsoLogoIzq: caja(4, 3, 22, 10), dorsoLogoDer: caja(74, 3, 22, 10),
-      vertical: caja(3, 16, 16, 106),
+      dorsoLogoIzq: grande ? caja(4, 4.5, 22, 9.5) : caja(4, 3, 22, 10), dorsoLogoDer: grande ? caja(74, 4.5, 22, 9.5) : caja(74, 3, 22, 10),
+      vertical: grande ? caja(3, 16, 16, 108) : caja(3, 16, 16, 106),
+      tablaEscala: grande ? 1.25 : 1,
       tabla: caja(22, 16, 48, 104),
       // Con `dorso.horarioCentro`: el horario centrado en lo que queda libre
       // entre el texto de lado y el borde derecho (Eliminatoria JDN de PZ).
-      tablaCentro: caja(33, 16, 48, 104),
+      tablaCentro: grande ? caja(22, 17, 75, 107) : linea ? caja(33, 21, 48, 99) : caja(33, 16, 48, 104),
       patrocinador: caja(72, 48, 24, 22),
       // La ilustración del dorso, abajo y pegada al QR: la profe Karina lo
       // muestra con la mano (Eliminatoria JDN de PZ).
-      dorsoIlustracion: caja(24, 64, 40, 64 - sube),   // termina antes del texto del QR y debajo del horario
+      dorsoIlustracion: grande ? caja(21, 77, 40, 49) : linea ? caja(24, 68, 40, 60 - sube) : caja(24, 64, 40, 64 - sube),   // termina antes del texto del QR y debajo del horario
       // Cuadrado siempre (con el lado chico de la escala): en un gafete que no
       // es de 10 × 14, como el de 5,5 × 8,5, salía más alto que ancho y le
       // sobraba blanco abajo. Pegado a la misma esquina de abajo a la derecha.
-      qr: { x: 96 * sx - 25 * s, y: (127 - sube) * sy - 25 * s, w: 25 * s, h: 25 * s },
+      qr: { x: 96 * sx - ladoQr, y: ((grande ? 124 : 127) - sube) * sy - ladoQr, w: ladoQr, h: ladoQr },
       cinta: caja(0, 129.5, 100, 10.5),
-      cintaDorso: caja(0, 129.5 - sube, 100, 10.5),
+      // Con el dorso grande, su franja de abajo mide lo mismo que la del frente
+      // (franjaAbajo): a contraluz coinciden, y el corte pasa igual por las dos.
+      cintaDorso: grande ? caja(0, 126, 100, 14) : caja(0, 129.5 - sube, 100, 10.5),
       // `franjaArriba`: una franja delgada del color del gafete arriba, en las
       // dos caras, de guía para cortar (lo pidió el dueño).
       franjaArriba: (Number(diseno.franjaArriba) || 0) * sy,
@@ -533,7 +547,7 @@
       };
 
       const lineas = String(diseno.titulo.texto || "").split(/\n/).map((l) => l.trim()).filter(Boolean).slice(0, 4);
-      lineas.forEach((l, i) => escribir(recursos.texto, l, M.titulo.tam, { x: M.W / 2, y: M.titulo.y + i * M.titulo.paso, alinear: "centro", color: diseno.titulo.color, max: M.W - 8 * M.sx }));
+      lineas.forEach((l, i) => escribir(recursos.texto, l, M.titulo.tam, { x: M.W / 2, y: M.titulo.y + i * M.titulo.paso, alinear: "centro", color: diseno.titulo.color, max: M.titulo.max || M.W - 8 * M.sx }));
 
       const nombre = g.nombre;
       const MN = centro ? M.nombreCentro : M.nombre;
@@ -573,8 +587,8 @@
     const filas = (diseno.dorso.horario || []).filter((r) => r.some((c) => String(c || "").trim()));
     const T = diseno.dorso.horarioCentro ? M.tablaCentro : M.tabla;
     const enc = diseno.dorso.encabezados;
-    const altoEnc = 6 * M.sy;
-    const altoFila = filas.length ? Math.min(5.6 * M.sy, (T.h - altoEnc) / filas.length) : 0;
+    const altoEnc = 6 * M.sy * M.tablaEscala;
+    const altoFila = filas.length ? Math.min(5.6 * M.sy * M.tablaEscala, (T.h - altoEnc) / filas.length) : 0;
     const altoTabla = filas.length ? altoEnc + altoFila * filas.length : 0;
     const columnas = [0.44, 0.31, 0.25].map((p) => p * T.w);
 
@@ -616,8 +630,15 @@
       if (ancho > V.h) tam *= V.h / ancho;
       escribir(recursos.titulo, g.vertical, tam, { x: V.x + k * tam * PT, y: V.y + V.h / 2, vertical: true, color, espaciado: 0.02 });
     }
+    // El renglón del lugar (`dorso.lineaArriba`): con el dorso grande, arriba
+    // y centrado entre los dos logos; si no, encima del horario.
+    if (diseno.dorso.lineaArriba) {
+      const L = String(diseno.dorso.lineaArriba);
+      if (M.tablaEscala > 1) escribir(recursos.texto, L, 7.6 * M.s, { x: M.W / 2, y: 10.6 * M.sy, alinear: "centro", color, max: 48 * M.sx });
+      else escribir(recursos.texto, L, 7.6 * M.s, { x: T.x + T.w / 2, y: T.y - 1.8 * M.sy, alinear: "centro", color, max: T.w + 8 * M.sx });
+    }
     if (filas.length) {
-      const tamEnc = Math.min(8.5 * M.s, altoEnc / PT * 0.62), tamFila = Math.min(7.6 * M.s, altoFila / PT * 0.62);
+      const tamEnc = Math.min(8.5 * M.s * M.tablaEscala, altoEnc / PT * 0.62), tamFila = Math.min(7.6 * M.s * M.tablaEscala, altoFila / PT * 0.62);
       const kT = altoMayus(recursos.texto);
       let x = T.x;
       enc.forEach((e, i) => {
@@ -629,7 +650,11 @@
         const y = T.y + altoEnc + k * altoFila + altoFila / 2 + kT * tamFila * PT / 2;
         f.slice(0, 3).forEach((celda, i) => {
           const t = String(celda || "").trim();
-          if (t) escribir(recursos.texto, t, tamFila, i === 0
+          // Con el dorso grande, todas las columnas centradas (también la de
+          // las actividades): se ve más ordenado (lo pidió el dueño).
+          if (t) escribir(recursos.texto, t, tamFila, i === 0 && M.tablaEscala > 1
+            ? { x: xc + columnas[i] / 2, y, alinear: "centro", color, max: columnas[i] - 1.5 * M.s }
+            : i === 0
             ? { x: xc + 1.5 * M.s, y, color, max: columnas[i] - 2.5 * M.s }
             : { x: xc + columnas[i] / 2, y, alinear: "centro", color: NEGRO_TEXTO, max: columnas[i] - 1.5 * M.s });
           xc += columnas[i];

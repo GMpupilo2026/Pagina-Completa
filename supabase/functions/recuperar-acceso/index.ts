@@ -91,6 +91,13 @@ Deno.serve(async (req) => {
 
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
+  // Freno por IP (la pone el worker en cf-connecting-ip, que no se falsifica).
+  // Se cuenta ANTES de mirar si la cuenta existe, así acota también el sondeo
+  // por tiempo y el bombardeo a una familia. Frenado: la misma respuesta.
+  const ip = (req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip") || "").trim();
+  const { data: frenado } = await adminClient.rpc("recuperar_acceso_frenar", { p_ip: ip });
+  if (frenado) return json(MISMA_RESPUESTA);
+
   // `ilike` para no depender de mayúsculas, con sus comodines escapados: un
   // «%» escrito en el campo encontraría la cuenta de otra persona.
   const { data: perfil } = await adminClient
@@ -98,56 +105,59 @@ Deno.serve(async (req) => {
     .ilike("email", usuario.replace(/[\\%_]/g, "\\$&")).maybeSingle();
   if (!perfil) return json(MISMA_RESPUESTA);
 
-  const interno = esCorreoInterno(usuario);
+  // Todo lo que depende de la cuenta —y que por el TIEMPO delataría si existe—
+  // va al fondo, en waitUntil: la respuesta sale igual de rápido exista o no la
+  // cuenta. Antes se hacía acá, con await, y una cuenta que existe tardaba
+  // cientos de ms más (getUserById + generateLink + el correo), lo que dejaba
+  // deducir qué usuarios de menores están registrados.
+  const trabajo = (async () => {
+    const interno = esCorreoInterno(usuario);
 
-  // Un correo de verdad recibe su propio enlace. Un usuario de la academia no
-  // tiene buzón: a dónde se le puede escribir a esa familia lo dice
-  // `correo_de_contacto()`, la regla que comparten los informes a la casa y
-  // los avisos de cobro.
-  let destino: string | null = usuario;
-  if (interno) {
-    const { data } = await adminClient.rpc("correo_de_contacto", { p_alumno: perfil.id });
-    destino = data;
-    if (!destino || esCorreoInterno(destino)) {
-      // No hay a quién escribirle: la familia tiene que pedírselo al profesor.
-      // Se deja anotado en los registros —es lo único que puede avisar— pero la
-      // respuesta sigue siendo la misma de siempre.
-      console.error("recuperar-acceso: el alumno", perfil.id, "no tiene ningún correo de contacto");
-      return json(MISMA_RESPUESTA);
+    // Un correo de verdad recibe su propio enlace. Un usuario de la academia no
+    // tiene buzón: a dónde se le puede escribir a esa familia lo dice
+    // `correo_de_contacto()`, la regla que comparten los informes a la casa y
+    // los avisos de cobro.
+    let destino: string | null = usuario;
+    if (interno) {
+      const { data } = await adminClient.rpc("correo_de_contacto", { p_alumno: perfil.id });
+      destino = data;
+      if (!destino || esCorreoInterno(destino)) {
+        // No hay a quién escribirle: la familia tiene que pedírselo al profesor.
+        console.error("recuperar-acceso: el alumno", perfil.id, "no tiene ningún correo de contacto");
+        return;
+      }
     }
-  }
 
-  // El freno: si salió uno hace menos de un minuto, ese sigue sirviendo y no
-  // se anula con otro.
-  const { data: cuenta } = await adminClient.auth.admin.getUserById(perfil.id);
-  const ultimo = cuenta?.user?.recovery_sent_at ? Date.parse(cuenta.user.recovery_sent_at) : 0;
-  if (Date.now() - ultimo < UN_MINUTO) return json(MISMA_RESPUESTA);
+    // El freno por cuenta: si salió uno hace menos de un minuto, ese sigue
+    // sirviendo y no se anula con otro.
+    const { data: cuenta } = await adminClient.auth.admin.getUserById(perfil.id);
+    const ultimo = cuenta?.user?.recovery_sent_at ? Date.parse(cuenta.user.recovery_sent_at) : 0;
+    if (Date.now() - ultimo < UN_MINUTO) return;
 
-  const { data, error } = await adminClient.auth.admin.generateLink({
-    type: "recovery",
-    email: usuario,
-    options: { redirectTo: DESTINO },
-  });
+    const { data, error } = await adminClient.auth.admin.generateLink({
+      type: "recovery",
+      email: usuario,
+      options: { redirectTo: DESTINO },
+    });
 
-  const token = data?.properties?.hashed_token;
-  if (error || !token) {
-    console.error("recuperar-acceso: no se pudo generar el enlace:", error?.message);
-    return json(MISMA_RESPUESTA);
-  }
-  const enlace = enlaceRecuperacion(token);
+    const token = data?.properties?.hashed_token;
+    if (error || !token) {
+      console.error("recuperar-acceso: no se pudo generar el enlace:", error?.message);
+      return;
+    }
+    const enlace = enlaceRecuperacion(token);
 
-  const id = await mandar(destino, enlace, usuario, perfil.full_name, !interno);
+    const id = await mandar(destino, enlace, usuario, perfil.full_name, !interno);
 
-  // Si Resend lo descartó (la dirección rebotó antes y está bloqueada), acá no
-  // se le puede decir a nadie —la respuesta es siempre la misma—, pero queda
-  // en los registros. Se revisa después de contestar, para que la respuesta
-  // no tarde más cuando la cuenta existe.
-  const revisar = envioFallido(Deno.env.get("RESEND_API_KEY") ?? "", id).then((fallo) => {
+    // Si Resend lo descartó (la dirección rebotó antes y está bloqueada) queda
+    // en los registros; no se le puede decir a nadie (la respuesta es la misma).
+    const fallo = await envioFallido(Deno.env.get("RESEND_API_KEY") ?? "", id);
     if (fallo) console.error("recuperar-acceso: el correo para", perfil.id, "terminó en", fallo, "(no le llegó)");
-  });
+  })();
+
   // deno-lint-ignore no-explicit-any
   const runtime = (globalThis as any).EdgeRuntime;
-  if (runtime?.waitUntil) runtime.waitUntil(revisar); else await revisar;
+  if (runtime?.waitUntil) runtime.waitUntil(trabajo); else await trabajo;
   return json(MISMA_RESPUESTA);
 });
 

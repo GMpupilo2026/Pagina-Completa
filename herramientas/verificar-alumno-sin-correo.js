@@ -105,6 +105,16 @@ async function pruebaContrasenaServidor() {
     const src = fs.readFileSync(path.join(RAIZ, "supabase/functions", f, "index.ts"), "utf8");
     cierto(f + " usa problemaDeContrasena()", /problemaDeContrasena\(clave\)/.test(src));
   });
+
+  // Cambiar el correo DE ENTRADA y los encargados son solo de «cuentas»: con
+  // «cobros» (que pasa el portón por la ficha de contacto) se podía poner el
+  // correo propio y tomar la cuenta por «olvidé mi contraseña». Admin y
+  // supervisión tienen todas las funciones, así que no se frenan.
+  const corAl = fs.readFileSync(path.join(RAIZ, "supabase/functions/correos-alumno/index.ts"), "utf8");
+  const bloque = (a) => corAl.slice(corAl.indexOf(`accion === "${a}"`), corAl.indexOf(`accion === "${a}"`) + 400);
+  cierto("correos-alumno: cambiar el correo de entrada exige cuentas", /if \(!cuentas\) return/.test(bloque("cuenta")));
+  cierto("correos-alumno: guardar encargado exige cuentas", /if \(!cuentas\) return/.test(bloque("encargado_guardar")));
+  cierto("correos-alumno: quitar encargado exige cuentas", /if \(!cuentas\) return/.test(bloque("encargado_quitar")));
 }
 
 /* --------------------------------------------- 2. el usuario que se propone
