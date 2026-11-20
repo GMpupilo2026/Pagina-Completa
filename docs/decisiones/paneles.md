@@ -2146,8 +2146,9 @@ lo mismo para cualquier rival, activable profesor por profesor desde
 administración.
 
 **Quién puede lo decide la base.** `puedo_preparar_rivales()` dice que sí a
-quien administra y a los profesores que están en
-`preparacion_rivales_profesores`. Esa tabla no tiene política de escritura: la
+quien administra, a los profesores que están en
+`preparacion_rivales_profesores` y al alumno que la canjeó por 15 000 puntos
+(ver «Desbloquearla con 15 000 puntos»). Esa tabla no tiene política de escritura: la
 escribe `activar_preparacion_rivales()`, que exige administrar, exige que la
 cuenta sea de un profesor y **devuelve cómo quedó**, leído de la tabla. El
 interruptor de `admin.html#preparacion` (`js/admin-preparacion.js`) pinta eso,
@@ -2306,6 +2307,58 @@ Competir («Prepara tu próxima partida»).
   dice, a Lichess solo va el usuario con el tope de 300, el plan con blancas y
   con negras, «Lo que juega», que se puede entrenar, que no se inserta nada
   del plan ni del análisis y que el formulario recuerda al último rival.
+
+### Desbloquearla con 15 000 puntos
+
+Se pidió que los alumnos pudieran abrir la herramienta del profesor ganándose
+15 000 Puntos Ajedrez, y que a administración le llegara un aviso cuando
+alguien lo logra. Entre «tener un saldo de 15 000», «haber ganado 15 000 en
+total» y «canjearla en la tienda», el dueño eligió **el canje**: el alumno
+gasta los 15 000 en la tienda de puntos (`puntos-tienda.html`). Con el saldo,
+al salir nadie la tenía (el saldo más alto era 12 723); con lo ganado en total,
+dos alumnos la habrían tenido apenas salía.
+
+- **Es un premio más del catálogo**: `herramienta_preparacion_rivales`,
+  categoría «contenido», el tipo nuevo `herramienta` (con
+  `parametros.herramienta = 'preparacion_rivales'`), 15 000 puntos y un solo
+  canje por persona. Se canjea con `canjear_premio()` de siempre, que valida
+  el saldo con su candado y descuenta. No se puede regalar: `regalar_premio()`
+  solo deja cosméticos, ventajas de entrenamiento y regalos.
+- **El canje ES el permiso.** `puedo_preparar_rivales()` suma una tercera vía:
+  tener ese canje en `premios_canjeados`. No hay una tabla aparte que se pueda
+  desfasar, y la política de insert de `preparaciones_rival`, que ya preguntaba
+  a esa función, deja guardar análisis al alumno sin tocarla. A diferencia del
+  profesor activado, administración no se la puede apagar desde el interruptor:
+  la pagó.
+- **Quien ya la tiene no la compra.** El trigger
+  `interno.al_desbloquear_herramienta()` (AFTER INSERT en `premios_canjeados`)
+  rechaza el canje de quien administra o de un profesor activado; el error
+  deshace el canje entero, puntos incluidos.
+- **El aviso a administración** lo manda ese mismo trigger con `avisar_push()`
+  a cada cuenta que administra («Desbloquearon la preparación de rivales»,
+  con el nombre y los puntos), y lleva a `admin.html#preparacion`. Un aviso
+  que no sale no deshace el canje. Lo que queda es la lista «Alumnos que la
+  desbloquearon con puntos» de esa sección (`js/admin-preparacion.js`, que lee
+  los canjes) y la bitácora de auditoría, porque `premios_canjeados` ya tenía
+  su `interno.auditar()`.
+- **La puerta del alumno** es Competir: la tarjeta «Preparación de rivales»
+  (`js/competir.js`, `mostrarPreparacion()`) abre la herramienta a quien
+  puede, y al alumno que todavía no la tiene le dice que se desbloquea con
+  15 000 puntos y lo lleva a la tienda. Un profesor sin activar no ve la
+  tarjeta: a él se la activa administración. En «Mis premios», el premio
+  canjeado trae «Abrir la herramienta» (`HERRAMIENTAS` de `js/puntos.js`).
+  En la página, el alumno sin el canje ve cómo se desbloquea y no el «pídesela
+  a la administración» del profesor.
+- **En la página, el alumno no ve lo que es de dar clase**: «Mandárselo a un
+  alumno» y «Guardar en Archivos» no se pintan (`alMandar`/`alArchivar` van
+  nulos), y el cruce es con SUS partidas: «Cruzarlo con tus partidas», «Tú
+  contra él», «tú juegas…» (`paraElAlumno` en `js/preparacion-pintar.js`).
+  Alumno es quien no es profesor ni administra.
+- Lo prueba `verificar-preparacion-rivales.js` (`pruebaAlumnoConPuntos`): el
+  alumno sin el canje ve el aviso de la tienda; con él, la herramienta sin
+  «Mandárselo a un alumno» ni «Guardar en Archivos» y con el cruce en «tus
+  partidas». Y sin navegador, que la migración dé el permiso por el canje,
+  rechace a quien ya la tiene y avise a quien administra.
 
 ### La base de la preparación: etapa 1
 
@@ -3583,6 +3636,60 @@ cuánto saca). Se toca una jugada y se avanza; con ◀ del tablero se vuelve.
   que tocar 1.e4 avanza tablero y tabla, que ◀ vuelve, que el cambio de color
   da sus primeras jugadas desde el lado de las negras, que dice dónde ya no se
   repite nada y que un análisis viejo avisa que no tiene árbol.
+
+### Su ficha, el índice y las barras
+
+Se pidió mejorar cómo se ve la herramienta y los datos que da (sin pensarla
+para el Modo Adaptado: los textos y las tablas siguen accesibles, pero no se
+diseñó para él). Mirada con 500 partidas reales de Lichess, lo que más
+costaba era encontrar las cosas: el tablero entero del árbol y el cruce con el
+alumno iban antes de «Qué hacer contra él», las cifras quedaban en el tercer
+lugar y todo eran tablas de texto. Cambió:
+
+- **«Su ficha», arriba de todo** (`pintarFicha()`, en `#ficha`, fuera de
+  `#resultado-cuerpo`): cuánto saca en total, con blancas y con negras, cada
+  uno con la barra de ganadas, tablas y perdidas (los tres tonos de la del
+  árbol) y las cifras escritas; su Elo en cada ritmo; y sus últimas 10
+  partidas con la racha en que viene. Reemplaza las cuatro cifras que había
+  (`pintarCifras`, que se quitó). Un análisis guardado antes de la ficha no
+  trae `r.ficha`: se ven las tres cifras y un aviso de volver a analizar.
+- **Los datos nuevos salen de `fichaDe()`** (en `js/preparacion-analisis.js`,
+  sin pantalla) y viajan con el análisis guardado (pesan unos cientos de
+  bytes):
+  - **El Elo, por ritmo y nunca mezclado.** En Lichess y Chess.com el de
+    bullet, el de blitz y el de rápidas son escalas distintas: el «Elo
+    reciente» de antes, una mediana de las últimas 50 de cualquier ritmo, no
+    era el Elo de nadie (con penguingim1 daba 3161, entre su bullet de 3173 y
+    su blitz de 2808). Por ritmo: el de su última partida, el máximo y el de
+    hace unos tres meses (su última partida de 90 días antes o más).
+  - **El rendimiento**, a lo FIDE: el Elo medio de sus rivales más la
+    diferencia que da su porcentaje, con el tope de ±800, desde 5 partidas
+    con los dos Elo. Dice cómo está jugando en estas partidas mejor que el Elo
+    del perfil: con 500 de penguingim1, en blitz saca 69,5 % pero contra
+    rivales de unos 2500, y su rendimiento (2643) queda 165 por debajo de su
+    Elo. La frase de arriba de la tabla lo dice del ritmo en que más juega.
+  - **Sus últimas partidas y la racha**: la letra (G, T, P) es el dato y el
+    fondo la acompaña; el detalle de cada una (fecha, ritmo, color, rival,
+    enlace a la partida) va plegado.
+- **El índice** («Ir a», `pintarIndice()`): un enlace a cada tarjeta que se
+  ve, del cruce al árbol. Se vuelve a armar cada vez que se pinta el análisis,
+  porque Stockfish y la teoría suman tarjetas. No se enlaza a la ficha, que
+  está justo arriba. Los títulos llevan `scroll-mt-28` para que el
+  encabezado fijo no los tape.
+- **El árbol va después del análisis**: es para explorar, y arriba tapaba lo
+  esencial con un tablero entero. El cruce con el alumno queda antes del
+  análisis, porque cambia el plan.
+- **«Saca» con su barrita** en las tablas (`saca()`): solo a la vista
+  (`aria-hidden`), el porcentaje sigue escrito; la raya del medio es el 50 %.
+- El contraste de la letra de cada resultado se mide en la página con los
+  colores que pinta (4,5:1 o más), no se copia del CSS.
+
+Lo prueba `verificar-preparacion-rivales.js`: sin navegador, `pruebaFicha`
+(el Elo de cada ritmo por su lado, el de hace tres meses, el rendimiento de 10
+de 12 contra 2000 = 2280, sin rendimiento con menos de 5 partidas, el tope de
+±800 y la racha); en la página, que la ficha se ve con sus cifras antes del
+cruce y del análisis, que el árbol va después, el contraste de G, T y P, que
+el índice lleva a cada tarjeta y no a la ficha, y la barrita de «Saca».
 
 ## Los proyectos
 
@@ -5214,7 +5321,9 @@ el sitio, con una sola cuenta.
   `insert into public.vistas_en_prueba (profile_id, vista) values ('<id>', 'panel_jornada');`
   y para sacarlo, borrar su fila.
 - **El aspecto de Chessgora, en todo el sitio** (pedido del dueño el
-  19/11/2026). Es un tema más de `js/temas-plataforma.js`, «jornada», con
+  19/11/2026; **reemplazado el 20/11** por el de tablero de control, abajo:
+  lo que sigue vale igual salvo los colores y el Inicio). Es un tema más de
+  `js/temas-plataforma.js`, «jornada», con
   `oculto: true` (Configuración no lo ofrece) y `estilo: "jornada"`:
   - **Colores**: crema en brand-50 y 100 (el fondo y los bordes), azul marino
     del 200 en adelante y dorado de acento. Cada tono tiene la misma
@@ -5251,10 +5360,68 @@ el sitio, con una sola cuenta.
   queda en «—» con «No se pudo cargar»: un número inventado se creería.
   «Hoy te toca» completo pasó a Entrenar, porque en Inicio ya lo resume su
   sala.
+- **Las animaciones** (pedido del dueño el 19/11/2026). Son cuatro, todas
+  en `css/panel-jornada.css` («Las animaciones») y `js/panel-jornada.js`
+  (`animarEntrada`, `contar`):
+  - **Al cambiar de pestaña** (y al entrar al panel), lo que queda a la vista
+    entra con un fundido y sube 8 px en 0,28 s.
+  - **Las tarjetas y las salas, una detrás de otra**: 40 ms entre cada una,
+    con tope en la quinta (`TOPE_ESCALON`), para que la última no se haga
+    esperar: todo está quieto en poco más de medio segundo.
+  - **Los números de las salas cuentan desde 0** (hoy entrenaste, tareas,
+    Puntos Ajedrez y clases de la semana) en 0,8 s. El texto de
+    `.jornada-sala-grande` es el número de verdad desde el principio,
+    transparente mientras dura el conteo: lo lee el lector, guarda el ancho
+    (con `tabular-nums`) y es lo que mide el verificador. El que va contando
+    se pinta encima con `::after` y `content: attr(data-contando) / ""`, cuyo
+    `/ ""` le dice al lector que ese dibujo no se lee.
+  - **Las salas y el botón de la clase suben 2 px con el ratón o con el foco
+    del teclado**, y las tarjetas del panel, que ya subían con el ratón,
+    también con Tab.
+  - **Reglas**: todo va dentro de `prefers-reduced-motion: no-preference`, en
+    el CSS **y** en el JS (si el sistema pide menos movimiento, ni se ponen las
+    clases ni se cuenta). Mientras se busca, nada se anima. Las clases se quitan
+    solas a los 0,9 s, y la animación usa `backwards`, no `forwards`: al
+    terminar no queda ningún `transform` puesto, porque un transform que se
+    queda le cambia la caja a lo que va fijo adentro (un diálogo, la burbuja).
+    El panel adaptado no las tiene porque este módulo no se aplica ahí.
+- **El aspecto de tablero de control** (20/11/2026: el dueño trajo de
+  muestra un tablero de control turquesa y pidió reemplazar el de Chessgora,
+  solo para la misma cuenta). Mismo tema «jornada» (así la cuenta no tiene
+  que volver a encenderlo), con otra paleta y otro Inicio:
+  - **Colores**: gris azulado en brand-50 y 100, turquesa del 200 en
+    adelante y rosado de acento; cada tono con la luminancia del Clásico,
+    como siempre.
+  - **Menú lateral oscuro** (brand-800) de alto completo en la computadora,
+    con la opción abierta en blanco. En el celular la barra de abajo sigue
+    clara.
+  - **Banner** en lugar de la tarjeta de la clase: degradado turquesa, la
+    marca de la academia, la clase (o «Sin clase programada»), atajos a lo
+    que más se usa, el saludo con la fecha de Costa Rica, tres botones y una
+    ilustración de ajedrez dibujada para el sitio (un tablero en perspectiva
+    con un caballo y un rey; adorno, con `aria-hidden`). La ilustración se
+    esconde por debajo de 900 px.
+  - **Tarjetas de color**: las seis salas, cada una con su degradado
+    (escrito en el CSS, no en el tema) y el dato abajo en una pastilla. Texto
+    blanco con 5,1:1 o más; cada una se reconoce por su nombre y su número
+    escritos, no solo por el color.
+  - **Cuatro gráficos** en SVG dibujado en `js/panel-jornada.js` (sin
+    librerías): los ejercicios de cada día de la semana (barras, la de hoy
+    distinta), el camino al próximo rango (dona: los puntos desde donde
+    empieza el rango actual, con los umbrales de `js/rangos.js`, que ahora
+    carga `clases.html`), las tareas completadas, por hacer y vencidas
+    (barra apilada; las programadas no cuentan) y el entrenamiento de los
+    últimos seis meses (línea, con `entreno_mi_mes`). Cada uno lleva sus
+    números escritos debajo, que son lo que lee el lector de pantalla; el
+    SVG es adorno. Para contar las completadas, `tareas_con_avance` se pide
+    ahora con `p_pendientes: false`.
 - Lo revisa `verificar-panel-jornada.js`: sin la fila, el panel no cambia;
   con ella, cinco pestañas, cada sección en la suya, buscar destapa todo, los
   puntos en Perfil y la barra abajo en el celular y a la izquierda en la
   computadora. También que el tema se pone y se devuelve, el aspecto (el
   encabezado blanco, el fondo crema, el borde fino, los títulos en Inter y
   el logo con su máscara) y que cada sala diga exactamente lo que contesta
-  la base, también cuando una consulta falla.
+  la base, también cuando una consulta falla; y las animaciones: que entran y cuentan
+  con movimiento, que al terminar no queda nada puesto, que mientras cuenta
+  el texto ya es el número de verdad, y que con «reducir movimiento» nada se
+  mueve.

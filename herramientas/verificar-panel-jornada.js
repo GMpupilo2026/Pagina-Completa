@@ -203,7 +203,7 @@ async function pruebaSecciones(browser) {
 }
 
 async function pruebaAspecto(browser) {
-  console.log("\nEl aspecto de Chessgora: el tema «jornada» para la cuenta anotada");
+  console.log("\nEl aspecto del panel jornada: el tema «jornada» para la cuenta anotada");
   const { ctx, page, errores } = await abrir(browser, ALUMNO, ANOTADO(ALUMNO.id), { viewport: { width: 1280, height: 900 } }, "", { plataforma_tema_v1: "bosque" });
   await page.waitForTimeout(300);
   const a = await page.evaluate(() => {
@@ -222,7 +222,7 @@ async function pruebaAspecto(browser) {
   igual("queda puesto el tema jornada", [a.tema, a.guardado], ["jornada", "jornada"]);
   igual("y se guarda el que había, para devolverlo", a.previo, "bosque");
   igual("el encabezado es blanco", a.encabezado, "rgb(255, 255, 255)");
-  igual("el fondo es crema (brand-50 del tema)", a.fondo, "rgb(248, 243, 233)");
+  igual("el fondo es gris azulado (brand-50 del tema)", a.fondo, "rgb(239, 244, 246)");
   cierto("las tarjetas llevan borde fino en vez de sombra", /0px 0px 0px 1px/.test(a.tarjeta), a.tarjeta);
   cierto("los títulos van en Inter", /^"?Inter/.test(a.titulo), a.titulo);
   cierto("el logo crema se pinta con su máscara (la imagen sale de la vista)", /-9999px/.test(a.logo), a.logo);
@@ -262,7 +262,10 @@ async function pruebaInicio(browser) {
       { id: "t1", titulo: "Mates en una jugada", vence_at: pasado.toISOString(), renglones: 10, cumplidos: 9 },
       { id: "t2", titulo: "Finales de peones", vence_at: new Date(ahora + 5 * dia).toISOString(), renglones: 5, cumplidos: 0 },
       { id: "t3", titulo: "Una que ya venció", vence_at: new Date(ahora - dia).toISOString(), renglones: 3, cumplidos: 0 },
+      { id: "t4", titulo: "Una ya hecha", vence_at: new Date(ahora - 3 * dia).toISOString(), renglones: 4, cumplidos: 4, situacion: "completada" },
+      { id: "t5", titulo: "Una que todavía no se abre", vence_at: new Date(ahora + 9 * dia).toISOString(), renglones: 4, cumplidos: 0, situacion: "programada" },
     ],
+    entreno_mi_mes: { ejercicios: 40 },
     entreno_mi_semana: { dias: [{ dia: "a", n: 4 }, { dia: "b", n: 0 }, { dia: "c", n: 6 }, { dia: "d", n: 2 }, { dia: "e", n: 5 }, { dia: "f", n: 1 }, { dia: "hoy", n: 3 }] },
     mi_rango: [{ rango: "alfil", nombre: "Alfil", puntos: 3200, siguiente: "torre", siguiente_nombre: "Torre", umbral_siguiente: 7000 }],
     informes_diagnosticos_alumnos: [{ student_id: ALUMNO.id, fecha: "2026-10-26T16:00:00Z", detalle: { nivel: "intermedio", nivel_etiqueta: "intermedio" } }],
@@ -296,6 +299,29 @@ async function pruebaInicio(browser) {
     return l.left >= p.right - 1;
   });
   igual("en la computadora, lo que viene va a la derecha", lado, true);
+
+  console.log("\nEl banner y los cuatro gráficos");
+  const banner = await page.evaluate(() => {
+    const c = document.getElementById("jornada-clase");
+    return {
+      saludo: c.querySelector(".jornada-clase-saludo").textContent,
+      atajos: Array.from(c.querySelectorAll(".jornada-clase-atajos li > *")).map((x) => x.textContent),
+      dibujo: c.querySelector(".jornada-clase-dibujo").checkVisibility(),
+      dibujoOculto: c.querySelector(".jornada-clase-dibujo svg").getAttribute("aria-hidden"),
+    };
+  });
+  cierto("el banner saluda con la hora y la fecha de Costa Rica", /^Buen(os días|as tardes|as noches), Oscarov\. /.test(banner.saludo), banner.saludo);
+  igual("trae sus atajos", banner.atajos, ["Tareas", "Entrenar", "Jugar", "Repasar mis clases", "Mi cuaderno"]);
+  igual("y su ilustración, que es adorno", [banner.dibujo, banner.dibujoOculto], [true, "true"]);
+  const datosDe = (id) => page.$$eval('.jornada-grafico[data-grafico="' + id + '"] .jornada-grafico-datos li', (lis) => lis.map((li) => li.textContent.trim()));
+  igual("los cuatro gráficos", await page.$$eval(".jornada-grafico", (g) => g.map((x) => x.dataset.grafico)), ["semana", "rango", "tareas", "meses"]);
+  igual("la semana, con sus números escritos", await datosDe("semana"), ["Esta semana21 ejercicios", "Hoy3", "Tu mejor día6"]);
+  igual("el camino al rango: de Alfil (3000) a Torre (7000) con 3200", await datosDe("rango"), ["Rango actualAlfil", "Hacia Torre5 %", "Te faltan" + new Intl.NumberFormat("es-CR").format(3800) + " puntos"]);
+  igual("las tareas por cómo van (la programada no cuenta)", await datosDe("tareas"), ["Completadas1", "Por hacer2", "Vencidas1"]);
+  igual("el entrenamiento por mes", await datosDe("meses"), ["Este mes40", "El mes pasado40", "En seis meses240"]);
+  igual("cada gráfico dibuja su SVG, que es adorno", await page.$$eval(".jornada-grafico-dibujo svg", (s) => s.map((x) => x.getAttribute("aria-hidden"))), ["true", "true", "true", "true"]);
+  igual("las barras: una por día, y la de hoy distinta", await page.$$eval('.jornada-grafico[data-grafico="semana"] svg rect', (r) => r.length), 7);
+
   igual("«Hoy te toca» completo pasó a Entrenar", await page.$eval("#progreso-alumno", (s) => s.dataset.jornada), "entrenar");
   await page.click('.jornada-sala[data-sala="hoy"]');
   igual("la sala de hoy lleva a Entrenar", await page.$eval(".jornada-nav button[aria-current='page']", (b) => b.dataset.pestana), "entrenar");
@@ -311,6 +337,76 @@ async function pruebaInicio(browser) {
   await c.ctx.close();
 }
 
+/* Las animaciones: se anota todo lo que pasa desde antes de cargar (un
+   MutationObserver), porque el conteo dura menos de un segundo y abrir()
+   ya espera más que eso. */
+const ESPIA_ANIMACION = () => {
+  window.__anim = { entra: 0, contando: [], textoAlContar: [] };
+  new MutationObserver((ms) => ms.forEach((m) => {
+    const t = m.target;
+    if (m.attributeName === "class" && t.classList && t.classList.contains("jornada-entra")) window.__anim.entra += 1;
+    if (m.attributeName === "data-contando" && t.dataset && t.dataset.contando) {
+      window.__anim.contando.push(t.dataset.contando);
+      window.__anim.textoAlContar.push(t.textContent);
+    }
+  })).observe(document, { subtree: true, attributes: true, attributeFilter: ["class", "data-contando"] });
+};
+
+async function pruebaAnimaciones(browser) {
+  console.log("\nLas animaciones: solo si el sistema no pide menos movimiento, y sin esconder datos");
+  const datos = Object.assign(ANOTADO(ALUMNO.id), { rpc: { saldo_de_puntos: 1250 } });
+  const vista = { viewport: { width: 1366, height: 900 } };
+
+  const a = await abrir(browser, ALUMNO, datos, Object.assign({ reducedMotion: "no-preference" }, vista), "", { __espia: "1" });
+  await a.ctx.addInitScript(ESPIA_ANIMACION);
+  await a.page.reload({ waitUntil: "networkidle" });
+  await a.page.waitForSelector("#app:not(.hidden)");
+  await a.page.waitForTimeout(1500);
+  const r = await a.page.evaluate(() => window.__anim);
+  cierto("al entrar, las secciones y tarjetas entran animadas (" + r.entra + ")", r.entra > 3);
+  const cuenta = r.contando.filter((x) => /^[\d\s ]+$/.test(x)).map((x) => Number(x.replace(/\D/g, "")));
+  cierto("los Puntos Ajedrez cuentan hacia arriba hasta 1 250 (" + cuenta.length + " pasos)", cuenta.length > 3 && cuenta[0] < cuenta[cuenta.length - 1]);
+  const mil = new Intl.NumberFormat("es-CR").format(1250);
+  cierto("mientras cuenta, el texto ya es el número de verdad", r.textoAlContar.includes(mil));
+  igual("al terminar, no queda nada contando", await a.page.$$eval("[data-contando]", (n) => n.length), 0);
+  igual("ni ninguna pieza con la animación puesta", await a.page.$$eval(".jornada-entra", (n) => n.length), 0);
+  igual("el número que queda", await a.page.$eval('.jornada-sala[data-sala="puntos"] .jornada-sala-grande', (s) => s.textContent), mil);
+  const antes = await a.page.evaluate(() => window.__anim.entra);
+  await a.page.click('.jornada-nav button[data-pestana="jugar"]');
+  await a.page.waitForTimeout(100);
+  cierto("al cambiar de pestaña, lo de la pestaña entra animado", (await a.page.evaluate(() => window.__anim.entra)) > antes);
+  const fuera = await a.page.$$eval(".jornada-entra", (n) => n.filter((x) => !x.checkVisibility()).length);
+  igual("y solo lo que se ve", fuera, 0);
+  igual("la animación existe en la hoja (no solo la clase)", await a.page.evaluate(() => {
+    const p = document.querySelector(".jornada-entra");
+    return p ? getComputedStyle(p).animationName : "ninguna pieza";
+  }), "jornada-entrar");
+  await a.page.hover('.jornada-nav button[data-pestana="inicio"]');
+  await a.page.click('.jornada-nav button[data-pestana="inicio"]');
+  await a.page.waitForTimeout(900);
+  await a.page.hover('.jornada-sala[data-sala="puntos"]');
+  await a.page.waitForTimeout(400);
+  cierto("una sala sube un poco con el ratón", await a.page.$eval('.jornada-sala[data-sala="puntos"]', (s) => getComputedStyle(s).transform !== "none"));
+  igual("sin errores", a.errores, []);
+  await a.ctx.close();
+
+  const b = await abrir(browser, ALUMNO, datos, Object.assign({ reducedMotion: "reduce" }, vista));
+  await b.ctx.addInitScript(ESPIA_ANIMACION);
+  await b.page.reload({ waitUntil: "networkidle" });
+  await b.page.waitForSelector("#app:not(.hidden)");
+  await b.page.waitForTimeout(1200);
+  await b.page.click('.jornada-nav button[data-pestana="jugar"]');
+  await b.page.waitForTimeout(100);
+  const rb = await b.page.evaluate(() => window.__anim);
+  igual("con «reducir movimiento»: nada entra animado ni cuenta", [rb.entra, rb.contando.length], [0, 0]);
+  await b.page.click('.jornada-nav button[data-pestana="inicio"]');
+  await b.page.hover('.jornada-sala[data-sala="puntos"]');
+  await b.page.waitForTimeout(300);
+  igual("ni sube con el ratón", await b.page.$eval('.jornada-sala[data-sala="puntos"]', (s) => getComputedStyle(s).transform), "none");
+  igual("y los Puntos están igual", await b.page.$eval('.jornada-sala[data-sala="puntos"] .jornada-sala-grande', (s) => s.textContent), mil);
+  await b.ctx.close();
+}
+
 async function pruebaHash(browser) {
   console.log("\nclases.html#tus-clases abre la pestaña donde vive");
   const { ctx, page } = await abrir(browser, ALUMNO, ANOTADO(ALUMNO.id), { viewport: { width: 1280, height: 900 } }, "#tus-clases");
@@ -321,7 +417,7 @@ async function pruebaHash(browser) {
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
-    for (const p of [pruebaSinAnotar, pruebaProfesoraAnotada, pruebaPestanas, pruebaCelular, pruebaSecciones, pruebaAspecto, pruebaInicio, pruebaHash]) await p(browser);
+    for (const p of [pruebaSinAnotar, pruebaProfesoraAnotada, pruebaPestanas, pruebaCelular, pruebaSecciones, pruebaAspecto, pruebaInicio, pruebaAnimaciones, pruebaHash]) await p(browser);
   } finally {
     await browser.close();
   }

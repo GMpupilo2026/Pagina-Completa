@@ -291,7 +291,7 @@ function decoracion(id, tema) {
 }
 
 /* Las FORMAS de un tema con `estilo` (hoy solo «jornada», el aspecto de
- * Chessgora para la prueba del panel jornada). Un tema normal cambia colores,
+ * tablero de control para la prueba del panel jornada). Un tema normal cambia colores,
  * letra y decorado; este cambia también la forma de las cosas, sin tocar
  * ninguna página: todo va por las utilidades que el sitio ya usa.
  *  - Encabezado BLANCO con borde fino (solo en modo claro: en oscuro sigue

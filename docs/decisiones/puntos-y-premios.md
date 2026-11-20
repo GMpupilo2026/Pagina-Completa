@@ -124,6 +124,15 @@ trae un enlace por cada archivo del producto, sacados de
 el catálogo de premios sale con sus enlaces sin tocar `js/puntos.js`. Lo
 revisa la prueba «4 bis» de `verificar-puntos.js`.
 
+### Una herramienta: la preparación de rivales por 15 000 puntos
+
+El premio más caro (`herramienta_preparacion_rivales`, tipo `herramienta`)
+no abre un material: abre para siempre `preparacion-rivales.html`, la
+herramienta del profesor. El canje mismo es el permiso
+(`puedo_preparar_rivales()` lo mira), un trigger le avisa a quien administra
+y rechaza el canje de quien ya la tenía, y en «Mis premios» trae «Abrir la
+herramienta». Ver «Desbloquearla con 15 000 puntos» en `paneles.md`.
+
 ## Los accesorios de avatar: lo único que otros alumnos (no solo quien lo tiene) llegan a ver
 
 Los títulos y los marcos de perfil solo se ven en el panel y la tienda de
@@ -249,6 +258,11 @@ misma academia, el mismo conjunto que la rama de compañeros de
 Suma solo lo GANADO en la semana o el mes: lo gastado en canjes, regalos y
 bromas no resta, para que regalar no castigue. Sale quien sumó algo, y uno
 mismo siempre (marcado con `aria-current`).
+La base devuelve el salón entero, pero **la página pinta solo el podio**
+(los tres primeros que sumaron algo, en tarjetas) y, si uno no está en él,
+una línea con su propio puesto («Tú vas en el 4.º lugar, con 80 puntos.»):
+la lista completa, de trece o más filas, no le gustó al dueño (19/11/2026)
+y al que iba 13.º no le servía de nada.
 
 **Regalos.** `public.regalar_premio()` compra para un compañero
 (`es_companero()`) una tarjeta (estrella, flores, trofeo, pastel, caballito)
