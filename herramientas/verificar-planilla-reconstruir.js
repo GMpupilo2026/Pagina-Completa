@@ -140,6 +140,23 @@ ok("las 8 primeras jugadas salen como la partida de verdad (menos 6… Cc6, de l
 ok("«C6» con la C mayúscula es un caballo (1… Cf6), no el peón c6: en español la C mayúscula es el caballo", sanes[1] === "Nf6", sanes[1]);
 ok("y sigue más allá de la jugada 8 (antes se cortaba en la 7 de las negras)", sanes.length >= 20, String(sanes.length));
 
+console.log("\n=== Otra de verdad: las dos planillas en una foto nítida (Centroamericano, 18/11) ===");
+// Con la foto buena, el lector daba 22 de 29: 1.e4 por «+4» (la f a mano leída como +), y por eso 3.c3 donde las dos
+// hojas dicen e3; 10.De1 porque Vision le pegó el 2 de «De2» al 0-0 de al lado («20-0»); y 13… e6 Qe3 metidas
+// entre Cxc6 y Dxc6 porque tres celdas de las blancas salieron mal («Pet», «C6», «Dec»).
+const LR2 = require("./lib/lectura-real-pareo-2.js");
+const real2 = R.hojasDeLaFoto(LR2.palabras);
+ok("encuentra las dos planillas", real2.hojas.length === 2, String(real2.hojas.length));
+ok("«De» | «20-0» vuelve a ser «De2» | «0-0» (el 2 era de las blancas)", real2.hojas[0][18] === "De2" && real2.hojas[0][19] === "0-0", real2.hojas[0].slice(18, 20).join(" | "));
+const sanes2 = R.reconstruir(Chess, real2.hojas).jugadas.map((j) => j.san);
+ok("1.f4 (la planilla dice «+4»: la f a mano con la raya), no 1.e4", sanes2[0] === "f4", sanes2[0]);
+ok("3.e3, como dicen las dos planillas (con 1.e4 no se podía y salía c3)", sanes2[4] === "e3", sanes2[4]);
+ok("10.De2, no De1", sanes2[18] === "Qe2", sanes2[18]);
+const hasta = LR2.partida.findIndex((s, i) => sanes2[i] !== s);
+ok("las primeras 27 medias jugadas salen exactas (hasta 14.Cd2, sin jugadas metidas en la 13)", hasta === -1 || hasta >= 27, hasta + ": " + sanes2.slice(20, 30).join(" "));
+const bien2 = LR2.partida.filter((s, i) => sanes2[i] === s).length;
+ok("y lee la partida casi entera: 45 o más de las 55 medias jugadas (antes, 22)", bien2 >= 45, bien2 + "/" + LR2.partida.length);
+
 console.log(`\n${pruebas - fallos}/${pruebas} comprobaciones bien.`);
 if (fallos) { console.log(`✗ ${fallos} fallaron.`); process.exit(1); }
 console.log("✓ Todo bien.");

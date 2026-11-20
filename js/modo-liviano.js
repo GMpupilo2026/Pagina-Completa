@@ -215,6 +215,8 @@
     if (typeof n.deviceMemory === "number" && n.deviceMemory > 0 && n.deviceMemory <= 2) m.push("poca memoria (" + n.deviceMemory + " GB)");
     if (typeof n.hardwareConcurrency === "number" && n.hardwareConcurrency > 0 && n.hardwareConcurrency <= 2) m.push("procesador de " + n.hardwareConcurrency + " núcleos");
     if (n.connection && n.connection.saveData) m.push("ahorro de datos encendido");
+    // La señal que el navegador ya midió (Chrome y Android; el iPad no lo dice): «2g» o menos es una red que apenas pasa.
+    if (n.connection && /^(slow-2g|2g)$/.test(String(n.connection.effectiveType || ""))) m.push("señal muy débil");
     // Un navegador al que le faltó algo de arriba es viejo: `replaceAll` llegó junto con el `?.` y el `??`
     // que usa la librería de Supabase (Safari 13.1; Chrome 85, cinco versiones después). No se prueba la
     // sintaxis con `new Function`: depende de que la CSP deje `unsafe-eval`, y sin eso toda tablet sería «vieja».
@@ -245,7 +247,7 @@
       if (estado) estado.textContent = activo ? "sí" : "no";
       bs[i].title = activo
         ? "Modo liviano encendido" + (eleccion() === "auto" ? " solo (" + motivos.join(", ") + ")" : "") + ". Toca para apagarlo."
-        : "Modo liviano apagado. Tócalo si la tablet va lenta: quita animaciones y adornos.";
+        : "Modo liviano apagado. Tócalo si la tablet va lenta o la señal es mala: quita animaciones y adornos y pide menos datos.";
     }
   }
 
@@ -270,12 +272,26 @@
     window.requestAnimationFrame(cuadro);
   }
 
+  // La página dice que la señal está débil (sus pedidos tardan o se pierden: ver medirSenal en
+  // js/centroamericano-arbitro.js). Solo por esta visita: la señal cambia de un lugar a otro y no se recuerda.
+  var porSenal = false;
+  function senalDebil() {
+    if (automatizado || porSenal) return;
+    porSenal = true;
+    motivos.push("la señal está débil");
+    aplicar();
+    anunciar();
+  }
+
   // Se avisa UNA vez por visita, cuando se encendió solo (si lo encendió la persona, ya lo sabe).
   function anunciar() {
     if (!activo || eleccion() !== "auto") return;
     try { if (window.sessionStorage.getItem("modo_liviano_avisado")) return; window.sessionStorage.setItem("modo_liviano_avisado", "1"); } catch (e) { /* sin almacenamiento: se avisa igual */ }
     if (!window.Avisos || !document.querySelector("[data-modo-liviano-boton]")) return;
-    window.Avisos.avisar("Esta tablet es antigua o va lenta: se encendió el modo liviano (sin animaciones ni adornos). Si quieres, lo apagas arriba, en «Liviano».", { tipo: "info", duracion: 9000 });
+    var texto = porSenal && motivos.length === 1
+      ? "La señal está débil: se encendió el modo liviano (pide menos datos y menos seguido; lo que anotas sale igual de rápido). Si quieres, lo apagas arriba, en «Liviano»."
+      : "Esta tablet es antigua, va lenta o tiene poca señal: se encendió el modo liviano (sin animaciones ni adornos, y pide menos datos). Si quieres, lo apagas arriba, en «Liviano».";
+    window.Avisos.avisar(texto, { tipo: "info", duracion: 9000 });
   }
 
   aplicar();
@@ -289,7 +305,7 @@
         escribir(CLAVE, activo ? "no" : "si");
         if (activo) escribir(CLAVE_MEDIDO, null); // lo apagó: lo medido antes ya no manda
         aplicar();
-        if (window.Avisos) window.Avisos.avisar(activo ? "Modo liviano encendido: sin animaciones ni adornos." : "Modo liviano apagado.", { tipo: "info" });
+        if (window.Avisos) window.Avisos.avisar(activo ? "Modo liviano encendido: sin animaciones ni adornos, y pide menos datos." : "Modo liviano apagado.", { tipo: "info" });
       });
     }
   });
@@ -305,6 +321,7 @@
     // "si" | "no" | "auto"
     elegir: function (v) { escribir(CLAVE, v === "si" || v === "no" ? v : null); aplicar(); },
     alCambiar: function (fn) { if (typeof fn === "function") oyentes.push(fn); },
+    senalDebil: senalDebil,
     // Para quien quiera saber qué se rellenó (el verificador lo mira).
     rellenado: function () { return faltaba.slice(); }
   };

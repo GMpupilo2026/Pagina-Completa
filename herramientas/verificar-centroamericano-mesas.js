@@ -59,6 +59,14 @@ const ahora = new Date("2026-11-02T15:00:00Z");
 igual("«esta noche» vence a las 11:59 p. m. de Costa Rica (05:59 UTC del día siguiente)", C.vencimiento("hoy", ahora, "2026-11-02").toISOString(), "2026-11-03T05:59:59.000Z");
 igual("«al terminar el torneo» es el 9 de noviembre a las 11:59 p. m. de Costa Rica", C.vencimiento("torneo", ahora, "2026-11-02").toISOString(), "2026-11-10T05:59:59.000Z");
 igual("«12 horas» son 12 horas", C.vencimiento("12h", ahora, "2026-11-02").toISOString(), "2026-11-03T03:00:00.000Z");
+// «Hasta el día que elijas» es la opción que viene puesta. Del 13 al 19/11/2026 la
+// expresión que revisa el día perdió sus barras invertidas (/^d{4}-…/) y rechazaba
+// TODA fecha: «Elige el día en que vence el enlace» con el día bien elegido.
+igual("«hasta el día que elijas» vence ese día a las 11:59 p. m. de Costa Rica", C.vencimiento("fecha", ahora, "2026-11-02", "2026-11-22").toISOString(), "2026-11-23T05:59:59.000Z");
+let sinDia = null; try { C.vencimiento("fecha", ahora, "2026-11-02", ""); } catch (e) { sinDia = e.message; }
+igual("sin día, lo pide", sinDia, "Elige el día en que vence el enlace.");
+let pasado = null; try { C.vencimiento("fecha", ahora, "2026-11-02", "2026-11-01"); } catch (e) { pasado = e.message; }
+igual("un día que ya pasó no sirve", /ya pasó/.test(pasado || ""), true);
 let malo = null; try { C.vencimiento("siempre", ahora, "2026-11-02"); } catch (e) { malo = e.message; }
 igual("una opción que no existe no inventa un vencimiento", /desconocida/.test(malo || ""), true);
 igual("el estado: activo, vencido o apagado (apagado gana)", [

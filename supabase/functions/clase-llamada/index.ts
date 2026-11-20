@@ -21,6 +21,20 @@
 //                     su voz no habla nunca. La página la llama cada
 //                     vez que da o termina un turno y cuando saca a alguien.
 //
+// LOS GRUPOS (game_state.llamada_grupos, 18/11): el profe parte la clase en
+// grupos de voz, cada uno en su sala (`clase-<sesión>-g<n>`). La sala del
+// alumno la decide la base (llamada_de_la_clase, por su grupo): él no elige a
+// qué sala entra. El profe sí: pide el pase con { grupo } (0 = la sala
+// grande) para pasar de un grupo a otro. Dentro de un grupo hablan todos (con
+// la misma regla de la grabación), y «sincronizar» recorre la sala grande y
+// las de los grupos y saca de cada una a quien no es de ella: la página del
+// alumno ya se mudó sola al ver el cambio, y la que no, vuelve a entrar.
+//
+// "silenciar" (solo el profe, con { persona }): le apaga el micrófono a un
+// alumno que mete ruido (MutePublishedTrack). Lo busca en la sala grande y en
+// las de los grupos. El alumno lo puede volver a encender si tiene la palabra:
+// apagar no quita el permiso de hablar (eso es el turno).
+//
 // QUIÉN DECIDE ES LA BASE: public.llamada_de_la_clase(p_profesor), llamada con
 // el TOKEN DE QUIEN PIDE (clave anónima + su Authorization), nunca con la clave
 // de servicio. Así pasa por la RLS y por antes_de_cada_pedido(): con la
@@ -88,9 +102,9 @@ async function firmar(claims: Record<string, unknown>): Promise<string> {
 // Y mientras se graba (game_state.llamada_grabando), solo quien tiene el permiso
 // de su familia para grabar su voz (permisos_grabar_voz): nunca queda grabada
 // la voz de alguien sin permiso, lo diga el turno o el micrófono libre.
-function puedeHablar(ll: Llamada, identidad: string, conPermiso: boolean): boolean {
+function puedeHablar(ll: Llamada, identidad: string, conPermiso: boolean, enGrupo = false): boolean {
   if (ll.grabando && !conPermiso) return false;
-  if (ll.modo === "libre") return true;
+  if (enGrupo || ll.modo === "libre") return true;
   if (ll.modo === "bloqueada") return false;
   return identidad === ll.elegido;
 }
@@ -122,7 +136,15 @@ async function servidor(metodo: string, sala: string, cuerpo: Record<string, unk
 // ------------------------------------------------------------- la función
 
 type Llamada = { yo: string; rol: "profe" | "alumno"; sala: string; nombre: string; elegido: string | null; sacados: string[] | null; abierta: boolean; modo: "turno" | "libre" | "bloqueada";
-  grabando: boolean; permiso_voz: boolean | null; con_permiso_voz: string[] | null };
+  grabando: boolean; permiso_voz: boolean | null; con_permiso_voz: string[] | null;
+  sala_grande?: string; grupo?: number | null; grupos?: Record<string, number> | null };
+
+// El número de grupo de alguien (1 a 20), o 0 si no tiene: la sala grande.
+const grupoDe = (ll: Llamada, identidad: string) => {
+  const n = Number(ll.grupos?.[identidad]);
+  return Number.isInteger(n) && n >= 1 && n <= 20 ? n : 0;
+};
+const salaDe = (ll: Llamada, grupo: number) => (ll.sala_grande || ll.sala) + (grupo ? "-g" + grupo : "");
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -134,13 +156,21 @@ Deno.serve(async (req) => {
   const autorizacion = req.headers.get("Authorization") ?? "";
   if (!/^Bearer\s+\S+/i.test(autorizacion)) return json({ error: "Inicia sesión para entrar a la llamada." }, 401);
 
-  let accion = "", profesor = "";
+  let accion = "", profesor = "", grupoPedido = 0, persona = "";
+  let viejos: number[] = [];
   try {
     const cuerpo = await req.json();
     accion = String(cuerpo.accion || "");
     profesor = String(cuerpo.profesor || "");
+    persona = String(cuerpo.persona || "");
+    const g = Number(cuerpo.grupo || 0);
+    grupoPedido = Number.isInteger(g) && g >= 0 && g <= 20 ? g : -1;
+    // Los grupos que hubo (los manda el profe): sus salas también se vacían al
+    // terminar los grupos o la llamada, aunque la base ya no los tenga.
+    viejos = (Array.isArray(cuerpo.viejos) ? cuerpo.viejos : []).map(Number).filter((n: number) => Number.isInteger(n) && n >= 1 && n <= 20).slice(0, 20);
   } catch { /* abajo se rechaza */ }
-  if (!UUID.test(profesor) || !["pase", "sincronizar"].includes(accion)) {
+  if (!UUID.test(profesor) || !["pase", "sincronizar", "silenciar"].includes(accion) || grupoPedido < 0
+      || (accion === "silenciar" && !UUID.test(persona))) {
     return json({ error: "Pedido incompleto." }, 400);
   }
 
@@ -155,39 +185,70 @@ Deno.serve(async (req) => {
   if (!ll) return json({ error: "No hay una clase abierta a la que puedas entrar." }, 403);
 
   if (accion === "pase") {
-    const hablar = ll.rol === "profe" || puedeHablar(ll, ll.yo, ll.permiso_voz === true);
+    // El profe elige a qué grupo entra; el alumno, nunca: su sala la dio la base.
+    const sala = ll.rol === "profe" ? salaDe(ll, grupoPedido) : ll.sala;
+    const enGrupo = ll.rol !== "profe" && Boolean(ll.grupo);
+    const hablar = ll.rol === "profe" || puedeHablar(ll, ll.yo, ll.permiso_voz === true, enGrupo);
     const token = await firmar({
       sub: ll.yo,
       name: ll.nombre,
       attributes: { rol: ll.rol },
-      video: { room: ll.sala, roomJoin: true, ...permisos(hablar, "microphone") },
+      video: { room: sala, roomJoin: true, ...permisos(hablar, "microphone") },
     });
-    return json({ url: LK_URL, token, sala: ll.sala, rol: ll.rol, yo: ll.yo, puede_hablar: hablar, permiso_voz: ll.permiso_voz });
+    return json({ url: LK_URL, token, sala, rol: ll.rol, yo: ll.yo, puede_hablar: hablar, permiso_voz: ll.permiso_voz,
+      grupo: ll.rol === "profe" ? grupoPedido : (ll.grupo || 0) });
   }
 
-  // "sincronizar": solo el profe de la clase.
+  // "sincronizar" y "silenciar": solo el profe de la clase.
   if (ll.rol !== "profe") return json({ error: "Solo quien da la clase reparte la palabra." }, 403);
-  const lista = await servidor("ListParticipants", ll.sala, {});
-  // Una sala vacía todavía no existe en LiveKit: no hay nada que acomodar.
-  if (!lista.ok) return json({ listo: true, cambiados: 0, sacados: 0 });
+
+  if (accion === "silenciar") {
+    const salas = [0, ...new Set([...Object.keys(ll.grupos || {}).map((id) => grupoDe(ll, id)).filter(Boolean), ...viejos])];
+    type Pista = { sid?: string; type?: string | number; muted?: boolean };
+    for (const grupo of salas) {
+      const sala = salaDe(ll, grupo);
+      const lista = await servidor("ListParticipants", sala, {});
+      if (!lista.ok) continue;
+      const p = ((lista.datos.participants || []) as Array<{ identity: string; tracks?: Pista[] }>).find((x) => x.identity === persona);
+      if (!p) continue;
+      // El tipo llega como nombre del enum («AUDIO») o como número (0).
+      const pistas = (p.tracks || []).filter((t) => (t.type === "AUDIO" || t.type === 0) && t.sid && !t.muted);
+      let silenciado = false;
+      for (const t of pistas) {
+        const r = await servidor("MutePublishedTrack", sala, { identity: persona, track_sid: t.sid, muted: true });
+        if (r.ok) silenciado = true;
+      }
+      return json({ listo: true, silenciado });
+    }
+    return json({ listo: true, silenciado: false });
+  }
   const sacados = new Set(ll.sacados || []);
   const conPermiso = new Set(ll.con_permiso_voz || []);
   let cambiados = 0, fuera = 0;
+  // La sala grande, la de cada grupo que hay ahora y las de los que hubo.
+  const grupos = [0, ...new Set([...Object.keys(ll.grupos || {}).map((id) => grupoDe(ll, id)).filter(Boolean), ...viejos])];
   // LiveKit CONTESTA con los nombres de protobuf (`can_publish`) aunque acepte
   // `canPublish` al pedir: leyendo solo uno, cada pasada volvía a «cambiar» a
   // todos (comprobado contra el servidor de verdad).
   type Permiso = { can_publish?: boolean; canPublish?: boolean };
-  for (const p of (lista.datos.participants || []) as Array<{ identity: string; permission?: Permiso }>) {
-    if (p.identity === ll.yo) continue;
-    if (sacados.has(p.identity) || !ll.abierta) {
-      const r = await servidor("RemoveParticipant", ll.sala, { identity: p.identity });
-      if (r.ok) fuera++;
-      continue;
+  for (const grupo of grupos) {
+    const sala = salaDe(ll, grupo);
+    const lista = await servidor("ListParticipants", sala, {});
+    // Una sala vacía todavía no existe en LiveKit: no hay nada que acomodar.
+    if (!lista.ok) continue;
+    for (const p of (lista.datos.participants || []) as Array<{ identity: string; permission?: Permiso }>) {
+      if (p.identity === ll.yo) continue;
+      // Quien no es de esta sala (otro grupo, o ya sin grupos) sale de ella.
+      if (sacados.has(p.identity) || !ll.abierta || grupoDe(ll, p.identity) !== grupo) {
+        const r = await servidor("RemoveParticipant", sala, { identity: p.identity });
+        if (r.ok) fuera++;
+        continue;
+      }
+      const hablar = puedeHablar(ll, p.identity, conPermiso.has(p.identity), grupo > 0);
+      if (Boolean(p.permission?.can_publish ?? p.permission?.canPublish) === hablar) continue;
+      const r = await servidor("UpdateParticipant", sala, { identity: p.identity, permission: permisos(hablar, "MICROPHONE") });
+      if (r.ok) cambiados++;
     }
-    const hablar = puedeHablar(ll, p.identity, conPermiso.has(p.identity));
-    if (Boolean(p.permission?.can_publish ?? p.permission?.canPublish) === hablar) continue;
-    const r = await servidor("UpdateParticipant", ll.sala, { identity: p.identity, permission: permisos(hablar, "MICROPHONE") });
-    if (r.ok) cambiados++;
   }
   return json({ listo: true, cambiados, sacados: fuera });
 });

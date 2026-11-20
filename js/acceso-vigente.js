@@ -555,7 +555,13 @@
     // Cobros: la cuenta de la familia decide (mi_acceso() dice «cobro»).
     if (a.motivo === "cobro") {
       if (a.vigente) {
-        if (enPanel()) avisoCobroVigente(sb, a, await whatsapp(sb));
+        /* La franja de «vence pronto / venció» del panel está APAGADA para
+           todos: el dueño pidió el 18/11/2026 que a los alumnos no les salga
+           nada mientras lleva los cobros a mano. Solo vuelve si la base
+           contesta `avisar_en_panel: true` (hoy nunca lo hace). El aviso de
+           la cuenta APAGADA sí se queda: sin él, quien no puede entrar no
+           sabe por qué ni cómo arreglarlo. */
+        if (enPanel() && a.avisar_en_panel === true) avisoCobroVigente(sb, a, await whatsapp(sb));
         return;
       }
       const wa = await whatsapp(sb);

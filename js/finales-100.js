@@ -589,6 +589,7 @@
         ? "Escribe tu respuesta: la jugada o el resultado (" + (tipoSiNo ? "«sí», «no», " : "") + "«tablas», «ganan blancas»)"
         : "Escribe tu jugada, recorre la línea o pregunta por la posición",
       juego: juegoVisto,
+      tableroEl: boardEl, // con la cuenta ciega, «Piezas» va antes de él
       // La posición no se dicta en cada jugada: se dice la jugada.
       posicionViva: false,
       onEnviar: alEscribir,

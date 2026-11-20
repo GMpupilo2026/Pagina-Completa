@@ -75,8 +75,9 @@ if (!ultima) {
   }
   if (/America\/Costa_Rica/.test(cuerpo)) bien("el día es el de Costa Rica");
   else mal("el día no se cuenta en hora de Costa Rica");
-  // El tope lo garantiza el upsert, no un if: solo suma si no llegó.
-  if (/on\s+conflict\s*\(\s*persona\s*,\s*dia\s*\)\s*do\s+update\s+set\s+usos\s*=\s*\w+\.usos\s*\+\s*1\s+where\s+\w+\.usos\s*<\s*tope_persona/i.test(cuerpo)) {
+  // El tope lo garantiza el upsert, no un if: solo suma si no llegó. Desde 20261119061009 el tope por
+  // persona es una variable (v_tope_persona: 30, o 250 con licencia de Pareo o Mesa del árbitro).
+  if (/on\s+conflict\s*\(\s*persona\s*,\s*dia\s*\)\s*do\s+update\s+set\s+usos\s*=\s*\w+\.usos\s*\+\s*1\s+where\s+\w+\.usos\s*<\s*(?:v_)?tope_persona/i.test(cuerpo)) {
     bien("el tope por persona lo garantiza el upsert (dos fotos a la vez no se cuelan)");
   } else {
     mal("el upsert suma sin mirar el tope por persona");

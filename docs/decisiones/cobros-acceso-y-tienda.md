@@ -103,8 +103,16 @@ una cuenta de 1 alumno es la de siempre: no hay dos mecanismos.
   `js/pendientes.js`). Confirmarlo es registrar el pago con ese reporte: se
   enciende y sale el recibo. «No es válido» pide el motivo, que el alumno lee
   en su aviso.
-- **Vencida sin apagar o por vencer**: en el panel, una franja con «Cómo
-  pagar» y el mismo formulario.
+- **Vencida sin apagar o por vencer: hoy no se le muestra nada.** Había una
+  franja en el panel con «Cómo pagar» y el mismo formulario, pero el
+  18/11/2026, recién pasadas las cuentas, 20 alumnos la veían en rojo y el
+  dueño pidió que a nadie le saliera nada mientras lleva los cobros a mano.
+  El código sigue (`avisoCobroVigente()`), pero solo se pinta si `mi_acceso()`
+  contesta `avisar_en_panel: true`, y hoy nunca lo hace: volver a mostrarla es
+  sumar ese dato (con su interruptor en «Automático»), no reescribir la
+  franja. El aviso de la cuenta APAGADA sí se queda: solo sale si alguien la
+  apaga, y sin él el alumno no sabría por qué no puede entrar.
+  `verificar-mensualidades.js` comprueba que la franja dependa de ese dato.
 - Si la consulta falla, no se tapa nada (la regla de siempre).
 
 ### Los recordatorios solos

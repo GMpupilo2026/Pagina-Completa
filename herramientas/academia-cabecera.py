@@ -76,7 +76,7 @@ PAGINAS = [
     "entreno/mates.html", "entreno/practicas.html", "entreno/temas.html",
     "entreno/visualizacion.html", "entreno/aperturas.html", "entreno/sin-internet.html",
     "entreno/precision-posicional.html", "entreno/tipos.html", "entreno/finales.html",
-    "entreno/memoria.html", "entreno/mis-estudios.html", "entreno/estilo.html",
+    "entreno/memoria.html", "entreno/mis-estudios.html", "entreno/estilo.html", "entreno/oido.html",
     "sonar.html", "batalla-naval.html", "ajedrez-4x8.html",
     "cursos/academia/aperturas-y-defensas.html",
     "cursos/academia/arbitro-nacional.html",
@@ -501,7 +501,7 @@ def guardia():
     login solo acepta un `next` que termine en .html, así que se le devuelve
     la extensión. El login va con ruta absoluta por lo mismo: una relativa
     cambiaría con la profundidad de la carpeta."""
-    return (GUARDIA_INICIO + "<script>(function(){try{if(window.sb||localStorage.getItem("
+    return (GUARDIA_INICIO + "<script>(function(){document.documentElement.setAttribute('data-academia','');try{if(window.sb||localStorage.getItem("
             + json.dumps("sb-" + proyecto_supabase() + "-auth-token") + "))return;}catch(e){return;}"
             + "try{window.stop()}catch(e){}"
             + "var p=location.pathname.replace(/^\\/+/,'');"
@@ -765,6 +765,7 @@ NOMBRE_Y_PADRE = {
     "entreno/tipos.html": ("Habilidades", "clases.html"),
     "entreno/finales.html": ("Finales contra la máquina", "clases.html"),
     "entreno/memoria.html": ("Memoria", "clases.html"),
+    "entreno/oido.html": ("De oído", "clases.html"),
     "entreno/estilo.html": ("Tu estilo de juego", "clases.html"),
     "cursos/academia/index.html": ("Mis cursos", "clases.html"),
 }

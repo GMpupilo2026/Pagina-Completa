@@ -346,6 +346,49 @@ que el alumno de 1800 vuelve a empezar en los de 1000.
   nivel estaba incompleto y ahora no): repasar un nivel ya completo no vuelve
   a festejar.
 
+## El rating táctico
+
+Un número propio de cada alumno que **sube al resolver limpio y baja cuando
+cuesta** (18/11/2026). La idea salió del «Coliseo de táctica» de Chessgora.
+Se ve en Ejercicios por tema (en la portada, con su detalle, y en la barra del
+ejercicio, corto) y en el informe de cada alumno («Rating táctico: 1871 (+12
+hoy) · 1540 ejercicios · su mejor: 2001»).
+
+- **No se guarda: se calcula** (`public.rating_tactico(p_alumno)`, migración
+  `20261118131646_rating_tactico.sql`) desde lo que Ejercicios por tema ya
+  anota en `training_progress`: la actividad `temas`, con el rating del
+  ejercicio y si salió limpio. Lo que se deriva no se guarda: así no hay un
+  número que se desfase de su historia ni una tabla más que proteger.
+- **La cuenta es Elo, ejercicio por ejercicio y en orden**: arranca en 1200,
+  K = 40 los primeros 20 ejercicios (para que llegue rápido a su nivel), 24
+  hasta los 60 y 16 después; se queda entre 400 y 3000. Limpio cuenta como
+  ganar; con error o con pista, como perder. Las filas viejas sin `limpio` no
+  cuentan (no se sabe cómo salieron). Solo se anota la PRIMERA vez que se
+  resuelve un ejercicio (el repaso no anota): el rating no se infla
+  repitiendo el mismo.
+- **SECURITY INVOKER**: la RLS de `training_progress` decide quién ve el de
+  quién (el alumno, el suyo; su profe y quien administra, el de sus alumnos).
+  Otra alumna recibe 1200 y 0 ejercicios; anon no la puede llamar. Probado
+  impersonando roles en SQL.
+- Con los datos de noviembre de 2026, los alumnos que más resuelven quedan
+  entre 1000 y 2100, en orden con cuánto resuelven limpio y qué tan difícil.
+  **No es el Elo** y la pantalla lo dice: no se compara con el del diagnóstico
+  ni con el de la federación.
+- **Se refresca solo**: `EntrenoProgress.log` dispara el evento
+  `entreno:anotado` cuando la base ACEPTÓ la fila, y `js/rating-tactico.js`
+  lo vuelve a pedir si fue de `temas`. Así `entreno-temas.js` no se tocó y la
+  página no tiene que acordarse de llamar a nada.
+- Los primeros 20 ejercicios dice que se está acomodando; sin ejercicios no
+  inventa un «1200»: dice cuándo aparece. Una baja se escribe con el signo
+  menos de verdad («−8»), y sin cambio no dice «+0».
+
+Lo prueba `verificar-rating-tactico.js`: las frases en Node; la página con el
+marcado de `entreno/temas.html` (se pide al cargar, se vuelve a pedir con un
+ejercicio anotado, no con uno rechazado ni con otra actividad); y el
+cableado (el orden de los scripts, el informe con el id del alumno, la
+función INVOKER y sin anon). Con el evento disparado también en el rechazo,
+salta.
+
 ## El puzzle del día
 
 `entreno/temas.html?del-dia=1`, con su caja «🌟 Puzzle del día» en la lista de
@@ -1279,6 +1322,51 @@ sola al terminar la cuenta, escrita entera sale perfecta y guarda el récord,
 Está probado que fallan: una FEN inventada en el banco hace saltar 2
 comprobaciones; dejar la lectura escrita al reconstruir, o guardar el récord
 de una con errores, las que corresponden.
+
+## De oído
+
+`entreno/oido.html` (tarjeta **«👂 De oído»** en Entreno y en el panel,
+Entrenamiento básico), pedida el 19/11 para los alumnos ciegos: es la
+visualización que más necesita quien no ve el tablero, y le sirve a todos.
+No hay tablero a la vista, porque eso es lo que se entrena. Todo se contesta
+escribiendo («e4», «eva 4», «efe tres», «sí», «3»). La pregunta se escribe, se
+dice en una región viva (`#oido-voz`) y, con «Activar voz», también en voz
+alta. Tres ejercicios, cada uno con nivel fácil, medio y difícil:
+
+- **¿A dónde llega?** Una pieza sola en el tablero vacío. En fácil se dicen
+  todas las casillas a las que llega un rey o un caballo del centro; en medio,
+  un caballo de cualquier lado o «¿llega a…?» con alfil o torre; en difícil,
+  sobre todo «¿llega?» con dama, caballo y alfil. En el «¿llega?» la mitad de
+  las veces sí llega: si no, casi siempre sería «no». Si a la lista le falta
+  una casilla o le sobra otra, se dice cuál.
+- **El camino del caballo:** de una casilla a otra, ¿en cuántas jugadas como
+  mínimo? Se calcula con una búsqueda a lo ancho, así que la respuesta es
+  exacta. Fácil 1-2, medio 3-4, difícil 5-6. La corrección da además un camino.
+- **La partida dictada:** se dictan las primeras jugadas de una apertura REAL
+  del banco de Aperturas (`js/aperturas-lineas.js`): 4 en fácil, 8 en medio,
+  12 en difícil. Después se pregunta dónde quedó una pieza que se movió («el
+  caballo negro que empezó en g8»). La posición la arma chess.js jugando esas
+  jugadas: «ninguna posición se inventa». `seguirPiezas` sigue cada pieza
+  desde su casilla de salida, con capturas, enroques (la torre también se
+  mueve) y capturas al paso. El dictado nombra al peón («peón eva 4»), porque
+  `sanSpoken` lo dice solo con la casilla y para seguir la partida de oído hay
+  que saber qué se movió.
+
+La lógica es pura y está aparte (`js/oido-ejercicios.js`, con el azar que le
+pasan): la prueba `verificar-oido.js` sin navegador, con el alcance de cada
+pieza contado a mano, los caminos, la lectura de lo escrito o dicho, el
+seguimiento con enroque y captura al paso, 180 dictados de los tres niveles
+contra el banco y 600 preguntas de alcance y camino. Con navegador prueba los
+tres ejercicios de punta a punta. Lo que no se entiende («ni idea») no cuenta
+como respuesta: se dice cómo escribirla.
+
+**Cada respuesta cuenta en Entrenamiento**: `training_progress` con la
+actividad `oido` (meta del día, racha, tareas). La base solo acepta las
+actividades de su lista, así que va con su migración
+(`training_progress_oido`); sin ella las filas se rechazarían sin avisar.
+Está en las tareas (`material-plataforma.js`, «preguntas»), en el plan
+(`plan-entrenamiento.js`) y cuenta como entrenamiento de visión
+(`direcciones-entrenamiento.js`).
 
 ## Aperturas y celadas: memorizar jugando, con repaso espaciado
 
@@ -4885,6 +4973,13 @@ editar a mano una medida y la calibración sin el paso de gradiente.
 las clases de ADAES, con su propia actividad (`finales_clases`) y la posición
 en `detail.theme` para mandarla de tarea una por una. Ver «Y para jugarlas en
 casa, de tarea» en `docs/decisiones/accesibilidad.md`.
+
+Con más de 60 posiciones, el tablero queda muy abajo de la lista y el clic
+parecía no hacer nada: al elegir una pestaña, la página baja hasta el título
+de la posición (descontando el encabezado fijo; sin animación si la persona
+pidió menos movimiento) y el foco pasa a ese título, para que el lector de
+pantalla diga cuál se cargó (`irAlTablero()` en `js/entreno-finales.js`;
+lo mide `verificar-finales-pagina.js`).
 
 ## El entrenador de IA
 

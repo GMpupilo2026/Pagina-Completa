@@ -19,15 +19,15 @@ body.jornada .jornada-fuera { display: none !important; }
     border-radius: .75rem;
 }
 .jornada-nav button svg { width: 1.35rem; height: 1.35rem; flex: none; }
-.jornada-nav button[aria-current="page"] { background: rgb(var(--c-accent-500) / .22); color: rgb(var(--c-brand-900)); }
-.jornada-nav button:hover:not([aria-current="page"]) { background: rgb(var(--c-brand-100)); }
+.jornada-nav button[aria-current] { background: rgb(var(--c-accent-500) / .22); color: rgb(var(--c-brand-900)); }
+.jornada-nav button:hover:not([aria-current]) { background: rgb(var(--c-brand-100)); }
 .jornada-nav button:focus-visible { outline: 2px solid rgb(var(--c-accent-500)); outline-offset: 2px; }
 .dark .jornada-nav button { color: rgb(var(--c-brand-200)); }
-.dark .jornada-nav button[aria-current="page"] { background: rgb(var(--c-accent-500) / .25); color: #fff; }
-.dark .jornada-nav button:hover:not([aria-current="page"]) { background: rgb(var(--c-brand-800)); }
+.dark .jornada-nav button[aria-current] { background: rgb(var(--c-accent-500) / .25); color: #fff; }
+.dark .jornada-nav button:hover:not([aria-current]) { background: rgb(var(--c-brand-800)); }
 
 /* Mientras se busca se ve todo: las pestañas no dicen nada y se apagan. */
-body.jornada-buscando .jornada-nav button[aria-current="page"] { background: transparent; }
+body.jornada-buscando .jornada-nav button[aria-current] { background: transparent; }
 
 /* ---- Celular y tableta: la barra fija abajo ---- */
 @media (max-width: 1023px) {
@@ -64,6 +64,328 @@ body.jornada-buscando .jornada-nav button[aria-current="page"] { background: tra
 
 @media (prefers-reduced-motion: no-preference) {
     .jornada-nav button { transition: background-color .15s ease; }
+}
+
+
+/* ---- Lo de adentro de una pestaña (js/panel-jornada.js, SUBSECCIONES) ----
+   En la computadora, debajo de su pestaña en el menú; en el celular, una fila
+   de botones arriba de la pestaña, que se desliza de lado si no cabe. Mismos
+   colores y contraste que las pestañas. */
+.jornada-sub a, .jornada-sub button, .jornada-fila a, .jornada-fila button {
+    font: inherit; font-weight: 600; color: rgb(var(--c-brand-700));
+    text-decoration: none; cursor: pointer; border: 0; background: transparent;
+}
+.jornada-sub [aria-current], .jornada-fila [aria-current] { background: rgb(var(--c-accent-500) / .22); color: rgb(var(--c-brand-900)); }
+.jornada-sub a:focus-visible, .jornada-sub button:focus-visible,
+.jornada-fila a:focus-visible, .jornada-fila button:focus-visible { outline: 2px solid rgb(var(--c-accent-500)); outline-offset: 2px; }
+.dark .jornada-sub a, .dark .jornada-sub button, .dark .jornada-fila a, .dark .jornada-fila button { color: rgb(var(--c-brand-200)); }
+.dark .jornada-sub [aria-current], .dark .jornada-fila [aria-current] { background: rgb(var(--c-accent-500) / .25); color: #fff; }
+.jornada-sub a::after, .jornada-fila a::after { content: " ↗"; }
+
+@media (max-width: 1023px) {
+    .jornada-nav .jornada-sub { display: none; }
+    body.jornada .jornada-fila {
+        display: flex; gap: .5rem; overflow-x: auto; margin: 0 0 1.25rem; padding-bottom: .25rem;
+        scrollbar-width: thin;
+    }
+    .jornada-fila a, .jornada-fila button {
+        flex: none; white-space: nowrap; padding: .45rem .9rem; border-radius: 999px; font-size: .85rem;
+        background: #fff; box-shadow: inset 0 0 0 1px rgb(var(--c-brand-200));
+    }
+    .dark .jornada-fila a, .dark .jornada-fila button { background: rgb(var(--c-brand-900)); box-shadow: inset 0 0 0 1px rgb(var(--c-brand-700)); }
+    .jornada-fila [aria-current] { box-shadow: none; }
+}
+
+@media (min-width: 1024px) {
+    body.jornada .jornada-fila { display: none; }
+    .jornada-nav .jornada-sub { display: grid; gap: .1rem; margin: .15rem 0 .35rem 2.6rem; }
+    .jornada-sub a, .jornada-sub button {
+        display: block; width: 100%; text-align: left; padding: .35rem .6rem; border-radius: .6rem; font-size: .85rem;
+    }
+    .jornada-sub a:hover, .jornada-sub button:hover:not([aria-current]) { background: rgb(var(--c-brand-100)); }
+    .dark .jornada-sub a:hover, .dark .jornada-sub button:hover:not([aria-current]) { background: rgb(var(--c-brand-800)); }
+}
+
+
+/* ---- El Inicio nuevo (js/panel-jornada.js, armarInicio) ----
+   La clase en una tarjeta de brand-600 con texto blanco (8,6:1 en el
+   Clásico y 8,7:1 en «jornada»; el chip, 6,0:1), las salas en
+   tarjetas blancas con borde fino y lo que viene al lado. El dato de cada
+   sala va escrito: el ícono es adorno. Detalle en brand-500 sobre blanco
+   (6,1:1); en oscuro, brand-300 sobre brand-900 (7,8:1). */
+.jornada-inicio { display: grid; gap: 1.25rem; margin-bottom: 2rem; }
+.jornada-inicio-principal { min-width: 0; display: grid; gap: 1rem; }
+.jornada-titulo-sec { font-weight: 700; font-size: 1rem; color: rgb(var(--c-brand-800)); margin: .25rem 0 0; }
+.dark .jornada-titulo-sec { color: #fff; }
+.jornada-clase { background: rgb(var(--c-brand-600)); color: #fff; border-radius: 1.25rem; padding: 1.1rem 1.25rem; display: grid; gap: .35rem; justify-items: start; }
+.jornada-clase[hidden] { display: none; }
+.jornada-clase-chip { font-size: .78rem; font-weight: 600; background: rgb(255 255 255 / .18); padding: .2rem .7rem; border-radius: 999px; }
+.jornada-clase-titulo { font-size: 1.35rem; font-weight: 700; margin: .25rem 0 0; color: #fff; }
+.jornada-clase-linea { margin: 0 0 .5rem; font-size: .9rem; color: #fff; }
+.jornada-clase-boton { background: #fff; color: rgb(var(--c-brand-800)); font-weight: 600; padding: .55rem 1.1rem; border-radius: 999px; text-decoration: none; }
+.jornada-clase-boton:focus-visible { outline: 3px solid rgb(var(--c-accent-400)); outline-offset: 2px; }
+.jornada-salas { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.jornada-sala {
+    display: flex; flex-direction: column; gap: .1rem; width: 100%; height: 100%; text-align: left;
+    background: #fff; border: 0; border-radius: 1rem; padding: .9rem; cursor: pointer; text-decoration: none; font: inherit;
+    box-shadow: 0 0 0 1px rgb(var(--c-brand-100));
+}
+.jornada-sala:hover { box-shadow: 0 0 0 1px rgb(var(--c-brand-300)); }
+.jornada-sala:focus-visible { outline: 2px solid rgb(var(--c-accent-500)); outline-offset: 2px; }
+.dark .jornada-sala { background: rgb(var(--c-brand-900)); box-shadow: 0 0 0 1px rgb(var(--c-brand-800)); }
+.jornada-sala-icono { font-size: 1.35rem; margin-bottom: .35rem; }
+.jornada-sala-nombre { font-size: .82rem; color: rgb(var(--c-brand-500)); }
+.jornada-sala-grande { font-size: 1.3rem; font-weight: 700; color: rgb(var(--c-brand-800)); font-variant-numeric: tabular-nums; }
+.jornada-sala-det { font-size: .78rem; color: rgb(var(--c-brand-500)); }
+.dark .jornada-sala-nombre, .dark .jornada-sala-det { color: rgb(var(--c-brand-300)); }
+.dark .jornada-sala-grande { color: #fff; }
+.jornada-inicio-lado { background: #fff; border-radius: 1rem; padding: 1rem; box-shadow: 0 0 0 1px rgb(var(--c-brand-100)); align-self: start; }
+.dark .jornada-inicio-lado { background: rgb(var(--c-brand-900)); box-shadow: 0 0 0 1px rgb(var(--c-brand-800)); }
+.jornada-viene { list-style: none; margin: .6rem 0 0; padding: 0; display: grid; gap: .75rem; }
+.jornada-viene-item { border-left: 3px solid rgb(var(--c-brand-200)); padding-left: .65rem; display: grid; font-size: .88rem; color: rgb(var(--c-brand-800)); }
+.jornada-viene-item.es-clase { border-left-color: rgb(var(--c-brand-600)); }
+.dark .jornada-viene-item { color: #fff; }
+.jornada-viene-cuando, .jornada-viene-det, .jornada-viene-vacio { font-size: .78rem; color: rgb(var(--c-brand-500)); }
+.dark .jornada-viene-cuando, .dark .jornada-viene-det, .dark .jornada-viene-vacio { color: rgb(var(--c-brand-300)); }
+@media (min-width: 640px) { .jornada-salas { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1200px) { .jornada-inicio { grid-template-columns: minmax(0, 1fr) 18rem; align-items: start; } }
+
+/* ---- Las animaciones (js/panel-jornada.js, animarEntrada y contar) ----
+   Solo con prefers-reduced-motion: no-preference: quien pide menos
+   movimiento en su sistema ve el panel quieto. Ninguna esconde un dato ni
+   retrasa un clic: duran menos de medio segundo y, al terminar, no dejan
+   ningún transform puesto (un transform que se queda le cambia la caja a lo
+   que va fijo adentro). El panel adaptado no las tiene: este módulo no se
+   aplica ahí. */
+@media (prefers-reduced-motion: no-preference) {
+    @keyframes jornada-entrar {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: none; }
+    }
+    /* Al cambiar de pestaña (y al entrar), lo que queda a la vista entra con
+       un fundido y sube un poco; las tarjetas y las salas, una detrás de otra
+       (--jornada-i lo pone el módulo, con tope para que la última no tarde). */
+    body.jornada .jornada-entra {
+        animation: jornada-entrar .28s ease-out backwards;
+        animation-delay: calc(var(--jornada-i, 0) * 40ms);
+    }
+    /* Las tarjetas y las salas suben un poco con el ratón o con el foco del
+       teclado (las del panel ya suben con el ratón; aquí también con Tab). */
+    .jornada-sala, .jornada-clase-boton { transition: transform .18s ease, box-shadow .18s ease; }
+    .jornada-sala:hover, .jornada-sala:focus-visible,
+    .jornada-clase-boton:hover, .jornada-clase-boton:focus-visible { transform: translateY(-2px); }
+    body.jornada #tile-grid a:focus-visible { transform: translateY(-2px); }
+}
+
+/* El número de una sala mientras cuenta: el de verdad sigue en el texto (lo
+   lee el lector y guarda el ancho, con tabular-nums) pero transparente, y el
+   que va contando se pinta encima. El «/ ""» le dice al lector que ese
+   dibujo no se lee. */
+.jornada-sala-grande[data-contando] { position: relative; color: transparent !important; }
+.jornada-sala-grande[data-contando]::after {
+    content: attr(data-contando);
+    content: attr(data-contando) / "";
+    position: absolute; left: 0; top: 0; white-space: nowrap;
+    color: rgb(var(--c-brand-800));
+}
+.dark .jornada-sala-grande[data-contando]::after { color: #fff; }
+
+/* Con el tema «jornada», el menú lateral también lleva borde fino y no sombra. */
+@media (min-width: 1024px) {
+    :root[data-tema=jornada] .jornada-nav { box-shadow: 0 0 0 1px rgb(var(--c-brand-100)); }
+    :root[data-tema=jornada].dark .jornada-nav { box-shadow: 0 0 0 1px rgb(var(--c-brand-800)); }
+}
+
+/* ---- El aspecto de tablero de control (20/11/2026) ----
+   Reemplazó al de Chessgora: menú lateral oscuro, un banner con degradado e
+   ilustración, tarjetas de color con su pastilla y cuatro gráficos.
+   Contraste medido (WCAG AA pide 4,5:1), con el tema «jornada»:
+   - Menú: brand-200 sobre brand-800 8,9:1 (y sobre brand-700 al pasar el
+     ratón, 7,0:1); la opción abierta, brand-800 sobre blanco 14,6:1.
+   - Banner: blanco sobre su tramo más claro (brand-500) 6,1:1; el chip y los
+     atajos llevan negro al 18 % debajo, así que más. El botón principal,
+     brand-900 sobre accent-500, 6,5:1.
+   - Tarjetas: blanco sobre el tramo claro de cada una, de 5,1:1 (turquesa) a
+     6,1:1 (violeta); la pastilla, con negro al 18 %, 6,9:1 o más. Los colores
+     de las tarjetas están escritos aquí y no salen del tema: cada una se
+     reconoce también por su nombre y su número escritos.
+   - Gráficos: el texto en brand-500 sobre blanco 6,1:1; los números de las
+     barras en brand-700, 11,5:1. */
+body.jornada .jornada-marco .jornada-nav button { color: rgb(var(--c-brand-200)); }
+body.jornada .jornada-marco .jornada-nav button svg { color: rgb(var(--c-brand-300)); }
+@media (min-width: 1024px) {
+    body.jornada .jornada-marco .jornada-nav {
+        background: rgb(var(--c-brand-800)); box-shadow: none; padding: 1rem .75rem;
+        min-height: calc(100vh - 8rem); max-height: calc(100vh - 7.5rem); overflow-y: auto;
+    }
+    body.jornada .jornada-marco .jornada-nav button:hover:not([aria-current]),
+    body.jornada .jornada-marco .jornada-sub a:hover,
+    body.jornada .jornada-marco .jornada-sub button:hover:not([aria-current]) { background: rgb(var(--c-brand-700)); }
+    body.jornada .jornada-marco .jornada-nav button[aria-current="page"],
+    body.jornada .jornada-marco .jornada-sub [aria-current] { background: #fff; color: rgb(var(--c-brand-800)); }
+    body.jornada .jornada-marco .jornada-nav button[aria-current="page"] svg { color: rgb(var(--c-brand-600)); }
+    body.jornada .jornada-marco .jornada-nav button[aria-current="true"] { background: rgb(var(--c-brand-700)); color: #fff; }
+    body.jornada .jornada-marco .jornada-sub a,
+    body.jornada .jornada-marco .jornada-sub button { color: rgb(var(--c-brand-200)); }
+    body.jornada .jornada-marco .jornada-nav button:focus-visible,
+    body.jornada .jornada-marco .jornada-sub a:focus-visible,
+    body.jornada .jornada-marco .jornada-sub button:focus-visible { outline-color: #fff; }
+}
+@media (max-width: 1023px) {
+    body.jornada .jornada-marco .jornada-nav button { color: rgb(var(--c-brand-700)); }
+    body.jornada .jornada-marco .jornada-nav button svg { color: currentColor; }
+    .dark body.jornada .jornada-marco .jornada-nav button { color: rgb(var(--c-brand-200)); }
+}
+
+/* El banner. */
+body.jornada .jornada-clase {
+    position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; gap: 1rem;
+    padding: 1.5rem 1.6rem; border-radius: 1.5rem; color: #fff; justify-items: stretch;
+    background: linear-gradient(120deg, rgb(var(--c-brand-800)), rgb(var(--c-brand-600)) 55%, rgb(var(--c-brand-500)));
+}
+body.jornada .jornada-clase::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .12;
+    background-image: radial-gradient(circle at 85% 20%, #fff 0, transparent 40%), radial-gradient(circle at 10% 110%, #fff 0, transparent 35%);
+}
+.jornada-clase-texto { position: relative; display: grid; gap: .55rem; justify-items: start; min-width: 0; }
+.jornada-clase-marca, body.jornada .jornada-clase-chip {
+    font-size: .78rem; font-weight: 600; padding: .25rem .75rem; border-radius: 999px; background: rgb(0 0 0 / .18); color: #fff;
+}
+.jornada-clase-marca::before { content: "♞ "; }
+body.jornada .jornada-clase-titulo { font-size: clamp(1.5rem, 3vw, 2.1rem); line-height: 1.15; margin: .1rem 0 0; }
+body.jornada .jornada-clase-linea { margin: 0; font-size: .95rem; }
+.jornada-clase-atajos { list-style: none; margin: .2rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem; }
+.jornada-clase-atajos a, .jornada-clase-atajos button {
+    display: inline-block; font: inherit; font-size: .8rem; font-weight: 600; color: #fff; text-decoration: none; cursor: pointer;
+    border: 1px solid rgb(255 255 255 / .35); background: rgb(0 0 0 / .18); padding: .25rem .75rem; border-radius: 999px;
+}
+.jornada-clase-atajos a::before, .jornada-clase-atajos button::before { content: "✓ " / ""; opacity: .8; }
+.jornada-clase-saludo { margin: .35rem 0 0; font-size: .88rem; color: #fff; }
+.jornada-clase-botones { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .25rem; }
+body.jornada .jornada-clase-boton { background: rgb(var(--c-accent-500)); color: rgb(var(--c-brand-900)); padding: .6rem 1.2rem; }
+.jornada-clase-boton2 {
+    font: inherit; font-weight: 600; cursor: pointer; padding: .6rem 1.1rem; border-radius: 999px;
+    background: #fff; color: rgb(var(--c-brand-800)); border: 0;
+}
+.jornada-clase-boton2:last-child { background: transparent; color: #fff; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .6); }
+.jornada-clase-atajos a:focus-visible, .jornada-clase-atajos button:focus-visible, .jornada-clase-boton2:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.jornada-clase-dibujo { display: none; position: relative; }
+.jornada-clase-dibujo svg { width: 100%; height: auto; display: block; }
+@media (min-width: 900px) {
+    body.jornada .jornada-clase { grid-template-columns: minmax(0, 1fr) 15rem; }
+    .jornada-clase-dibujo { display: block; }
+}
+
+/* Las tarjetas de color: el número grande en blanco y la pastilla abajo. */
+body.jornada .jornada-sala {
+    color: #fff; box-shadow: none; padding: 1rem 1.1rem; border-radius: 1.1rem; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, var(--sala-a), var(--sala-b));
+}
+body.jornada .jornada-sala::after {
+    content: ""; position: absolute; right: -1.5rem; top: -1.5rem; width: 6rem; height: 6rem; border-radius: 50%;
+    background: rgb(255 255 255 / .1); pointer-events: none;
+}
+body.jornada .jornada-sala:hover { box-shadow: 0 10px 22px -12px var(--sala-a); }
+body.jornada .jornada-sala:focus-visible { outline: 3px solid var(--sala-a); outline-offset: 3px; }
+.jornada-sala[data-sala="hoy"] { --sala-a: #1f56b8; --sala-b: #2d68cc; }
+.jornada-sala[data-sala="tareas"] { --sala-a: #0b6a72; --sala-b: #0e7a81; }
+.jornada-sala[data-sala="puntos"] { --sala-a: #156c3b; --sala-b: #1a7b44; }
+.jornada-sala[data-sala="rango"] { --sala-a: #a8264c; --sala-b: #c0345e; }
+.jornada-sala[data-sala="diagnostico"] { --sala-a: #5b3cb0; --sala-b: #6c4cc4; }
+.jornada-sala[data-sala="clases"] { --sala-a: #9c450b; --sala-b: #b1500e; }
+body.jornada .jornada-sala-icono {
+    position: absolute; right: .9rem; top: .85rem; margin: 0; font-size: 1.1rem; width: 2.1rem; height: 2.1rem;
+    display: grid; place-items: center; border-radius: .65rem; background: rgb(255 255 255 / .2);
+}
+body.jornada .jornada-sala-nombre { color: #fff; font-weight: 600; font-size: .85rem; padding-right: 2.5rem; }
+body.jornada .jornada-sala-grande { color: #fff; font-size: 1.8rem; margin: .35rem 0 .45rem; }
+body.jornada .jornada-sala-det {
+    color: #fff; align-self: flex-start; background: rgb(0 0 0 / .18); padding: .2rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 600;
+}
+body.jornada .jornada-sala-grande[data-contando]::after { color: #fff; }
+.dark body.jornada .jornada-sala-nombre, .dark body.jornada .jornada-sala-det, .dark body.jornada .jornada-sala-grande { color: #fff; }
+
+/* Los gráficos. */
+.jornada-graficos { display: grid; gap: .9rem; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 700px) { .jornada-graficos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.jornada-grafico { background: #fff; border-radius: 1.1rem; padding: 1rem 1.1rem; box-shadow: 0 0 0 1px rgb(var(--c-brand-100)); min-width: 0; }
+.dark .jornada-grafico { background: rgb(var(--c-brand-900)); box-shadow: 0 0 0 1px rgb(var(--c-brand-800)); }
+.jornada-grafico-titulo { margin: 0; font-size: .98rem; font-weight: 700; color: rgb(var(--c-brand-800)); }
+.jornada-grafico-sub { margin: .1rem 0 .6rem; font-size: .78rem; color: rgb(var(--c-brand-500)); }
+.dark .jornada-grafico-titulo { color: #fff; }
+.dark .jornada-grafico-sub { color: rgb(var(--c-brand-300)); }
+.jornada-grafico-dibujo svg { display: block; width: 100%; height: auto; max-height: 9rem; }
+.jornada-grafico[data-grafico="rango"] .jornada-grafico-dibujo svg { max-width: 9rem; margin: 0 auto; }
+.jornada-grafico-datos { list-style: none; margin: .6rem 0 0; padding: 0; display: grid; gap: .3rem; font-size: .82rem; color: rgb(var(--c-brand-500)); }
+.jornada-grafico-datos li { display: flex; align-items: center; gap: .45rem; }
+.jornada-grafico-datos b { margin-left: auto; color: rgb(var(--c-brand-800)); font-variant-numeric: tabular-nums; }
+.dark .jornada-grafico-datos { color: rgb(var(--c-brand-300)); }
+.dark .jornada-grafico-datos b { color: #fff; }
+.jornada-grafico-marca { width: .7rem; height: .7rem; border-radius: 3px; flex: none; }
+.jornada-svg-num { font-size: 11px; font-weight: 700; fill: rgb(var(--c-brand-700)); }
+.jornada-svg-eje { font-size: 11px; fill: rgb(var(--c-brand-500)); text-transform: capitalize; }
+.jornada-svg-centro { font-size: 24px; font-weight: 700; fill: rgb(var(--c-brand-800)); }
+.dark .jornada-svg-num, .dark .jornada-svg-centro { fill: #fff; }
+.dark .jornada-svg-eje { fill: rgb(var(--c-brand-300)); }
+
+/* En el celular, dos tarjetas por fila: el número grande, más chico para que no parta la línea. */
+@media (max-width: 639px) {
+    body.jornada .jornada-sala-grande { font-size: 1.35rem; }
+    body.jornada .jornada-sala { padding: .85rem .9rem; }
+}
+
+/* ---- Las otras pestañas, con la forma del Inicio (armarCabeceras) ----
+   Banner y cuatro salas de color arriba de cada pestaña. Las salas nuevas
+   repiten los colores ya medidos de las seis del Inicio (blanco encima,
+   5,1:1 o más), sin repetir color dentro de una misma pestaña. Con una
+   sección elegida (Entrenar · Aprender) las salas se apartan: lo que se
+   busca son las tarjetas. */
+.jornada-cabecera { display: grid; gap: 1rem; margin-bottom: 1.5rem; }
+.jornada-cabecera .jornada-salas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 900px) { .jornada-cabecera .jornada-salas { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+body.jornada-con-seccion .jornada-cabecera .jornada-salas { display: none; }
+div.jornada-sala { cursor: default; }
+.jornada-sala[data-sala="semana"] { --sala-a: #0b6a72; --sala-b: #0e7a81; }
+.jornada-sala[data-sala="mes"] { --sala-a: #156c3b; --sala-b: #1a7b44; }
+.jornada-sala[data-sala="proxima"] { --sala-a: #1f56b8; --sala-b: #2d68cc; }
+.jornada-sala[data-sala="repasar"] { --sala-a: #5b3cb0; --sala-b: #6c4cc4; }
+.jornada-sala[data-sala="cuaderno"] { --sala-a: #a8264c; --sala-b: #c0345e; }
+.jornada-sala[data-sala="rival"] { --sala-a: #9c450b; --sala-b: #b1500e; }
+.jornada-sala[data-sala="competir"] { --sala-a: #1f56b8; --sala-b: #2d68cc; }
+
+/* ---- La portada de Entrenar (armarPortada) ----
+   Seis cartas blancas, cada una con su color en el ícono, el borde y la
+   pastilla «Abrir» (blanco sobre esos colores: 5,1:1 o más). Lo que trae
+   va en brand-500 sobre blanco (6,1:1); en oscuro, brand-300 sobre
+   brand-900. */
+.jornada-portada { display: grid; gap: 1rem; margin-bottom: 1.5rem; }
+.jornada-portada-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 640px) { .jornada-portada-lista { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1200px) { .jornada-portada-lista { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.jornada-portada-carta {
+    display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "icono nombre" "icono trae" "icono ir";
+    column-gap: .85rem; row-gap: .2rem; align-items: start; width: 100%; height: 100%; text-align: left; font: inherit; cursor: pointer;
+    background: #fff; border: 0; border-left: 5px solid var(--carta); border-radius: 1.1rem; padding: 1rem 1.1rem;
+    box-shadow: 0 0 0 1px rgb(var(--c-brand-100)), 0 6px 16px -12px rgb(var(--c-brand-800) / .5);
+}
+.dark .jornada-portada-carta { background: rgb(var(--c-brand-900)); box-shadow: 0 0 0 1px rgb(var(--c-brand-800)); }
+.jornada-portada-carta:focus-visible { outline: 3px solid var(--carta); outline-offset: 3px; }
+.jornada-portada-icono {
+    grid-area: icono; width: 2.9rem; height: 2.9rem; border-radius: .9rem; display: grid; place-items: center;
+    font-size: 1.45rem; color: #fff; background: var(--carta);
+}
+.jornada-portada-nombre { grid-area: nombre; font-size: 1rem; color: rgb(var(--c-brand-800)); }
+.jornada-portada-trae { grid-area: trae; font-size: .8rem; color: rgb(var(--c-brand-500)); }
+.dark .jornada-portada-nombre { color: #fff; }
+.dark .jornada-portada-trae { color: rgb(var(--c-brand-300)); }
+.jornada-portada-ir {
+    grid-area: ir; justify-self: start; margin-top: .35rem; font-size: .75rem; font-weight: 700; color: #fff;
+    background: var(--carta); padding: .2rem .7rem; border-radius: 999px;
+}
+.jornada-portada-ir::after { content: " →"; }
+@media (prefers-reduced-motion: no-preference) {
+    .jornada-portada-carta { transition: transform .18s ease, box-shadow .18s ease; }
+    .jornada-portada-carta:hover, .jornada-portada-carta:focus-visible { transform: translateY(-2px); }
 }
 
 /*! rev bfb5bbb0d2d82f9f */

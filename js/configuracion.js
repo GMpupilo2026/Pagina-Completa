@@ -568,6 +568,8 @@
             grid.innerHTML = "";
             Object.keys(window.TemasPlataforma.TEMAS).forEach((id) => {
                 const tema = window.TemasPlataforma.TEMAS[id];
+                // Un tema oculto (el de la prueba del panel jornada) no se ofrece.
+                if (tema.oculto) return;
                 const btn = document.createElement("button");
                 btn.type = "button";
                 btn.className = id === actual ? THEME_ACTIVE : THEME_INACTIVE;

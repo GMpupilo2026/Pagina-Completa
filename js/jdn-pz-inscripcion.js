@@ -1,5 +1,5 @@
 /* La inscripción de la Eliminatoria Cantonal JDN de Pérez Zeledón 2026
- * (jdn-pz-2026.html, la ventana #inscribirme) y sus fichas de resultados.
+ * (jdn-pz-2026.html, la ventana #inscribirme).
  *
  * El torneo se dirige en Pareo Integral, sin chess-results: dos torneos, U12
  * y U20 (con la U16), publicados por la organización ADAPZ. Este módulo:
@@ -13,9 +13,9 @@
  *    nuevo con «U12» en el nombre y el más nuevo con «U20» (o «U16»). Lo lee
  *    con la clave anónima: pareo_organizadores y pareo_publicados son de
  *    lectura pública (sus políticas dejan fuera lo oculto).
- * 2. LAS FICHAS «Resultados U12» y «Resultados U20» pasan de la lista de
- *    torneos de Pareo a la página de su torneo (torneos-pareo.html#t=<id>),
- *    que js/ventana-enlace.js abre encima.
+ * 2. LAS FICHAS «Resultados U12» y «Resultados U20» ya no son de este
+ *    módulo: abren su torneo en una ventana de la página, con el diseño del
+ *    Centroamericano (js/jdn-pz-resultados.js, desde el 18/11/2026).
  * 3. EL FORMULARIO: con la fecha de nacimiento elige la categoría (U12:
  *    2015 a 2020; U16: 2011 a 2014; U20: 2007 a 2010, como dicen las bases) y
  *    el torneo (U16 y U20 van juntos), y manda la inscripción con
@@ -84,29 +84,6 @@
       for (const k of Object.keys(TORNEOS)) if (!torneos[k] && TORNEOS[k].test(n)) torneos[k] = t;
     }
     return { ...torneos };
-  }
-
-  // La ficha «Pronto» (sin enlace) pasa a ser el enlace a SU torneo, que
-  // js/ventana-enlace.js abre encima (escucha los clics de toda la página).
-  // Sin el torneo se queda «Pronto»: nunca lleva a la lista de Pareo, que
-  // trae los torneos de otros (lo pidió el dueño).
-  function pintarFichas() {
-    for (const k of Object.keys(TORNEOS)) {
-      const vieja = $("ficha-resultados-" + k.toLowerCase());
-      if (!vieja || !torneos[k] || vieja.tagName === "A") continue;
-      const a = document.createElement("a");
-      a.id = vieja.id;
-      a.href = "torneos-pareo.html#t=" + torneos[k].id;
-      a.dataset.ventana = "Resultados " + k;
-      a.dataset.color = vieja.dataset.color;
-      a.className = vieja.className.replace("bg-white/70 dark:bg-brand-900/70 border-2 border-dashed border-brand-300 dark:border-brand-700", "bg-white dark:bg-brand-900 shadow-md");
-      const partes = [...vieja.children];
-      const fin = document.createElement("span");
-      fin.className = "mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion";
-      fin.textContent = "Ver el torneo " + k + " →";
-      a.append(...partes.slice(0, -1), fin);
-      vieja.replaceWith(a);
-    }
   }
 
   // Lo que dice arriba del formulario y si el botón se puede tocar.
@@ -260,7 +237,7 @@
     // Lo que se escribe a mano en el ID o el Elo queda; vaciarlo deja que la búsqueda lo vuelva a poner.
     ["insc-fide", "insc-elo"].forEach((id) => $(id).addEventListener("input", () => { if ($(id).value.trim()) $(id).dataset.manual = "si"; else delete $(id).dataset.manual; }));
     $("insc-form").addEventListener("submit", mandar);
-    buscarTorneos().then(() => { pintarFichas(); pintarEstado(); }, () => {
+    buscarTorneos().then(() => { pintarEstado(); }, () => {
       $("insc-estado-torneos").textContent = "No pudimos buscar los torneos en Pareo Integral ahora mismo. Revisa la conexión y vuelve a abrir esta ventana.";
     });
   }

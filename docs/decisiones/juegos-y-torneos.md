@@ -179,6 +179,49 @@ y no contra Oscar. Es solo para esa academia.
   recorre el libro desde la posición inicial y juega cada entrada con
   chess.js (ninguna jugada inventada).
 
+## El profe Oscar como rival: el bot con cara y con lengua
+
+Pedido del dueño el 19/11/2026, después de ver «Jaque al perro guasón»
+(ChessBase, 2000: un bulldog animado que comenta la partida con burlas y
+muecas): **un rival propio con esa personalidad, con el avatar del profe
+Oscar, solo para Oscarov para probarlo**. No se copió nada del perro (ni
+dibujo, ni voz, ni frases): se tomó la receta.
+
+- **Es el mismo bot** (`js/bot-oscar.js`, todas las modalidades); lo nuevo es
+  `js/rival-profe.js` con `css/rival-profe.css`: un panel arriba del tablero
+  con un dibujo del avatar (`js/avatar-profe-oscar.js`, así que en CCDR POCOCI
+  sale la profe Pame; por eso las frases no llevan adjetivos con género) y un
+  globo con lo que dice (`aria-live="polite"`).
+- **Comenta lo que pasó, no frases al azar.** Sin saber las reglas de cada
+  modalidad: le pregunta al adaptador `material()` desde el lado del bot. Si
+  después de su respuesta tiene **2,5 peones** más que antes de tu jugada, le
+  regalaste algo (se burla); si tiene 2,5 menos, se lo ganaste (se queja, la
+  cara se sacude). Menos es ruido —`material()` suma también la posición— y
+  no se comenta. Además: se ríe de tu jaque, presume el suyo, saluda,
+  festeja o reniega al final, y si tardas 30 s «Estoy esperando…», a los 70
+  «¿Te dormiste?». A veces, sin motivo, una charla (18 %).
+- **El modo «sparring», solo en los niveles 1 y 2**: desde su sexta jugada y
+  con no menos de ocho jugadas entre uno y otro, con 30 % de probabilidad
+  cambia su jugada por una que deja **entre 2,5 y 6 peones** colgando (una
+  pieza o una torre, nunca la dama) y lo avisa con una pista. Si la comes, te
+  felicita; si no, te dice que había algo gratis. **El regalo se comprueba con
+  la recaptura**: la primera versión miraba una sola jugada adelante y
+  «regalaba» un alfil defendido (…Ae6 en una Italiana, que se come pero se
+  recaptura): la pista mentía. Ahora, para cada captura que gana algo, mira la
+  mejor respuesta del bot, con un tope de 300 ms (`probar()` es lo caro).
+- **Solo para las cuentas en `vistas_en_prueba` con «rival_profe»** (la misma
+  tabla que el panel jornada; se anotan desde SQL, cada quien lee solo las
+  suyas). Entre ellas, una casilla en la pantalla de elegir partida («Que el
+  profe me hable mientras juego», marcada; la elección queda en
+  `rival_profe_activo_v1` de este navegador). `bot.js` llama al rival solo a
+  través de `rival(...)`, que no hace nada si la cuenta no está en la prueba.
+- Las animaciones (respira, salta, se sacude, el globo entra) se apagan con
+  «reducir movimiento». Las caras se bajan al activarse, para que el cambio
+  de gesto sea al instante.
+- Lo revisa `verificar-rival-profe.js` (sin navegador): que cada cara exista,
+  los umbrales, que el regalo sea de verdad con chess.js aun con la recaptura,
+  que no regale la dama, y las conexiones con `bot.js` y `bot.html`.
+
 ## El bot siempre contesta, y su tiempo no se le cobra al alumno
 
 Contra el bot, el reloj del alumno baja **solo mientras le toca pensar a él**,
@@ -4407,6 +4450,86 @@ la hora en que se guardó (`pintarEstado`, que corre en `pintarTodo` y en
   porque `replaceChildren` convierte un `null` en el texto «null»; ahora los
   botones que no van se filtran antes.
 
+### Pareo Integral con el aspecto del panel de la Academia
+
+El 20/11/2026 el dueño dijo que en Pareo Integral se perdía y veía mucho
+desorden, y pidió que se viera como el panel de la Academia (barra lateral
+turquesa, recuadro grande con botones rosados, tarjetas de color, «Lo que
+viene»). Antes de tocar nada se armó una simulación con ocho mejoras para
+prender y apagar en los cuatro momentos de un torneo (antes de la ronda 1,
+ronda en juego, ronda completa, terminado); el dueño eligió las ocho. Este
+aspecto reemplaza al de «programa de computadora» de la sección anterior
+(la barra de estado y las tablas como cuadrícula se quedan).
+
+- **El aspecto.** Adentro de `#pi-editor` se redefinen `--c-brand-*` y
+  `--c-accent-*` con la paleta del tema «jornada» (#1406, turquesa y
+  rosado), que se calibró a la luminancia del Clásico: cada clase de
+  Tailwind de la página (`text-brand-600`, `bg-brand-800`…) toma el
+  turquesa con el mismo contraste que tiene en el resto del sitio, sin
+  tocar el HTML. Por eso Pareo se ve turquesa con cualquier tema de la
+  plataforma: es el aspecto de la herramienta, no el del usuario. Todo el
+  CSS está en «Pareo Integral con el aspecto del panel de la Academia» de
+  `css/styles.css`.
+- **La barra lateral** es el mismo `#pi-fichas` de siempre (`role="tablist"`
+  con `aria-orientation="vertical"`; sirven las cuatro flechas porque en el
+  celular se vuelve una fila que se desliza). Cada parte lleva un ícono y
+  **una insignia que dice cómo va** (`pintarInsignias`): Jugadores, cuántos;
+  Rondas, «4 de 7 · faltan 4» (en ámbar si faltan resultados, y el texto lo
+  dice); Clasificación, «tras 3». El nombre de cada parte va en su propio
+  `<span data-t>`: `pintarTextos` pone el `textContent` de cada `[data-t]`
+  y, si fuera el botón entero, borraría la insignia.
+- **«Lo siguiente»** (`loSiguiente`): una frase con lo que toca hacer y el
+  botón para hacerlo. Hay cuatro casos: sin jugadores (agregar o subir la
+  lista), ronda con resultados pendientes (ir al primero que falta),
+  ronda completa (emparejar la siguiente) y torneo terminado (clasificación
+  y TRF). Va en la tira de arriba de cada parte (`#pi-siguiente`; sin
+  botón en la parte a la que ya lleva) y en grande en la Portada. Se
+  vuelve a pintar en `pintarEstado`, que corre en cada `guardar()`: anotar
+  un resultado cambia la tira y las insignias al momento.
+- **La Portada** (`#pi-p-inicio`, `pintarInicio`): el recuadro con el
+  nombre, los datos (sistema, rondas, ritmo, fecha, ciudad) y «Lo
+  siguiente»; seis tarjetas de color que llevan a su parte, cada una con
+  su dato escrito (el color nunca va solo; blanco sobre cada color ≥ 5,7:1,
+  medido); y «Lo que viene», las rondas una por una (las ya jugadas, salvo
+  las dos últimas, en una sola línea). **La parte que se abre al entrar
+  sigue siendo la última que se usó** (`pareo_ficha_v1`, y Jugadores la
+  primera vez): la Portada es la primera de la barra, no la obligatoria.
+- **Los botones de Rondas, agrupados.** Eran once sueltos; ahora son tres
+  menús (`menuDeBotones`, un `<details class="pi-menu">`): Imprimir
+  (imprimir, plantilla para la pared, planillas para firmar y de
+  anotación, hojas de alineación, todo para imprimir), Compartir (ver
+  desde el celular, WhatsApp) y Árbitros y cámaras (solo en la última
+  ronda). **«Deshacer el emparejamiento» va aparte, al final de la ronda**,
+  en una caja roja que dice qué saca, lejos de los botones de todos los
+  días. Los botones conservan su `id`. Un menú se cierra al elegir, al
+  tocar afuera y con Escape (que devuelve el foco a su botón), y nunca hay
+  dos abiertos (`engancharMenus`).
+- **Cada parte empieza por lo que más se usa.** En Jugadores, con gente
+  inscrita la lista va arriba y «Agregar un jugador» debajo, con un botón
+  en la lista que lleva al formulario. Se mueve el nodo solo si el orden
+  está mal, para no sacarle el foco a quien está escribiendo.
+- **Archivos y Herramientas, separados.** El comprobador, el generador y
+  «Con qué está hecho» salieron de «Archivos y comprobador» a su parte,
+  Herramientas, que con «Solo lo de los JDE» no se ve (si estaba abierta,
+  se pasa a Archivos). La parte se llama ahora «Archivos», y los textos
+  que nombraban «Archivos y comprobador» también.
+- **Explicaciones plegadas.** Los párrafos largos de ayuda van en «¿Cómo
+  funciona?» (`<details class="pi-ayuda">`). **No se pliegan los avisos**:
+  lo que sale de la computadora (el Elo Nacional), lo que se publica y
+  «si corriges un resultado…» siguen a la vista.
+- **La barra de arriba, corta.** El lema se esconde por debajo de 1024 px,
+  y «Solo lo de los JDE», el sonido y «Archivar torneos» van en «Más
+  opciones». **El aviso «queda guardado solo en este navegador» no entra
+  al menú**: es lo que evita perder un torneo, y `js/pareo/nube.js` lo
+  esconde solo cuando se guarda en la cuenta.
+- **En papel no cambia nada**: la barra lateral, la tira, la Portada y los
+  menús son `no-imprimir`, y el cuerpo deja de ser una cuadrícula.
+- **Los verificadores** tocan los botones de un menú como una persona:
+  `P.clicEnMenu(page, sel)` de `herramientas/lib/pareo-pruebas.js` abre el
+  menú que lo contiene (si no está abierto) y después hace clic;
+  `P.abrirMenuDe` solo lo abre (para las casillas de «Más opciones»).
+  Un botón nuevo de Rondas que entre a un menú se prueba igual.
+
 ### Pareo Integral: los adjuntos con nombre, el chat, las llamadas y corregir con constancia
 
 Lo pidió el dueño del sitio (con una captura del formulario del enlace).
@@ -5617,8 +5740,31 @@ Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
   cuadro, en un aviso y en la tarjeta). `avisado` guarda la hora del correo
   que salió: la tarjeta ya marcada muestra el comentario y si se le avisó,
   sin adivinar. Un correo que no sale no deshace la marca. Volver a
-  «pendiente» borra el comentario. Lo prueba
-  `herramientas/verificar-pareo-inscripcion-comentario.js`.
+  «pendiente» borra el comentario.
+  **Avisar después y agregar el correo** (lo pidió el dueño: a un jugador
+  se le rechazó sin que le llegara nada y el panel no tenía cómo
+  mandárselo; y muchas familias dejan un teléfono). Una tarjeta ya decidida
+  sin `avisado` tiene «Avisar por correo»: abre el mismo cuadro con el
+  comentario que ya tenía y llama a `marcar` con el MISMO estado, así que
+  manda el aviso sin cambiar la decisión (y, si era aceptada, sin volver a
+  agregar al jugador a la lista). Cuando la inscripción es una sola y dejó
+  un teléfono, el cuadro pide además el correo (opcional al decidir,
+  necesario al avisar después): `marcar` lo recibe en `correo`, solo con
+  un id y nunca con «pendiente», lo valida con `esCorreo`, lo deja como
+  `contacto` y pasa el teléfono a la `nota` («Teléfono: …») para no
+  perderlo. Sin columna nueva: el resto del flujo ya mira `contacto`.
+  Lo prueba `herramientas/verificar-pareo-inscripcion-comentario.js`.
+- **Una decisión ya tomada se puede cambiar.** Lo pidió el dueño (18/11): a
+  un jugador lo rechazaron por un atraso en la mensualidad y, ya al día,
+  no había cómo aceptarlo. La tarjeta marcada trae «Cambiar a aceptada» o
+  «Cambiar a rechazada», que abre el mismo cuadro de siempre (comentario y
+  aviso por correo con el estado nuevo); `marcar` ya aceptaba cualquier
+  paso, así que la función no cambió. De rechazada a aceptada entra a la
+  lista con `agregarJugadores`. De aceptada a rechazada **sale de la lista
+  solo si todavía no hay rondas** (el último con ese nombre): con rondas
+  jugadas sigue ahí, el cuadro lo dice y el árbitro lo retira en
+  «Jugadores», para no tocar emparejamientos ya hechos. Lo prueba el mismo
+  verificador.
 - **Las partidas en PGN.** En cada mesa de una ronda, «Partida (PGN)» abre
   un cuadro para pegarla. `js/pareo/partida.js` la lee jugada por jugada con
   chess.js (cargado solo la primera vez: Pareo no lo necesita para nada
@@ -5715,6 +5861,54 @@ Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
     `ACCESS_DENIED` («Permission denied on the service»); volver a copiarla
     de «Mostrar clave» y pegarla lo arregló. Si vuelve ese 403, lo primero es
     revisar el valor del secreto.
+  - **La segunda foto de verdad** (18/11, Centroamericano, las dos
+    planillas en una foto nítida de 2600 px): daba 22 de 29 medias jugadas
+    bien y se cortaba en la 15. La letra se leía bien a ojo; lo que falló
+    fue lo que Vision hizo con ella, y el lector no lo arreglaba:
+    - **La f a mano, con su raya, salía «+»** («+4» por f4, «D+3» por Df3),
+      y `normalizar()` borraba el «+» como si fuera un jaque. «4» empataba
+      con el «E4» de la otra hoja, salía 1.e4 y el «e3» que dicen las dos
+      planillas en la jugada 3 se volvía c3. Ahora un «+» delante de un
+      número es una f (un jaque nunca va antes de un número).
+    - **El número final de las Blancas pegado a las Negras**: «De2» y «0-0»
+      llegaron como «De» | «20-0», y salía De1. Al armar las celdas, si las
+      Negras empiezan con un número y devolverlo a las Blancas deja las dos
+      más parecidas a una jugada (`forma()`), se devuelve.
+    - **Letras que esta letra confunde siempre**: el 4 como «u» o «y»
+      («au», «gy», «dxcu»), el 7 como «z» («Adz») o «t» («Pet» por Dc7). Sin
+      el 7/t, tres celdas mal leídas seguidas en la jugada 12 y 13 hacían
+      más barato meter dos jugadas que no existen (e4, e6) que leerlas.
+    - Con eso salen 47 de 55 (exactas las primeras 27). Quedan 14… Tde8
+      por Tfe8 (con «fe8» y «Te8» las dos torres cuestan igual), 18.De1 por
+      Df3 y tres del final. Un haz más ancho (400, 1000) no lo arreglaba y
+      tardaba de 20 a 60 s. La lectura queda, sin el encabezado, en
+      `herramientas/lib/lectura-real-pareo-2.js`, con la partida entera
+      sacada a ojo de las planillas.
+  - **La planilla para imprimir** (lo pidió el dueño el 18/11, para un
+    torneo de unas 500 partidas): `planilla-pareo-integral.pdf`, en la raíz
+    (se baja de `ajedrez-integral.com/planilla-pareo-integral.pdf`), la arma
+    `herramientas/planilla-pareo-pdf.js`. Es una planilla común de 60
+    jugadas dibujada a la medida de `hojasDeLaFoto()`: tres bloques de 20 con
+    los números grandes y en negrita (el lector se guía por ellos), rayas en
+    gris claro, renglones de 10,2 mm y la marca de agua tenue en el
+    encabezado, lejos de las casillas. Después de verla, el dueño pidió (19/11):
+    el nombre del torneo en grande en lugar de «Planilla de anotación»
+    (`--torneo "…"`; sin él, una raya para escribirlo), sin Elo ni ID FIDE,
+    Ronda/Mesa/Fecha en un renglón y Blancas/Negras en otro, espacio de verdad
+    para las firmas, de consejos solo el de «si te equivocas», y **Blancas y
+    Negras del mismo ancho**. Con columnas iguales, una jugada corta de las
+    Negras escrita pegada a la raya («d5») tiene el centro antes de
+    `NEGRAS_DESDE` (0,565, medido con las planillas de la FCA) y caía en las
+    Blancas («Cf3d5»). En vez de achicar las Negras, `hojasDeLaFoto()`
+    aprendió a devolverla: si la casilla de las Negras quedó vacía y la última
+    palabra de las Blancas va aparte y empieza pasada la mitad del bloque, es
+    de las Negras. Las 46 comprobaciones de las fotos de verdad siguen igual.
+    La prueba
+    `verificar-planilla-pareo-pdf.js` mide la planilla en el navegador, le
+    escribe una partida de 60 jugadas (al centro y pegada a la raya, con una
+    hoja sola y con las dos en una foto torcida) y comprueba que cada jugada
+    cae en su casilla y que sale la partida entera. Si se cambian las
+    medidas de la planilla, o `NEGRAS_DESDE` en el lector, esa prueba lo dice.
   - Lo prueba `herramientas/verificar-pareo-planilla.js` (un doble de
     `ocr-scoresheet` con las planillas de verdad de la mesa 11). **Sin
     probar de verdad**: Google Vision con planillas de un torneo de Pareo.
@@ -9252,6 +9446,69 @@ cola (no con una clave mala), borrarla, apagar el adjunto (entrar da 403
 **Lo que falta para el 22/11**: el ensayo general con un torneo de prueba. El
 Centro del evento y las cámaras en la mesa del adjunto, abajo.
 
+### El resultado de la mesa, al público al instante
+
+Pedido del dueño el 13/11/2026, en el Tacho Chess 2 (1er Ciclo): «cómo hago
+para que Pareo Integral anote el resultado de la mesa del árbitro, y de paso
+que en tiempo real lo vea el público» y «que se vea de una ahí».
+
+**Lo que pasó.** Un árbitro anotó 1-0 en la mesa 1 desde
+`centroamericano-arbitro.html` a las 5:19 p. m.; a las 5:26 el Pareo del
+principal seguía «sin resultado». En la base: la línea del registro decía
+`enviado: false`, **la cola estaba vacía** y el torneo publicado sin
+resultados. Es decir: un Pareo leyó la fila y la borró sin anotarla. Era un
+Pareo de antes de #1276 (ese mismo día a la 1:26 p. m.): su `leerCola`
+llamaba `recibirDeAdjunto(x.codigo, d)`, y una fila de la Mesa del árbitro no
+trae código (`codigo: null`, trae `asignacion_id`). No encontraba al adjunto,
+la descartaba, y después `cola_borrar` borraba hasta lo último leído. Sin
+ningún error. Un Pareo viejo es lo normal: la pestaña queda abierta horas, la
+página se guarda en caché y Pareo también anda como programa.
+
+- **La función ya no se las da a un Pareo que no las entiende.** `cola` y
+  `cola_borrar` de `pareo-publicar` filtran `codigo is not null` salvo que el
+  pedido traiga `mesa: true`, y `js/pareo/publicar.js` lo manda. Un Pareo
+  viejo sigue leyendo (y borrando) solo lo de sus adjuntos propios; lo de la
+  Mesa queda esperando a que se abra un Pareo al día. **Lo que ya se perdió
+  no vuelve**: esa mesa se anota otra vez (desde la Mesa o en Pareo).
+- **Cuánto tardaba un resultado en verse en `torneos-pareo.html`**: hasta
+  15 s en que el principal leyera la cola, 30 s de espera para publicar y
+  hasta 60 s en que la página pública volviera a leer: **hasta minuto y
+  medio**. Ahora:
+  - `centroamericano-mesa`, al dejar algo en `pareo_cola`, **toca** el canal
+    `pareo-cola-<id publicado>` y el Pareo del principal (que lo escucha
+    desde `conectarAdjuntos`, `escucharCola`) lee la cola en el momento. Un
+    toque que llega mientras ya está leyendo hace otra lectura 1,5 s
+    después, no se pierde. La vuelta de 15 s sigue, por si el toque no llega.
+  - Pareo publica **a los 5 segundos** de un cambio (`ESPERA_PUBLICAR`, eran
+    30): sigue juntando varios resultados en una sola llamada. El freno de
+    `actualizar` (1500 por conexión y hora) solo cuenta cuando algo cambia.
+  - `pareo-publicar`, al poner al día un torneo, toca `pareo-publico-<id>` y
+    la página pública que lo tiene abierto lo vuelve a leer ya
+    (`escucharTorneo` en `js/torneos-pareo-pagina.js`): como mucho una
+    relectura cada 3 s aunque lleguen muchos toques, y con la pestaña
+    escondida, una sola al volver. La vuelta de cada minuto sigue, por si el
+    toque no llega. El texto dice «se pone al día solo, en vivo».
+  - Total: unos pocos segundos desde que el árbitro toca el resultado.
+- **El toque es Broadcast y no lleva el dato** (`_compartido/toque-vivo.ts`,
+  por la API REST de Realtime: no hace falta suscribirse para mandar). Con
+  `postgres_changes`, Realtime revisaría la RLS de cada cambio una vez por
+  cada persona mirando (ver «Realtime escucha solo lo que la pantalla
+  muestra»). Los canales son públicos: un toque falso solo provoca una
+  relectura (por eso se juntan) y lo que se lee sale por la vía de siempre,
+  con sus permisos. Si el toque falla, la función no tira.
+
+**Probado**: la API de Broadcast con un canal de prueba de verdad (202, y la
+página suscrita lo recibió en menos de 1,5 s); `verificar-pareo-adjuntos.js`
+(el canal `pareo-cola-<id>` se escucha, el toque lee la cola en el momento,
+la fila de la Mesa entra a nombre de su árbitro, y cada `cola`/`cola_borrar`
+lleva `mesa: true`) y `verificar-pareo-publicar.js` (el canal del torneo
+abierto se abre y se cierra al cambiar de torneo, cinco toques dan una sola
+relectura, un toque enseguida espera, el de otro torneo no hace nada; y sin
+navegador, los toques y el filtro en las dos funciones). Rotos a propósito
+el nombre del canal, la escucha de la página y el `mesa: true`, saltan.
+**No probado**: las funciones desplegadas mandando el toque con la clave de
+servicio (se despliegan solas al entrar a `main`).
+
 ### Pareo Integral: el Centro del evento
 
 Pedido del dueño el 12/11/2026, después de ver las maquetas: una ficha nueva
@@ -11826,6 +12083,68 @@ respaldo y por HTTP de verdad, enciende el modo sola, abre y cierra un aviso del
 rellenado y recuerda el botón; una tablet nueva donde «Actualizar» con lo mismo NO rearma las tarjetas y un pedido
 de ayuda nuevo sí; y la poca memoria y la tablet que dibuja lento. Una página nueva para tablet que cargue otro
 script con sintaxis nueva hace saltar la primera comprobación.
+
+## La señal débil: el modo liviano pide menos datos (Centroamericano, 5/11)
+
+Pregunta del dueño, con la ronda en curso: el internet de la sala es muy limitado y el router queda lejos de varias
+mesas; ¿cómo hacer que las tablets gasten muchísimo menos y que todo siga llegando? Se midió primero qué pesaba
+(con la base, no con un pedido real: no se usó el token de un enlace):
+
+- **Las mesas de chess-results pesan poco** (unos 3 KB por categoría). Lo que pesaba era **todo lo demás de «leer»**:
+  las anotaciones de la ronda, los controles de tiempos y la presencia, que al final de una ronda suman **40–80 KB**,
+  y se mandaban enteros cada 45 s aunque nada hubiera cambiado.
+- **«Mis mesas en vivo» mandaba todas las jugadas de todas las mesas cada 10 s** (de LiveChess, cada una con su reloj).
+- **Cada pedido hacía dos viajes.** La función no mandaba `Access-Control-Max-Age`: el navegador guarda el permiso
+  CORS 5 s, así que casi todo pedido de la tablet iba precedido de un `OPTIONS`. Con señal débil eso es el doble de
+  espera y el doble de ocasiones de que algo se pierda.
+- **Fair Play se pedía dos veces**: en cada «leer» y además en su intervalo de 20 s.
+
+Lo que se hizo (sirve a TODAS las tablets; el modo liviano, además, espacia):
+
+- **`Access-Control-Max-Age: 7200`** en `centroamericano-mesas-vivo` (y en `centroamericano-mesa`, pendiente: ver abajo): un solo viaje por pedido
+  (Chrome guarda el permiso hasta 2 h; Safari, 10 min).
+- **«leer» con firma.** La respuesta trae `firma` (SHA-256 de la respuesta sin `leido_en` ni `datos`, que cambian
+  siempre). La tablet la manda la vez siguiente y, si coincide, la función contesta solo `{ igual, firma, leido_en,
+  datos }`: unos pocos bytes en vez de 40–80 KB. La tablet arma la pantalla con una copia de la **última respuesta
+  completa** (no con `estado`, que la página va tocando: un resultado guardado, una foto subida), así que «igual»
+  deja exactamente lo que dejaría la respuesta entera. La función todavía hace todo su trabajo (las consultas a la base
+  y la copia de chess-results): lo que se ahorra es la red, no el servidor. Compatible hacia los dos lados: una tablet
+  sin recargar no manda firma y recibe todo; si la función no manda firma, la tablet pide todo.
+- **«Mis mesas en vivo», solo lo nuevo.** La tablet manda de cada mesa cuántas jugadas tiene y su huella
+  (`tengo: [{mesa, n, h}]`, FNV-1a de las jugadas); si las primeras `n` jugadas de la transmisión siguen siendo esas,
+  la función manda solo las que faltan (`desde: n`). Si el tablero corrigió una jugada de antes, la huella ya no
+  coincide y va todo; de otra ronda, también. Si a la tablet le falta algo para pegarlo (no debería pasar), se queda con
+  lo de antes y la próxima lectura pide todo. La huella está escrita dos veces (la función no puede importar de `js/`):
+  `huellaJugadas` en `js/centroamericano-arbitro-vivo.js` y entre `// huella-jugadas: inicio/fin` en la función, y el
+  verificador ejecuta las dos y exige que den lo mismo. Lo de Lichess (sin LiveChess) ya era solo la posición.
+- **Fair Play**, solo en su intervalo (y al abrir o cambiar de ronda), no en cada «leer».
+- **El modo liviano, más espaciado**: las mesas cada 90 s (eran 45), Fair Play cada 60 s (eran 40) y «Mis mesas en
+  vivo» cada 20 s (ya estaba). **Los avisos de la organización (20 s) y lo que el árbitro anota no se demoran nunca.**
+- **El modo liviano se enciende solo con la señal débil**: si 3 de los últimos 6 pedidos chicos («leer» y «avisos»;
+  la foto no cuenta, tarda por su tamaño) tardaron más de 6 s o se perdieron, la página llama
+  `ModoLiviano.senalDebil()` y avisa «La señal está débil…». También si el navegador ya dice `2g` o menos
+  (`navigator.connection`, que el iPad no tiene). **No se recuerda**: la señal cambia de un lugar de la sala a otro.
+  Si la persona lo apagó con el botón, manda lo que eligió.
+
+**Lo que falta desplegar (6/11): la parte de `centroamericano-mesa`** —su `Access-Control-Max-Age` y la firma de
+«leer» con su respuesta «igual»—. `centroamericano-mesas-vivo` ya está desplegada (versión 7) y la tablet ya manda la
+firma, pero la función de «leer» de hoy la ignora y contesta todo, como siempre: nada se rompe y el ahorro empieza solo
+cuando se despliegue. Se dejó fuera de este cambio porque se despliega copiando sus siete archivos (unos 124 KB) por la
+herramienta de Supabase, y al copiar a mano la de mesas en vivo se coló un error (se volvió a subir bien): en pleno
+torneo, la función que usan todas las tablets no se sube así. El cambio está descrito arriba («leer» con firma) y se
+aplica con la CLI de Supabase (`supabase functions deploy centroamericano-mesa`), que sube los archivos del disco.
+
+Lo que NO se tocó, a propósito:
+
+- **La foto de las planillas** (JPG al 82 %, lado largo de 2600 px, unos cientos de KB): de esa foto se reconstruye la
+  partida («Generar PGN»), y una foto más chica se lee peor. Ya va por la cola: si no sale, espera y se manda sola.
+- **Los avisos cada 20 s**: son pocos bytes y es lo que no se puede atrasar.
+
+Lo revisan `verificar-modo-liviano.js` (la firma que se manda, el «igual» que deja la pantalla igual, un cambio que
+trae todo, la señal débil que lo enciende sin recordarlo, el botón que manda, los intervalos) y
+`verificar-centroamericano-mesas-vivo.js` (las dos huellas iguales, unir lo nuevo, otra ronda y el `Max-Age` de la
+función). El doble de la función (`herramientas/lib/doble-centroamericano-arbitro.js`) firma como la de verdad;
+`window.__sinFirma` imita a la de antes.
 
 ## La tablet del árbitro: el clásico siempre confirma el resultado, sin botón de tiempos arriba, el pie de la barra y el contador de «Se levantó»
 
@@ -15783,9 +16102,10 @@ suizo a 5 rondas a 30 minutos + 30 segundos.
   buscador, la clasificación, el podio ni el proyector de
   `js/centroamericano-vivo.js` (leen chess-results por `sala-jugadores`), ni
   sus scripts; la página suma los suyos (`scripts`) y su propio menú
-  (`menu`). «Resultados U12» y «Resultados U20» abren encima la página
-  pública de cada torneo en Pareo (`torneos-pareo.html#t=<id>`; sin el
-  torneo encontrado, la lista de Pareo, que es cierta siempre), y la ficha
+  (`menu`). «Resultados U12» y «Resultados U20» abrían encima la página
+  pública de cada torneo en Pareo (`torneos-pareo.html#t=<id>`); desde el
+  18/11/2026 son como en el Centroamericano, con los datos de Pareo (ver
+  «Los resultados U12 y U20, como en el Centroamericano», abajo), y la ficha
   «Inscribirme» abre el formulario (ver «La inscripción de la Eliminatoria
   Cantonal JDN de Pérez Zeledón», abajo). La portada de Torneos
   (`PORTADAS`) lleva un enlace a Pareo a las fichas, las bases a su ficha y
@@ -15965,7 +16285,15 @@ sus pts y su puesto actual».
   aceptados del 18/11 se emparejaron solas 24: lo demás era de verdad
   dudoso (dos Aaron y una foto, dos Santiago con «SANTIAGO» y «SANTI», los
   Samuel, «MATEW» por Matthew) y se elige a mano en la lista, que dice
-  cuántos tienen foto y qué fotos sobraron. **Las fotos no salen de la
+  cuántos tienen foto y qué fotos sobraron. Después la organización les puso apellidos,
+  casi siempre a la versión de «MEDIOS DIGITALES» («10 SAMUEL Quesada Aguero
+  MEDIOS DIGITALES.jpg» junto a «10 SAMUEL.jpg»), y a una le sobró un nombre
+  («23 Elizabeth SOFIA BADILLA Mena»). Por eso de cada número se usa la foto
+  limpia pero se busca con el nombre más completo de las dos (`busca`), y una
+  foto le sirve a un jugador si todas sus palabras están en su nombre o si
+  coinciden al menos dos (`puntaje`); un archivo que quedó para dos es del que
+  mejor calza. Con la carpeta así, el 19/11 se emparejaron solas 31 de 32: la
+  que falta es «12 MATEW» (Matthew), que se elige a mano. **Las fotos no salen de la
   computadora ni se guardan**, como el Excel: se achican en el navegador y se
   pierden al cerrar la página.
 - **El recorte**: son de medio cuerpo frente al tablero, así que se
@@ -15975,8 +16303,23 @@ sus pts y su puesto actual».
   Con un recorte fijo desde arriba, una niña bajita salía con la cara chica
   abajo y mucho blanco encima. Se miraron los 46 recortes en una hoja: todos
   con la cabeza arriba y la cara del mismo tamaño. Una foto que ya viene de cabeza y
-  hombros (más ancha que 0,72, como la de Aaron González que mandó el dueño
+  hombros (más ancha que 0,72, como la de Aaron Barrantes que mandó el dueño
   por el chat) no se recorta de más: entra entera a lo alto.
+- **Hoja carta para imprimir en casa** (pedido del dueño: los imprime en
+  una Brother T530, hojas carta, por ambos lados, «listos solo para
+  cortar»). En «Cómo salen» (`salida.formato`: «imprenta», un gafete por
+  página, o «carta»; el diseño de la PZ viene en «carta»). Caben **9 por
+  hoja** (3 × 3, derechos; acostados, 8): con 5 mm de margen para lo que una
+  impresora de casa no imprime, pegados entre sí (cada corte sirve para dos)
+  y centrados, con 25,45 mm de margen a los lados y 12,2 mm arriba y abajo.
+  Cada hoja son dos páginas: los frentes, con marcas de corte en el margen
+  (nunca encima de un gafete), y los dorsos **en espejo por columnas**, que
+  al voltear por el borde largo caen cada uno detrás de su frente
+  (`hojaCarta` en `js/gafetes.js`; `agregarHoja` en `js/gafetes-pdf.js`).
+  Si la impresora no calza exacto, «córrelo» (`salida.dorsoX`/`dorsoY`, en
+  mm) mueve solo los dorsos. El verificador mira en el PDF que cada dorso
+  esté en el espejo de su frente, que las marcas vayan solo en los frentes y
+  sin pisar un gafete, y que el corrimiento mueva solo los dorsos.
 - **Los dos logos, del mismo alto** (lo preguntó el dueño): los archivos son
   cuadrados pero traen márgenes blancos distintos (el de la ADAPZ ocupa el
   73 % del alto de su archivo; el del CCDR, el 65 %), así que en la misma
@@ -15984,6 +16327,48 @@ sus pts y su puesto actual».
   (`sinMargen` en `js/gafetes-dibujo.js`) se les quita el margen al
   cargarlos y los dos llenan su caja; el verificador mide el alto dibujado de
   cada uno en el píxel.
+- **El personal del torneo** (pedido del dueño): en el diseño, un renglón
+  por persona, «Rol | Apellidos | Nombre | Título | Avatar» (`personal`, se
+  edita en la página), que se suma al final al traer los jugadores. El rol va
+  en la franja, el título debajo del nombre, todo el personal va en **negro**
+  (organización, arbitraje y asistente; lo pidió el dueño, 21 : 1), y abajo
+  del dorso dice ORGANIZACIÓN, ARBITRAJE o ASISTENTE. Sebastián va como
+  «Asistente» a secas, sin «árbitro». Su QR lleva a la página del torneo, y lo dice
+  (`{Texto QR}`, un texto por fila); en el dorso va su avatar (`dorso.poseColumna`):
+  Karina (la organizadora) y Oscar Angulo Cubero (IA), cada uno con su avatar
+  de árbitro (lo pidió el dueño); Jean Quesada Arauz (AF), el profe Oscar
+  presentando, y el asistente Sebastián Mora Chavarría, el profe Oscar «te toca». Con una foto que no tiene fondo
+  blanco no se busca la cabeza (lo oscuro de una sala no es el pelo). Cada foto
+  se guarda por el QR **y el nombre** (`claveFila`): el personal comparte el
+  QR, y con el QR solo los tres árbitros quedaban con la misma foto. De lado
+  dice PRINCIPAL o ASISTENTE, no «ÁRBITRO»: escrita de lado, la tilde de la Á
+  quedaba suelta como un apóstrofo.
+- **19/11, más pedidos del dueño:** el nombre va **en negro** (`nombre.color`;
+  «fácil de ver para el árbitro»), debajo del nombre **la categoría** a la que
+  pertenece y luego el ID FIDE («Juega el torneo U…» se quitó: no le gustó); la U16 pasa del turquesa al
+  **celeste oscuro** `#1873b4` (5,1 : 1 con letra blanca; el celeste de la
+  bandera del cantón, azul rey, celeste y blanco, no aguanta letra blanca), y
+  abajo del dorso va **la categoría sola**, sin el número (`{Edad}`).
+- **19/11, a pedido del dueño con el borrador en la mano:** (1) **el QR es
+  cuadrado** siempre: su caja se escalaba distinto a lo ancho y a lo alto (en
+  5,5 × 8,5, 0,55 contra 0,61) y quedaba más alta que ancha, con blanco de
+  más abajo; ahora usa el lado chico de la escala, pegado a la misma esquina.
+  (2) **Las fotos centradas**: a lo ancho, la cabeza va al medio del marco
+  (`cabezaDeLaPersona`: el medio de lo oscuro en la franja de la cabeza, en
+  toda la foto), y el recorte es más cerca (el 44 % del alto, desde un poco
+  arriba del pelo), con menos tablero. (3) **La profe Karina cambia de pose en
+  cada dorso**, por turno (`dorso.ilustraciones`): presentando, te toca, con
+  el reloj, con el caballo, pulgar arriba, tú puedes, con el trofeo y
+  saludando (de cuerpo entero y sin nada ancho al lado). (4) **El ID FIDE en
+  el frente**, en lugar del Elo: Pareo no lo publica y la lista de FIDE no
+  contestaba, así que sale del que se puso al inscribirse, con
+  `public.pareo_fide_de_aceptados` (solo administración, solo aceptadas, el
+  nombre y el ID; un «0» no cuenta), emparejado por el nombre sin tildes;
+  sin ID, la línea no sale. Del 19/11: 13 de 34 con ID. La función es la
+  migración `20261119050629_pareo_fide_de_aceptados.sql`, aplicada con
+  permiso del dueño y comprobada impersonando: anon no la puede ejecutar,
+  una cuenta que no administra recibe el rechazo y quien administra recibe
+  los ID (10 en el torneo U20; el «0» no cuenta).
 - **La franja del frente dice el club** («ADAPZ»; pedido del dueño), y
   debajo del nombre solo va «Juega el torneo U…»: la categoría y el Elo
   salieron del frente (también lo pidió el dueño). La categoría sigue de lado
@@ -16004,6 +16389,125 @@ el celular, en `verificar-pareo-seguir.js` (con el enlace tal cual lo trae el
 QR) y en `verificar-pareo-publicar.js`. Rompiendo a propósito el QR por fila
 y el filtro de los retirados saltan doce comprobaciones; la mesa de la sala,
 dos.
+
+### Los resultados U12 y U20, como en el Centroamericano
+
+El 18/11/2026 el dueño pidió que «Resultados U12» y «Resultados U20» de
+`jdn-pz-2026.html` fueran «como en centroamericano para que se vea todo más
+ordenado», leyendo los datos de Pareo Integral. Antes abrían encima la página
+pública de cada torneo en Pareo, con otro diseño.
+
+- **La página dejó `resultados: "pareo"`** y quedó como la de Tacho Chess 2:
+  `fuente: "pareo"` en `torneoPagina` y `js/torneo-pareo-datos.js` en
+  `scriptsAntes`, así que `js/centroamericano-vivo.js` y
+  `js/centroamericano-tablas.js` leen los dos torneos de Pareo
+  (`pareo.nombre: "JDN CCDRPZ"`, los que publicó Ajedrez Integral, con el
+  sello) en lugar de chess-results. Con eso salen solos «Busca a tu
+  jugador», el podio y la clasificación de cada categoría y el proyector.
+  `ordenGrupos` pone las categorías en su orden (U12 Absoluto, U12
+  Femenino, U16…): el grupo de cada jugador es su categoría de Pareo, que
+  es como se clasifica a los Juegos Nacionales.
+- **Cada ficha abre su ventana** (`#resultados-u12`, `#resultados-u20`), que
+  arma `js/jdn-pz-resultados.js` con el diseño de cada categoría del
+  Centroamericano: arriba cómo va (ronda, partidas terminadas, jugadores),
+  los botones «Pareo de la ronda» y «Clasificación», y un buscador. El pareo
+  va en una tarjeta por mesa (como `#categoria`: en el celular una tabla
+  dejaba las negras afuera), con la categoría, el Elo y los puntos de cada
+  uno; la clasificación, una tabla por categoría con el puesto en la
+  categoría y el general, en el orden de Pareo (sus desempates). No se usó
+  `#categoria` del Centroamericano porque va por grupo, y aquí el grupo es
+  la categoría: el pareo de «U12 Femenino» dejaría fuera las mesas que no
+  tienen a una niña. Aquí se ve el torneo entero. El torneo de cada ventana
+  se reconoce por el nombre («U12»; «U20» o «U16»), como en la inscripción.
+- **Tocar un nombre lo busca en «Busca a tu jugador»** (cierra la ventana y
+  escribe el nombre), no con `#jugador=`: ese enlace pide un número de
+  torneo de chess-results, y el de Pareo es un UUID.
+- **Se pone al día sola** mientras la ventana está abierta (cada 20 s
+  pregunta la hora de actualización, `TorneoPareoDatos.cambio`), como
+  «Pareos de la ronda».
+- **Los torneos se leen al cargar la página** (`V.pedir()`), una vez: la
+  profe Karina (`js/jdn-pz-profe.js`) pregunta `JdnPzResultados.torneo()`
+  para saber si ya están publicados, y antes lo sabía por el enlace de la
+  ficha, que ya no cambia.
+- La ficha «Los torneos en Pareo Integral» no se puso: la ventana trae
+  abajo «Ver el torneo completo en Pareo Integral».
+
+`herramientas/verificar-jdn-pz-resultados.js` lo revisa con un doble de la
+base (la ronda 2 a medias, un torneo de la misma organización que no es de
+la eliminatoria, sin torneos y en el celular).
+
+### Los inscritos de la Eliminatoria JDN de PZ, con su foto
+
+El mismo día pidió «una ficha de lista de inscritos y que se pueda ver
+quienes están aprobados y listos para la competencia», con la foto de cada
+uno (las tomó Tecnicolor Fotografía para la ADAPZ; carpeta «ADA PZ» de
+Google Drive).
+
+- **Aprobado es estar en la lista del torneo en Pareo**: la inscripción del
+  formulario queda pendiente hasta que el árbitro la acepta. La ventana
+  `#inscritos` (`js/jdn-pz-inscritos.js`) muestra solo a los aprobados,
+  con «✓ Aprobado · listo para jugar», su categoría y su Elo; se filtra por
+  categoría (con su cuenta), se ordena por nombre o por Elo y se busca. **Las
+  pendientes no salen**: son datos de menores que nadie aprobó, y su tabla
+  no es de lectura pública. La ventana lo explica para quien mandó una y no
+  la ve.
+- **El nombre se muestra con el nombre primero** y arregla las palabras
+  escritas todas en mayúscula o todas en minúscula («VALVERDE ALVARADO,
+  LEONARDO» → «Leonardo Valverde Alvarado»); en las tablas va como en Pareo.
+- **Las fotos las arma `herramientas/jdn-pz-fotos.py`**: baja de Drive la
+  versión «MEDIOS DIGITALES», recorta la cabeza y los hombros de cada uno
+  (busca dónde empieza la cabeza sobre el fondo blanco y dónde empieza la
+  mesa, que va de borde a borde: una camiseta oscura no es la mesa) y la
+  guarda a 360 × 360 en `img/jdn-pz-2026/jugadores/<nombre de Pareo sin
+  tildes>.jpg`, con la lista de las que hay en `lista.json`. La página pide
+  solo las de la lista: antes daba un 404 por cada jugador sin foto.
+- **Los archivos de Drive traen solo el nombre de pila** («24 SANTIAGO»).
+  El mapa del script lo arma una persona contra el nombre de Pareo, y un
+  nombre repetido NO se adivina por la cara: dos Aaron (Piedra y
+  Barrantes), dos Santiago (Cordero y Segura), Samuel Quesada y Samuel
+  Beitia (hay tres fotos «SAMUEL» sin apellido), Sofía Cordova (hay
+  «SOFIA» y «SOFIA BADILLA») y Elizabeth Badilla quedaron con sus
+  iniciales hasta que alguien diga cuál foto es de quién. Ponerle a un niño
+  la cara de otro en una página pública es peor que no ponerle ninguna.
+  El 19/11/2026 el dueño les puso el apellido a esos archivos en Drive (y
+  subió la de Aaron Barrantes, que no estaba): están todos. Para
+  agregar una: su línea en `MAPA`, correr el script y poner al día el grupo
+  de las fotos en `data/archivos.json` (`herramientas/archivos-catalogo.js`;
+  en Windows cambia los kb de los archivos de texto por los saltos de línea,
+  así que de lo que arma se toma solo ese grupo).
+
+### Lo del Tacho, también en la Eliminatoria JDN de PZ
+
+El dueño preguntó el 18/11/2026, cuatro días antes del torneo: «el torneo de
+pareo integral de JDN CCDRPZ ya tiene las actualizaciones que se hicieron al
+tacho?». Se compararon las dos páginas en `main`: los resultados, los pareos
+que se ponen al día solos y los inscritos ya estaban; faltaban tres cosas, y
+se pasaron:
+
+- **Los textos y el certificado propios.** `torneoPagina.textos` y
+  `torneoPagina.diploma` (ver «El certificado y las imágenes del Tacho, sin el
+  Centroamericano»): sin ellos, el certificado salía con el morado, el pizote,
+  «XXI Festival Centroamericano…» y el Gimnasio Nacional, y la tarjeta de un
+  jugador antes de la ronda 1 decía «El torneo empieza el 2 de noviembre». El
+  certificado de PZ lleva el azul marino de ADAPZ, la píldora en `#1D64B0`
+  (blanco encima 6,00), el marco celeste y blanco de sus franjas, el logo de
+  ADAPZ arriba a la izquierda y el del CCDR arriba a la derecha
+  (`escudoDerecha`, nuevo en `diploma()`; sin él no cambia nada). Al podio no
+  se le dice oro, plata o bronce: la eliminatoria clasifica a los Juegos
+  Nacionales.
+- **«En vivo» con la cámara de Notara** (ver «La partida en vivo de Notara en
+  la página del Tacho»). El código salió de `js/tacho-chess-resultados.js` a
+  `js/torneo-en-vivo.js`, una sola copia para las dos páginas; toma los
+  torneos de lo que ya leyó `js/centroamericano-vivo.js` (`tnr`, el id de
+  Pareo), sin pedir nada aparte, y el botón lleva la clase de cada página
+  (`botonVivo`: `.tacho-boton` o `.pz-boton`, el azul de ADAPZ).
+- **No se pasó «La sala de juego» con la mesa iluminada** (ver «La mesa
+  iluminada en la foto»): pide una foto de la sala del Hotel del Sur y que el
+  dueño marque dónde queda cada mesa; no se adivina.
+
+Lo revisan `verificar-tacho-chess.js` (el «En vivo» del Tacho, ya desde el
+módulo compartido) y `verificar-jdn-pz-resultados.js` (el «En vivo» y el
+certificado de PZ).
 
 ### La del Tacho Chess 2
 
@@ -16403,7 +16907,8 @@ nada más pone la que está en ese momento en vivo».
   cámara»; Pareo vuelve a jugar lo que llega con chess.js, nunca pisa una
   partida escrita a mano y el resultado no se anota sin confirmarlo.
 - **«En vivo» siempre está en «El torneo»** (`#hoy-vivo`, lo pone
-  `js/tacho-chess-resultados.js`, que ya encuentra los torneos del Tacho):
+  `js/torneo-en-vivo.js`, desde el 18/11/2026 la misma copia de la
+  Eliminatoria JDN de PZ; antes vivía en `js/tacho-chess-resultados.js`):
   «En vivo: próximamente» mientras ninguna cámara transmite; apenas una
   transmite, «En vivo ahora», su mesa, quién juega y «Ver la partida en
   vivo», que abre `tablero-vivo.html#<código>&t=<id>&m=<mesa>` encima de la
@@ -18647,6 +19152,36 @@ el bye, la ronda 0, las tablas iguales a las del navegador, la migración, que c
 `guardarYComprobar`, el virtual solo desde la cola y que la página no escriba en el localStorage de Pareo). Roto a
 propósito el paso de mesa física a índice o el virtual por el canal, salta.
 
+### Cada evento de la Mesa, por separado
+
+Lo pidió el dueño el 19/11/2026, preparando la Eliminatoria Cantonal JDN de PZ: con sus torneos de Pareo Integral
+vinculados, la pestaña «Torneos» le seguía mostrando la clave de chess-results, y la lista de LiveChess traía las
+treinta categorías del Centroamericano, del Blitz y del Tacho Chess. «Cada torneo es independiente»: lo hecho para el
+Centroamericano sirve en todos, pero cada evento funciona solo en la Mesa del árbitro.
+
+- **Arriba, «Evento»** (`#evento-elegido`, en `js/centroamericano-mesas-pagina.js`): la organización elige sobre cuál
+  trabaja y **todo se filtra por ahí**, porque `dentro(tnr)` (el mismo filtro del Modo ensayo) ahora pregunta también
+  por el evento: la ronda en curso, los árbitros y sus enlaces, los avisos, el control de tiempos, las planillas, lo que
+  anotan, Fair Play y la Transmisión (que recibe `dentro`). No se guarda en el navegador (esta página no guarda nada ahí,
+  lo revisa `verificar-centroamericano-mesas.js`): dura mientras la ventana siga abierta. Se esconde cuando hay un
+  solo evento, y al agregar o vincular torneos a un evento la ventana pasa a ese evento. La lista para «Archivar»
+  sigue mostrando todos los eventos. Un torneo sin evento cuenta como «Centroamericano 2026». Primero salen los
+  eventos que no son del Centroamericano.
+- **LiveChess** (`js/centroamericano-vivo-conectar.js`) lista solo los torneos del evento (`window.MesaEvento`) y, al
+  pegar la tabla de tableros, manda sus `tnr`: la función `centroamericano-mesas-vivo` busca el «SUB-12 ABS» solo
+  entre ellos, no en otro evento que tenga la misma categoría.
+- **chess-results solo si el evento lo usa**: la clave del grupo y «Otras claves» (`data-solo-chess-results`) se
+  esconden cuando el evento elegido no tiene torneos de chess-results, o cuando se llegó por «Pareo Integral»
+  (`#torneos`) sin torneos todavía. El botón «Este evento también tiene torneos en chess-results» las vuelve a mostrar.
+- **«Vincular» sigue viendo todos los torneos de Pareo de la computadora** y dice en qué evento está cada uno; al
+  vincular, la ventana pasa al evento donde quedó.
+- **Un torneo vinculado desde otra cuenta ya no queda trabado.** El U12 de la Eliminatoria había quedado (archivado)
+  en un evento de una cuenta de prueba, y «Vincular» decía «Ese torneo ya está en el evento de otro organizador», sin
+  salida. Quien vincula ya probó con la clave de Pareo que el torneo es suyo, así que ahora se lo lleva a su evento;
+  los enlaces de árbitros del evento anterior se borran (`20261120001400_mesa_pareo_vincular_dueno_con_clave.sql`).
+
+Lo prueba `verificar-centroamericano-mesas-eventos.js`.
+
 ### Fair Play y Transmisión en cualquier evento
 
 Lo pidió el dueño el 14/11/2026, en pleno Tacho Chess 2: en la Mesa del árbitro de un evento que no es el
@@ -18701,7 +19236,13 @@ torneo de Tacho Chess y pidió quitarlo). Ahora:
   de Pareo.
 - La mascota sigue siendo el botón de «Todas las mesas». Un torneo de Pareo cuyo
   nombre coincide con una entrada de `MASCOTAS` (hoy, `/tacho\s*chess/i` → Tacho,
-  `img/tacho-chess-2/mascota.png`) trae su mascota; cualquier otro, el pizote.
+  `img/tacho-chess-2/mascota.png`) trae su mascota; cualquier otro (y el
+  Centroamericano), el **logo de Ajedrez Integral** (`img/logo-marca.png`, con
+  `.cam-mascota-logo`). El pizote salió el 19/11/2026, a pedido del dueño.
+- **En el medio de la franja va el nombre del torneo** (`#torneo-centro`, de
+  `estado.torneo`); antes iba ahí el logo. Debajo de «Mis mesas» queda solo la
+  categoría y la rama, si el torneo tiene. En el celular el nombre baja a una
+  fila propia, a todo lo ancho.
   Tacho es de pie (450 × 755) y se mide por el alto (`.cam-mascota-alta`), para
   no estirar la franja.
 - La imagen de Tacho tenía el zapato izquierdo deformado (sin punta, salido así

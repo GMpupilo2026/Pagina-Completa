@@ -157,10 +157,18 @@ window.__llamadas = [];
       if (nombre === "retos_de_la_semana") return Promise.resolve({ data: RETOS, error: null });
       if (nombre === "marcador_del_salon") {
         const mes = args && args.p_periodo === "mes";
-        return Promise.resolve({ data: [
-          { alumno_id: "u-carla", nombre: "Carla Mora", puntos: mes ? 400 : 120, puesto: 1, soy_yo: false },
-          { alumno_id: YO, nombre: "Ana Pérez", puntos: mes ? 310 : 80, puesto: 2, soy_yo: true },
-          { alumno_id: "u-beto", nombre: "Beto Rojas", puntos: mes ? 90 : 15, puesto: 3, soy_yo: false },
+        // La semana: Ana va 4.ª (fuera del podio). El mes: Ana va 2.ª.
+        return Promise.resolve({ data: mes ? [
+          { alumno_id: "u-carla", nombre: "Carla Mora", puntos: 400, puesto: 1, soy_yo: false },
+          { alumno_id: YO, nombre: "Ana Pérez", puntos: 310, puesto: 2, soy_yo: true },
+          { alumno_id: "u-beto", nombre: "Beto Rojas", puntos: 90, puesto: 3, soy_yo: false },
+          { alumno_id: "u-dani", nombre: "Dani Solís", puntos: 20, puesto: 4, soy_yo: false },
+        ] : [
+          { alumno_id: "u-carla", nombre: "Carla Mora", puntos: 120, puesto: 1, soy_yo: false },
+          { alumno_id: "u-beto", nombre: "Beto Rojas", puntos: 95, puesto: 2, soy_yo: false },
+          { alumno_id: "u-dani", nombre: "Dani Solís", puntos: 90, puesto: 3, soy_yo: false },
+          { alumno_id: YO, nombre: "Ana Pérez", puntos: 80, puesto: 4, soy_yo: true },
+          { alumno_id: "u-eva", nombre: "Eva Mata", puntos: 15, puesto: 5, soy_yo: false },
         ], error: null });
       }
       if (nombre === "regalar_premio" || nombre === "mandar_broma") {
@@ -479,13 +487,20 @@ async function main() {
     const { page, ctx } = await abrir(navegador, 100, []);
     await page.waitForSelector("#puntos-marcador [data-marcador-fila]", { timeout: 5000 });
     const filas = await page.$$eval("#puntos-marcador [data-marcador-fila]", (l) => l.map((x) => x.textContent));
-    ok(filas.length === 3 && filas[0].includes("Carla Mora") && filas[0].includes("120 puntos"), "el marcador de la semana no sale bien: " + JSON.stringify(filas));
-    ok(await page.isVisible('#puntos-marcador [aria-current="true"]:has-text("Ana Pérez (tú)")'), "uno mismo no sale marcado en el marcador");
+    ok(filas.length === 3 && filas[0].includes("Carla Mora") && filas[0].includes("120 puntos") && filas[2].includes("Dani Solís"),
+      "el marcador de la semana debería mostrar solo el podio (los tres primeros): " + JSON.stringify(filas));
+    ok(!filas.some((x) => x.includes("Eva Mata") || x.includes("Ana Pérez")), "fuera del podio no debería salir nadie en las tarjetas: " + JSON.stringify(filas));
+    const yoSemana = page.locator("[data-marcador-yo]");
+    ok(await yoSemana.isVisible() && (await yoSemana.textContent()) === "Tú vas en el 4.º lugar, con 80 puntos.",
+      "quien queda fuera del podio debería ver su propio puesto: " + JSON.stringify(await yoSemana.textContent()));
     ok((await page.getAttribute('[data-periodo="semana"]', "aria-pressed")) === "true", "«Esta semana» debería arrancar apretado");
     await page.click('[data-periodo="mes"]');
     await page.waitForFunction(() => document.querySelector("#puntos-marcador").textContent.includes("400 puntos"), null, { timeout: 5000 });
     ok(await page.evaluate(() => window.__llamadas.some((l) => l.rpc === "marcador_del_salon" && l.args.p_periodo === "mes")),
       "«Este mes» no pidió el marcador del mes");
+    ok(await page.isVisible('#puntos-marcador [aria-current="true"]:has-text("Ana Pérez (tú)")'), "uno mismo no sale marcado en el podio");
+    ok(!(await page.locator("[data-marcador-yo]").isVisible()), "si uno ya está en el podio, la línea de su puesto sobra");
+    ok((await page.$$eval("#puntos-marcador [data-marcador-fila]", (l) => l.length)) === 3, "el podio del mes debería tener tres tarjetas");
     ok((await page.getAttribute('[data-periodo="mes"]', "aria-pressed")) === "true"
       && (await page.getAttribute('[data-periodo="semana"]', "aria-pressed")) === "false", "los botones del periodo no dicen cuál está apretado");
     await ctx.close();

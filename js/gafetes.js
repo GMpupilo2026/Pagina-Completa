@@ -42,9 +42,10 @@
       },
       codigo: { plantilla: "", sinCodigoSi: "" },
       fuentes: { titulo: { id: "league-spartan" }, texto: { id: "quicksand" } },
-      salida: { separarPor: "" },
+      salida: { separarPor: "", formato: "imprenta", dorsoX: 0, dorsoY: 0 },
       fotoRecorte: null,     // { arriba, alto, cabeza }: qué parte de cada foto va al marco
       fotoCentro: false,     // con foto: la foto en el medio y el nombre debajo
+      personal: "",          // «Rol | Apellidos | Nombre | Título | Avatar», uno por renglón
       logosSinMargen: false, // los logos sin el blanco de alrededor (del mismo alto)
     };
   }
@@ -84,6 +85,22 @@
      torneo publicado en Pareo Integral (su mesa de cada ronda, sus puntos y
      su puesto, al día). Los datos salen de «Traer los jugadores de Pareo»
      (traerJdnPz) y las fotos de «Subir las fotos» (subirFotos). */
+  // Presentando (muestra el QR) primero; las demás, de cuerpo entero y sin
+  // nada ancho al lado (el tablero grande, la mesa, el confeti, la mochila).
+  // El profe Oscar, para el dorso del personal de arbitraje.
+  const POSES_OSCAR = ["arbitro", "presentando", "te-toca"];
+  /* El personal del torneo (pedido del dueño): uno por renglón,
+     «Rol | Apellidos | Nombre | Título | Avatar». El rol va en la franja, el
+     título debajo del nombre, y el avatar en el dorso: karina (presentando),
+     karina-arbitro u oscar-<pose>. Karina y Oscar, cada uno con su avatar de
+     árbitro (lo pidió el dueño); Jean, el profe Oscar presentando. */
+  const PERSONAL_PZ = [
+    "Organizadora | Rojas | Itzel Karina |  | karina-arbitro",
+    "Árbitro principal | Quesada Arauz | Jean | Árbitro FIDE (AF) | oscar-presentando",
+    "Árbitro principal | Angulo Cubero | Oscar | Árbitro Internacional (IA) | oscar-arbitro",
+    "Asistente | Mora Chavarría | Sebastián |  | oscar-te-toca",
+  ].join("\n");
+  const POSES_KARINA = ["presentando", "te-toca", "reloj-de-ajedrez", "caballo", "muy-bien", "tu-puedes", "campeones", "hola"];
   async function disenoJdnPz() {
     const d = disenoNuevo();
     d.nombreDiseno = "Eliminatoria JDN PZ 2026";
@@ -93,22 +110,39 @@
     d.logosSinMargen = true;
     d.titulo.texto = "ELIMINATORIA CANTONAL JDN\nCCDRPZ – ADAPZ 2026\nHOTEL DEL SUR, PÉREZ ZELEDÓN";
     d.titulo.color = "#1b2a4a";
-    d.nombre = { linea1: "{Apellidos}", linea2: "{Nombre}", propio: true };
-    // El club va en la franja; la categoría y el Elo no van en el frente (lo
-    // pidió el dueño): la categoría sigue de lado en el dorso.
-    d.detalles = ["Juega el torneo {Torneo}", "", ""];
+    // El nombre en negro, no del color de la edad: se lee mejor de lejos y
+    // es lo que busca el árbitro (lo pidió el dueño).
+    d.nombre = { linea1: "{Apellidos}", linea2: "{Nombre}", propio: true, color: "#000000" };
+    // El club va en la franja; debajo del nombre, la categoría a la que
+    // pertenece y el ID FIDE (en lugar del Elo; sin ID, esa línea no sale).
+    // «Juega el torneo U…» no va (lo pidió el dueño).
+    d.detalles = ["{Categoría}", "ID FIDE: {FIDE ID}", ""];
     d.bandera = { plantilla: "", texto: true };
-    d.franja = { plantilla: "{Club}" };
-    // Contraste con la letra blanca: U12 6,0:1, U16 5,4:1 y U20 14,2:1. La
-    // categoría va también escrita en la franja: el color nunca va solo.
-    d.colores = { columna: "Edad", valores: { u12: "#1d64b0", u16: "#0e7490", u20: "#1b2a4a" }, etiquetas: { u12: "U12", u16: "U16", u20: "U20" }, omision: "#1b2a4a" };
-    d.dorso.vertical = "{Categoría}";
+    // La franja: el club del jugador o el rol del personal.
+    d.franja = { plantilla: "{Franja}" };
+    // Contraste con la letra blanca: U12 6,0:1, U16 5,1:1 (el celeste oscuro
+    // que pidió el dueño en lugar del turquesa; el celeste de la bandera del
+    // cantón no aguanta letra blanca) y U20 14,2:1. La categoría va también
+    // escrita: el color nunca va solo.
+    // El personal (organización, arbitraje y asistente), en negro (21:1):
+    // lo pidió el dueño.
+    d.colores = { columna: "Grupo", valores: { u12: "#1d64b0", u16: "#1873b4", u20: "#1b2a4a", organizacion: "#000000", arbitraje: "#000000", asistente: "#000000" },
+      etiquetas: { u12: "U12", u16: "U16", u20: "U20", organizacion: "Organización", arbitraje: "Arbitraje", asistente: "Asistente" }, omision: "#1b2a4a" };
+    d.dorso.vertical = "{Lado}";
     d.dorso.horarioCentro = true;
+    // En el dorso, la profe Karina en una pose distinta en cada gafete, por
+    // turno (lo pidió el dueño): las de cuerpo entero que caben junto al QR.
+    d.dorso.ilustraciones = ["ilustracionDorso", ...POSES_KARINA.slice(1).map((n, i) => "karina" + (i + 2))];
+    // El personal lleva la suya (la columna «Pose»), no la del turno.
+    d.dorso.poseColumna = "Pose";
+    d.personal = PERSONAL_PZ;
     d.dorso.qr = "{QR}";
-    d.dorso.qrTexto = "Escanéalo: | tu mesa en cada ronda, | tus puntos y tu puesto";
+    // Lo que dice arriba del QR es de cada fila: al jugador, su mesa; al
+    // personal, la página del torneo.
+    d.dorso.qrTexto = "{Texto QR}";
     // Las fotos del fotógrafo son de medio cuerpo, frente al tablero: se
     // recortan a tamaño pasaporte desde la cabeza (el pelo, la cara y la camisa).
-    d.fotoRecorte = { arriba: 0.12, alto: 0.5, cabeza: true };
+    d.fotoRecorte = { arriba: 0.12, alto: 0.44, cabeza: true };
     // Con foto: la foto en el medio y el nombre debajo (lo pidió el dueño).
     d.fotoCentro = true;
     d.dorso.encabezados = ["Actividad", "Fecha", "Hora"];
@@ -118,9 +152,11 @@
       ["Ronda 3", "22/11/2026", "1:00 p.m."], ["Ronda 4", "22/11/2026", "3:00 p.m."], ["Ronda 5", "22/11/2026", "5:00 p.m."],
       ["Clausura", "22/11/2026", "7:30 p.m."],
     ];
-    d.codigo.plantilla = "{Edad} {n}";
-    d.salida.separarPor = "Torneo";
-    for (const [id, ruta] of [["logoIzq", "img/adapz/logo.jpg"], ["logoDer", "img/adapz/ccdr-pz.jpg"], ["ilustracion", "img/avatar-profe-karina/bienvenidos.webp"], ["ilustracionDorso", "img/avatar-profe-karina/presentando.webp"]]) {
+    // Abajo del dorso, la categoría sola: el número (U12 01…) no hace falta.
+    d.codigo.plantilla = "{Grupo}";
+    // Para la Brother T530 del dueño: hojas carta, frente y dorso, listas para cortar.
+    d.salida = { separarPor: "", formato: "carta", dorsoX: 0, dorsoY: 0 };
+    for (const [id, ruta] of [["logoIzq", "img/adapz/logo.jpg"], ["logoDer", "img/adapz/ccdr-pz.jpg"], ["ilustracion", "img/avatar-profe-karina/bienvenidos.webp"], ["ilustracionDorso", "img/avatar-profe-karina/presentando.webp"], ...POSES_KARINA.slice(1).map((n, i) => ["karina" + (i + 2), "img/avatar-profe-karina/" + n + ".webp"]), ...POSES_OSCAR.map((n) => ["oscar-" + n, "img/avatar-profe-oscar/" + n + ".webp"]), ["karina-arbitro", "img/avatar-profe-karina/arbitro.webp"]]) {
       try { d.imagenes[id] = { nombre: ruta.split("/").pop(), datos: await aDatos(await (await fetch(ruta)).blob()) }; } catch (e) { /* sin esa imagen */ }
     }
     return d;
@@ -142,7 +178,7 @@
     if (!ids.length) throw new Error("todavía no hay torneos de la eliminatoria publicados en Pareo Integral");
     const { data, error } = await sb.from("pareo_publicados").select("id, nombre, datos").in("id", ids);
     if (error) throw error;
-    const filas = [["Apellidos", "Nombre", "Categoría", "Edad", "Torneo", "Club", "Elo", "QR"]];
+    const filas = [["Apellidos", "Nombre", "Categoría", "Edad", "Torneo", "Club", "Elo", "FIDE ID", "QR", "Grupo", "Franja", "Lado", "Texto QR", "Pose"]];
     const orden = (x) => ["U12", "U20"].indexOf(Object.keys(t).find((k) => t[k] && t[k].id === x.id));
     for (const x of (data || []).sort((a, b) => orden(a) - orden(b))) {
       const torneo = Object.keys(t).find((k) => t[k] && t[k].id === x.id);
@@ -152,12 +188,46 @@
         const [apellidos, nombre] = j.nombre.includes(",") ? j.nombre.split(",").map((p) => p.trim()) : [j.nombre.trim(), ""];
         const cat = String(j.categoria || "").trim();
         const edad = (cat.match(/\bU\s?\d{2}\b/i) || [torneo])[0].replace(/\s/g, "").toUpperCase();
-        filas.push([apellidos, nombre, cat || torneo, edad, torneo, j.institucion || "", Number(j.elo) > 0 ? String(j.elo) : "",
-          SITIO + "torneos-pareo#t=" + x.id + "&j=" + encodeURIComponent(j.id)]);
+        filas.push([apellidos, nombre, cat || torneo, edad, torneo, j.institucion || "", Number(j.elo) > 0 ? String(j.elo) : "", "",
+          SITIO + "torneos-pareo#t=" + x.id + "&j=" + encodeURIComponent(j.id), edad, j.institucion || "", cat || torneo,
+          "Escanéalo: | tu mesa en cada ronda, | tus puntos y tu puesto", ""]);
       }
     }
     if (filas.length < 2) throw new Error("los torneos todavía no tienen jugadores aceptados");
+    await ponerFide(filas, ids);
+    // El personal del torneo, al final (del diseño: se edita en la página).
+    for (const linea of String(diseno.personal || "").split(/\r?\n/)) {
+      const [rol, apellidos, nombre, titulo, avatar] = linea.split("|").map((c) => (c || "").trim());
+      if (!rol || !(apellidos || nombre)) continue;
+      const grupo = /organiz/i.test(rol) ? "Organización" : /asist/i.test(rol) ? "Asistente" : "Arbitraje";
+      // De lado, sin la Á de «Árbitro» (escrita de lado, la tilde queda suelta).
+      const lado = /organiz/i.test(rol) ? "Organización" : /asist/i.test(rol) ? "Asistente" : "Principal";
+      const pose = /^karina$/i.test(avatar) ? "ilustracionDorso" : (avatar || "");
+      filas.push([apellidos, nombre, titulo, "", "", "", "", "", SITIO + "jdn-pz-2026", grupo, rol, lado,
+        "Escanéalo: | la página | del torneo", pose]);
+    }
     return filas;
+  }
+
+  /* El ID FIDE de cada jugador (lo pidió el dueño para el frente). Pareo no
+     lo publica nunca (va como huella) y la lista de FIDE dejó de contestar;
+     el que hay es el que se puso al INSCRIBIRSE. Lo da la función
+     public.pareo_fide_de_aceptados (solo a quien administra, solo de las
+     inscripciones aceptadas: el nombre y el ID). Se empareja por el nombre,
+     sin tildes ni mayúsculas; quien entró sin inscribirse, o sin ID, sale sin
+     esa línea. Si la función no contesta, los gafetes salen igual y se avisa. */
+  async function ponerFide(filas, ids) {
+    const col = filas[0].indexOf("FIDE ID");
+    const plano2 = (t) => plano(t).replace(/[^a-z0-9ñ]+/g, " ").trim();
+    const ids2 = new Map();
+    let falla = false;
+    for (const id of ids) {
+      const { data, error } = await sb.rpc("pareo_fide_de_aceptados", { p_publicado: id });
+      if (error) { falla = true; continue; }
+      for (const x of data || []) if (x && x.nombre && /^[1-9][0-9]*$/.test(String(x.fide_id || ""))) ids2.set(plano2(x.nombre), String(x.fide_id));
+    }
+    for (let n = 1; n < filas.length; n++) filas[n][col] = ids2.get(plano2(filas[n][0] + ", " + filas[n][1])) || "";
+    if (falla) Avisos.avisar("No se pudieron leer los ID FIDE de las inscripciones: los gafetes salen sin esa línea.", { tipo: "info" });
   }
 
   // Lo que falte en un diseño viejo o recortado, con lo de uno nuevo.
@@ -369,39 +439,49 @@
      achican en el navegador y se pierden al cerrar la página. */
   let fotos = [];                 // [{ nombre, lienzo }]
   const fotoDe = new Map();       // clave de la fila → índice en `fotos` (-1: sin foto)
-  const claveFila = (f) => String(D().valor(f, "QR") || [D().valor(f, "Apellidos"), D().valor(f, "Nombre")].join(", "));
+  // El QR y el nombre: el personal comparte el QR (la página del torneo), y
+  // con el QR solo, los tres árbitros quedaban con la misma foto.
+  const claveFila = (f) => [D().valor(f, "QR"), D().valor(f, "Apellidos"), D().valor(f, "Nombre")].join(" | ");
   const palabras = (t) => plano(t).split(/[^a-z0-9ñ]+/).filter(Boolean);
   function plano(t) { return String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
-  // Lo que dice el archivo, sin el número, la extensión ni «v2».
-  const palabrasDeArchivo = (n) => palabras(n.replace(/\.[a-z0-9]+$/i, "")).filter((w) => !/^\d+$/.test(w) && !/^v\d$/.test(w));
-  function leSirve(archivo, f) {
+  // Lo que dice el archivo, sin el número, la extensión, «v2» ni «MEDIOS DIGITALES».
+  const palabrasDeArchivo = (n) => palabras(n.replace(/\.[a-z0-9]+$/i, "")).filter((w) => !/^\d+$/.test(w) && !/^v\d$/.test(w) && w !== "medios" && w !== "digitales");
+  // Cuánto le sirve un archivo a un jugador: cuántas palabras del archivo
+  // están en su nombre, si están TODAS o coinciden al menos dos (nombre y
+  // apellido: «23 Elizabeth SOFIA BADILLA Mena» es de Elizabeth Badilla Mena
+  // aunque traiga un nombre de más). Si no, 0.
+  function puntaje(archivo, f) {
     const de = palabrasDeArchivo(archivo);
     const suyas = palabras([D().valor(f, "Nombre"), D().valor(f, "Apellidos")].join(" "));
-    return de.length > 0 && de.every((w) => (w.length === 1 ? suyas.some((x) => x[0] === w) : suyas.includes(w)));
+    const n = de.filter((w) => (w.length === 1 ? suyas.some((x) => x[0] === w) : suyas.includes(w))).length;
+    return n > 0 && (n === de.length || n >= 2) ? n : 0;
   }
+  const busca = (i) => fotos[i].busca || fotos[i].nombre;
   function emparejar() {
     if (!datos) return;
-    const elegidos = new Map();
+    const elegidos = new Map();                  // clave de la fila → { i, p }
     datos.filas.forEach((f) => {
       const k = claveFila(f);
       if (fotoDe.has(k)) return;                 // lo que se eligió a mano se respeta
-      const sirven = fotos.map((x, i) => i).filter((i) => leSirve(fotos[i].nombre, f));
+      const sirven = fotos.map((x, i) => [i, puntaje(busca(i), f)]).filter(([, p]) => p > 0);
       if (!sirven.length) return;
-      const largo = (i) => palabrasDeArchivo(fotos[i].nombre).length;
-      const mejor = Math.max(...sirven.map(largo));
-      let top = sirven.filter((i) => largo(i) === mejor);
+      const mejor = Math.max(...sirven.map(([, p]) => p));
+      let top = sirven.filter(([, p]) => p === mejor).map(([i]) => i);
       // Empate: la que empieza por su primer nombre («Yariela Sofía»: YARIELA, no SOFIA).
       if (top.length > 1) {
         const primero = palabras(D().valor(f, "Nombre"))[0];
-        const conPrimero = top.filter((i) => palabrasDeArchivo(fotos[i].nombre)[0] === primero);
+        const conPrimero = top.filter((i) => palabrasDeArchivo(busca(i))[0] === primero);
         if (conPrimero.length === 1) top = conPrimero;
       }
-      if (top.length === 1) elegidos.set(k, top[0]);
+      if (top.length === 1) elegidos.set(k, { i: top[0], p: mejor });
     });
-    // Un archivo que quedó para dos personas no es de ninguna.
-    const usos = new Map();
-    for (const i of elegidos.values()) usos.set(i, (usos.get(i) || 0) + 1);
-    for (const [k, i] of elegidos) if (usos.get(i) === 1) fotoDe.set(k, i);
+    // Un archivo que quedó para dos personas es de la que mejor calza; si
+    // empatan, de ninguna.
+    for (const [k, e] of elegidos) {
+      const rivales = [...elegidos.values()].filter((x) => x.i === e.i);
+      const max = Math.max(...rivales.map((x) => x.p));
+      if (e.p === max && rivales.filter((x) => x.p === max).length === 1) fotoDe.set(k, e.i);
+    }
   }
 
   // Achica la foto (las del fotógrafo miden 4480 × 6720) y, si el diseño lo
@@ -424,9 +504,12 @@
         // Con `cabeza`, el recorte empieza un poco arriba de donde empieza la
         // persona (el fondo del fotógrafo es blanco): un niño bajito sale
         // con la cara del mismo tamaño que uno alto. Sin encontrarla, `arriba`.
-        const tope = r.cabeza ? topeDeLaPersona(im, sx, sw) : null;
-        const desde = tope != null ? Math.max(0, tope - H * 0.035) : H * (r.arriba || 0);
+        const cab = r.cabeza ? cabezaDeLaPersona(im, sx, sw) : null;
+        const desde = cab ? Math.max(0, cab.tope - H * 0.045) : H * (r.arriba || 0);
         sy = Math.max(0, Math.min(H - sh, desde));
+        // Y a lo ancho, la cabeza en el centro del marco (no todos posaron en
+        // el centro de la foto).
+        if (cab && cab.centro != null) sx = Math.max(0, Math.min(W - sw, cab.centro - sw / 2));
       }
       const k = Math.min(1, 1100 / sh);
       const c = document.createElement("canvas");
@@ -437,14 +520,22 @@
   }
 
   // La primera fila (de arriba abajo) donde, en la franja del recorte, más
-  // del 4 % de los puntos no es fondo claro: ahí empieza el pelo. En la foto
+  // del 4 % de los puntos no es fondo claro: ahí empieza el pelo (`tope`). Y
+  // `centro`: el medio, a lo ancho, de lo oscuro en la franja de la cabeza
+  // (del tope a un 12 % del alto más abajo), en toda la foto. En la foto
   // achicada a 200 px de ancho; null si no la encuentra.
-  function topeDeLaPersona(im, sx, sw) {
+  function cabezaDeLaPersona(im, sx, sw) {
     const W = im.naturalWidth, H = im.naturalHeight, k = 200 / W;
     const c = document.createElement("canvas");
     c.width = 200; c.height = Math.round(H * k);
     const ctx = c.getContext("2d", { willReadFrequently: true });
     ctx.drawImage(im, 0, 0, c.width, c.height);
+    // Solo con fondo claro (el del fotógrafo): en una foto con fondo (una
+    // sala, un techo) lo oscuro no es el pelo, y se recorta sin buscarla.
+    const arriba = ctx.getImageData(0, 0, c.width, Math.max(1, Math.round(c.height * 0.03))).data;
+    let luz = 0;
+    for (let i = 0; i < arriba.length; i += 4) luz += 0.299 * arriba[i] + 0.587 * arriba[i + 1] + 0.114 * arriba[i + 2];
+    if (luz / (arriba.length / 4) < 215) return null;
     const x0 = Math.round(sx * k), ancho = Math.max(1, Math.round(sw * k));
     const px = ctx.getImageData(x0, 0, ancho, c.height).data;
     for (let y = 0; y < c.height * 0.8; y++) {
@@ -453,24 +544,41 @@
         const i = (y * ancho + x) * 4;
         if (0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2] < 200) oscuros++;
       }
-      if (oscuros > ancho * 0.04) return y / k;
+      if (oscuros > ancho * 0.04) {
+        const todo = ctx.getImageData(0, y, c.width, Math.min(c.height - y, Math.round(c.height * 0.12))).data;
+        const xs = [];
+        for (let i = 0; i < todo.length; i += 4) if (0.299 * todo[i] + 0.587 * todo[i + 1] + 0.114 * todo[i + 2] < 200) xs.push((i / 4) % c.width);
+        xs.sort((a, b) => a - b);
+        const centro = xs.length > 20 ? (xs[Math.floor(xs.length * 0.05)] + xs[Math.floor(xs.length * 0.95)]) / 2 / k : null;
+        return { tope: y / k, centro };
+      }
     }
     return null;
   }
 
   async function subirFotos(lista) {
     let archivos = [...lista].filter((f) => /^image\//.test(f.type) || /\.(jpe?g|png|webp)$/i.test(f.name));
-    // El fotógrafo manda dos de cada una: la de «MEDIOS DIGITALES» lleva su
-    // marca; si está la otra (el mismo número), se usa la otra.
+    // El fotógrafo manda dos de cada una: la de «(MEDIOS) DIGITALES» lleva su
+    // marca; si está la otra (el mismo número), se usa la otra. Pero el
+    // nombre con que se busca es el más completo de las dos: en la carpeta
+    // de la PZ los apellidos se los pusieron a la de «MEDIOS DIGITALES»
+    // («10 SAMUEL Quesada Aguero MEDIOS DIGITALES.jpg» y «10 SAMUEL.jpg»).
     const numero = (n) => (n.match(/^\s*(\d+)/) || [])[1];
-    const limpias = new Set(archivos.filter((f) => !/medios digitales/i.test(f.name)).map((f) => numero(f.name)).filter(Boolean));
-    archivos = archivos.filter((f) => !(/medios digitales/i.test(f.name) && limpias.has(numero(f.name))));
+    const marcada = (n) => /digitales/i.test(n);
+    const porNumero = new Map();
+    for (const f of archivos) { const k = numero(f.name); if (k) { if (!porNumero.has(k)) porNumero.set(k, []); porNumero.get(k).push(f); } }
+    const nombreDeBusqueda = new Map();
+    for (const lista2 of porNumero.values()) {
+      const mas = lista2.slice().sort((a, b) => palabrasDeArchivo(b.name).length - palabrasDeArchivo(a.name).length)[0];
+      for (const f of lista2) nombreDeBusqueda.set(f, mas.name);
+    }
+    archivos = archivos.filter((f) => !(marcada(f.name) && (porNumero.get(numero(f.name)) || []).some((g) => !marcada(g.name))));
     if (!archivos.length) { Avisos.avisar("No llegó ninguna foto (sirven JPG, PNG o WEBP).", { tipo: "error" }); return; }
     const estado = $("g-fotos-estado");
     const nuevas = [];
     for (const [i, f] of archivos.entries()) {
       estado.textContent = `Preparando la foto ${i + 1} de ${archivos.length}…`;
-      try { nuevas.push({ nombre: f.name, lienzo: await prepararFoto(f) }); } catch (e) { /* una foto dañada no frena las demás */ }
+      try { nuevas.push({ nombre: f.name, busca: nombreDeBusqueda.get(f) || f.name, lienzo: await prepararFoto(f) }); } catch (e) { /* una foto dañada no frena las demás */ }
     }
     fotos = nuevas.sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { numeric: true }));
     fotoDe.clear();
@@ -501,7 +609,7 @@
       sel.id = id;
       sel.className = "px-2 py-1 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm";
       const o0 = document.createElement("option"); o0.value = "-1"; o0.textContent = "— sin foto —"; sel.append(o0);
-      fotos.forEach((x, j) => { const o = document.createElement("option"); o.value = String(j); o.textContent = x.nombre; sel.append(o); });
+      fotos.forEach((x, j) => { const o = document.createElement("option"); o.value = String(j); o.textContent = x.nombre + (x.busca && x.busca !== x.nombre ? " (" + x.busca + ")" : ""); sel.append(o); });
       sel.value = String(i);
       sel.addEventListener("change", () => { fotoDe.set(k, Number(sel.value)); pintarFotos(); refrescar(); });
       const marca = document.createElement("span");
@@ -719,6 +827,32 @@
 
   const nombreSeguro = (t) => String(t).replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim().slice(0, 80) || "sin grupo";
 
+  /* La hoja carta para imprimir en casa (pedido del dueño para la Brother
+     T530): cuántos gafetes caben derechos con 5 mm de margen (lo que una
+     impresora de casa no alcanza a imprimir), pegados entre sí (cada corte
+     sirve para dos) y centrados. Los dorsos van en ESPEJO por columnas: al
+     imprimir por ambos lados volteando por el borde largo, la columna de la
+     izquierda del frente queda a la derecha del dorso. `dorsoX`/`dorsoY`
+     corren los dorsos (mm) por si la impresora no calza exacto. Las marcas
+     de corte van en los márgenes del frente, nunca encima de un gafete. */
+  const CARTA = { w: 215.9, h: 279.4 }, MARGEN_CASA = 5;
+  function hojaCarta(d) {
+    const w = d.tamano.ancho, h = d.tamano.alto;
+    const cols = Math.floor((CARTA.w - 2 * MARGEN_CASA) / w), filas = Math.floor((CARTA.h - 2 * MARGEN_CASA) / h);
+    if (cols < 1 || filas < 1) return null;
+    const x0 = (CARTA.w - cols * w) / 2, y0 = (CARTA.h - filas * h) / 2;
+    const x1 = x0 + cols * w, y1 = y0 + filas * h;
+    const dx = Number(d.salida.dorsoX) || 0, dy = Number(d.salida.dorsoY) || 0;
+    const marcas = [];
+    for (let c = 0; c <= cols; c++) { const x = x0 + c * w; marcas.push([x, 3, x, y0 - 2], [x, y1 + 2, x, CARTA.h - 3]); }
+    for (let f = 0; f <= filas; f++) { const y = y0 + f * h; marcas.push([3, y, x0 - 2, y], [x1 + 2, y, CARTA.w - 3, y]); }
+    return {
+      hoja: CARTA, cols, filas, porHoja: cols * filas, marcas,
+      frente: (k) => ({ x: x0 + (k % cols) * w, y: y0 + Math.floor(k / cols) * h, w, h }),
+      dorso: (k) => ({ x: x0 + (cols - 1 - (k % cols)) * w + dx, y: y0 + Math.floor(k / cols) * h + dy, w, h }),
+    };
+  }
+
   async function crear() {
     if (!datos || !datos.filas.length) { Avisos.avisar("Primero sube el Excel con la gente.", { tipo: "error" }); return; }
     if (!diseno.aprobado) { Avisos.avisar("Primero aprueba el diseño: los PDF salen del diseño aprobado.", { tipo: "error" }); return; }
@@ -745,8 +879,41 @@
       let hechas = 0;
       const total = todos.length * 2;
       barra.max = total;
+      const carta = diseno.salida.formato === "carta";
+      const H = carta ? hojaCarta(diseno) : null;
+      if (carta && !H) throw new Error("ese tamaño de gafete no cabe en una hoja carta");
+      let hojas = 0;
+      const caraLista = async (g, lado) => {
+        const c = await D().cara(diseno, r, g, lado);
+        c.avisos.forEach((a) => avisos.add(a));
+        if (!fondos.has(c.clave)) fondos.set(c.clave, await fondoJpeg(diseno, c));
+        hechas++;
+        barra.value = hechas;
+        texto.textContent = `Gafete ${Math.ceil(hechas / 2)} de ${todos.length}…`;
+        if (hechas % 4 === 0) await new Promise((ok) => setTimeout(ok));
+        return { clave: c.clave, ...fondos.get(c.clave), textos: c.textos };
+      };
       for (const [grupo, lista] of grupos) {
-        const titulo = `Gafetes ${medida} - ${grupo || diseno.nombreDiseno}`;
+        const titulo = `Gafetes ${carta ? "carta" : medida} - ${grupo || diseno.nombreDiseno}`;
+        if (carta) {
+          // De a una hoja: la página de los frentes y, detrás, la de los
+          // dorsos en espejo (cada dorso cae detrás de su frente al voltear
+          // por el borde largo).
+          const pdf = window.GafetesPdf.nuevo(H.hoja.w, H.hoja.h, titulo);
+          for (let i = 0; i < lista.length; i += H.porHoja) {
+            const grupoHoja = lista.slice(i, i + H.porHoja);
+            const frentes = [], dorsos = [];
+            for (const [k, g] of grupoHoja.entries()) {
+              frentes.push({ ...(await caraLista(g, "frente")), ...H.frente(k) });
+              dorsos.push({ ...(await caraLista(g, "dorso")), ...H.dorso(k) });
+            }
+            await pdf.agregarHoja(frentes, H.marcas);
+            await pdf.agregarHoja(dorsos, []);
+            hojas++;
+          }
+          archivos.push({ nombre: nombreSeguro(titulo) + ".pdf", bytes: pdf.cerrar() });
+          continue;
+        }
         const pdf = window.GafetesPdf.nuevo(diseno.tamano.ancho, diseno.tamano.alto, titulo);
         for (const g of lista) {
           for (const lado of ["frente", "dorso"]) {
@@ -764,15 +931,19 @@
       }
       let blob, nombre;
       if (archivos.length === 1) { blob = new Blob([archivos[0].bytes], { type: "application/pdf" }); nombre = archivos[0].nombre; }
-      else { blob = new Blob([window.TablaExcel.zip(archivos)], { type: "application/zip" }); nombre = nombreSeguro(`Gafetes ${medida} - ${diseno.nombreDiseno}`) + ".zip"; }
+      else { blob = new Blob([window.TablaExcel.zip(archivos)], { type: "application/zip" }); nombre = nombreSeguro(`Gafetes ${carta ? "carta" : medida} - ${diseno.nombreDiseno}`) + ".zip"; }
       const enlace = $("g-bajar");
       if (enlace.href) URL.revokeObjectURL(enlace.href);
       enlace.href = URL.createObjectURL(blob);
       enlace.download = nombre;
       enlace.textContent = `📥 Bajar ${nombre}`;
-      $("g-resultado-texto").textContent = `${todos.length} gafetes (${total} páginas de ${String(diseno.tamano.ancho / 10).replace(".", ",")} × ${String(diseno.tamano.alto / 10).replace(".", ",")} cm)` +
-        (archivos.length > 1 ? `, en ${archivos.length} PDF dentro de un .zip` : "") +
-        `. Cada página es una imagen de fondo a ${DPI} dpi y el texto en curvas, sin marcas de corte.`;
+      $("g-resultado-texto").textContent = carta
+        ? `${todos.length} gafetes en ${hojas} ${hojas === 1 ? "hoja carta" : "hojas carta"} (${H.porHoja} por hoja), frente y dorso` +
+          (archivos.length > 1 ? `, en ${archivos.length} PDF dentro de un .zip` : "") +
+          ". Imprímelo al 100 % (tamaño real, sin «Ajustar a la página») y por ambos lados, volteando por el borde largo. Corta por las marcas."
+        : `${todos.length} gafetes (${total} páginas de ${String(diseno.tamano.ancho / 10).replace(".", ",")} × ${String(diseno.tamano.alto / 10).replace(".", ",")} cm)` +
+          (archivos.length > 1 ? `, en ${archivos.length} PDF dentro de un .zip` : "") +
+          `. Cada página es una imagen de fondo a ${DPI} dpi y el texto en curvas, sin marcas de corte.`;
       const lista = $("g-resultado-avisos");
       lista.textContent = "";
       [...avisos].slice(0, 30).forEach((a) => { const li = document.createElement("li"); li.textContent = a; lista.append(li); });

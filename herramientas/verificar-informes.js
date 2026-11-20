@@ -137,7 +137,7 @@ window.__funcion = [];
   if (DATOS.supabaseUrl) window.SUPABASE_URL = DATOS.supabaseUrl;
   function constructor(filas, etiqueta) {
     let desde = null, hasta = null, limite = null, unica = false;
-    let condiciones = [], dentro = [], nulos = [], noNulos = [], orden = null, pendiente = null;
+    let condiciones = [], dentro = [], nulos = [], noNulos = [], desdeValor = [], orden = null, pendiente = null;
     // El doble FILTRA Y ORDENA de verdad. Uno que devolviera siempre la tabla
     // entera daría por buena una página que mezcla las filas de dos alumnos, y
     // uno que ignorara el orden daría por bueno un código que se quedara con la
@@ -147,6 +147,8 @@ window.__funcion = [];
       select() { return b; },
       eq(col, val) { condiciones.push([col, val]); return b; },
       in(col, vals) { dentro.push([col, vals.map(String)]); return b; },
+      // .gte(col, val): desde tal fecha (la participación del mes). Filtra de verdad.
+      gte(col, val) { desdeValor.push([col, String(val)]); return b; },
       // .is(col, null): las que no tienen nada en col (un certificado vigente
       // es uno sin anulado_at). Filtra de verdad, como los demás.
       is(col, val) { if (val === null) nulos.push(col); return b; },
@@ -205,6 +207,7 @@ window.__funcion = [];
           dentro.forEach(([c, vs]) => { d = d.filter((f) => vs.indexOf(String(f[c])) !== -1); });
           nulos.forEach((c) => { d = d.filter((f) => f[c] == null); });
           noNulos.forEach((c) => { d = d.filter((f) => f[c] != null); });
+          desdeValor.forEach(([c, v]) => { d = d.filter((f) => f[c] != null && String(f[c]) >= v); });
           if (orden) {
             const [c, asc] = orden;
             d = d.slice().sort((x, y) => (x[c] < y[c] ? -1 : x[c] > y[c] ? 1 : 0) * (asc ? 1 : -1));

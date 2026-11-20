@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261119031658
+# al-dia-con: 20261120051810
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -96,6 +96,7 @@ tabla  clase_elegidos  rls=true
 tabla  clase_enlaces  rls=true
 tabla  clase_espectadores  rls=true
 tabla  clase_grabaciones  rls=true
+tabla  clase_marcas  rls=true
 tabla  clase_plan_hecho  rls=true
 tabla  clase_sacados  rls=true
 tabla  class_attendance  rls=true
@@ -195,6 +196,8 @@ tabla  metropolitano_menu  rls=true
 tabla  metropolitano_menu_cocinas  rls=true
 tabla  metropolitano_parqueo  rls=true
 tabla  misiones_secretas  rls=true
+tabla  niveles_academia  rls=true
+tabla  niveles_alumno  rls=true
 tabla  notas_alumno  rls=true
 tabla  pagos  rls=true
 tabla  pagos_reportados  rls=true
@@ -1206,6 +1209,10 @@ columna  clase_grabaciones.profesor_id  uuid
 columna  clase_grabaciones.ruta  text
 columna  clase_grabaciones.segundos  integer
 columna  clase_grabaciones.texto  text
+columna  clase_marcas.class_session_id  uuid
+columna  clase_marcas.id  uuid
+columna  clase_marcas.marcada_en  timestamp with time zone
+columna  clase_marcas.persona_id  uuid
 columna  clase_plan_hecho.class_session_id  uuid
 columna  clase_plan_hecho.created_at  timestamp with time zone
 columna  clase_plan_hecho.plan_item_id  uuid
@@ -1700,6 +1707,7 @@ columna  game_state.fen  text
 columna  game_state.id  integer
 columna  game_state.last_move  text
 columna  game_state.llamada_grabando  boolean
+columna  game_state.llamada_grupos  jsonb
 columna  game_state.llamada_modo  text
 columna  game_state.llamada_sesion  uuid
 columna  game_state.moves  jsonb
@@ -2104,6 +2112,18 @@ columna  misiones_secretas.created_at  timestamp with time zone
 columna  misiones_secretas.jugador_id  uuid
 columna  misiones_secretas.mision  text
 columna  misiones_secretas.sala_id  uuid
+columna  niveles_academia.academia_id  uuid
+columna  niveles_academia.created_at  timestamp with time zone
+columna  niveles_academia.descripcion  text
+columna  niveles_academia.id  uuid
+columna  niveles_academia.nombre  text
+columna  niveles_academia.orden  integer
+columna  niveles_alumno.alumno_id  uuid
+columna  niveles_alumno.created_at  timestamp with time zone
+columna  niveles_alumno.id  uuid
+columna  niveles_alumno.nivel_id  uuid
+columna  niveles_alumno.nivel_nombre  text
+columna  niveles_alumno.puesto_por  uuid
 columna  notas_alumno.alumno_id  uuid
 columna  notas_alumno.class_session_id  uuid
 columna  notas_alumno.compartida  boolean
@@ -2213,6 +2233,7 @@ columna  pareo_organizadores.recuperar_token_hash  text
 columna  pareo_organizadores.recuperar_token_vence  timestamp with time zone
 columna  pareo_organizadores.verificado  boolean
 columna  pareo_preinscripciones.avisado  timestamp with time zone
+columna  pareo_preinscripciones.aviso_estado  text
 columna  pareo_preinscripciones.categoria  text
 columna  pareo_preinscripciones.comentario  text
 columna  pareo_preinscripciones.consentimiento  timestamp with time zone
@@ -3326,7 +3347,7 @@ funcion  detalle_mensual_profesor(p_profesor uuid, p_periodo date)  definer  ano
 funcion  detalle_para_mi(p_profesor uuid, p_detalle jsonb)  definer  anon=false  auth=false
 funcion  devolver_invitacion(p_profesor uuid)  definer  anon=false  auth=false
 funcion  diagnostico_armar()  definer  anon=true  auth=true
-funcion  diagnostico_items_para_examen(p_ids text[])  definer  anon=true  auth=true
+funcion  diagnostico_items_para_examen(p_ids text[])  definer  anon=false  auth=true
 funcion  diagnostico_responder(p_sesion uuid, p_item text, p_respuesta jsonb)  definer  anon=true  auth=true
 funcion  diagnostico_sesion_estado(p_sesion uuid)  definer  anon=true  auth=true
 funcion  diagnostico_terminar(p_sesion uuid)  definer  anon=true  auth=true
@@ -3420,6 +3441,7 @@ funcion  historial_de_puntos(p_alumno uuid, p_limite integer)  invoker  anon=fal
 funcion  hora_servidor_ms()  invoker  anon=false  auth=true
 funcion  ia_disponible()  definer  anon=false  auth=true
 funcion  ia_explicar_quedan()  definer  anon=false  auth=true
+funcion  ia_gastado_del_mes()  definer  anon=false  auth=false
 funcion  ia_guardar_alumnos(p_academia uuid, p_alumnos boolean)  definer  anon=false  auth=true
 funcion  ia_guardar_config(p_academia uuid, p_modelo text, p_tope numeric)  definer  anon=false  auth=true
 funcion  ia_inicio_de_mes()  invoker  anon=false  auth=true
@@ -3440,6 +3462,8 @@ funcion  iniciar_examen(p_examen uuid)  definer  anon=false  auth=true
 funcion  interno.academia_activa()  definer  anon=false  auth=true
 funcion  interno.academia_para_recibo(p_alumno uuid)  definer  anon=false  auth=false
 funcion  interno.academias_de(p_persona uuid)  definer  anon=false  auth=true
+funcion  interno.academias_de_niveles()  definer  anon=false  auth=true
+funcion  interno.al_desbloquear_herramienta()  definer  anon=false  auth=false
 funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.analisis_partidas_al_guardar()  definer  anon=false  auth=false
 funcion  interno.anotar_recorte(p_room_id uuid, p_color text, p_de_mas numeric, p_es_jugada boolean)  definer  anon=false  auth=true
@@ -3632,6 +3656,7 @@ funcion  marca_de_diagnostico(p_id uuid)  definer  anon=false  auth=true
 funcion  marcador_del_salon(p_periodo text)  definer  anon=false  auth=true
 funcion  marcar_aviso_leido(p_aviso uuid)  definer  anon=false  auth=true
 funcion  marcar_coordinador(p_profesor uuid, p_valor boolean)  definer  anon=false  auth=true
+funcion  marcar_momento_de_clase(p_clase uuid)  definer  anon=false  auth=true
 funcion  marcar_partida_revisada(p_room_id uuid)  definer  anon=false  auth=true
 funcion  marcar_supervisor(p_persona uuid, p_valor boolean)  definer  anon=false  auth=true
 funcion  marcar_vision(p_persona uuid, p_vision text)  definer  anon=false  auth=true
@@ -3723,6 +3748,7 @@ funcion  pareo_cifras()  definer  anon=false  auth=true
 funcion  pareo_clave(p text)  invoker  anon=true  auth=true
 funcion  pareo_correo_frenar(p_ip text, p_ambito text)  definer  anon=false  auth=false
 funcion  pareo_elo_frenar(p_ip text)  definer  anon=false  auth=false
+funcion  pareo_fide_de_aceptados(p_publicado uuid)  definer  anon=false  auth=true
 funcion  pareo_frenar(p_ip text, p_crear boolean)  definer  anon=false  auth=false
 funcion  pareo_inscribir_frenar(p_ip text, p_publicado uuid)  definer  anon=false  auth=false
 funcion  pareo_institucion(p_nombre text)  invoker  anon=true  auth=true
@@ -3755,6 +3781,7 @@ funcion  personas_con_dos_pasos()  definer  anon=false  auth=true
 funcion  personas_para_ver_como()  definer  anon=false  auth=true
 funcion  plan_compartido_conmigo(p_plan uuid)  definer  anon=true  auth=true
 funcion  planes_compartidos_conmigo()  definer  anon=false  auth=true
+funcion  poner_nivel_alumno(p_alumno uuid, p_nivel uuid)  definer  anon=false  auth=true
 funcion  practica_ayuda_proteger()  invoker  anon=false  auth=false
 funcion  practica_intentos_al_crear()  invoker  anon=false  auth=false
 funcion  prefijo_recibo(p_academia uuid)  invoker  anon=false  auth=true
@@ -3808,12 +3835,14 @@ funcion  quitar_insignia(p_id uuid)  definer  anon=false  auth=true
 funcion  quitar_permiso_grabar_voz()  definer  anon=false  auth=true
 funcion  quitar_verificacion_en_dos_pasos(p_persona uuid)  definer  anon=false  auth=true
 funcion  rango_es(p_desde date, p_hasta date)  invoker  anon=false  auth=true
+funcion  rating_tactico(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  recibo_entregado_en_mano(p_recibo uuid, p_entregado boolean)  definer  anon=false  auth=true
 funcion  recibo_por_whatsapp(p_recibo uuid)  definer  anon=false  auth=true
 funcion  recibos_resumen(p_desde date, p_hasta date, p_alumno uuid, p_buscar text)  invoker  anon=false  auth=true
 funcion  reclamar_por_abandono(p_room_id uuid, p_tablas boolean)  definer  anon=false  auth=true
 funcion  reclamar_puntos_pendientes()  definer  anon=false  auth=true
 funcion  recordar_informes_mensuales(p_hoy date)  definer  anon=false  auth=false
+funcion  recuperar_acceso_frenar(p_ip text)  definer  anon=false  auth=false
 funcion  regalar_premio(p_premio_id uuid, p_para uuid, p_mensaje text)  definer  anon=false  auth=true
 funcion  regalos_y_bromas_recientes(p_desde timestamp with time zone)  invoker  anon=false  auth=true
 funcion  registrar_arbitraje_publico(p_nombre text, p_email text, p_porcentaje integer, p_nivel text, p_detalle jsonb)  definer  anon=true  auth=true
@@ -3894,6 +3923,7 @@ funcion  seminario_revelar(p_sala uuid, p_correcta integer)  definer  anon=false
 funcion  seminario_salas_para_mi()  definer  anon=false  auth=true
 funcion  sesion_de_supervisado(p_sesion uuid)  definer  anon=false  auth=true
 funcion  set_cuentas_del_supervisor(p_supervisor uuid, p_cuentas uuid[])  definer  anon=false  auth=true
+funcion  set_niveles_academia(p_academia uuid, p_niveles jsonb)  definer  anon=false  auth=true
 funcion  set_profesores_del_coordinador(p_coordinador uuid, p_profesores uuid[])  definer  anon=false  auth=true
 funcion  set_student_elo(p_student uuid, p_elo integer, p_tipo text)  definer  anon=false  auth=true
 funcion  sincronizar_profesor_principal()  definer  anon=false  auth=false
@@ -4072,6 +4102,9 @@ politica  clase_espectadores  clase_espectadores_select  SELECT
 politica  clase_espectadores  verificacion_en_dos_pasos  ALL  restrictiva
 politica  clase_grabaciones  clase_grabaciones_exige_acceso_sel  SELECT  restrictiva
 politica  clase_grabaciones  clase_grabaciones_select  SELECT
+politica  clase_marcas  clase_marcas_delete  DELETE
+politica  clase_marcas  clase_marcas_exige_acceso_sel  SELECT  restrictiva
+politica  clase_marcas  clase_marcas_select  SELECT
 politica  clase_plan_hecho  clase_plan_hecho_de_quien_da_la_clase  ALL
 politica  clase_sacados  clase_sacados_lee  SELECT
 politica  clase_sacados  verificacion_en_dos_pasos  ALL  restrictiva
@@ -4273,6 +4306,8 @@ politica  metropolitano_menu_cocinas  metropolitano_menu_cocinas_ver  SELECT
 politica  metropolitano_parqueo  metropolitano_parqueo_ver  SELECT
 politica  misiones_secretas  misiones_secretas_lee  SELECT
 politica  misiones_secretas  verificacion_en_dos_pasos  ALL  restrictiva
+politica  niveles_academia  niveles_academia_select  SELECT
+politica  niveles_alumno  niveles_alumno_select  SELECT
 politica  notas_alumno  notas_alumno_delete  DELETE
 politica  notas_alumno  notas_alumno_insert  INSERT
 politica  notas_alumno  notas_alumno_select  SELECT
@@ -4668,6 +4703,7 @@ trigger  practice_games  practica_intentos_al_crear
 trigger  practice_games  practica_ventaja_maxima
 trigger  practice_sessions  practice_sessions_ligar_a_la_clase
 trigger  premios_academia_canjes  auditar
+trigger  premios_canjeados  al_desbloquear_herramienta
 trigger  premios_canjeados  auditar
 trigger  preparacion_rivales_profesores  auditar
 trigger  preparacion_sesiones  sello
@@ -4903,6 +4939,9 @@ indice  clase_grabaciones  clase_grabaciones_creado_idx
 indice  clase_grabaciones  clase_grabaciones_pkey
 indice  clase_grabaciones  clase_grabaciones_profesor_idx
 indice  clase_grabaciones  clase_grabaciones_ruta_key
+indice  clase_marcas  clase_marcas_clase_idx
+indice  clase_marcas  clase_marcas_persona_clase_idx
+indice  clase_marcas  clase_marcas_pkey
 indice  clase_plan_hecho  clase_plan_hecho_item_idx
 indice  clase_plan_hecho  clase_plan_hecho_pkey
 indice  clase_sacados  clase_sacados_alumno
@@ -5157,6 +5196,11 @@ indice  metropolitano_menu_cocinas  metropolitano_menu_cocinas_pkey
 indice  metropolitano_parqueo  metropolitano_parqueo_pkey
 indice  misiones_secretas  misiones_secretas_jugador
 indice  misiones_secretas  misiones_secretas_pkey
+indice  niveles_academia  niveles_academia_nombre
+indice  niveles_academia  niveles_academia_orden
+indice  niveles_academia  niveles_academia_pkey
+indice  niveles_alumno  niveles_alumno_alumno
+indice  niveles_alumno  niveles_alumno_pkey
 indice  notas_alumno  notas_alumno_alumno_compartida_idx
 indice  notas_alumno  notas_alumno_class_session_id_fk
 indice  notas_alumno  notas_alumno_pkey
@@ -5762,6 +5806,13 @@ grant  clase_grabaciones  authenticated  SELECT
 grant  clase_grabaciones  authenticated  TRIGGER
 grant  clase_grabaciones  authenticated  TRUNCATE
 grant  clase_grabaciones  authenticated  UPDATE
+grant  clase_marcas  authenticated  DELETE
+grant  clase_marcas  authenticated  INSERT
+grant  clase_marcas  authenticated  REFERENCES
+grant  clase_marcas  authenticated  SELECT
+grant  clase_marcas  authenticated  TRIGGER
+grant  clase_marcas  authenticated  TRUNCATE
+grant  clase_marcas  authenticated  UPDATE
 grant  clase_plan_hecho  authenticated  DELETE
 grant  clase_plan_hecho  authenticated  INSERT
 grant  clase_plan_hecho  authenticated  REFERENCES
@@ -6325,6 +6376,12 @@ grant  misiones_secretas  authenticated  SELECT
 grant  misiones_secretas  authenticated  TRIGGER
 grant  misiones_secretas  authenticated  TRUNCATE
 grant  misiones_secretas  authenticated  UPDATE
+grant  niveles_academia  authenticated  REFERENCES
+grant  niveles_academia  authenticated  SELECT
+grant  niveles_academia  authenticated  TRIGGER
+grant  niveles_alumno  authenticated  REFERENCES
+grant  niveles_alumno  authenticated  SELECT
+grant  niveles_alumno  authenticated  TRIGGER
 grant  notas_alumno  authenticated  DELETE
 grant  notas_alumno  authenticated  INSERT
 grant  notas_alumno  authenticated  REFERENCES

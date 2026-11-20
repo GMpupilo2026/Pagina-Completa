@@ -222,7 +222,7 @@ async function pruebaPagina(browser) {
   await page.click(`#pi-enc-${i}-b-3`);
   ok(/juega con 3: pierde por incomparecencia 1 tablero/.test(await page.textContent(`#pi-enc-${i}-avisos`)), "con tres, el aviso del tablero que se pierde", await page.textContent(`#pi-enc-${i}`).catch(() => ""));
   await page.click(`#pi-enc-${i}-b-3`);
-  await page.click("#pi-alineaciones");
+  await P.clicEnMenu(page, "#pi-alineaciones");
   const hojas = await page.$$eval("#pi-firmas .pi-firma-mesa", (l) => l.map((x) => x.textContent));
   igual("una hoja de alineación por equipo en cada encuentro (3 equipos: un encuentro y uno libre)", hojas.length, 2);
   ok(/Alineación · Ronda 1 · Mesa/.test(hojas[0]) && /☐  Tablero 1: PRUEBA/.test(hojas[0]) && /Firma del capitán/.test(hojas[0]) && /Hora de entrega/.test(hojas[0]), "con la casilla de cada integrante, la firma y la hora", hojas[0]);

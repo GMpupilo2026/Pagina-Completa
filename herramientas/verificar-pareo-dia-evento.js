@@ -79,12 +79,12 @@ async function pruebaImprimir(browser) {
   await page.click("#pi-una-firma");
   igual("y la de firmar, igual", await page.$$eval("#pi-firmas .pi-ft .pi-ft-mesa", (l) => l.map((x) => x.textContent)), ["Mesa 2"]);
   await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
-  await page.click("#pi-planillas-firma");
+  await P.clicEnMenu(page, "#pi-planillas-firma");
   ok((await page.$$eval("#pi-firmas .pi-ft", (l) => l.length)) === 2, "y las de arriba siguen siendo de todas las mesas");
   await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
 
   console.log("\n=== El QR del jugador en la planilla ===");
-  await page.click("#pi-planillas-anotacion");
+  await P.clicEnMenu(page, "#pi-planillas-anotacion");
   await page.waitForFunction(() => document.querySelectorAll("#pi-firmas .pi-planilla").length === 2);
   ok(!(await page.$("#pi-firmas .pi-pl-qr")), "sin el evento en vivo, sin QR (llevaría a una página que espera)");
   await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
@@ -94,7 +94,7 @@ async function pruebaImprimir(browser) {
   await page.click('[data-ficha="rondas"]');
   await page.emulateMedia({ media: "print" });
   await page.setViewportSize({ width: Math.round(21.59 * CM), height: 1000 });
-  await page.click("#pi-planillas-anotacion", { force: true }).catch(() => page.evaluate(() => document.getElementById("pi-planillas-anotacion").click()));
+  await P.clicEnMenu(page, "#pi-planillas-anotacion", { force: true }).catch(() => page.evaluate(() => document.getElementById("pi-planillas-anotacion").click()));
   await page.waitForFunction(() => document.querySelectorAll("#pi-firmas .pi-pl-qr svg").length === 4);
   const titulos = await page.$$eval("#pi-firmas .pi-planilla:first-child .pi-pl-qr", (l) => l.map((x) => x.getAttribute("title")));
   ok(titulos.length === 2 && /PRUEBA SUB-10 A/.test(titulos[0]) && /PRUEBA SUB-10 B/.test(titulos[1]), "con el evento en vivo, un QR por jugador", JSON.stringify(titulos));
@@ -115,7 +115,7 @@ async function pruebaImprimir(browser) {
   ok(true, "al anotar la última mesa, avisa que ya se puede emparejar la ronda 2");
   ok(/PRUEBA SUB-10 — lista para la ronda 2/.test(await page.$eval("#pi-lista", (s) => [...s.options].map((o) => o.textContent).join("|"))), "y en la lista de torneos lo dice junto al nombre");
   ok(!/SUB-12 — lista/.test(await page.$eval("#pi-lista", (s) => [...s.options].map((o) => o.textContent).join("|"))), "solo en el que está listo");
-  await page.check("#pi-sonido-ronda");
+  await P.abrirMenuDe(page, "#pi-sonido-ronda"); await page.check("#pi-sonido-ronda");
   ok(await page.evaluate(() => localStorage.getItem("pareo_sonido_ronda_v1") === "1"), "el sonido se puede prender, y se recuerda");
   ok(!errores.length, "sin errores en la página", errores.join(" | "));
   await ctx.close();
@@ -148,7 +148,7 @@ async function pruebaCierre(browser) {
   await page.click(confirmar + " [data-avisos-aceptar]");
   await page.waitForFunction(() => JSON.parse(localStorage.getItem("pareo_lista_v1")).every((x) => !/SUB-1/.test(x.nombre)));
   ok(true, "al aceptar, los torneos del evento salen de la lista");
-  await page.click("#pi-archivar");
+  await P.clicEnMenu(page, "#pi-archivar");
   const hechos = await page.textContent("#pi-archivados").catch(() => "");
   ok(/paquete-final\.zip/.test(hechos) && /PRUEBA SUB-10/.test(hechos) && /PRUEBA SUB-12/.test(hechos), "y la lista de lo archivado dice en qué archivo están", hechos);
   await page.click("#pi-archivados-olvidar");

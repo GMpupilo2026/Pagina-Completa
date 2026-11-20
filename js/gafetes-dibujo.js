@@ -83,7 +83,8 @@
      cuenta aparte por cada código: «{Fed} {n}» da CRC 01, CRC 02… y TTO 01. */
   function gafetes(diseno, filas) {
     const cuenta = new Map();
-    return filas.map((fila) => {
+    const poses = Array.isArray(diseno.dorso.ilustraciones) ? diseno.dorso.ilustraciones.filter(Boolean) : [];
+    return filas.map((fila, n) => {
       const d = diseno;
       const prop = (t) => (t != null && d.nombre.propio ? nombrePropio(t) : t);
       let codigo = null;
@@ -117,6 +118,12 @@
         // la Eliminatoria JDN de PZ lleva a cada jugador a su ficha en Pareo.
         // Sin el dato, ese gafete sale sin QR (nunca con el de otro).
         ...(esPlantilla(d.dorso.qr) ? { qr: llenar(d.dorso.qr, fila) || "" } : {}),
+        // Con `dorso.ilustraciones` (varias imágenes del diseño), el dorso de
+        // cada gafete lleva una, por turno: la profe Karina en distintas poses.
+        // ...salvo que la fila traiga la suya (`dorso.poseColumna`: el personal).
+        ilustracionDorso: (d.dorso.poseColumna && valor(fila, d.dorso.poseColumna)) || (poses.length ? poses[n % poses.length] : null),
+        // El texto de arriba del QR, si es una plantilla, es de cada fila.
+        ...(esPlantilla(d.dorso.qrTexto) ? { qrTexto: llenar(d.dorso.qrTexto, fila) || "" } : {}),
       };
     });
   }
@@ -218,8 +225,11 @@
       patrocinador: caja(72, 48, 24, 22),
       // La ilustración del dorso, abajo y pegada al QR: la profe Karina lo
       // muestra con la mano (Eliminatoria JDN de PZ).
-      dorsoIlustracion: caja(24, 64, 44, 64),
-      qr: caja(71, 102, 25, 25),
+      dorsoIlustracion: caja(24, 64, 40, 64),   // termina antes del texto del QR
+      // Cuadrado siempre (con el lado chico de la escala): en un gafete que no
+      // es de 10 × 14, como el de 5,5 × 8,5, salía más alto que ancho y le
+      // sobraba blanco abajo. Pegado a la misma esquina de abajo a la derecha.
+      qr: { x: 96 * sx - 25 * s, y: 127 * sy - 25 * s, w: 25 * s, h: 25 * s },
       cinta: caja(0, 129.5, 100, 10.5),
       codigo: { x: 5 * sx, y: 137.2 * sy, tam: 15 * s },
     };
@@ -465,7 +475,7 @@
     // depende de su QR (si trae uno propio, `g.qr`) y de cuántas filas tiene su
     // horario (el marco de la tabla va en el fondo).
     const filasDorso = (diseno.dorso.horario || []).filter((r) => r.some((c) => String(c || "").trim())).length;
-    const clave = JSON.stringify([lado, color, lado === "frente" ? [g.iso && bandera ? g.iso : null, g.iconos, g.fotoClave || null] : [g.qr || null, filasDorso]]);
+    const clave = JSON.stringify([lado, color, lado === "frente" ? [g.iso && bandera ? g.iso : null, g.iconos, g.fotoClave || null] : [g.qr || null, filasDorso, g.ilustracionDorso || null]]);
 
     if (lado === "frente") {
       const centro = !!(g.foto && diseno.fotoCentro);
@@ -520,8 +530,11 @@
         // Las dos líneas del nombre van del mismo tamaño: el de la que menos cabe.
         let tam = MN.tam;
         for (const l of nombre) { const a = anchoDe(recursos.titulo, l, tam, 0); if (a > MN.max) tam = tam * MN.max / a; }
-        if (nombre.length === 1) escribir(recursos.titulo, nombre[0], tam, { x: M.W / 2, y: MN.solo, alinear: "centro", color, max: MN.max });
-        else nombre.slice(0, 2).forEach((l, i) => escribir(recursos.titulo, l, tam, { x: M.W / 2, y: i ? MN.y2 : MN.y1, alinear: "centro", color, max: MN.max }));
+        // `nombre.color` fija el color del nombre (en la PZ, negro); sin él,
+        // el del rol o la edad.
+        const colorNombre = /^#[0-9a-f]{6}$/i.test(diseno.nombre.color || "") ? diseno.nombre.color : color;
+        if (nombre.length === 1) escribir(recursos.titulo, nombre[0], tam, { x: M.W / 2, y: MN.solo, alinear: "centro", color: colorNombre, max: MN.max });
+        else nombre.slice(0, 2).forEach((l, i) => escribir(recursos.titulo, l, tam, { x: M.W / 2, y: i ? MN.y2 : MN.y1, alinear: "centro", color: colorNombre, max: MN.max }));
       }
       const MD = centro ? M.detallesCentro : M.detalles;
       g.detalles.slice(0, 3).forEach((d, i) => escribir(recursos.texto, d, MD.tam, centro
@@ -545,6 +558,7 @@
     // El QR: el del diseño, o el propio de este gafete (el Metropolitano lleva
     // a cada jugador a su ronda y su mesa).
     const qr = g.qr ? matrizQr(g.qr) : recursos.qr;
+    const ilDorso = (g.ilustracionDorso && img[g.ilustracionDorso]) || img.ilustracionDorso;
     const filas = (diseno.dorso.horario || []).filter((r) => r.some((c) => String(c || "").trim()));
     const T = diseno.dorso.horarioCentro ? M.tablaCentro : M.tabla;
     const enc = diseno.dorso.encabezados;
@@ -572,7 +586,7 @@
         rectRedondo(ctx, T.x, T.y, T.w, altoTabla, 2 * M.s); ctx.stroke();
       }
       if (img.patrocinador) contener(ctx, img.patrocinador, M.patrocinador, "centro");
-      if (img.ilustracionDorso) contener(ctx, img.ilustracionDorso, M.dorsoIlustracion, "der", true);
+      if (ilDorso) contener(ctx, ilDorso, M.dorsoIlustracion, "der", true);
       const c = M.cinta;
       ctx.fillStyle = color; ctx.fillRect(c.x, c.y, c.w, c.h);
       if (qr) {     // el QR se apoya sobre la cinta con un borde blanco
@@ -614,9 +628,10 @@
     // separados por «|»), arriba de él y pegado a su derecha: «Escanéalo: tu
     // mesa…» en la PZ. Con la ilustración del dorso al lado, no pasa del
     // ancho del QR (si no, se le montaría encima).
-    if (qr && diseno.dorso.qrTexto) {
-      const lineas = String(diseno.dorso.qrTexto).split(/\n|\|/).map((l) => l.trim()).filter(Boolean).slice(0, 3);
-      const der = M.qr.x + M.qr.w, max = img.ilustracionDorso ? M.qr.w + 6 * M.sx : der - T.x;
+    const textoQr = g.qrTexto != null ? g.qrTexto : diseno.dorso.qrTexto;
+    if (qr && textoQr) {
+      const lineas = String(textoQr).split(/\n|\|/).map((l) => l.trim()).filter(Boolean).slice(0, 3);
+      const der = M.qr.x + M.qr.w, max = ilDorso ? M.qr.w + 6 * M.sx : der - T.x;
       const tam = 7.6 * M.s, paso = tam * PT * 1.4;
       lineas.forEach((l, i) => {
         const ancho = Math.min(anchoDe(recursos.texto, l, tam, 0), max);

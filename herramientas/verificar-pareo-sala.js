@@ -140,7 +140,7 @@ async function pruebaPagina(browser) {
   igual("«Está bien así» la saca de la lista", await page.$$eval("#pi-confirmar li", (l) => l.length), 1);
 
   // Un adjunto manda otro resultado para la mesa 2.
-  await page.click("#pi-adjunto");
+  await P.clicEnMenu(page, "#pi-adjunto");
   await page.waitForSelector(dialogo);
   await page.fill(dialogo + ' [name="arbitro"]', "PRUEBA ADJUNTA");
   await page.click(dialogo + " [data-avisos-aceptar]");

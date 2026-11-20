@@ -23,7 +23,7 @@
     <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
     <script src="js/adaptive-mode.js"></script>
     <script src="js/candado-herramienta.js" data-herramienta="pareo"></script>
-<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(t==='jornada'&&!document.documentElement.hasAttribute('data-academia'))t=localStorage.getItem('panel_jornada_tema_previo_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
     <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
@@ -108,41 +108,65 @@
                         <span class="block text-sm font-semibold mb-1" data-t="torneoAbierto">Torneo abierto</span>
                         <select id="pi-lista" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
                     </label>
-                    <label class="flex items-center gap-2 text-sm pb-2"><input type="checkbox" id="pi-modo-jde"><span data-t="modoJde">Solo lo de los JDE</span></label>
-                    <label class="flex items-center gap-2 text-sm pb-2"><input type="checkbox" id="pi-sonido-ronda"><span data-t="sonidoRonda">Sonido al completar una ronda</span></label>
                     <button type="button" id="pi-nuevo" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="nuevoTorneo">Nuevo torneo</button>
-                    <button type="button" id="pi-archivar" aria-expanded="false" aria-controls="pi-archivar-caja" class="border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="archivarBoton">Archivar torneos</button>
+                    <!-- Lo que se usa poco va en «Más opciones», para que la barra quede corta
+                         («La barra de arriba, corta» en docs/decisiones/juegos-y-torneos.md). -->
+                    <details id="pi-mas" class="pi-menu pi-menu-derecha">
+                        <summary class="border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span data-t="masOpciones">Más opciones</span></summary>
+                        <div class="pi-menu-lista">
+                            <button type="button" id="pi-archivar" aria-expanded="false" aria-controls="pi-archivar-caja" data-t="archivarBoton">Archivar torneos</button>
+                            <label class="pi-menu-casilla"><input type="checkbox" id="pi-modo-jde"><span data-t="modoJde">Solo lo de los JDE</span></label>
+                            <label class="pi-menu-casilla"><input type="checkbox" id="pi-sonido-ronda"><span data-t="sonidoRonda">Sonido al completar una ronda</span></label>
+                        </div>
+                    </details>
                 </div>
                 <div id="pi-archivar-caja" class="mt-4 rounded-xl border border-brand-200 dark:border-brand-700 p-4" hidden></div>
                 <p id="pi-sin-red" class="text-xs text-brand-600 dark:text-brand-300 mt-3" role="status" hidden></p>
+                <!-- A la vista mientras no se guarde en la cuenta (js/pareo/nube.js lo esconde con la nube encendida): es lo que evita perder un torneo. -->
                 <p class="text-xs text-brand-600 dark:text-brand-300 mt-3" data-t="privado">Lo que escribes queda guardado solo en este navegador. Para pasarlo a otra computadora o tener una copia, baja el archivo del torneo en «Archivos».</p>
                 <!-- Guardar los torneos en la cuenta (js/pareo/nube.js): lo pinta la nube, solo con sesión. -->
                 <div id="pi-nube" class="mt-3 border-t border-brand-200 dark:border-brand-700 pt-3" hidden></div>
             </section>
 
-            <div id="pi-fichas" role="tablist" aria-label="Partes del torneo" data-t-aria="partes" class="pi-pestanas flex flex-wrap gap-2 mb-6 no-imprimir">
-                <button type="button" role="tab" id="pi-f-torneo" aria-controls="pi-p-torneo" data-ficha="torneo" class="pi-ficha" data-t="fTorneo">Torneo</button>
-                <button type="button" role="tab" id="pi-f-jugadores" aria-controls="pi-p-jugadores" data-ficha="jugadores" class="pi-ficha" data-t="fJugadores">Jugadores</button>
-                <button type="button" role="tab" id="pi-f-rondas" aria-controls="pi-p-rondas" data-ficha="rondas" class="pi-ficha" data-t="fRondas">Rondas</button>
-                <button type="button" role="tab" id="pi-f-centro" aria-controls="pi-p-centro" data-ficha="centro" class="pi-ficha" data-t="fCentro">Centro del evento</button>
-                <button type="button" role="tab" id="pi-f-clasificacion" aria-controls="pi-p-clasificacion" data-ficha="clasificacion" class="pi-ficha" data-t="fClasificacion">Clasificación</button>
-                <button type="button" role="tab" id="pi-f-cruzada" aria-controls="pi-p-cruzada" data-ficha="cruzada" class="pi-ficha" data-t="fCruzada">Tabla cruzada</button>
-                <button type="button" role="tab" id="pi-f-archivos" aria-controls="pi-p-archivos" data-ficha="archivos" class="pi-ficha" data-t="fArchivos">Archivos y comprobador</button>
+            <!-- El cuerpo: la barra lateral con las partes del torneo (cada una dice
+                 cómo va) y, a la derecha, «Lo siguiente» y la parte abierta. Ver
+                 «Pareo Integral con el aspecto del panel de la Academia» en
+                 docs/decisiones/juegos-y-torneos.md. -->
+            <div class="pi-cuerpo">
+            <div id="pi-fichas" role="tablist" aria-orientation="vertical" aria-label="Partes del torneo" data-t-aria="partes" class="pi-pestanas no-imprimir">
+                <button type="button" role="tab" id="pi-f-inicio" aria-controls="pi-p-inicio" data-ficha="inicio" class="pi-ficha"><span class="pi-ficha-icono" aria-hidden="true">🏠</span><span data-t="fInicio">Portada</span><span class="pi-insignia"></span></button>
+                <button type="button" role="tab" id="pi-f-torneo" aria-controls="pi-p-torneo" data-ficha="torneo" class="pi-ficha"><span class="pi-ficha-icono" aria-hidden="true">⚙️</span><span data-t="fTorneo">Torneo</span><span class="pi-insignia"></span></button>
+                <button type="button" role="tab" id="pi-f-jugadores" aria-controls="pi-p-jugadores" data-ficha="jugadores" class="pi-ficha"><span class="pi-ficha-icono" aria-hidden="true">👥</span><span data-t="fJugadores">Jugadores</span><span class="pi-insignia"></span></button>
+                <button type="button" role="tab" id="pi-f-rondas" aria-controls="pi-p-rondas" data-ficha="rondas" class="pi-ficha"><span class="pi-ficha-icono" aria-hidden="true">♟️</span><span data-t="fRondas">Rondas</span><span class="pi-insignia"></span></button>
+                <button type="button" role="tab" id="pi-f-centro" aria-controls="pi-p-centro" data-ficha="centro" class="pi-ficha"><span class="pi-ficha-icono" aria-hidden="true">📡</span><span data-t="fCentro">Centro del evento</span><span class="pi-insignia"></span></button>
+                <button type="button" role="tab" id="pi-f-clasificacion" aria-controls="pi-p-clasificacion" data-ficha="clasificacion" class="pi-ficha"><span class="pi-ficha-icono" aria-hidden="true">🏆</span><span data-t="fClasificacion">Clasificación</span><span class="pi-insignia"></span></button>
+                <button type="button" role="tab" id="pi-f-cruzada" aria-controls="pi-p-cruzada" data-ficha="cruzada" class="pi-ficha"><span class="pi-ficha-icono" aria-hidden="true">▦</span><span data-t="fCruzada">Tabla cruzada</span><span class="pi-insignia"></span></button>
+                <button type="button" role="tab" id="pi-f-archivos" aria-controls="pi-p-archivos" data-ficha="archivos" class="pi-ficha"><span class="pi-ficha-icono" aria-hidden="true">📁</span><span data-t="fArchivos">Archivos</span><span class="pi-insignia"></span></button>
+                <button type="button" role="tab" id="pi-f-herramientas" aria-controls="pi-p-herramientas" data-ficha="herramientas" class="pi-ficha pi-no-jde"><span class="pi-ficha-icono" aria-hidden="true">🧰</span><span data-t="fHerramientas">Herramientas</span><span class="pi-insignia"></span></button>
             </div>
+            <div class="pi-contenido">
+            <!-- «Lo siguiente»: qué toca hacer ahora y el botón para hacerlo (pintarSiguiente). -->
+            <div id="pi-siguiente" class="pi-siguiente no-imprimir" role="region" aria-label="Lo siguiente" data-t-aria="sigRegion" hidden></div>
+
+            <!-- ===== Portada (pintarInicio en js/pareo/pagina.js) ===== -->
+            <section id="pi-p-inicio" role="tabpanel" aria-labelledby="pi-f-inicio" class="no-imprimir" hidden>
+                <div id="pi-inicio"></div>
+            </section>
+
 
             <!-- ===== Torneo ===== -->
             <section id="pi-p-torneo" role="tabpanel" aria-labelledby="pi-f-torneo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" hidden>
                 <h2 class="font-serif text-xl font-bold mb-4" data-t="datosTorneo">Datos del torneo</h2>
                 <div id="pi-caja-subir-lista" class="mb-4 rounded-xl border-2 border-accent-500 p-4">
                     <h3 class="font-semibold" data-t="subirLista">Subir la lista de jugadores (Word o Excel)</h3>
-                    <p class="text-sm text-brand-600 dark:text-brand-300 mt-1" data-t="subirListaAyuda">Un .xlsx, .csv o .docx con una fila o un párrafo por jugador. Si una de las primeras filas dice «Nombre», «Institución», «Elo»… se usa esa columna; si no, se lee en el mismo orden de arriba. Si trae sexo, categoría o equipo/individual (como la inscripción de los JDE), te sugiere separarla en un torneo por grupo. Se pueden subir varios archivos a la vez (los clasificados de cada Dirección Regional, en la Interregional).</p>
+                    <details class="pi-ayuda"><summary data-t="comoFunciona">¿Cómo funciona?</summary><p data-t="subirListaAyuda">Un .xlsx, .csv o .docx con una fila o un párrafo por jugador. Si una de las primeras filas dice «Nombre», «Institución», «Elo»… se usa esa columna; si no, se lee en el mismo orden de arriba. Si trae sexo, categoría o equipo/individual (como la inscripción de los JDE), te sugiere separarla en un torneo por grupo. Se pueden subir varios archivos a la vez (los clasificados de cada Dirección Regional, en la Interregional).</p></details>
                     <label class="mt-3 inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors cursor-pointer focus-within:ring-2 focus-within:ring-brand-800 focus-within:ring-offset-2"><span data-t="subirListaBoton">Elegir el archivo</span><input type="file" id="pi-subir-lista" accept=".xlsx,.csv,.docx" multiple class="sr-only"></label>
                     <p id="pi-subir-lista-estado" class="text-sm text-brand-600 dark:text-brand-300 mt-2" role="status" aria-live="polite"></p>
                     <div id="pi-sugerencia" class="mt-4 rounded-xl border-2 border-accent-500 bg-white dark:bg-brand-900 p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" role="region" aria-labelledby="pi-sugerencia-titulo" tabindex="-1" hidden></div>
                 </div>
                 <div class="mb-4 rounded-xl border border-brand-200 dark:border-brand-700 p-4">
                     <button type="button" id="pi-config-jde-aplicar" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed" data-t="configJdeBoton">Aplicar la configuración de los JDE</button>
-                    <p class="text-sm text-brand-600 dark:text-brand-300 mt-2" data-t="configJdeBotonAyuda">Deja el sistema según cuántos juegan (todos contra todos con 8 o menos, suizo de al menos 5 rondas con más), el ritmo mínimo de 10 min + 2 s si no tiene uno, 1 · ½ · 0 con el bye en 1 y los desempates de FIDE. Antes pregunta la etapa y el lugar, y le pone al torneo el nombre del evento. Solo antes de la ronda 1.</p>
+                    <details class="pi-ayuda"><summary data-t="comoFunciona">¿Cómo funciona?</summary><p data-t="configJdeBotonAyuda">Deja el sistema según cuántos juegan (todos contra todos con 8 o menos, suizo de al menos 5 rondas con más), el ritmo mínimo de 10 min + 2 s si no tiene uno, 1 · ½ · 0 con el bye en 1 y los desempates de FIDE. Antes pregunta la etapa y el lugar, y le pone al torneo el nombre del evento. Solo antes de la ronda 1.</p></details>
                 </div>
                 <p id="pi-publico-aviso" class="mb-4 text-sm text-brand-600 dark:text-brand-300"><span data-t="publicoAviso">Todo torneo de Pareo Integral se publica en Torneos en Pareo Integral al emparejar la ronda 1, con el nombre, la institución, el Elo, la categoría y los resultados de cada participante (nunca la fecha de nacimiento, el sexo ni el ID FIDE). Ver la política de privacidad.</span> <a href="privacidad.html#torneos" target="_blank" rel="noopener" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">privacidad.html</a></p>
                 <div id="pi-torneo-vivo" class="mb-4 rounded-xl border border-brand-200 dark:border-brand-700 p-4"></div>
@@ -194,7 +218,7 @@
 
                 <div class="mt-6">
                     <h3 class="font-semibold mb-1" data-t="desempates">Desempates, en orden</h3>
-                    <p class="text-sm text-brand-600 dark:text-brand-300 mb-3" data-t="desempatesAyuda">Se aplican uno detrás del otro, según el reglamento C.07 de FIDE (versión 2026). Los que usan el Elo necesitan el Elo de todos los jugadores.</p>
+                    <details class="pi-ayuda"><summary data-t="comoFunciona">¿Cómo funciona?</summary><p data-t="desempatesAyuda">Se aplican uno detrás del otro, según el reglamento C.07 de FIDE (versión 2026). Los que usan el Elo necesitan el Elo de todos los jugadores.</p></details>
                     <ol id="pi-desempates" class="space-y-2 mb-3"></ol>
                     <div class="flex flex-wrap items-end gap-2">
                         <label class="flex-1 min-w-[14rem]"><span class="block text-sm font-semibold mb-1" data-t="agregarDesempate">Agregar un desempate</span><select id="pi-desempate-nuevo" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select></label>
@@ -205,7 +229,7 @@
 
             <!-- ===== Jugadores ===== -->
             <section id="pi-p-jugadores" role="tabpanel" aria-labelledby="pi-f-jugadores" class="space-y-6" hidden>
-                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                <div id="pi-jug-agregar" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
                     <h2 class="font-serif text-xl font-bold mb-4" data-t="agregarJugador">Agregar un jugador</h2>
                     <p id="pi-nota-equipos" class="text-sm text-brand-600 dark:text-brand-300 mb-3" data-t="notaEquipos" hidden>Es un torneo por equipos: los equipos salen de la inscripción. Para otra lista, crea un torneo nuevo.</p>
                     <form id="pi-form-jugador" class="grid sm:grid-cols-6 gap-3" novalidate>
@@ -249,9 +273,10 @@
                     </details>
                     <p class="mt-4 text-sm"><span data-t="subirListaEnTorneo">¿Tienes la lista en Word o Excel?</span> <button type="button" id="pi-ir-subir-lista" class="font-semibold underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="subirListaIr">Súbela en la ficha Torneo</button></p>
                 </div>
-                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                <div id="pi-jug-inscritos" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
                     <div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
                         <h2 class="font-serif text-xl font-bold"><span data-t="inscritos">Inscritos</span> (<span id="pi-cuenta">0</span>)</h2>
+                        <button type="button" id="pi-ir-agregar" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="irAgregar" hidden>Agregar un jugador</button>
                         <p class="text-sm text-brand-600 dark:text-brand-300" id="pi-orden-ayuda" data-t="ordenAyuda">El número de cada uno sale del orden inicial de FIDE: Elo, título y nombre.</p>
                     </div>
                     <div id="pi-acreditacion"></div>
@@ -284,9 +309,9 @@
                 <div id="pi-ronda"></div>
                 <div id="pi-ver-compartir" class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 no-imprimir" hidden>
                     <h3 class="font-semibold mb-2" data-t="verDesdeElCelular">Ver desde el celular</h3>
-                    <p class="text-sm text-brand-600 dark:text-brand-300 mb-3" data-t="verAyuda">Es una foto del momento: muestra esta ronda y la clasificación de ahora, pero no se actualiza sola. Si cambia un resultado o se empareja otra ronda, vuelve a mostrar el código.</p>
+                    <details class="pi-ayuda"><summary data-t="comoFunciona">¿Cómo funciona?</summary><p data-t="verAyuda">Es una foto del momento: muestra esta ronda y la clasificación de ahora, pero no se actualiza sola. Si cambia un resultado o se empareja otra ronda, vuelve a mostrar el código.</p></details>
                     <label class="flex items-center gap-2 text-sm mb-1"><input type="checkbox" id="pi-ver-en-vivo" class="w-4 h-4 accent-brand-800"> <span data-t="actualizarSola">Actualizar sola (en vivo)</span></label>
-                    <p class="text-xs text-brand-600 dark:text-brand-300 mb-3" data-t="actualizarSolaAyuda">Mientras esta pestaña quede abierta, cada cambio que guardes llega solo a quien ya tenga el enlace o el código abiertos. Si la cierras, quien ya estaba mirando se queda con lo último que vio, y quien recién llega no ve nada hasta que la vuelvas a abrir.</p>
+                    <details class="pi-ayuda"><summary data-t="comoFunciona">¿Cómo funciona?</summary><p data-t="actualizarSolaAyuda">Mientras esta pestaña quede abierta, cada cambio que guardes llega solo a quien ya tenga el enlace o el código abiertos. Si la cierras, quien ya estaba mirando se queda con lo último que vio, y quien recién llega no ve nada hasta que la vuelvas a abrir.</p></details>
                     <p id="pi-ver-en-vivo-estado" class="text-sm mb-3" role="status" aria-live="polite" hidden></p>
                     <button type="button" id="pi-ver-en-vivo-nuevo-codigo" class="text-sm underline underline-offset-2 mb-3 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="nuevoCodigoBoton" hidden>Usar un código nuevo</button>
                     <div class="flex flex-wrap gap-4 items-start">
@@ -335,7 +360,7 @@
                 <div class="overflow-x-auto"><table class="pi-tabla" id="pi-tabla-cruzada"></table></div>
             </section>
 
-            <!-- ===== Archivos y comprobador ===== -->
+            <!-- ===== Archivos ===== -->
             <section id="pi-p-archivos" role="tabpanel" aria-labelledby="pi-f-archivos" class="space-y-6" hidden>
                 <div id="pi-evento" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" hidden></div>
                 <div id="pi-publicar" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5"></div>
@@ -349,7 +374,7 @@
                         <button type="button" id="pi-bajar-jugadores" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="bajarJugadores">Exportar jugadores (.csv)</button>
                         <button type="button" id="pi-borrar" class="border border-red-700 text-red-700 dark:border-red-400 dark:text-red-300 font-semibold px-4 py-2 rounded-lg text-sm hover:bg-red-50 dark:hover:bg-red-950 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="borrarTorneo">Borrar este torneo</button>
                     </div>
-                    <p class="text-sm text-brand-600 dark:text-brand-300 mt-3" data-t="trfAyuda">El TRF es el archivo que FIDE pide para el informe de Elo, y el que leen los demás programas de emparejamiento.</p>
+                    <details class="pi-ayuda"><summary data-t="comoFunciona">¿Cómo funciona?</summary><p data-t="trfAyuda">El TRF es el archivo que FIDE pide para el informe de Elo, y el que leen los demás programas de emparejamiento.</p></details>
                     <div id="pi-historial" class="mt-5"></div>
                 </div>
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
@@ -357,9 +382,15 @@
                     <div class="flex flex-wrap items-center gap-3">
                         <label class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 cursor-pointer focus-within:ring-2 focus-within:ring-accent-400"><span data-t="abrirArchivo">Abrir un TRF o una copia .json</span><input type="file" id="pi-abrir" accept=".trf,.txt,.json,text/plain,application/json" class="sr-only"></label>
                     </div>
-                    <p class="text-sm text-brand-600 dark:text-brand-300 mt-3" data-t="abrirAyuda">Sirve el TRF de Swiss-Manager, Vega u otro programa: se siguen emparejando las rondas que faltan.</p>
+                    <details class="pi-ayuda"><summary data-t="comoFunciona">¿Cómo funciona?</summary><p data-t="abrirAyuda">Sirve el TRF de Swiss-Manager, Vega u otro programa: se siguen emparejando las rondas que faltan.</p></details>
                 </div>
-                <div class="pi-no-jde bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+            </section>
+
+            <!-- ===== Herramientas: el comprobador, el generador y con qué está hecho.
+                 Antes iban al final de «Archivos y comprobador»; ahora tienen su parte
+                 («Archivos y Herramientas, separados» en docs/decisiones/juegos-y-torneos.md). ===== -->
+            <section id="pi-p-herramientas" role="tabpanel" aria-labelledby="pi-f-herramientas" class="pi-no-jde space-y-6" hidden>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
                     <h2 class="font-serif text-xl font-bold mb-1" data-t="comprobador">Comprobador de emparejamientos</h2>
                     <p class="text-sm text-brand-600 dark:text-brand-300 mb-3" data-t="comprobadorAyuda">Pega un TRF (de cualquier programa) y se vuelve a emparejar cada ronda con el Sistema Holandés para ver si coincide con la que se jugó.</p>
                     <textarea id="pi-fpc-texto" rows="6" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 font-mono text-xs" aria-label="TRF a comprobar" data-t-aria="trfComprobar"></textarea>
@@ -370,7 +401,7 @@
                     </div>
                     <div id="pi-fpc-resultado" class="mt-3" role="status" aria-live="polite"></div>
                 </div>
-                <div class="pi-no-jde bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
                     <h2 class="font-serif text-xl font-bold mb-1" data-t="generador">Generador de torneos al azar</h2>
                     <p class="text-sm text-brand-600 dark:text-brand-300 mb-3" data-t="generadorAyuda">Arma un torneo entero con resultados al azar, emparejado con el Sistema Holandés. Con la misma semilla sale siempre el mismo torneo: sirve para comparar programas.</p>
                     <div class="flex flex-wrap items-end gap-3">
@@ -379,7 +410,7 @@
                         <button type="button" id="pi-rtg-abrir" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="generarAbrir">Generar y abrirlo acá</button>
                     </div>
                 </div>
-                <div class="pi-no-jde rounded-2xl border border-brand-200 dark:border-brand-700 p-5 text-sm text-brand-700 dark:text-brand-200">
+                <div class="rounded-2xl border border-brand-200 dark:border-brand-700 p-5 text-sm text-brand-700 dark:text-brand-200">
                     <h2 class="font-semibold mb-2" data-t="creditos">Con qué está hecho</h2>
                     <p data-t="creditosMotor">Los emparejamientos los calcula bbpPairings (Jeremy Bierema, licencia Apache 2.0), el motor del Sistema Holandés que usan programas avalados por FIDE, compilado para correr en tu navegador.</p>
                     <p class="mt-2" data-t="creditosDesempates">Los desempates siguen el C.07 de FIDE (versión 2026) y están comparados con chesspairing (Gert Nutterts, licencia Apache 2.0).</p>
@@ -387,6 +418,8 @@
                     <p class="mt-2"><a href="pareo-manual.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="manual">Manual de uso</a> <span aria-hidden="true">·</span> <a href="torneos-pareo.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="torneosPublicados">Torneos publicados</a> <span aria-hidden="true">·</span> <a href="descargas/pareo-integral-cli.zip" download class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="bajarCli">Versión de línea de comandos (.zip)</a> <span aria-hidden="true">·</span> <a href="js/vendor/bbppairings/LEEME.txt" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="licencias">Licencias y versión del motor</a></p>
                 </div>
             </section>
+            </div>
+            </div>
 
             <!-- La barra de estado, como la de un programa: el torneo abierto,
                  cuántos juegan, la ronda y cuándo se guardó (pintarEstado). -->
