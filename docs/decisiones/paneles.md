@@ -2146,8 +2146,9 @@ lo mismo para cualquier rival, activable profesor por profesor desde
 administración.
 
 **Quién puede lo decide la base.** `puedo_preparar_rivales()` dice que sí a
-quien administra y a los profesores que están en
-`preparacion_rivales_profesores`. Esa tabla no tiene política de escritura: la
+quien administra, a los profesores que están en
+`preparacion_rivales_profesores` y al alumno que la canjeó por 15 000 puntos
+(ver «Desbloquearla con 15 000 puntos»). Esa tabla no tiene política de escritura: la
 escribe `activar_preparacion_rivales()`, que exige administrar, exige que la
 cuenta sea de un profesor y **devuelve cómo quedó**, leído de la tabla. El
 interruptor de `admin.html#preparacion` (`js/admin-preparacion.js`) pinta eso,
@@ -2306,6 +2307,58 @@ Competir («Prepara tu próxima partida»).
   dice, a Lichess solo va el usuario con el tope de 300, el plan con blancas y
   con negras, «Lo que juega», que se puede entrenar, que no se inserta nada
   del plan ni del análisis y que el formulario recuerda al último rival.
+
+### Desbloquearla con 15 000 puntos
+
+Se pidió que los alumnos pudieran abrir la herramienta del profesor ganándose
+15 000 Puntos Ajedrez, y que a administración le llegara un aviso cuando
+alguien lo logra. Entre «tener un saldo de 15 000», «haber ganado 15 000 en
+total» y «canjearla en la tienda», el dueño eligió **el canje**: el alumno
+gasta los 15 000 en la tienda de puntos (`puntos-tienda.html`). Con el saldo,
+al salir nadie la tenía (el saldo más alto era 12 723); con lo ganado en total,
+dos alumnos la habrían tenido apenas salía.
+
+- **Es un premio más del catálogo**: `herramienta_preparacion_rivales`,
+  categoría «contenido», el tipo nuevo `herramienta` (con
+  `parametros.herramienta = 'preparacion_rivales'`), 15 000 puntos y un solo
+  canje por persona. Se canjea con `canjear_premio()` de siempre, que valida
+  el saldo con su candado y descuenta. No se puede regalar: `regalar_premio()`
+  solo deja cosméticos, ventajas de entrenamiento y regalos.
+- **El canje ES el permiso.** `puedo_preparar_rivales()` suma una tercera vía:
+  tener ese canje en `premios_canjeados`. No hay una tabla aparte que se pueda
+  desfasar, y la política de insert de `preparaciones_rival`, que ya preguntaba
+  a esa función, deja guardar análisis al alumno sin tocarla. A diferencia del
+  profesor activado, administración no se la puede apagar desde el interruptor:
+  la pagó.
+- **Quien ya la tiene no la compra.** El trigger
+  `interno.al_desbloquear_herramienta()` (AFTER INSERT en `premios_canjeados`)
+  rechaza el canje de quien administra o de un profesor activado; el error
+  deshace el canje entero, puntos incluidos.
+- **El aviso a administración** lo manda ese mismo trigger con `avisar_push()`
+  a cada cuenta que administra («Desbloquearon la preparación de rivales»,
+  con el nombre y los puntos), y lleva a `admin.html#preparacion`. Un aviso
+  que no sale no deshace el canje. Lo que queda es la lista «Alumnos que la
+  desbloquearon con puntos» de esa sección (`js/admin-preparacion.js`, que lee
+  los canjes) y la bitácora de auditoría, porque `premios_canjeados` ya tenía
+  su `interno.auditar()`.
+- **La puerta del alumno** es Competir: la tarjeta «Preparación de rivales»
+  (`js/competir.js`, `mostrarPreparacion()`) abre la herramienta a quien
+  puede, y al alumno que todavía no la tiene le dice que se desbloquea con
+  15 000 puntos y lo lleva a la tienda. Un profesor sin activar no ve la
+  tarjeta: a él se la activa administración. En «Mis premios», el premio
+  canjeado trae «Abrir la herramienta» (`HERRAMIENTAS` de `js/puntos.js`).
+  En la página, el alumno sin el canje ve cómo se desbloquea y no el «pídesela
+  a la administración» del profesor.
+- **En la página, el alumno no ve lo que es de dar clase**: «Mandárselo a un
+  alumno» y «Guardar en Archivos» no se pintan (`alMandar`/`alArchivar` van
+  nulos), y el cruce es con SUS partidas: «Cruzarlo con tus partidas», «Tú
+  contra él», «tú juegas…» (`paraElAlumno` en `js/preparacion-pintar.js`).
+  Alumno es quien no es profesor ni administra.
+- Lo prueba `verificar-preparacion-rivales.js` (`pruebaAlumnoConPuntos`): el
+  alumno sin el canje ve el aviso de la tienda; con él, la herramienta sin
+  «Mandárselo a un alumno» ni «Guardar en Archivos» y con el cruce en «tus
+  partidas». Y sin navegador, que la migración dé el permiso por el canje,
+  rechace a quien ya la tiene y avise a quien administra.
 
 ### La base de la preparación: etapa 1
 

@@ -1,9 +1,14 @@
 /* preparacion-rivales.html: cargar las partidas, elegir al rival, filtrar,
  * pintar el análisis, revisarlo con Stockfish y guardarlo.
  *
- * Quién puede: puedo_preparar_rivales() (quien administra, o un profesor al
- * que administración se la activó en admin.html#preparacion). Esta página
- * solo decide qué se pinta; guardar lo vuelve a exigir la RLS.
+ * Quién puede: puedo_preparar_rivales() (quien administra, un profesor al
+ * que administración se la activó en admin.html#preparacion, o un alumno que
+ * la desbloqueó con 15 000 puntos en la tienda de puntos). Esta página solo
+ * decide qué se pinta; guardar lo vuelve a exigir la RLS.
+ *
+ * Al alumno no se le muestra lo que es de dar clase (mandar el plan a un
+ * alumno, guardarlo en Archivos), y el cruce es con SUS partidas. Ver
+ * «Desbloquearla con 15 000 puntos» en docs/decisiones/paneles.md.
  *
  * Las piezas:
  *   js/preparacion-trabajador.js  lee y analiza en segundo plano, y se queda
@@ -31,6 +36,8 @@
   const TOPE_BYTES = 1400000;      // la base acepta hasta 1,5 MB por análisis
 
   let yo = null;
+  let soyAlumno = false;            // la desbloqueó con puntos: sin lo de dar clase
+  const segun = (profe, alumno) => (soyAlumno ? alumno : profe);
   let actual = null;                // el análisis que se ve
   let guardadoId = null;            // si el que se ve ya está guardado
   let rivalCargado = null;          // el rival cuyas partidas tiene el trabajador
@@ -484,9 +491,10 @@
         window.print();
       },
       alBajarPgn: (lado) => bajarPgn(r, lado),
-      alMandar: (lado, origen) => abrirMandar(r, lado, origen),
+      alMandar: soyAlumno ? null : (lado, origen) => abrirMandar(r, lado, origen),
       alJugar: (lado, origen) => abrirSparring(r, lado, origen),
-      alArchivar: (lado, origen) => archivar(r, lado, origen),
+      alArchivar: soyAlumno ? null : (lado, origen) => archivar(r, lado, origen),
+      paraElAlumno: soyAlumno,
       // Una jugada del plan: la línea hasta ahí y su continuación principal.
       alVerLinea: (camino, origen) => {
         const l = L.lineaDelPlan(r, camino);
@@ -732,7 +740,7 @@
 
   async function cargarAlumno(texto, usuario) {
     const estado = $("alumno-estado");
-    estado.textContent = "Leyendo las partidas de tu alumno…";
+    estado.textContent = segun("Leyendo las partidas de tu alumno…", "Leyendo tus partidas…");
     let r;
     try {
       r = await trabajo.leerAlumno(texto);
@@ -768,7 +776,7 @@
     }
     const nombreSitio = sitio === "lichess" ? "Lichess" : "Chess.com";
     $("alumno-bajar").disabled = true;
-    estado.textContent = "Pidiéndole las partidas de tu alumno a " + nombreSitio + "…";
+    estado.textContent = segun("Pidiéndole las partidas de tu alumno a ", "Pidiéndole tus partidas a ") + nombreSitio + "…";
     let texto = "";
     try {
       texto = await window.PreparacionDescarga.descargar({ sitio, usuario, maximo: 2000 });
@@ -784,7 +792,7 @@
 
   async function leerAlumno() {
     const f = ($("alumno-archivo").files || [])[0];
-    if (!f) { $("alumno-estado").textContent = "Elige el archivo PGN con las partidas de tu alumno."; return; }
+    if (!f) { $("alumno-estado").textContent = segun("Elige el archivo PGN con las partidas de tu alumno.", "Elige el archivo PGN con tus partidas."); return; }
     let texto;
     try { texto = await leerArchivo(f); } catch (e) { $("alumno-estado").textContent = "No se pudo leer el archivo: " + (e.message || e); return; }
     await cargarAlumno(texto, null);
@@ -797,7 +805,7 @@
     // análisis: uno guardado de otro rival no las trae.
     const mismas = r && rivalCargado && claveDe(rivalCargado) === claveDe(r.rival);
     if (!r || r.vacio || !alumno || !mismas) {
-      $("alumno-estado").textContent = mismas ? "Elige a tu alumno en la lista." : "Para cruzar hace falta analizar al rival con sus partidas cargadas (un análisis guardado no las trae): vuelve a cargarlas y analízalo.";
+      $("alumno-estado").textContent = mismas ? segun("Elige a tu alumno en la lista.", "Elígete en la lista.") : "Para cruzar hace falta analizar al rival con sus partidas cargadas (un análisis guardado no las trae): vuelve a cargarlas y analízalo.";
       return;
     }
     $("alumno-cruzar").disabled = true;
@@ -1071,17 +1079,35 @@
 
   // ------------------------------------------------------------ inicio
 
+  /* El alumno se prepara para SU partida: el cruce es con sus partidas y no
+     hay a quién mandarle el plan (alMandar y alArchivar no van en pintar). */
+  function modoAlumno() {
+    document.documentElement.dataset.modo = "alumno";
+    $("alumno-titulo").textContent = "Cruzarlo con tus partidas";
+    $("alumno-ayuda").textContent = "Trae tus partidas: se compara tu repertorio con el plan (¿ya lo juegas?) y con lo que el rival juega (¿dónde te conviene jugar lo tuyo?).";
+    $("alumno-usuario-rotulo").textContent = "Tu usuario";
+    $("alumno-archivo-rotulo").textContent = "O un PGN con tus partidas";
+    $("alumno-nombre-rotulo").textContent = "Tú en ese archivo";
+  }
+
   async function init() {
     const { data } = await sb.auth.getSession();
     const sesion = data && data.session;
     if (!sesion) { location.href = "login.html"; return; }
     yo = sesion.user.id;
-    const { data: puede, error } = await sb.rpc("puedo_preparar_rivales");
+    const [{ data: puede, error }, { data: perfil }] = await Promise.all([
+      sb.rpc("puedo_preparar_rivales"),
+      sb.from("profiles").select("role, is_admin").eq("id", yo).maybeSingle(),
+    ]);
+    soyAlumno = !!perfil && perfil.role !== "profesor" && !perfil.is_admin;
     $("loading").classList.add("hidden");
     if (error || puede !== true) {
+      // Al alumno se le dice cómo se abre: con puntos, en la tienda.
+      if (soyAlumno) { $("denegado-profe").hidden = true; $("denegado-alumno").hidden = false; }
       $("denegado").classList.remove("hidden");
       return;
     }
+    if (soyAlumno) modoAlumno();
     $("app").classList.remove("hidden");
     $("leer").addEventListener("click", leer);
     $("bajar-form").addEventListener("submit", bajar);

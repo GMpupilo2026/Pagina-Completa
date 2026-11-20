@@ -547,6 +547,25 @@
             banner.classList.remove("hidden");
             setTimeout(() => banner.classList.add("hidden"), 6000);
         }
+        /* La tarjeta de la preparación de rivales completa: abierta para quien
+           puede usarla (puedo_preparar_rivales: administración, el profesor
+           activado o el alumno que la canjeó), y para el alumno que todavía no
+           la tiene, la puerta a la tienda de puntos, donde se desbloquea con
+           15 000. Un profesor sin activar no ve nada: a él se la activa
+           administración. Ver «Desbloquearla con 15 000 puntos» en paneles.md. */
+        async function mostrarPreparacion() {
+            const tarjeta = document.getElementById("preparacion-completa");
+            const { data: puede } = await sb.rpc("puedo_preparar_rivales");
+            if (puede !== true) {
+                if (isTeacher) return;
+                tarjeta.href = "puntos-tienda.html";
+                document.getElementById("preparacion-completa-icono").textContent = "🔒";
+                document.getElementById("preparacion-completa-desc").textContent = "La herramienta completa de los profesores para estudiar a un rival. Se desbloquea para siempre con 15 000 Puntos Ajedrez en la tienda de puntos.";
+            }
+            tarjeta.classList.remove("hidden");
+            tarjeta.classList.add("block");
+        }
+
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
@@ -562,6 +581,7 @@
             // A quien arma torneos no se le dice «los que arma tu profesor».
             if (isTeacher) document.getElementById("torneos-desc").textContent = "Arma torneos para tus alumnos, con sus rondas y su tabla.";
             if (profile.is_admin) mostrarMediciones();
+            mostrarPreparacion().catch((e) => console.error(e));
 
             // Quién está en línea y los retos: para todos, alumnos y profesores.
             await iniciarPresencia();

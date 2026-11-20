@@ -912,8 +912,11 @@
      tablas, por el celular (lo mismo que «Dónde deja la teoría»). */
   function pintarCruce(r) {
     const c = r.cruce;
-    const s = tarjeta("Tu alumno contra él: " + c.alumno, "cruce-titulo");
-    s.appendChild(nota("Con " + c.total.toLocaleString("es-CR") + (c.total === 1 ? " partida" : " partidas") + " de " + c.alumno + " (una jugada cuenta desde " + c.minimo + "). «Él saca» es lo que consigue el rival; «tu alumno saca», lo que consigue el alumno en sus propias partidas."));
+    // Un alumno que desbloqueó la herramienta con puntos se cruza a sí mismo:
+    // «tú», no «tu alumno» (ver «Desbloquearla con 15 000 puntos»).
+    const yo = !!opcionesActuales.paraElAlumno;
+    const s = tarjeta(yo ? "Tú contra él" : "Tu alumno contra él: " + c.alumno, "cruce-titulo");
+    s.appendChild(nota("Con " + c.total.toLocaleString("es-CR") + (c.total === 1 ? " partida" : " partidas") + " de " + c.alumno + " (una jugada cuenta desde " + c.minimo + "). «Él saca» es lo que consigue el rival; " + (yo ? "«tú sacas», lo que consigues tú en tus propias partidas." : "«tu alumno saca», lo que consigue el alumno en sus propias partidas.")));
     const renglon = (sec, textos, ver) => {
       const li = el("li", "py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-2");
       li.dataset.cruce = sec.join(" ");
@@ -926,36 +929,38 @@
     };
     const lista = (items) => { const ul = el("ul", "divide-y divide-brand-100 dark:divide-brand-800"); items.forEach((x) => ul.appendChild(x)); return ul; };
     const partidas = (n) => n + (n === 1 ? " partida" : " partidas");
-    [["conBlancas", "Con blancas (tu alumno lleva blancas)"], ["conNegras", "Con negras (tu alumno lleva negras)"]].forEach(([clave, titulo]) => {
+    [["conBlancas", yo ? "Con blancas (llevas blancas)" : "Con blancas (tu alumno lleva blancas)"], ["conNegras", yo ? "Con negras (llevas negras)" : "Con negras (tu alumno lleva negras)"]].forEach(([clave, titulo]) => {
       const l = c.lados[clave];
       s.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mt-5 mb-1", titulo));
       if (!l.partidas) {
-        s.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", "No trae partidas suyas con " + (clave === "conBlancas" ? "blancas." : "negras.")));
+        s.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", (yo ? "No trae partidas tuyas con " : "No trae partidas suyas con ") + (clave === "conBlancas" ? "blancas." : "negras.")));
         return;
       }
       const rp = l.resumenPlan;
       const totalPlan = rp.laJuega + rp.otra + rp.nunca;
       if (totalPlan) {
         // Solo lo que no es cero: «en 0 juega otra cosa» no dice nada.
-        const partes = [rp.laJuega ? "ya juega " + rp.laJuega : "todavía no juega ninguna"];
-        if (rp.otra) partes.push("en " + rp.otra + " juega otra cosa");
-        if (rp.nunca) partes.push("a " + rp.nunca + " no llegó en sus partidas");
-        s.appendChild(el("p", "text-sm text-brand-700 dark:text-brand-100", "El plan: de " + totalPlan + (totalPlan === 1 ? " jugada que le toca, " : " jugadas que le tocan, ") + partes.join("; ") + "."));
+        const partes = yo
+          ? [rp.laJuega ? "ya juegas " + rp.laJuega : "todavía no juegas ninguna"]
+          : [rp.laJuega ? "ya juega " + rp.laJuega : "todavía no juega ninguna"];
+        if (rp.otra) partes.push(yo ? "en " + rp.otra + " juegas otra cosa" : "en " + rp.otra + " juega otra cosa");
+        if (rp.nunca) partes.push(yo ? "a " + rp.nunca + " no llegaste en tus partidas" : "a " + rp.nunca + " no llegó en sus partidas");
+        s.appendChild(el("p", "text-sm text-brand-700 dark:text-brand-100", "El plan: de " + totalPlan + (yo ? (totalPlan === 1 ? " jugada que te toca, " : " jugadas que te tocan, ") : (totalPlan === 1 ? " jugada que le toca, " : " jugadas que le tocan, ")) + partes.join("; ") + "."));
         const otras = l.plan.filter((x) => x.estado === "otra");
         if (otras.length) {
           s.appendChild(lista(otras.map((x) => {
             const num = Math.floor(x.sec.length / 2) + 1;
             const jug = (x.sec.length % 2 === 0 ? num + "." : num + "…");
             return renglon(x.sec.concat(x.recomendada), [
-              "El plan dice " + jug + A.sanEs(x.recomendada) + "; tu alumno juega " + jug + A.sanEs(x.suya.san) + " (" + x.suya.n + " de " + x.total + ")."],
-              "El plan: " + A.sanEs(x.recomendada) + ". Tu alumno suele jugar " + A.sanEs(x.suya.san) + " (" + x.suya.n + " de " + x.total + ").");
+              "El plan dice " + jug + A.sanEs(x.recomendada) + (yo ? "; tú juegas " : "; tu alumno juega ") + jug + A.sanEs(x.suya.san) + " (" + x.suya.n + " de " + x.total + ")."],
+              "El plan: " + A.sanEs(x.recomendada) + (yo ? ". Tú sueles jugar " : ". Tu alumno suele jugar ") + A.sanEs(x.suya.san) + " (" + x.suya.n + " de " + x.total + ").");
           })));
         }
       }
-      const texto = (x) => ["Tu alumno saca " + A.pct(x.alumno.puntos) + " en " + partidas(x.alumno.n) + "; él saca " + A.pct(x.rival.puntos) + " en " + partidas(x.rival.n) + " (su promedio con ese color: " + A.pct(l.base) + ")."];
+      const texto = (x) => [(yo ? "Tú sacas " : "Tu alumno saca ") + A.pct(x.alumno.puntos) + " en " + partidas(x.alumno.n) + "; él saca " + A.pct(x.rival.puntos) + " en " + partidas(x.rival.n) + " (su promedio con ese color: " + A.pct(l.base) + ")."];
       if (l.aFavor.length) {
         s.appendChild(el("h5", "text-sm font-semibold text-brand-800 dark:text-white mt-3", "Juega lo suyo: ahí él rinde menos"));
-        s.appendChild(lista(l.aFavor.map((x) => renglon(x.sec.concat(x.jugada), texto(x), "Aquí él saca " + A.pct(x.rival.puntos) + " y tu alumno ya la conoce: " + A.pct(x.alumno.puntos) + " en " + partidas(x.alumno.n) + "."))));
+        s.appendChild(lista(l.aFavor.map((x) => renglon(x.sec.concat(x.jugada), texto(x), "Aquí él saca " + A.pct(x.rival.puntos) + (yo ? " y tú ya la conoces: " : " y tu alumno ya la conoce: ") + A.pct(x.alumno.puntos) + " en " + partidas(x.alumno.n) + "."))));
       }
       if (l.enContra.length) {
         s.appendChild(el("h5", "text-sm font-semibold text-brand-800 dark:text-white mt-3", "Ojo: ahí él rinde más"));
