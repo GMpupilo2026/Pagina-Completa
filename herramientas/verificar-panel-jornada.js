@@ -203,7 +203,7 @@ async function pruebaSecciones(browser) {
 }
 
 async function pruebaAspecto(browser) {
-  console.log("\nEl aspecto de Chessgora: el tema «jornada» para la cuenta anotada");
+  console.log("\nEl aspecto del panel jornada: el tema «jornada» para la cuenta anotada");
   const { ctx, page, errores } = await abrir(browser, ALUMNO, ANOTADO(ALUMNO.id), { viewport: { width: 1280, height: 900 } }, "", { plataforma_tema_v1: "bosque" });
   await page.waitForTimeout(300);
   const a = await page.evaluate(() => {
@@ -222,7 +222,7 @@ async function pruebaAspecto(browser) {
   igual("queda puesto el tema jornada", [a.tema, a.guardado], ["jornada", "jornada"]);
   igual("y se guarda el que había, para devolverlo", a.previo, "bosque");
   igual("el encabezado es blanco", a.encabezado, "rgb(255, 255, 255)");
-  igual("el fondo es crema (brand-50 del tema)", a.fondo, "rgb(248, 243, 233)");
+  igual("el fondo es gris azulado (brand-50 del tema)", a.fondo, "rgb(239, 244, 246)");
   cierto("las tarjetas llevan borde fino en vez de sombra", /0px 0px 0px 1px/.test(a.tarjeta), a.tarjeta);
   cierto("los títulos van en Inter", /^"?Inter/.test(a.titulo), a.titulo);
   cierto("el logo crema se pinta con su máscara (la imagen sale de la vista)", /-9999px/.test(a.logo), a.logo);
@@ -262,7 +262,10 @@ async function pruebaInicio(browser) {
       { id: "t1", titulo: "Mates en una jugada", vence_at: pasado.toISOString(), renglones: 10, cumplidos: 9 },
       { id: "t2", titulo: "Finales de peones", vence_at: new Date(ahora + 5 * dia).toISOString(), renglones: 5, cumplidos: 0 },
       { id: "t3", titulo: "Una que ya venció", vence_at: new Date(ahora - dia).toISOString(), renglones: 3, cumplidos: 0 },
+      { id: "t4", titulo: "Una ya hecha", vence_at: new Date(ahora - 3 * dia).toISOString(), renglones: 4, cumplidos: 4, situacion: "completada" },
+      { id: "t5", titulo: "Una que todavía no se abre", vence_at: new Date(ahora + 9 * dia).toISOString(), renglones: 4, cumplidos: 0, situacion: "programada" },
     ],
+    entreno_mi_mes: { ejercicios: 40 },
     entreno_mi_semana: { dias: [{ dia: "a", n: 4 }, { dia: "b", n: 0 }, { dia: "c", n: 6 }, { dia: "d", n: 2 }, { dia: "e", n: 5 }, { dia: "f", n: 1 }, { dia: "hoy", n: 3 }] },
     mi_rango: [{ rango: "alfil", nombre: "Alfil", puntos: 3200, siguiente: "torre", siguiente_nombre: "Torre", umbral_siguiente: 7000 }],
     informes_diagnosticos_alumnos: [{ student_id: ALUMNO.id, fecha: "2026-10-26T16:00:00Z", detalle: { nivel: "intermedio", nivel_etiqueta: "intermedio" } }],
@@ -296,6 +299,29 @@ async function pruebaInicio(browser) {
     return l.left >= p.right - 1;
   });
   igual("en la computadora, lo que viene va a la derecha", lado, true);
+
+  console.log("\nEl banner y los cuatro gráficos");
+  const banner = await page.evaluate(() => {
+    const c = document.getElementById("jornada-clase");
+    return {
+      saludo: c.querySelector(".jornada-clase-saludo").textContent,
+      atajos: Array.from(c.querySelectorAll(".jornada-clase-atajos li > *")).map((x) => x.textContent),
+      dibujo: c.querySelector(".jornada-clase-dibujo").checkVisibility(),
+      dibujoOculto: c.querySelector(".jornada-clase-dibujo svg").getAttribute("aria-hidden"),
+    };
+  });
+  cierto("el banner saluda con la hora y la fecha de Costa Rica", /^Buen(os días|as tardes|as noches), Oscarov\. /.test(banner.saludo), banner.saludo);
+  igual("trae sus atajos", banner.atajos, ["Tareas", "Entrenar", "Jugar", "Repasar mis clases", "Mi cuaderno"]);
+  igual("y su ilustración, que es adorno", [banner.dibujo, banner.dibujoOculto], [true, "true"]);
+  const datosDe = (id) => page.$$eval('.jornada-grafico[data-grafico="' + id + '"] .jornada-grafico-datos li', (lis) => lis.map((li) => li.textContent.trim()));
+  igual("los cuatro gráficos", await page.$$eval(".jornada-grafico", (g) => g.map((x) => x.dataset.grafico)), ["semana", "rango", "tareas", "meses"]);
+  igual("la semana, con sus números escritos", await datosDe("semana"), ["Esta semana21 ejercicios", "Hoy3", "Tu mejor día6"]);
+  igual("el camino al rango: de Alfil (3000) a Torre (7000) con 3200", await datosDe("rango"), ["Rango actualAlfil", "Hacia Torre5 %", "Te faltan" + new Intl.NumberFormat("es-CR").format(3800) + " puntos"]);
+  igual("las tareas por cómo van (la programada no cuenta)", await datosDe("tareas"), ["Completadas1", "Por hacer2", "Vencidas1"]);
+  igual("el entrenamiento por mes", await datosDe("meses"), ["Este mes40", "El mes pasado40", "En seis meses240"]);
+  igual("cada gráfico dibuja su SVG, que es adorno", await page.$$eval(".jornada-grafico-dibujo svg", (s) => s.map((x) => x.getAttribute("aria-hidden"))), ["true", "true", "true", "true"]);
+  igual("las barras: una por día, y la de hoy distinta", await page.$$eval('.jornada-grafico[data-grafico="semana"] svg rect', (r) => r.length), 7);
+
   igual("«Hoy te toca» completo pasó a Entrenar", await page.$eval("#progreso-alumno", (s) => s.dataset.jornada), "entrenar");
   await page.click('.jornada-sala[data-sala="hoy"]');
   igual("la sala de hoy lleva a Entrenar", await page.$eval(".jornada-nav button[aria-current='page']", (b) => b.dataset.pestana), "entrenar");
