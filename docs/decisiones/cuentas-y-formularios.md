@@ -2248,3 +2248,114 @@ página (`js/visor-documento.js`, que sirve para cualquier página):
 - En la inscripción, la privacidad, las bases y «toda la información del
   torneo» también se abren encima: nadie pierde lo que llevaba escrito.
 
+## La inscripción configurable por evento
+
+Pedido del dueño (20/11/2026): cada evento tenía su formulario escrito a
+mano —`inscripcion-metropolitano.html`, `inscripcion-jde.html`, la ventana
+de `jdn-pz-2026.html` (`js/jdn-pz-inscripcion.js`), `inscripcion.html` y el
+de `torneos-pareo.html`— y todos repetían lo mismo con variaciones: la
+categoría por el año de nacimiento y a qué torneo va, el cierre con su
+hora, qué campos se piden y cuáles son obligatorios, los valores por
+defecto y los textos. Ahora hay **un solo módulo**,
+`js/inscripcion-evento.js` (`window.InscripcionEvento`), que arma el
+formulario con una configuración y manda con `PareoPublicar.inscribir`
+(`js/pareo/publicar.js`) a la Edge Function `pareo-publicar`: queda en
+`pareo_preinscripciones` hasta que quien organiza la acepta en Pareo
+Integral, como antes.
+
+- **La configuración**: `torneo` (el id publicado al que va por omisión),
+  `abierta` y `hasta` (un día que entra completo), `cierre`
+  (`"AAAA-MM-DDTHH:MM"`, hora de Costa Rica: desde ese minuto, cerrada),
+  `categorias` (`{ nombre, desde, hasta, torneo, juegaEn }`, por AÑO de
+  nacimiento; `torneo` es un id o una clave de `torneos`, que la página
+  puede llenar después de buscar sus torneos), `ramaEnCategoria` («U16
+  Femenino»), `campos` (`nombre.forma` `"uno"` o `"apellidos"` →
+  «Apellidos, Nombre»; `nacimiento`, `sexo`, `categoria`, `institucion`
+  con `defecto`, `elo`, `fide` con `buscar` y `federacion`, `nota`; cada uno
+  con `pedir` y `obligatorio`), `declaraciones` (casillas obligatorias cuya
+  `nota` viaja en la nota, como «afiliado a la ADAPZ»), `notaFija`,
+  `conservar` (lo que se queda al inscribir al siguiente), `idioma` (`es`
+  o `en`), `textos` (cualquier texto del formulario) y `privacidad` (el
+  enlace del consentimiento, siempre a una página `.html` del sitio; por
+  omisión `privacidad.html#torneos`). Sin nada, es el formulario de siempre
+  de `torneos-pareo.html`. Con categorías por año, la fecha se pide y es
+  obligatoria y la categoría ya no se elige a mano.
+- **Incrustarla en una página de evento** son pocas líneas:
+  `<script src="js/pareo/publicar.js">`, `js/pareo/elo-nacional.js` (si se
+  busca el ID FIDE), `js/inscripcion-evento.js` y
+  `InscripcionEvento.montar(contenedor, { … })` desde el archivo de `js/` de
+  la página (nunca en un `<script>` escrito dentro: CSP). `prefijo` decide
+  los ids (`<prefijo>-nombre`…) para que dos formularios convivan.
+- **Dónde vive la configuración de un torneo, sin migración**: en
+  `pareo_publicados.datos.inscripcion` (jsonb), junto a `{ abierta, hasta }`.
+  Pareo la manda desde `t.inscripcionEvento` (aparte de `t.inscripcion`,
+  porque la casilla «Recibir inscripciones» de `js/pareo/pagina.js` vuelve
+  a escribir `t.inscripcion` entero y la borraría); `datosPublicos` solo
+  pasa las claves conocidas y, sin configuración, publica `{ abierta, hasta }`
+  igual que siempre. `torneos-pareo.html` la lee con
+  `InscripcionEvento.desdePublicado()`.
+- **La función no le cree al navegador**: `supabase/functions/pareo-publicar/inscripcion.ts`
+  limpia la configuración campo por campo al publicar (`limpiarInscripcion`:
+  solo claves conocidas, categorías con los años en orden y torneos que son
+  un id) y, al inscribir, vuelve a comprobar el cierre con su hora
+  (`cerrada`), lo obligatorio y la categoría por el año (`revisar`: la
+  categoría la pone el año, de lo que llega solo se respeta la rama; una
+  categoría que juega en otro torneo se rechaza). Un torneo sin
+  configuración acepta exactamente lo mismo que antes. La función se
+  despliega sola al entrar a `main`: hasta entonces, la de producción guarda
+  solo `{ abierta, hasta }` y la página usa el formulario de siempre.
+- **Lo que falta: configurarla desde Pareo Integral.** No hay todavía
+  pantalla para llenar `t.inscripcionEvento`: `js/pareo/pagina.js` se está
+  partiendo en varios archivos en otra rama, y esta no lo tocó. Cuando eso
+  entre, la pantalla va en un archivo nuevo de `js/pareo/` con una sola
+  línea de enganche en la caja de la inscripción. Mientras, la usan las
+  páginas de evento con la configuración en su `js/`.
+- **El ID FIDE solo** es el de la Eliminatoria JDN de Pérez Zeledón,
+  generalizado (`coincideFide`, con la federación del evento). La copia de
+  `js/jdn-pz-inscripcion.js` se borra cuando esa página pase al módulo.
+
+### Migrar por edición, nunca a medio evento
+
+**Un formulario vivo no se cambia mientras su evento recibe inscripciones.**
+Cada uno pasa al módulo nuevo en su **próxima edición**, cuando se arma la
+página del evento siguiente: cambiarlo a medio evento arriesga perder
+inscripciones de gente que ya está llenando, y lo que se rompe en un
+formulario no da ningún error. Este cambio (20/11/2026) no tocó ninguno:
+
+- **Eliminatoria JDN de Pérez Zeledón** (`jdn-pz-2026.html`,
+  `js/jdn-pz-inscripcion.js`; la eliminatoria es el domingo 22/11). En la
+  próxima edición: la página busca sus torneos como hoy
+  (`buscarTorneos`), llena `torneos: { U12, U20 }` y monta con
+  `categorias` (U12 2015-2020 → U12; U16 2011-2014 y U20 2007-2010 → U20,
+  con `juegaEn`), `ramaEnCategoria`, `cierre`, `nombre.forma: "apellidos"`,
+  `sexo` obligatorio, institución «ADAPZ» por defecto, `fide.buscar` y la
+  declaración de afiliado. Se borra el formulario del HTML y lo propio de
+  `js/jdn-pz-inscripcion.js` (queda `buscarTorneos`, que usan los gafetes).
+- **Metropolitano** (`inscripcion-metropolitano.html` y sus `js/`): no es una
+  inscripción a Pareo sino a su propia base, con pago, hospedaje, delegación
+  y factura. Lo que pasa al módulo en la próxima edición es lo común
+  —categoría por año, cierre, ID FIDE, textos en `en`— usando las cuentas de
+  `InscripcionEvento` (`categoriaDe`, `estado`, `coincideFide`); el envío
+  sigue siendo el suyo hasta que Pareo reciba esos datos.
+- **JDE** (`inscripcion-jde.html`, `js/inscripcion-jde*.js`): igual, sus
+  reglas de categorías y modalidades se pasan a la configuración en la
+  próxima edición; el resto (el Excel para Pareo) queda.
+- **`inscripcion.html`** (`js/inscripcion.js`): en su próxima edición, si
+  inscribe a un torneo de Pareo, se cambia por `montar()`.
+
+Al migrar uno, su verificador sigue pasando con los mismos ids (el
+`prefijo` del módulo los reproduce, como `tp-i` en `torneos-pareo.html`), y
+`verificar-inscripcion-evento.js` cubre lo común.
+
+`herramientas/verificar-inscripcion-evento.js` lo prueba con dobles de la
+tabla (filtra por id), de la función y de la búsqueda de FIDE: la categoría
+por el año y sus límites, el torneo de cada categoría (también desde otro
+torneo), el cierre en hora de Costa Rica (un minuto antes, en el minuto, el
+día «hasta» que en UTC ya es el siguiente, y el cierre que llega con la
+página abierta), lo obligatorio, los valores por defecto que vuelven al
+inscribir al siguiente, lo que llega a `PareoPublicar.inscribir`, la
+configuración que viaja en lo publicado sin cambiar lo de antes, la función
+(`inscripcion.ts`, cargada con Node) y la caja incrustada en inglés.
+Rompiendo a propósito el límite de la categoría, el cierre (en UTC), la rama
+obligatoria, el valor por defecto, el torneo de la categoría, el cierre en la
+función o la configuración en lo publicado, salta.
