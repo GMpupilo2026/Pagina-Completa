@@ -15,8 +15,10 @@ chess-results-proxy            true         trae de chess-results.com la ficha d
 cobros-recordatorios           false        la tanda diaria de avisos de morosidad (pg_cron)
 consulta-arbitraje             false        el Espacio de consultas de Herramientas de arbitraje (IA, sin cuenta; freno y presupuesto propios)
 correos-alumno                 true         corrige los tres correos de una familia
+clase-grabaciones-limpiar      false        borra las grabaciones de la llamada de la clase de mas de 90 dias, archivo y fila (pg_cron limpiar-grabaciones, secreto de la boveda)
 clase-llamada                  true         la llamada de voz de la clase en vivo (LiveKit): el pase y quién puede hablar, con llamada_de_la_clase() y el token de quien llama; secretos LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET
 create-student                 true         invita a un alumno desde la clase en vivo
+entrenador-ia                  true         el botón «¿Por qué?» al fallar un ejercicio (Claude; solo a quien se lo enciende quien administra)
 enviar-resultado-arbitraje     true         manda el detalle de un examen de arbitraje
 informe-examen                 true         manda a la casa el informe de un examen
 jdn-drive                      false        la ficha de los JDN 2027 al Drive, por el Apps Script puente: administracion (sesion, aal2, is_admin) y la familia sin cuenta (freno jdn_frenar); url y secreto en la boveda
@@ -27,6 +29,7 @@ notificar                      false        los avisos push (VAPID y aes128gcm a
 ocr-scoresheet                 true         el lector de planilla, contra Google Vision
 elo-fide                       false        el Elo FIDE Estandar y Nacional de Costa Rica con el codigo FIDE (pg_cron elo-fide-nacional, secreto de la boveda; "actualizar" con el JWT de quien llama)
 explorador-maestros            true         las partidas de maestros de Lichess por posicion, para ver donde un rival deja la teoria (token en LICHESS_TOKEN)
+examen-mate                    true         los mates basicos del examen de rango Caballo: arbitra la partida contra el rey solo (chess.js y la defensa de Con lo justo), con mate_estado()/mate_registrar() y el reloj de la base
 seleccion-chess-results        true         un torneo entero de chess-results para la seleccion CODICADER (herramientas de arbitraje): solo con licencia, tengo_herramienta() con el token de quien llama
 desempates-chess-results       true         la clasificacion y las partidas de un torneo individual de chess-results para Desempates explicados (herramientas de arbitraje): solo con licencia, tengo_herramienta() con el token de quien llama
 mesa-arbitro                   true         la Mesa del arbitro (herramientas de arbitraje): lee las mesas de la ronda abierta de un torneo suizo de chess-results y manda resultados con el codigo y el SID del torneo (la clave no se guarda ni se imprime); solo con licencia, tengo_herramienta() con el token de quien llama

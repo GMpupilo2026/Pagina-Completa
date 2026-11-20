@@ -66,12 +66,12 @@ async function pruebaPrincipal(browser) {
     await sembrar(torneo())(p);
   });
   await page.click('[data-ficha="rondas"]');
-  await page.click("#pi-adjunto");
+  await P.clicEnMenu(page, "#pi-adjunto");
   await page.waitForSelector(dialogo);
   await page.click(dialogo + " [data-avisos-aceptar]");
   await page.waitForFunction(() => /Escribe el nombre del árbitro adjunto/.test(document.body.textContent)).catch(() => {});
   ok(/Escribe el nombre del árbitro adjunto/.test(await page.textContent("body")) && !(await page.$(".pi-adjunto-url")), "sin nombre no se crea");
-  await page.click("#pi-adjunto");
+  await P.clicEnMenu(page, "#pi-adjunto");
   await page.waitForSelector(dialogo);
   await page.fill(dialogo + ' [name="arbitro"]', "PRUEBA ADJUNTA");
   await page.click(dialogo + " [data-avisos-aceptar]");
@@ -209,7 +209,7 @@ async function pruebaBase(browser) {
   await page.click('[data-ficha="rondas"]');
   await page.waitForSelector(".pi-adjunto-codigo");
   igual("la tarjeta del adjunto muestra su código para escribirlo a mano", await page.textContent(".pi-adjunto-codigo strong"), "PRUE-BA23");
-  await page.click("#pi-adjunto");
+  await P.clicEnMenu(page, "#pi-adjunto");
   await page.waitForSelector(dialogo);
   await page.fill(dialogo + ' [name="arbitro"]', "PRUEBA SEGUNDA");
   await page.fill(dialogo + ' [name="desde"]', "3");
@@ -218,6 +218,20 @@ async function pruebaBase(browser) {
   await page.waitForTimeout(300);
   const subida = pedidos.filter((x) => x.accion === "adjuntos").pop();
   igual("un enlace nuevo sube a la base apenas se crea, con la lista entera", subida && subida.adjuntos.map((a) => [a.nombre, a.rango, a.activo]), [["PRUEBA ADJUNTA", "1-2", true], ["PRUEBA SEGUNDA", "3-3", true]]);
+  // Al final: completa la ronda (y entonces ya no se muestran las tarjetas de
+  // los adjuntos). La Mesa del árbitro: su fila no trae código sino asignacion_id, y su toque
+  // llega por el canal del torneo publicado (lo manda centroamericano-mesa).
+  cola = [{ id: 11, codigo: null, asignacion_id: "PRUEBA-ASIG", nombre: "PRUEBA MESA", desde: 1, hasta: 3, evento: "resultado", ronda: 1, datos: { mesa: 3, r: "0-1" } }];
+  await page.waitForFunction(() => window.__canales && window.__canales.has("pareo-cola-11111111-2222-3333-4444-555555555555"), null, { timeout: 5000 }).catch(() => {});
+  ok(await page.evaluate(() => window.__canales.has("pareo-cola-11111111-2222-3333-4444-555555555555")), "escucha el toque de la Mesa del árbitro en el canal del torneo publicado");
+  const lecturasAntes = pedidos.filter((x) => x.accion === "cola").length;
+  await page.evaluate((c) => window.__llega(c, "cola", {}), "pareo-cola-11111111-2222-3333-4444-555555555555");
+  await page.waitForTimeout(500);
+  ok(pedidos.filter((x) => x.accion === "cola").length > lecturasAntes, "y con el toque lee la cola en el momento, sin esperar su vuelta");
+  [g] = await P.esperarGuardado(page, (l) => l[0].rondas[0].mesas[2].r === "0-1");
+  ok(g.rondas[0].mesas[2].porAdjunto === "PRUEBA MESA", "con el toque de la Mesa del árbitro (canal del torneo publicado), su resultado entra ya, a nombre del árbitro de la Mesa");
+  ok(pedidos.filter((x) => x.accion === "cola" || x.accion === "cola_borrar").every((x) => x.mesa === true),
+    "y cada lectura y borrado de la cola dice que entiende las filas de la Mesa (sin eso, la función no se las da ni las deja borrar)");
   ok(!errores.length, "sin errores en la página", errores.join(" | "));
   await ctx.close();
 
@@ -256,6 +270,11 @@ async function pruebaCamaras(browser) {
   await page.waitForFunction(() => window.__enviados.some((x) => x.canal === "tablero-vivo-camprue2" && x.evento === "pedir"), null, { timeout: 8000 }).catch(() => {});
   ok(await page.evaluate(() => window.__enviados.some((x) => x.canal === "tablero-vivo-camprue2" && x.evento === "pedir")), "con el código del principal, escucha las cámaras y les pide lo que tienen");
   ok(/Sin noticias de la cámara/.test(await page.textContent('[data-cam="1"]')), "antes de que llegue algo, lo dice escrito");
+  // Un teléfono para esa mesa: el QR sale en el celular del adjunto.
+  await page.click('[data-cam="2"] [data-camara-poner] summary');
+  await page.waitForSelector('[data-cam="2"] [data-camara-poner] svg', { timeout: 8000 }).catch(() => {});
+  igual("«Poner un teléfono en esta mesa» muestra el QR de ESA mesa de su torneo, y el mismo enlace para abrirlo ahí", await page.$eval('[data-cam="2"] [data-camara-poner]', (n) => [n.dataset.camaraPoner, !!n.querySelector("svg"), /mesa 2/.test((n.querySelector("svg") || { getAttribute: () => "" }).getAttribute("aria-label")), n.querySelector("[data-camara-enlace]").href.replace(/^.*\//, "")]),
+    ["2", true, true, "camara-tablero.html#t=" + PUB + "&c=camprue2&m=2&r=0"]);
   const camara = (mesa, pgn, resultado, extra) => page.evaluate(([x]) => window.__llega("tablero-vivo-camprue2", "estado", x),
     [Object.assign({ v: 1, pgn, torneo: PUB, ronda: 2, mesa, t: Date.now(), resultado }, extra || {})]);
   // Lo de otro torneo y lo de otra ronda no entran.
@@ -265,6 +284,7 @@ async function pruebaCamaras(browser) {
   ok(/Sin noticias de la cámara/.test(await page.textContent('[data-cam="1"]')), "lo de otro torneo o de otra ronda no entra");
   await camara(1, "1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7#", "1-0");
   await page.waitForSelector('[data-cam="1"] [data-camara-dice]', { timeout: 8000 }).catch(() => {});
+  ok(!(await page.$('[data-cam="1"] [data-camara-poner]')), "una mesa que ya transmite no ofrece poner un teléfono");
   igual("el tablero de su mesa, con las jugadas y cómo va, escritas", await page.$eval('[data-cam="1"]', (n) => [n.querySelectorAll('[aria-hidden="true"] > div').length, /En vivo · 7 jugadas/.test(n.textContent), /Jaque mate/.test(n.textContent)]), [64, true, true]);
   ok(/La cámara dice: 1-0/.test(await page.textContent('[data-cam="1"]')), "y la propuesta de la cámara, escrita");
   await page.click('[data-cam="1"] [data-camara-confirmar]');

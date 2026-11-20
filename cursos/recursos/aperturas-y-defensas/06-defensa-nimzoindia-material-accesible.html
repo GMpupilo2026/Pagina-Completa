@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,24 +57,36 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejercicios</a></li>
+    <li><a href="#s4">Preguntas con su respuesta</a></li>
+    <li><a href="#s5">Fuentes</a></li>
+  </ol>
+</nav>
 
-<p>1. david 4, caballo felix 6, 2. cesar 4, eva 6, 3. caballo cesar 3, alfil bella 4 clava al caballo c3 y amenaza doblarle los peones a blancas si captura. Blancas suele responder con 4. eva 3, 4. dama cesar 2 o 4. caballo felix 3, y a menudo termina aceptando peones doblados en c3 a cambio de la pareja de alfiles y un centro amplio.</p>
+<h2 id="s1">1. De qué trata esta lección</h2>
+
+<p>1. david 4, caballo felix 6, 2. cesar 4, eva 6, 3. caballo cesar 3, alfil bella 4 clava al caballo cesar 3 y amenaza doblarle los peones a blancas si captura. Blancas suele responder con 4. eva 3, 4. dama cesar 2 o 4. caballo felix 3, y a menudo termina aceptando peones doblados en cesar 3 a cambio de la pareja de alfiles y un centro amplio.</p>
 <p>Es una de las defensas más respetadas en ajedrez de élite: enseña el principio de que una estructura de peones imperfecta puede compensarse con actividad de piezas.</p>
 
 
 <h2>2. Conceptos clave</h2>
 <dl>
   <dt>El centro</dt>
-  <dd>Las cuatro casillas del medio —d4, e4, d5, e5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.</dd>
-  <dd><strong>El error de siempre:</strong> Confundir ocupar con controlar. Un peón en e4 ocupa; un alfil en g7 y un caballo en f6 controlan e4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.</dd>
-  <dd><strong>Para verlo:</strong> Un caballo en e5 ataca ocho casillas; el mismo caballo en a1 ataca dos. Es el mismo caballo y vale cuatro veces menos.</dd>
+  <dd>Las cuatro casillas del medio —david 4, eva 4, david 5, eva 5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.</dd>
+  <dd><strong>El error de siempre:</strong> Confundir ocupar con controlar. Un peón en eva 4 ocupa; un alfil en gustav 7 y un caballo en felix 6 controlan eva 4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.</dd>
+  <dd><strong>Para verlo:</strong> Un caballo en eva 5 ataca ocho casillas; el mismo caballo en anna 1 ataca dos. Es el mismo caballo y vale cuatro veces menos.</dd>
   <dt>La estructura de peones</dt>
   <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
-  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: eva 4-david 5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
   <dt>El valor de las piezas</dt>
   <dd>Peón 1, caballo y alfil 3, torre 5, dama 9. El rey no tiene valor de cambio porque no se puede entregar. Son números de referencia, no una verdad: sirven para decidir cambios rápido, no para juzgar una posición.</dd>
   <dd><strong>El error de siempre:</strong> Tratar los números como si fueran exactos. Un caballo clavado en el borde vale menos que un peón pasado a punto de coronar, y la calidad (torre por pieza menor) se entrega todos los días cuando la pieza menor domina una casilla fuerte.</dd>
@@ -77,18 +95,18 @@
 
 
 
-<h2>3. Ejercicios</h2>
+<h2 id="s3">3. Ejercicios</h2>
 <ol>
   <li>repasa el artículo &quot;Peones doblados: ¿siempre son una debilidad?&quot; en la sección de Artículos del sitio.</li>
   <li>Pon un caballo en el centro y otro en la esquina y cuenta las casillas que ataca cada uno. Hazlo con alfil, torre y dama.</li>
   <li>En tus tres últimas partidas, marca en qué jugada se resolvió el centro (se abrió, se cerró o se cambió) y qué hiciste después.</li>
   <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
-  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Arma en el tablero un peón aislado en david 4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
   <li>Anota diez cambios de tu última partida y di, en cada uno, si ganaste o perdiste material y si la posición mejoró o empeoró. Vas a encontrar cambios parejos que fueron buenos y cambios parejos que fueron malos.</li>
   <li>Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos.</li>
 </ol>
 
-<h2>4. Preguntas con su respuesta</h2>
+<h2 id="s4">4. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -141,7 +159,7 @@
   </li>
 </ol>
 
-<h2>5. Fuentes</h2>
+<h2 id="s5">5. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Aperturas y Defensas» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

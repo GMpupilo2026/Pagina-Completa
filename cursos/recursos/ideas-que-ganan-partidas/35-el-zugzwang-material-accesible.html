@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: A veces lo mejor es pasarle el turno al rival. Juegan las blancas; el rival acaba de jugar … rey david 6.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>En la mayoría de las posiciones, tener que mover es una ventaja: siempre hay algo útil que hacer. Pero en algunas, sobre todo en los finales, cualquier jugada empeora la posición. Eso es el zugzwang: la obligación de mover cuando moverse perjudica.</p>
 <p>Aprovecharlo pide una jugada que no hace nada en apariencia —un movimiento de rey, una pieza que pierde un tiempo— pero que le pasa el turno al rival justo cuando no le conviene. En los finales de peones es la base de la oposición; en los de piezas, aparece cuando el defensor tiene todas sus piezas en su mejor casilla y no puede mejorarlas.</p>
@@ -63,34 +87,51 @@
 <h2>2. Conceptos clave</h2>
 <dl>
   <dt>Cómo hacer un plan</dt>
-  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a d5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
+  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a david 5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
   <dd><strong>El error de siempre:</strong> Jugar sin plan, mirando solo la jugada que sigue. El otro error es enamorarse del plan y no cambiarlo cuando la posición cambia.</dd>
   <dd><strong>Para verlo:</strong> El método corto: qué material hay, cómo están los reyes, cómo es la estructura, qué pieza mía es la peor. La respuesta a la última pregunta suele ser el plan.</dd>
   <dt>La oposición</dt>
   <dd>Dos reyes enfrentados con una casilla de por medio, en la misma columna, fila o diagonal. Tiene la oposición quien NO está obligado a mover: el otro tiene que ceder el paso.</dd>
   <dd><strong>El error de siempre:</strong> Correr con el peón antes que con el rey. En los finales de rey y peón manda el rey: el peón avanza cuando el rey ya conquistó las casillas de delante.</dd>
-  <dd><strong>Para verlo:</strong> Rey blanco en e5, rey negro en e7, peón blanco en e4 y le toca mover al negro: el blanco tiene la oposición, el rey negro cede y el peón corona. Con el turno cambiado, son tablas.</dd>
+  <dd><strong>Para verlo:</strong> Rey blanco en eva 5, rey negro en eva 7, peón blanco en eva 4 y le toca mover al negro: el blanco tiene la oposición, el rey negro cede y el peón corona. Con el turno cambiado, son tablas.</dd>
   <dt>Desarrollo y tiempo</dt>
   <dd>Sacar cada pieza a una casilla donde trabaje, y hacerlo rápido. Un tiempo es una jugada: moverse dos veces con la misma pieza en la apertura regala uno.</dd>
   <dd><strong>El error de siempre:</strong> Sacar la dama temprano. La dama es la pieza más valiosa y por eso la más fácil de echar: cada jaque que le dan al rival lo desarrolla a él y a ti te cuesta una jugada.</dd>
   <dd><strong>Para verlo:</strong> Tres principios que resuelven casi toda apertura: un peón al centro, las piezas menores antes que las mayores, y enrocar. Lo que sobre, para después.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: A veces lo mejor es pasarle el turno al rival. Juegan las blancas; el rival acaba de jugar … rey david 6.</h3>
+  <h3 id="posicion-1">Posición 1: A veces lo mejor es pasarle el turno al rival. Juegan las blancas; el rival acaba de jugar … rey david 6.</h3>
   
-  <p>Piezas blancas: rey en c4; peones en b4, f4, g3.</p>
-  <p>Piezas negras: rey en d6; peones en a6, f5, g4.</p>
+  <h4>Piezas blancas: 4</h4>
+  <ul>
+    <li>Rey en cesar 4.</li>
+    <li>Peón en bella 4.</li>
+    <li>Peón en felix 4.</li>
+    <li>Peón en gustav 3.</li>
+  </ul>
+  <h4>Piezas negras: 4</h4>
+  <ul>
+    <li>Rey en david 6.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en felix 5.</li>
+    <li>Peón en gustav 4.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 63. rey david 4, rey cesar 6, 64. rey eva 5</p>
+  <h4>La línea: 3 jugadas</h4>
+  <ul>
+    <li>63. Blancas: rey david 4.</li>
+    <li>63. Negras: rey cesar 6.</li>
+    <li>64. Blancas: rey eva 5.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>63. rey david 4, rey cesar 6, 64. rey eva 5. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Después de esta jugada, cualquier respuesta del rival empeora su posición: eso es el zugzwang. (Ejercicio 3FN1D de la base abierta de Lichess (CC0), rating 1392. Stockfish 16 a profundidad 18: rey david 4 es la mejor (+5,2) y la segunda queda en 0,0.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/8/p2k4/5p2/1PK2Pp1/6P1/8/8 w - - 7 63</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/8/p2k4/5p2/1PK2Pp1/6P1/8/8 w - - 7 63</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Para en la jugada 15 de tu próxima partida y escribe tu plan en una frase. Al final, mira si lo cumpliste.</li>
   <li>Toma cinco posiciones de partidas de maestros en la jugada 20, escribe tu plan, y compáralo con lo que pasó.</li>
@@ -100,7 +141,7 @@
   <li>Toma diez partidas de grandes maestros y cuenta en qué jugada terminaron de desarrollar. El número es más bajo de lo que crees.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -109,7 +150,7 @@
   </li>
   <li>
     <p>¿De qué depende dónde atacar?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena e4-d5 el juego es en el flanco de rey; con d4-e3, en el de dama.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena eva 4-david 5 el juego es en el flanco de rey; con david 4-eva 3, en el de dama.</p>
   </li>
   <li>
     <p>¿Cada cuánto se revisa un plan?</p>
@@ -137,7 +178,7 @@
   </li>
   <li>
     <p>¿Por qué los caballos antes que los alfiles?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (f3 y c3, f6 y c6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (felix 3 y cesar 3, felix 6 y cesar 6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
   </li>
   <li>
     <p>¿Qué es una ventaja de desarrollo y cómo se aprovecha?</p>
@@ -153,7 +194,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Ideas que ganan partidas» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

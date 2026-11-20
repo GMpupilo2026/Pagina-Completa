@@ -32,7 +32,17 @@ const DATOS = {
   perfiles: [
     { id: "u-ana", full_name: "Ana Rojas", role: "alumno", is_admin: false },
     { id: "u-profe", full_name: "Karina Rojas", role: "profesor", is_admin: false },
+    { id: "u-admin", full_name: "Óscar Admin", role: "profesor", is_admin: true },
   ],
+  /* Días sin clase: uno de Karina (jueves 22), un feriado para todos (jueves
+     29) y uno de otra profe (jueves 5 de noviembre), que solo lee quien
+     administra. La RLS del doble es la de la base. */
+  dias_sin_clase: [
+    { id: "d1", profesor_id: "u-profe", fecha: "2026-10-22", motivo: "Torneo en Cartago" },
+    { id: "d2", profesor_id: null, fecha: "2026-10-29", motivo: "Día feriado de prueba" },
+    { id: "d3", profesor_id: "u-otra", fecha: "2026-11-05", motivo: "De otra profe" },
+  ],
+  profesores_de: { "u-ana": ["u-profe"] },
   mis_clases_proximas: [
     { horario_id: "h1", inicio: "2026-10-15T16:00:00-06:00", fin: "2026-10-15T17:00:00-06:00", titulo: "7B", modalidad: "en_linea", profesor: "Karina Rojas" },
     { horario_id: "h1", inicio: "2026-10-22T16:00:00-06:00", fin: "2026-10-22T17:00:00-06:00", titulo: "7B", modalidad: "en_linea", profesor: "Karina Rojas" },
@@ -62,19 +72,48 @@ function clienteFalso(yo) {
     // Filtra de verdad, como la base: cada quien recibe lo suyo.
     if (nombre === "profiles") return D.perfiles.filter((p) => filtros.every(([c, v]) => String(p[c]) === String(v)));
     if (nombre === "horario_clases") return D.horario.filter((h) => filtros.every(([c, v]) => String(h[c]) === String(v)));
-    if (nombre === "mis_clases_proximas") return ${JSON.stringify(yo)} === "u-ana" ? D.mis_clases_proximas : [];
+    // Como la base: mis_clases_proximas salta los días sin clase de su profe y los feriados.
+    if (nombre === "mis_clases_proximas") return ${JSON.stringify(yo)} === "u-ana"
+      ? D.mis_clases_proximas.filter((c) => !D.dias_sin_clase.some((d) => d.fecha === c.inicio.slice(0, 10) && (!d.profesor_id || d.profesor_id === "u-profe")))
+      : [];
+    if (nombre === "dias_sin_clase") {
+      const yo = ${JSON.stringify(yo)};
+      const admin = D.perfiles.some((p) => p.id === yo && p.is_admin);
+      const mios = D.profesores_de[yo] || [];
+      return D.dias_sin_clase.filter((d) => !d.profesor_id || d.profesor_id === yo || mios.includes(d.profesor_id) || admin)
+        .filter((d) => filtros.every(([c, v, op]) => op === "gte" ? d[c] >= v : op === "lte" ? d[c] <= v : String(d[c]) === String(v)));
+    }
     if (nombre === "tareas_con_avance") return D.tareas.filter((t) => (!args.p_alumno || t.alumno_id === args.p_alumno) && (!args.p_profesor || t.profesor_id === args.p_profesor));
     if (nombre === "examenes_con_nota") return D.examenes.filter((t) => (!args.p_alumno || t.alumno_id === args.p_alumno) && (!args.p_profesor || t.profesor_id === args.p_profesor));
     if (nombre === "mis_subgrupos") return [];
     return [];
   }
   function consulta(nombre, args) {
-    const filtros = []; let unica = false;
+    const filtros = []; let unica = false; let op = "select"; let fila = null;
     const q = {
       select() { return q; }, eq(c, v) { filtros.push([c, v]); return q; },
+      gte(c, v) { filtros.push([c, v, "gte"]); return q; }, lte(c, v) { filtros.push([c, v, "lte"]); return q; },
       order() { return q; }, limit() { return q; }, range() { return q; },
       maybeSingle() { unica = true; return q; }, single() { unica = true; return q; },
+      insert(o) { op = "insert"; fila = o; return q; }, delete() { op = "delete"; return q; },
       then(res, rej) {
+        // Escribir en dias_sin_clase, con las reglas de la base: el índice único y la RLS.
+        if (nombre === "dias_sin_clase" && op !== "select") {
+          window.__escrituras = window.__escrituras || [];
+          window.__escrituras.push({ op, fila, filtros: filtros.slice() });
+          const yo = ${JSON.stringify(yo)};
+          const admin = D.perfiles.some((p) => p.id === yo && p.is_admin);
+          let error = null;
+          if (op === "insert") {
+            const puede = (fila.profesor_id === yo) || (fila.profesor_id === null && admin);
+            if (!puede) error = { code: "42501", message: "RLS" };
+            else if (D.dias_sin_clase.some((d) => d.fecha === fila.fecha && (d.profesor_id || null) === (fila.profesor_id || null))) error = { code: "23505", message: "duplicado" };
+            else D.dias_sin_clase.push(Object.assign({ id: "n" + D.dias_sin_clase.length }, fila));
+          } else {
+            D.dias_sin_clase = D.dias_sin_clase.filter((d) => !(filtros.every(([c, v]) => String(d[c]) === String(v)) && (d.profesor_id === yo || (!d.profesor_id && admin))));
+          }
+          return Promise.resolve({ data: null, error }).then(res, rej);
+        }
         window.__consultas.push({ nombre, args: args || null, filtros: filtros.slice() });
         const f = respuesta(nombre, args || {}, filtros);
         return Promise.resolve({ data: unica ? (f[0] || null) : f, error: null }).then(res, rej);
@@ -176,7 +215,8 @@ async function pruebaAlumna(browser) {
   igual("la agenda se ve y el mes no", [await seVe(page, "#cal-vista-agenda"), await seVe(page, "#cal-vista-mes"), await seVe(page, "#cal-dia")], [true, false, false]);
   igual("y cuál está puesta lo dice el botón", [await page.getAttribute("#cal-ver-agenda", "aria-pressed"), await page.getAttribute("#cal-ver-mes", "aria-pressed")], ["true", "false"]);
   igual("la agenda va de hoy en adelante, solo los días con algo", await textos(page, "#cal-vista-agenda h3"), [
-    "Miércoles 14 de octubre (hoy)", "Jueves 15 de octubre (mañana)", "Viernes 16 de octubre", "Sábado 17 de octubre", "Domingo 18 de octubre", "Martes 20 de octubre", "Jueves 22 de octubre",
+    // El 22 y el 29 salen por sus días sin clase (el de su profe y el feriado), no por una clase.
+    "Miércoles 14 de octubre (hoy)", "Jueves 15 de octubre (mañana)", "Viernes 16 de octubre", "Sábado 17 de octubre", "Domingo 18 de octubre", "Martes 20 de octubre", "Jueves 22 de octubre", "Jueves 29 de octubre",
   ]);
   await page.uncheck("#cal-filtro-plan");
   igual("sin el plan, el domingo sale (solo tenía la sugerencia)", (await textos(page, "#cal-vista-agenda h3")).includes("Domingo 18 de octubre"), false);
@@ -193,9 +233,93 @@ async function pruebaAlumna(browser) {
   const [bajada] = await Promise.all([page.waitForEvent("download"), page.click("#cal-bajar")]);
   const fs = require("fs");
   const texto = fs.readFileSync(await bajada.path(), "utf8");
-  igual("baja «ajedrez-integral.ics» con las 2 clases, las 3 tareas por delante y el examen",
-    [bajada.suggestedFilename(), (texto.match(/BEGIN:VEVENT/g) || []).length], ["ajedrez-integral.ics", 6]);
-  igual("y lo dice", /^Listo: se bajó «ajedrez-integral.ics» con 6 fechas/.test(await page.textContent("#cal-bajar-estado")), true);
+  // La clase del 22 no va: ese día su profe no da clase (mis_clases_proximas lo salta).
+  igual("baja «ajedrez-integral.ics» con la clase que queda, las 3 tareas por delante y el examen",
+    [bajada.suggestedFilename(), (texto.match(/BEGIN:VEVENT/g) || []).length], ["ajedrez-integral.ics", 5]);
+  igual("y lo dice", /^Listo: se bajó «ajedrez-integral.ics» con 5 fechas/.test(await page.textContent("#cal-bajar-estado")), true);
+  igual("sin errores en la página", errores, []);
+  await ctx.close();
+}
+
+async function pruebaSinClaseAlumna(browser) {
+  console.log("\n=== Días sin clase, vistos por la alumna ===");
+  const { page, ctx, errores } = await abrir(browser, "u-ana");
+  await page.click('button[data-dia="2026-10-22"]');
+  igual("el jueves 22 dice por qué no hay clase, y la clase no está", await textos(page, "#cal-dia-lista > li"),
+    ["🚫 Sin clase: Torneo en Cartago Lo marcó tu profe: ese día no hay clase."]);
+  igual("el día lo dice también en su nombre para el lector", await page.getAttribute('button[data-dia="2026-10-22"]', "aria-label"), "Jueves 22 de octubre: 1 día sin clase");
+  await page.click('button[data-dia="2026-10-29"]');
+  igual("el feriado para todos", await textos(page, "#cal-dia-lista > li"), ["🚫 Feriado: Día feriado de prueba Ese día no hay clase en ninguna academia."]);
+  igual("el día de otra profe no le llega", (await page.textContent("#cal-vista-mes")).includes("De otra profe"), false);
+  igual("la alumna no ve el formulario de días sin clase", await seVe(page, "#cal-sin-clase"), false);
+  const [bajada] = await Promise.all([page.waitForEvent("download"), page.click("#cal-bajar")]);
+  const texto = require("fs").readFileSync(await bajada.path(), "utf8");
+  igual("su .ics no trae la clase del día sin clase", /20261022T/.test(texto), false);
+  igual("sin errores en la página", errores, []);
+  await ctx.close();
+}
+
+async function pruebaSinClaseProfe(browser) {
+  console.log("\n=== Días sin clase, de quien da clase ===");
+  const { page, ctx, errores } = await abrir(browser, "u-profe");
+  await page.click('button[data-dia="2026-10-22"]');
+  igual("su clase del jueves 22 no va: es su día sin clase", (await textos(page, "#cal-dia-lista > li")).filter((t) => /^🎓|^🚫/.test(t)),
+    ["🚫 Sin clase: Torneo en Cartago Lo marcaste tú: tus clases de ese día no se cuentan."]);
+  igual("se ve el formulario", await seVe(page, "#cal-sin-clase"), true);
+  igual("sin la casilla de feriado para todos (no administra)", await seVe(page, "#cal-sin-clase-todos-caja"), false);
+  igual("lista lo suyo y el feriado; solo lo suyo se puede quitar", await textos(page, "#cal-sin-clase-lista > li"), [
+    "Jueves 22 de octubre · Torneo en Cartago Quitar",
+    "Jueves 29 de octubre · Feriado para todos · Día feriado de prueba",
+  ]);
+  const [bajada] = await Promise.all([page.waitForEvent("download"), page.click("#cal-bajar")]);
+  const texto = require("fs").readFileSync(await bajada.path(), "utf8");
+  igual("el .ics salta el 22 y el 29", [/20261022T/.test(texto), /20261029T/.test(texto), (texto.match(/BEGIN:VEVENT/g) || []).length], [false, false, 11]);
+
+  // Marcar uno nuevo: el jueves 15 (hay clase) queda sin clase.
+  await page.click("#cal-sin-clase-poner");
+  igual("sin día, lo dice y no guarda", [await page.textContent("#cal-sin-clase-estado"), (await page.evaluate(() => window.__escrituras || [])).length], ["Elige el día.", 0]);
+  await page.fill("#cal-sin-clase-fecha", "2026-10-15");
+  await page.click("#cal-sin-clase-poner");
+  igual("sin motivo, lo pide", await page.textContent("#cal-sin-clase-estado"), "Escribe el motivo: tus alumnos lo ven («Feriado», «Vacaciones»…).");
+  await page.fill("#cal-sin-clase-motivo", "Vacaciones <b>cortas</b>");
+  await page.click("#cal-sin-clase-poner");
+  await page.waitForFunction(() => /^Listo/.test(document.getElementById("cal-sin-clase-estado").textContent));
+  igual("guarda a su nombre", (await page.evaluate(() => window.__escrituras))[0], { op: "insert", fila: { profesor_id: "u-profe", fecha: "2026-10-15", motivo: "Vacaciones <b>cortas</b>" }, filtros: [] });
+  await page.click('button[data-dia="2026-10-15"]');
+  const dia15 = await textos(page, "#cal-dia-lista > li");
+  igual("y la clase del 15 desaparece del calendario", [dia15.some((t) => t.startsWith("🎓")), dia15.some((t) => t.startsWith("🚫 Sin clase: Vacaciones <b>cortas</b>"))], [false, true]);
+  igual("el motivo se escribe como texto, no como HTML", await page.$$eval("#cal-sin-clase-lista b, #cal-dia-lista b", (n) => n.length), 0);
+  // El mismo día otra vez: lo dice el índice único.
+  await page.fill("#cal-sin-clase-fecha", "2026-10-15");
+  await page.fill("#cal-sin-clase-motivo", "Otra vez");
+  await page.click("#cal-sin-clase-poner");
+  await page.waitForFunction(() => /ya estaba/.test(document.getElementById("cal-sin-clase-estado").textContent));
+  igual("el mismo día dos veces: «ya estaba marcado»", await page.textContent("#cal-sin-clase-estado"), "Ese día ya estaba marcado sin clase.");
+
+  // Quitar el del 22, confirmando en el aviso de la página.
+  await page.click('#cal-sin-clase-lista button[aria-label="Quitar el día sin clase del jueves 22 de octubre"]');
+  await page.getByRole("button", { name: "Quitar el día sin clase", exact: true }).click();
+  await page.waitForFunction(() => /vuelve a tener clase/.test(document.getElementById("cal-sin-clase-estado").textContent));
+  igual("borra ese, por su id", (await page.evaluate(() => window.__escrituras)).filter((e) => e.op === "delete"), [{ op: "delete", fila: null, filtros: [["id", "d1"]] }]);
+  await page.click('button[data-dia="2026-10-22"]');
+  igual("y la clase del 22 vuelve", (await textos(page, "#cal-dia-lista > li")).some((t) => t.startsWith("🎓 Clase: Grupo 7B")), true);
+  igual("sin errores en la página", errores, []);
+  await ctx.close();
+}
+
+async function pruebaSinClaseAdmin(browser) {
+  console.log("\n=== Días sin clase, de quien administra ===");
+  const { page, ctx, errores } = await abrir(browser, "u-admin");
+  igual("ve la casilla de feriado para todos", await seVe(page, "#cal-sin-clase-todos-caja"), true);
+  igual("el día de otra profe no se lista (no es suyo)", (await textos(page, "#cal-sin-clase-lista > li")).some((t) => t.includes("De otra profe")), false);
+  igual("el feriado sí lo puede quitar", (await textos(page, "#cal-sin-clase-lista > li")).some((t) => /Feriado para todos .*Quitar$/.test(t)), true);
+  await page.fill("#cal-sin-clase-fecha", "2026-12-25");
+  await page.fill("#cal-sin-clase-motivo", "Navidad");
+  await page.check("#cal-sin-clase-todos");
+  await page.click("#cal-sin-clase-poner");
+  await page.waitForFunction(() => /^Listo/.test(document.getElementById("cal-sin-clase-estado").textContent));
+  igual("el feriado va sin profe (para todos)", (await page.evaluate(() => window.__escrituras))[0].fila, { profesor_id: null, fecha: "2026-12-25", motivo: "Navidad" });
+  igual("y lo dice", await page.textContent("#cal-sin-clase-estado"), "Listo: el viernes 25 de diciembre queda sin clase para todas las academias.");
   igual("sin errores en la página", errores, []);
   await ctx.close();
 }
@@ -239,7 +363,8 @@ async function pruebaProfe(browser) {
   igual("la clase de otra profe no aparece", (await page.textContent("#cal-vista-mes")).includes("De otra profe"), false);
   const [bajada] = await Promise.all([page.waitForEvent("download"), page.click("#cal-bajar")]);
   const texto = require("fs").readFileSync(await bajada.path(), "utf8");
-  igual("su .ics lleva solo las clases que vienen (no las entregas de cada alumno)", [(texto.match(/BEGIN:VEVENT/g) || []).length, /tarea/i.test(texto)], [13, false]);
+  // 13 jueves en 90 días, menos el suyo sin clase (22) y el feriado (29).
+  igual("su .ics lleva solo las clases que vienen (no las entregas de cada alumno)", [(texto.match(/BEGIN:VEVENT/g) || []).length, /tarea/i.test(texto)], [11, false]);
   igual("sin errores en la página", errores, []);
   await ctx.close();
 }
@@ -250,6 +375,9 @@ async function pruebaProfe(browser) {
     await pruebaAlumna(browser);
     await pruebaCelular(browser);
     await pruebaProfe(browser);
+    await pruebaSinClaseAlumna(browser);
+    await pruebaSinClaseProfe(browser);
+    await pruebaSinClaseAdmin(browser);
   } finally {
     await browser.close();
   }

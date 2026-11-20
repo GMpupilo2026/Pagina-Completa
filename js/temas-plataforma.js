@@ -126,6 +126,27 @@
       decorado: "lunas",
       vuelan: "magos",
     },
+    /* El aspecto de tablero de control (turquesa y oscuro, como el que el dueño
+     * trajo de muestra el 20/11/2026): fondo gris claro, encabezado blanco,
+     * tarjetas con borde fino, botones de píldora y todo en Inter; en el panel,
+     * el menú lateral oscuro, un banner con degradado, tarjetas de color y
+     * gráficos (css/panel-jornada.css). Reemplazó al de Chessgora (crema y
+     * dorado). NO se ofrece en Configuración (`oculto`): es de la prueba del
+     * panel jornada y lo enciende js/panel-jornada.js solo a las cuentas de
+     * vistas_en_prueba. Los tonos tienen la misma luminancia que el Clásico,
+     * como todos: gris azulado en 50 y 100, turquesa del 200 en adelante y
+     * rosado de acento. Las formas (`estilo`) las escribe
+     * herramientas/css-construir.js. */
+    jornada: {
+      label: "Jornada",
+      icono: "📊",
+      descripcion: "Turquesa y rosado, con tarjetas de borde fino.",
+      brand: { 50: "#eff4f6", 100: "#d8e3e6", 200: "#add0d7", 300: "#7ebac5", 350: "#59aab8", 400: "#368591", 450: "#2c7783", 500: "#236b77", 600: "#16535d", 700: "#0f3f48", 800: "#092d35", 900: "#072128", 950: "#04171d" },
+      accent: { 50: "#fefafb", 100: "#fdeff3", 300: "#f7c0cd", 400: "#f3aabb", 500: "#e8849b", 600: "#d95d78", 700: "#cf2d4e", 900: "#961f33" },
+      casillas: "turquesa",
+      estilo: "jornada",
+      oculto: true,
+    },
   };
 
   /* La LETRA es una preferencia aparte del tema: quien quiere los colores de

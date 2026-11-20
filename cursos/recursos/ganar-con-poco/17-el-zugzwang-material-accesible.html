@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: El rival defiende todo con lo justo. ¿Qué jugada lo obliga a mover algo que no quiere? Juegan las blancas; el rival acaba de jugar … rey david 6.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Zugzwang es una palabra alemana para una situación muy ajedrecística: el bando que mueve está obligado a hacerlo, y cualquier jugada lo empeora. Si pudiera pasar el turno, aguantaría; como no puede, pierde. Pasa sobre todo en los finales, cuando quedan pocas piezas y cada una cumple una sola función.</p>
 <p>El zugzwang es la herramienta más fina para cobrar una ventaja pequeña. Cuando el rival está defendiendo todo con lo justo, no hace falta atacar más: basta con hacer una jugada que no cambie nada y dejar que él tenga que mover una pieza que estaba defendiendo algo. Las jugadas de espera, la oposición entre los reyes y la triangulación son sus formas más comunes.</p>
@@ -65,32 +89,57 @@
   <dt>La oposición</dt>
   <dd>Dos reyes enfrentados con una casilla de por medio, en la misma columna, fila o diagonal. Tiene la oposición quien NO está obligado a mover: el otro tiene que ceder el paso.</dd>
   <dd><strong>El error de siempre:</strong> Correr con el peón antes que con el rey. En los finales de rey y peón manda el rey: el peón avanza cuando el rey ya conquistó las casillas de delante.</dd>
-  <dd><strong>Para verlo:</strong> Rey blanco en e5, rey negro en e7, peón blanco en e4 y le toca mover al negro: el blanco tiene la oposición, el rey negro cede y el peón corona. Con el turno cambiado, son tablas.</dd>
+  <dd><strong>Para verlo:</strong> Rey blanco en eva 5, rey negro en eva 7, peón blanco en eva 4 y le toca mover al negro: el blanco tiene la oposición, el rey negro cede y el peón corona. Con el turno cambiado, son tablas.</dd>
   <dt>El zugzwang</dt>
   <dd>Estar obligado a mover y que cualquier jugada empeore la posición. En ajedrez no se puede pasar: el turno es una obligación, y en los finales eso decide partidas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar jugadas activas cuando lo que gana es esperar. En posiciones de zugzwang, la mejor jugada suele ser la que no cambia nada y devuelve el turno.</dd>
-  <dd><strong>Para verlo:</strong> Rey blanco en e6, rey negro en e8, peón blanco en e7: le toca al negro y tiene que soltar la casilla de coronación. La misma posición con el blanco a mover son tablas por ahogado.</dd>
+  <dd><strong>Para verlo:</strong> Rey blanco en eva 6, rey negro en eva 8, peón blanco en eva 7: le toca al negro y tiene que soltar la casilla de coronación. La misma posición con el blanco a mover son tablas por ahogado.</dd>
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: El rival defiende todo con lo justo. ¿Qué jugada lo obliga a mover algo que no quiere? Juegan las blancas; el rival acaba de jugar … rey david 6.</h3>
+  <h3 id="posicion-1">Posición 1: El rival defiende todo con lo justo. ¿Qué jugada lo obliga a mover algo que no quiere? Juegan las blancas; el rival acaba de jugar … rey david 6.</h3>
   
-  <p>Piezas blancas: rey en c3; peones en a5, b4, d4, f4, h4.</p>
-  <p>Piezas negras: rey en d6; peones en a6, b7, c6, f5, h5.</p>
+  <h4>Piezas blancas: 6</h4>
+  <ul>
+    <li>Rey en cesar 3.</li>
+    <li>Peón en anna 5.</li>
+    <li>Peón en bella 4.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en felix 4.</li>
+    <li>Peón en hector 4.</li>
+  </ul>
+  <h4>Piezas negras: 6</h4>
+  <ul>
+    <li>Rey en david 6.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 6.</li>
+    <li>Peón en felix 5.</li>
+    <li>Peón en hector 5.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 37. rey cesar 4, rey david 7, 38. rey cesar 5, rey eva 6, 39. rey bella 6, rey david 6, 40. rey captura bella 7</p>
+  <h4>La línea: 7 jugadas</h4>
+  <ul>
+    <li>37. Blancas: rey cesar 4.</li>
+    <li>37. Negras: rey david 7.</li>
+    <li>38. Blancas: rey cesar 5.</li>
+    <li>38. Negras: rey eva 6.</li>
+    <li>39. Blancas: rey bella 6.</li>
+    <li>39. Negras: rey david 6.</li>
+    <li>40. Blancas: rey captura bella 7.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>37. rey cesar 4, rey david 7, 38. rey cesar 5, rey eva 6, 39. rey bella 6, rey david 6, 40. rey captura bella 7. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. El rival no pierde por un ataque: pierde porque le toca mover, y cualquier cosa que haga suelta algo. (Ejercicio 0v3Rb de la base abierta de Lichess (CC0), rating 1307. Stockfish 16 a profundidad 18: rey cesar 4 es la mejor (+4,0) y la segunda queda en 0,0.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/1p6/p1pk4/P4p1p/1P1P1P1P/2K5/8/8 w - - 3 37</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/1p6/p1pk4/P4p1p/1P1P1P1P/2K5/8/8 w - - 3 37</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Arma rey y peón contra rey en cinco posiciones distintas y decide, antes de jugar, quién gana. Después compruébalo.</li>
   <li>Practica la triangulación hasta poder ganar una posición donde la oposición directa no alcanza.</li>
@@ -100,7 +149,7 @@
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +202,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Ganar con poco» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

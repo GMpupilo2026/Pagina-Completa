@@ -328,6 +328,11 @@
     return "<strong>" + esc(txt.slice(0, i + 1)) + "</strong>" + esc(txt.slice(i + 1)) + (resto ? " " + esc(resto) : "");
   }
   function sinTildes(t) { return String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); }
+  /* De un visor al siguiente de la lección sin salir del recuadro («partida
+     siguiente», «ejercicio siguiente», «diagrama anterior»): lo resuelve
+     js/curso-adaptado.js, igual que en js/finales-100.js. */
+  function hayOtros() { return !!(window.CursoAdaptado && window.CursoAdaptado.otroVisor); }
+  function otroVisor(el, texto, api, ocupado) { return hayOtros() && window.CursoAdaptado.otroVisor(el, texto, api, ocupado || ""); }
   // Una sola copia de «qué partida de chess.js corresponde a esta FEN».
   function chessDe(cache, fen) {
     if (cache.g && cache.fen === fen) return cache.g;
@@ -448,6 +453,8 @@
     // recorrer la partida («siguiente», «jugada 12») o preguntar por la posición.
     function alEscribir(texto, api) {
       const t = sinTildes(texto);
+      if (otroVisor(el, texto, api, state.mode === "practicar" ? "Estás practicando contra el motor: escribe «terminar» y después «partida siguiente»."
+        : state.mode === "adivinar" ? "Estás adivinando las jugadas clave: escribe «salir» y después «partida siguiente»." : "")) return;
       if (state.mode === "adivinar") {
         if (/^(pista|ayudame)$/.test(t)) { api.limpiar(); darPista(); return; }
         if (/^(ver la jugada|rendirme|me rindo|saltar)$/.test(t) && puedeJugar) { api.limpiar(); revealGuess(true); return; }
@@ -482,17 +489,37 @@
         return;
       }
       if (n < 0) { api.decir("Ya estás en la posición inicial."); return; }
-      if (n > moves.length) { api.decir("Ya estás en la última jugada de la partida."); return; }
+      if (n > moves.length) { api.decir("Ya estás en la última jugada de la partida." + (hayOtros() ? " Para pasar a lo que sigue en la lección, escribe «partida siguiente»." : "")); return; }
       api.limpiar().decir("");
       irA(n);
+    }
+    /* Con el recuadro VACÍO, Intro o → avanzan una jugada, ← retrocede, Inicio
+       y Fin van a las puntas (js/cuadro-comandos.js, `recorrer`): escribir
+       «siguiente» en cada una de las cincuenta jugadas de una partida era
+       demasiado. Al adivinar, Intro es «seguir» cuando toca. */
+    function pasoVacio(palabra, api) {
+      if (state.mode === "practicar") { api.decir("Estás practicando contra el motor: escribe tu jugada, o «terminar»."); return; }
+      if (state.mode === "adivinar") {
+        if (esperaSeguir && palabra === "siguiente") { api.decir(""); nextGuess(); return; }
+        api.decir(esperaSeguir ? "Pulsa Intro para el próximo momento clave." : "Escribe tu jugada, «pista» o «ver la jugada».");
+        return;
+      }
+      alEscribir(palabra, api);
     }
     const mostrarCuadro = montarCuadro(cmdHost, {
       etiqueta: "Escribe tu jugada, recorre la partida o pregunta por la posición",
       juego: juegoVisto,
+      tableroEl: boardEl, // con la cuenta ciega, «Piezas» va antes de él
       posicionViva: false,
       onEnviar: alEscribir,
+      recorrer: {
+        siguiente: (api) => pasoVacio("siguiente", api),
+        anterior: (api) => pasoVacio("anterior", api),
+        inicio: (api) => pasoVacio("inicio", api),
+        final: (api) => pasoVacio("final", api),
+      },
     }, () => state.mode !== "ver", (api) => {
-      api.ayuda("Recorrer: «siguiente», «anterior», «jugada 12». Jugar: «adivinar» o «practicar», y luego la jugada («Cf3», «e4»); «pista», «seguir». Preguntar: «posición», «caballos», «qué hay en e4».");
+      api.ayuda("Con el recuadro vacío: Intro o flecha derecha, la jugada siguiente; flecha izquierda, la anterior; Inicio y Fin, las puntas. Escribiendo: «jugada 12», «partida siguiente». Jugar: «adivinar» o «practicar», y luego la jugada («Cf3», «e4»); «pista», y al acertar Intro sigue. Preguntar: «posición», «caballos», «qué hay en e4».");
     });
 
     function startGuess() {
@@ -703,6 +730,7 @@
     }
     function alEscribir(texto, api) {
       const t = sinTildes(texto);
+      if (otroVisor(el, texto, api)) return;
       if (/^(pista|ayudame)$/.test(t) && !state.solved) { api.limpiar(); darPista(); return; }
       if (/^(solucion|ver la solucion|me rindo|rendirme)$/.test(t) && !state.solved) { api.limpiar(); solve(false); return; }
       if (!state.solved) {
@@ -716,17 +744,29 @@
       const n = window.VisorLinea ? window.VisorLinea.pasoPedido(texto, state.ply, sol.length) : null;
       if (n === null) { api.decir("No entendí «" + texto.trim() + "». Escribe «siguiente», «anterior», «jugada 2», o una pregunta como «caballos»."); return; }
       if (n < 0) { api.decir("Ya estás en la posición inicial."); return; }
-      if (n > sol.length) { api.decir("Ya estás en la última jugada de la solución."); return; }
+      if (n > sol.length) { api.decir("Ya estás en la última jugada de la solución." + (hayOtros() ? " Para pasar al próximo, escribe «ejercicio siguiente»." : "")); return; }
       api.limpiar().decir("");
       irA(n);
+    }
+    // Con el recuadro vacío, Intro y las flechas recorren la solución (ya resuelto).
+    function pasoVacio(palabra, api) {
+      if (!state.solved) { api.decir("Escribe tu jugada, «pista» o «solución»." + (hayOtros() ? " «ejercicio siguiente» pasa al próximo." : "")); return; }
+      alEscribir(palabra, api);
     }
     montarCuadro(cmdHost, {
       etiqueta: "Escribe tu jugada o pregunta por la posición",
       juego: () => (state.solved ? chessDe(vista, fenAt(state.ply)) : game),
+      tableroEl: boardEl, // con la cuenta ciega, «Piezas» va antes de él
       posicionViva: false,
       onEnviar: alEscribir,
+      recorrer: {
+        siguiente: (api) => pasoVacio("siguiente", api),
+        anterior: (api) => pasoVacio("anterior", api),
+        inicio: (api) => pasoVacio("inicio", api),
+        final: (api) => pasoVacio("final", api),
+      },
     }, () => !state.solved, (api) => {
-      api.ayuda("Contestar: la jugada («Cf3», «e4»), «pista» o «solución». Ya resuelto: «siguiente», «anterior». Preguntar: «posición», «caballos», «qué hay en e4».");
+      api.ayuda("Contestar: la jugada («Cf3», «e4»), «pista» o «solución». Ya resuelto, con el recuadro vacío: Intro o flecha derecha, la jugada siguiente; flecha izquierda, la anterior. «ejercicio siguiente» pasa al próximo. Preguntar: «posición», «caballos», «qué hay en e4».");
     });
     function darPista() {
       const pista = x.pista || "Piensa en el desequilibrio de material y en qué pieza está mal colocada.";

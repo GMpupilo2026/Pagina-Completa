@@ -180,6 +180,9 @@ window.ClaseAdaptada = (function () {
 
     /* "ir a e4" lleva el foco del teclado a esa casilla del tablero. */
     var tableroApi = {
+      /* El tablero mismo: con la cuenta ciega, el recuadro pone la lista de
+         piezas justo antes de él (ver «Las piezas, arriba del tablero»). */
+      get el() { var b = board(); return b && b.el ? b.el : null; },
       enfocar: function (sq) {
         var b = board();
         if (!b || !b.el) return false;

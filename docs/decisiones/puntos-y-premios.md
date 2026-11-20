@@ -124,6 +124,15 @@ trae un enlace por cada archivo del producto, sacados de
 el catálogo de premios sale con sus enlaces sin tocar `js/puntos.js`. Lo
 revisa la prueba «4 bis» de `verificar-puntos.js`.
 
+### Una herramienta: la preparación de rivales por 15 000 puntos
+
+El premio más caro (`herramienta_preparacion_rivales`, tipo `herramienta`)
+no abre un material: abre para siempre `preparacion-rivales.html`, la
+herramienta del profesor. El canje mismo es el permiso
+(`puedo_preparar_rivales()` lo mira), un trigger le avisa a quien administra
+y rechaza el canje de quien ya la tenía, y en «Mis premios» trae «Abrir la
+herramienta». Ver «Desbloquearla con 15 000 puntos» en `paneles.md`.
+
 ## Los accesorios de avatar: lo único que otros alumnos (no solo quien lo tiene) llegan a ver
 
 Los títulos y los marcos de perfil solo se ven en el panel y la tienda de
@@ -249,6 +258,11 @@ misma academia, el mismo conjunto que la rama de compañeros de
 Suma solo lo GANADO en la semana o el mes: lo gastado en canjes, regalos y
 bromas no resta, para que regalar no castigue. Sale quien sumó algo, y uno
 mismo siempre (marcado con `aria-current`).
+La base devuelve el salón entero, pero **la página pinta solo el podio**
+(los tres primeros que sumaron algo, en tarjetas) y, si uno no está en él,
+una línea con su propio puesto («Tú vas en el 4.º lugar, con 80 puntos.»):
+la lista completa, de trece o más filas, no le gustó al dueño (19/11/2026)
+y al que iba 13.º no le servía de nada.
 
 **Regalos.** `public.regalar_premio()` compra para un compañero
 (`es_companero()`) una tarjeta (estrella, flores, trofeo, pastel, caballito)
@@ -793,6 +807,189 @@ por sí sola ganar "de pura suerte": si la posición nunca estuvo objetivamente
 perdida para quien ganó, no se roba nada, aunque la partida haya sido reñida.
 Tampoco se aplicó con retroactividad a partidas ya jugadas antes de esta
 migración: solo las que terminan después de que el trigger existe.
+
+## Los rangos se ganan con un examen
+
+Cada alumno tiene un **rango**: Peón, Caballo (1000), Alfil (3000), Torre
+(7000), Dama o Rey (15 000) y Dragón (30 000). Juntar los puntos ya no basta:
+al llegar al umbral del siguiente, la base le arma **sola** el examen de ese
+rango, y solo si lo aprueba sube y recibe su diploma. La idea de los rangos es
+de Chessgora («sube de rango al asistir y entrenar»); el examen es del dueño.
+
+- **El rango se guarda** (`public.rangos_alumno`), a diferencia de lo demás
+  que se deriva: ya no sale de una cuenta sino de un examen aprobado, que es
+  un acta. Al crear la tabla se sembró a cada alumno con el rango que le daban
+  sus puntos de entonces: nadie bajó ni tuvo que rendir lo que ya tenía.
+- **Los puntos que cuentan son los ganados** (`interno.puntos_ganados`: clase,
+  entrenamiento, tarea, examen, racha, reto semanal y tema terminado), no el
+  saldo: con el saldo, canjear un premio te bajaría el avance. Regalos,
+  bromas, robos y ajustes a mano no son trabajo del alumno.
+- **Reprobar resta 500 del avance, no del saldo**:
+  `interno.puntos_para_rango()` = ganados − 500 × exámenes de rango
+  reprobados. Así, para volver a intentarlo hay que juntar otra vez 500 puntos
+  de trabajo. No se escribe en `puntos_ajustes`: un cobro de 500 dejaría el
+  saldo en negativo a quien ya canjeó, y movería las tareas que llegan solas
+  por puntos, que no tienen nada que ver.
+- **Se aprueba con el 90 %**, en todos los rangos (lo pidió así el dueño).
+- **Dama y Rey son un solo rango**, y el alumno elige con cuál nombre quedarse
+  (`public.elegir_titulo_rango`, en la tienda; se puede cambiar). El más alto
+  es Dragón.
+- **Quién dispara el examen**: el trigger `rango_al_ganar` en `puntos_ajustes`
+  (cada vez que gana puntos) y `mi_rango()` al abrir la tienda (por si los
+  ganó antes de que existiera el examen). Los dos llaman a
+  `interno.revisar_examen_rango()`, que no hace nada si ya tiene uno
+  pendiente: lo garantiza el índice único parcial
+  `rango_examenes_uno_pendiente`, no un `if`. El trigger va envuelto en un
+  bloque de excepción: un examen que no se pudo armar nunca le quita a nadie
+  los puntos que acaba de ganar.
+- **Las preguntas salen de Entrenamiento**, no se inventan: 10 tácticas de
+  `interno.rango_examen_banco`, de la franja de dificultad del rango
+  (Caballo 900-1199, Alfil 1200-1499, Torre 1500-1799, Dama o Rey 1800-2099,
+  Dragón 2100-2700; sin el tema «mezcla»). El banco lo genera
+  `herramientas/rangos-examen-banco.js` (→ `herramientas/rangos/banco.sql`),
+  40 por rango y en forma compacta (sin enunciado ni explicación);
+  `interno.pregunta_de_rango()` rearma la pregunta completa, y el verificador
+  comprueba que sale idéntica a la de `ExamenBanco.preguntaDeTactica()`. Con
+  el banco vacío no se arma ningún examen.
+- **Al entregar**, el trigger `rango_al_entregar` en `examenes` llama a
+  `interno.resolver_examen_rango()`: aprobado sube el rango y emite el
+  certificado (`curso = 'rango:<rango>'`, que `certificado.html` lee como
+  «aprobó el examen del rango…»); reprobado queda anotado y empieza a restar.
+- **La pantalla solo pinta** lo que devuelve `public.mi_rango()`
+  (`js/rangos.js`): rango y nombre elegido, avance, el examen pendiente con su
+  enlace, el selector Dama/Rey y el diploma. Los umbrales están en dos copias,
+  `js/rangos.js` e `interno.umbral_rango()`, y el verificador las compara.
+
+## Los mates del examen de Caballo
+
+El examen de Caballo lleva, además de las 10 tácticas, **dos mates
+obligatorios**: dama y rey contra rey, y dos torres contra rey, con **2 minutos
+cada uno** (se suman al tiempo del examen: 20 + 3 por mate). Sin los dos mates
+dados no se aprueba, aunque el porcentaje llegue al 90 %.
+
+- **Se juegan contra el servidor**, no en el navegador: si la partida la
+  arbitrara la página, bastaría con avisar «di mate» desde la consola. La Edge
+  Function `examen-mate` recibe cada jugada, la valida con chess.js 0.10.3,
+  contesta con el rey negro y decide si hubo mate o tablas (ahogado, material
+  insuficiente, triple repetición, 50 jugadas). El estado y el reloj viven en
+  `public.examen_mate_partidas`; `mate_estado()` y `mate_registrar()` son solo
+  para la clave de servicio, y la base rechaza la jugada que llega tarde o que
+  no sigue a la posición anterior. `responder_examen()` no acepta una pregunta
+  de mate (`motivo 'se_juega'`).
+- **El rey defiende de verdad.** Con la dama, con la distancia EXACTA al mate
+  (`FinalesDTM`, la tabla se calcula en 0,3 s): elige la jugada que deja el
+  mate más lejos, y comerse la dama o ahogarse es lo mejor que le puede pasar.
+  Con las dos torres, con la heurística de «Con lo justo»
+  (`TiposReglas.defensaRey`), porque esa tabla tarda 19 s y no cabe en una
+  función. Las dos fuentes son las del sitio: `herramientas/defensa-mate-armar.js`
+  las pega en `supabase/functions/_compartido/defensa-mate.js` (un archivo
+  armado y no leído del sitio porque las funciones solo se vuelven a desplegar
+  cuando cambia algo en `supabase/functions/`).
+- **Las posiciones** son las de «Con lo justo» (niveles de dos torres y de
+  dama), legales, con blancas al mover y sin jaque.
+- **El banco se carga después de desplegar `examen-mate`**: con el banco
+  cargado y la función sin desplegar, un alumno recibiría mates que no se
+  pueden jugar y reprobaría por eso.
+
+`herramientas/verificar-rangos-examen.js` (sin navegador) comprueba umbrales
+JS = SQL, el banco idéntico al generador y legal, las posiciones de mate, la
+defensa armada al día, 12 partidas completas de dama donde el mate llega en
+exactamente las jugadas que dice la tabla (si el rey defendiera peor, llegaría
+antes), y en la base el 90 %, los mates obligatorios, un pendiente por alumno,
+la resta solo en el avance y los permisos de las funciones de mate.
+
+## El diploma de rango
+
+El diploma de un rango sale en la misma página que el certificado de un curso,
+`certificado.html?c=<código>`, con el mismo código y el mismo QR para
+comprobarlo. Pero es otro papel: encabezado «Diploma de rango», marco azul con
+un bisel dorado, la pieza del rango en un medallón con volumen, un sello, y
+**sin profesor**, porque el examen lo arma la base sola. El diseño lo propuso
+Gemini a pedido del dueño y se adaptó al sitio.
+
+- **Qué se cambió del diseño de Gemini**:
+  - las fuentes de Google se cambiaron por las del sitio (Merriweather, Cinzel
+    e Inter), porque la CSP solo deja `font-src 'self'`;
+  - la marca de agua es la imagen de siempre, `img/marca-agua-ajedrez-integral.png`,
+    en lugar de un texto dibujado;
+  - el logo es el de la marca, el caballo sobre el azul;
+  - la cinta «Certificación Oficial» dice ahora «Nivel 2 de 6»;
+  - los estilos pasaron a `css/styles.css`, todo bajo `.es-diploma`.
+- **Los colores de cada rango** son variables CSS: bronce, plata, esmeralda,
+  azul, dorado y rojo con fuego para el Dragón. Las reglas por rango van como
+  `.es-diploma.rango-<id>`, con dos clases. Con una sola clase, la regla
+  general `.certificado.es-diploma` tiene más peso y todos los diplomas salían
+  plateados, sin dar ningún error.
+- **La pieza va rellena** (♞ y no ♘): el metal se pinta adentro de la letra, y
+  la pieza blanca de Unicode es solo un contorno. La pieza sale de
+  `js/rangos.js`, que sigue siendo una sola copia. El Dragón es un emoji y
+  conserva su color.
+- **Las medidas van en `cqw`**, el ancho del papel, así que el diploma se ve
+  igual en la pantalla y en la hoja. En un celular angosto se apila hacia
+  abajo.
+- **Se imprime en carta apaisada, en una sola hoja** (`@page diploma-rango`).
+  Primero se llamó `@page diploma`, pero ese nombre ya era de los diplomas de
+  Pareo Integral, que tienen 1,5 cm de margen. Dos `@page` con el mismo nombre
+  se pisan sin avisar, y el diploma salía en dos hojas. Ahora
+  `verificar-certificados.js` revisa que ningún `@page` con nombre esté
+  repetido.
+- `verificar-certificados.js` comprueba que, con un `curso` de rango:
+  - se ve el diploma y no el certificado de curso;
+  - dice lo que guardó la base y no trae profesor;
+  - la pieza sale rellena;
+  - cada rango pinta sus propios colores;
+  - se imprime en su propia página.
+
+  Se rompió a propósito (el nombre de página repetido y los colores sin la
+  doble clase) y saltó.
+
+## Los premios de cada academia
+
+Además del catálogo de todo el sitio, **cada academia pone sus premios** —una
+clase extra, una camiseta, elegir la apertura de la clase— en
+`premios-academia.html` (tarjeta «🎁» en el panel del supervisor y en el de
+administración). Sus alumnos los ven en la tienda de puntos («🏫 Premios de tu
+academia»), los canjean con sus puntos y el supervisor se los entrega en persona
+y lo marca; si no se lo puede dar, lo cancela y **se le devuelven los puntos**.
+Migración `20261118061543_premios_academia`.
+
+- **Sin políticas de escritura**: arma los premios `premio_academia_guardar()`
+  (supervisor de esa academia o administración), canjea
+  `canjear_premio_academia()` y resuelve `canje_academia_resolver()`. Los
+  permisos van con `coalesce`.
+- **Canjear usa el MISMO candado que `canjear_premio()`**
+  (`pg_advisory_xact_lock` de `'puntos:<alumno>'`): dos canjes a la vez, uno en
+  cada tienda, no dejan el saldo en negativo. Las existencias van con
+  `FOR UPDATE`: dos alumnos no se llevan la última camiseta.
+- **Solo canjea un miembro de la academia** (`academia_miembros`): las
+  academias son privadas. La tienda pide solo los premios de las academias del
+  alumno; quien administra o supervisa ve otros por la RLS, pero no son suyos
+  para canjear.
+- **El canje guarda una foto** (nombre y costo pagado) y **los premios no se
+  borran, se apagan**: un canje viejo seguiría apuntando a un premio borrado.
+- **Cancelar devuelve los puntos** como `ajuste_manual` con referencia
+  `devolucion:canje_academia:<id>` (no se paga dos veces y no cuenta como
+  ganado) y repone la existencia. Un canje ya resuelto no se resuelve otra vez.
+- Los canjes reparten puntos, como `premios_canjeados`: llevan el trigger
+  `auditar` (alta y cambio) y van en `VIGILADAS`.
+- Al canjear en la tienda, la tienda vuelve a leer el saldo
+  (`montarTienda(...).recargar`): si no, seguiría ofreciendo lo que ya no
+  alcanza.
+
+Comprobado impersonando roles en SQL (revertido): la supervisora de ADAPZ arma
+dos premios y no puede en otra academia; un alumno de ADAPZ con 4336 puntos
+canjea «Clase extra» (1000): le quedan 3336, sus ganados no cambian y la
+existencia pasa de 1 a 0; otra vez, «Se acabaron»; la camiseta de 999 999, «Te
+faltan…»; no puede marcarse el premio como entregado ni ver los ganados de otro;
+un alumno de otra academia no ve los premios ni el canje y no puede canjear; el
+supervisor de otra academia no lo resuelve ni lo ve; la de ADAPZ lo cancela, el
+saldo vuelve a 4336, los ganados siguen igual, la existencia vuelve a 1, quedan
+dos filas en la bitácora, y resolverlo otra vez se rechaza; los insert y update
+directos dan «permission denied», y `anon` no puede canjear.
+
+**Al tocarlo, `node herramientas/verificar-todo.js premios-academia`** (sin
+navegador). Está probado que salta con los rangos desordenados y si la tienda
+no recarga el saldo al canjear.
 
 ## Los verificadores
 

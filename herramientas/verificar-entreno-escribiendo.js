@@ -178,7 +178,7 @@ async function temas(browser) {
   await page.evaluate(() => { openTheme("opening"); currentIndex = idsOf("opening").indexOf("3U3Ox"); loadPuzzle(); });
   await page.waitForSelector(".cc-input", { state: "visible" });
   igual("el recuadro va con la posición muda (no es región viva)",
-    await page.evaluate(() => document.querySelector("#q-comandos .cc-pos").hasAttribute("aria-live")), false);
+    await page.evaluate(() => document.querySelector(".cc-pos").hasAttribute("aria-live")), false);
   cierto("al empezar, el aviso del ejercicio dice la posición entera",
     await page.evaluate(() => /Blancas:.*Negras:/.test(document.getElementById("round-status").textContent)));
   await escuchar(page);

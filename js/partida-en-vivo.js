@@ -10,6 +10,7 @@
  *
  *   PartidaEnVivo.nuevoCodigo()         → «k7mq2xpa»
  *   PartidaEnVivo.codigoValido(c)
+ *   PartidaEnVivo.enlaceCamara({ torneo, codigo, mesa, tablero, retraso }) → el enlace del QR de una mesa
  *   PartidaEnVivo.canal(c)              → nombre del canal
  *   PartidaEnVivo.enlace(c)             → la dirección para mirarla
  *   PartidaEnVivo.estado(juego, nombres, donde, resultado, extra) → lo que se manda
@@ -52,6 +53,14 @@
     // Con .html: sirve igual en el sitio (que lo redirige sin perder el #) y
     // en un servidor de prueba.
     const enlace = (c, torneo) => new URL("tablero-vivo.html#" + c + (torneo ? "&t=" + torneo : ""), location.href).href;
+
+    /* El enlace (y el QR) que pone un celular a transmitir UNA mesa de un
+     * torneo publicado, sin cuenta («modo mesa» de camara-tablero.html):
+     * todo después del #, que no llega al servidor. Lo arman la cámara (su
+     * hoja de QR), Pareo Integral y la mesa del árbitro adjunto. */
+    const RETRASOS = [0, 5, 10, 15, 30];
+    const enlaceCamara = (o) => new URL("camara-tablero.html#t=" + o.torneo + "&c=" + o.codigo + "&m=" + o.mesa + (o.tablero ? "&b=" + o.tablero : "")
+        + "&r=" + (RETRASOS.includes(Number(o.retraso)) ? Number(o.retraso) : 0), location.href).href;
 
     const nombre = (s) => String(s || "").replace(/\s+/g, " ").trim().slice(0, 60);
 
@@ -424,7 +433,7 @@
     const TEXTO_RESULTADO = { "1-0": "Terminó: ganan las blancas (1-0).", "=": "Terminó en tablas (½-½).", "0-1": "Terminó: ganan las negras (0-1)." };
     const textoResultado = (r) => TEXTO_RESULTADO[r] || "";
 
-    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, loNuevo, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe, lugar, clave, resultadoSolo, reglaDeTablas, repeticiones, pgn, textoResultado, hasta, reloj, relojDe, pocoTiempo, tiempoReloj };
+    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, enlaceCamara, RETRASOS, estado, loNuevo, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe, lugar, clave, resultadoSolo, reglaDeTablas, repeticiones, pgn, textoResultado, hasta, reloj, relojDe, pocoTiempo, tiempoReloj };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

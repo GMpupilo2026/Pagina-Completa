@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,21 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejercicios</a></li>
+    <li><a href="#s4">Preguntas con su respuesta</a></li>
+    <li><a href="#s5">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Dos alfiles cubren juntos las casillas claras y oscuras, complementándose donde el otro no llega. La ventaja es mayor en posiciones abiertas, con muchas columnas y diagonales libres; en posiciones muy cerradas, un caballo bien situado puede igualar o superar a un alfil.</p>
 
@@ -67,12 +85,12 @@
   <dt>El par de alfiles y el alfil malo</dt>
   <dd>Tener los dos alfiles contra alfil y caballo, o contra dos caballos, es una pequeña ventaja duradera: entre los dos cubren las casillas de los dos colores. Un alfil es malo cuando sus propios peones están en casillas de su color.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar un alfil por un caballo sin motivo. El cambio es correcto muchas veces —contra un caballo en puesto avanzado, o en posiciones cerradas—, pero hay que poder decir por qué.</dd>
-  <dd><strong>Para verlo:</strong> En la Francesa, el alfil de c8 del negro queda detrás de la cadena e6-d5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.</dd>
+  <dd><strong>Para verlo:</strong> En la Francesa, el alfil de cesar 8 del negro queda detrás de la cadena eva 6-david 5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.</dd>
 </dl>
 
 
 
-<h2>3. Ejercicios</h2>
+<h2 id="s3">3. Ejercicios</h2>
 <ol>
   <li>en 3 partidas, evita cambiar tu pareja de alfiles por caballos mientras la posición se mantenga abierta.</li>
   <li>Da los tres mates básicos cinco veces cada uno, cronometrándote. Con dama deberías bajar de un minuto.</li>
@@ -81,7 +99,7 @@
   <li>Arma un final de alfil bueno contra alfil malo con el mismo material y juégalo desde los dos lados.</li>
 </ol>
 
-<h2>4. Preguntas con su respuesta</h2>
+<h2 id="s4">4. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -118,7 +136,7 @@
   </li>
 </ol>
 
-<h2>5. Fuentes</h2>
+<h2 id="s5">5. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Estrategia y Táctica» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

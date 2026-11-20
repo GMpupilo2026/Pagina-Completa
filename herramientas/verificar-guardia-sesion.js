@@ -53,7 +53,11 @@ function correr(bloque, direccion) {
   const ventana = { stop() {} };
   const location = { pathname: direccion, replace(u) { fue = u; } };
   const localStorage = { getItem: () => null };
-  new Function("window", "location", "localStorage", codigo)(ventana, location, localStorage);
+  // La guardia marca <html data-academia> (el tema «jornada» es solo de la Academia: tema-cabecera.py).
+  const marcas = {};
+  const document = { documentElement: { setAttribute(k, v) { marcas[k] = v; } } };
+  new Function("window", "location", "localStorage", "document", codigo)(ventana, location, localStorage, document);
+  if (!("data-academia" in marcas)) mal(direccion + ": la guardia no marca data-academia en <html>");
   return fue;
 }
 for (const ruta of PAGINAS) {

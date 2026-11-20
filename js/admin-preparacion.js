@@ -5,6 +5,11 @@
  * escritura: la escribe activar_preparacion_rivales(), que valida que quien
  * llama administre y que la cuenta sea de un profesor, y devuelve cómo quedó.
  * El interruptor se pinta con lo que devuelve la base, no con lo que se pidió.
+ *
+ * Debajo, los alumnos que la desbloquearon con 15 000 puntos: sus canjes del
+ * premio herramienta_preparacion_rivales (premios_canjeados, que quien
+ * administra ve entero). Ese canje ES el permiso; al hacerlo le llega un aviso
+ * a quien administra. Ver «Desbloquearla con 15 000 puntos».
  * Ver «La preparación de rivales» en docs/decisiones/paneles.md.
  */
 (function () {
@@ -15,6 +20,7 @@
   let cuentas = () => [];
   let activos = new Set();
   let cargado = false;
+  let canjes = null;               // [{ student_id, created_at }] o null si no cargó
 
   function el(tag, clase, texto) {
     const e = document.createElement(tag);
@@ -103,6 +109,45 @@
       ul.appendChild(li);
     }
     pintarResumen();
+    pintarCanjes();
+  }
+
+  function pintarCanjes() {
+    if (!canjes) return;
+    const ul = $("prep-puntos-lista");
+    ul.textContent = "";
+    $("prep-puntos-cargando").hidden = true;
+    $("prep-puntos-vacio").hidden = canjes.length > 0;
+    const porId = new Map(cuentas().map((u) => [u.id, u]));
+    for (const c of canjes) {
+      const u = porId.get(c.student_id);
+      const li = el("li", "flex flex-wrap items-center justify-between gap-3 py-3");
+      const quien = el("div", "min-w-0");
+      quien.appendChild(el("p", "font-semibold text-brand-800 dark:text-white truncate", (u && (u.full_name || u.email)) || "Una cuenta que ya no está en la lista"));
+      if (u && u.email) quien.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 truncate", u.email));
+      li.appendChild(quien);
+      li.appendChild(el("span", "text-xs font-semibold text-brand-500 dark:text-brand-300",
+        "Desbloqueada el " + HoraCR.fecha(c.created_at, { day: "numeric", month: "long", year: "numeric" })));
+      ul.appendChild(li);
+    }
+  }
+
+  async function cargarCanjes() {
+    try {
+      const { data: premio, error: e1 } = await sb.from("premios_catalogo").select("id")
+        .eq("clave", "herramienta_preparacion_rivales").maybeSingle();
+      if (e1) throw e1;
+      if (!premio) { canjes = []; pintarCanjes(); return; }
+      const { data, error } = await sb.from("premios_canjeados").select("student_id, created_at")
+        .eq("premio_id", premio.id).order("created_at", { ascending: false }).range(0, 999);
+      if (error) throw error;
+      canjes = data || [];
+    } catch (e) {
+      console.error(e);
+      $("prep-puntos-cargando").textContent = "No se pudo cargar quién la desbloqueó con puntos.";
+      return;
+    }
+    pintarCanjes();
   }
 
   async function cargar() {
@@ -124,6 +169,7 @@
     cuentas = obtenerCuentas;
     $("prep-buscar").addEventListener("input", pintar);
     cargar();
+    cargarCanjes();
   }
 
   window.AdminPreparacion = { iniciar, pintar };

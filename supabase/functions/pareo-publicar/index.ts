@@ -10,7 +10,7 @@
 //   { accion: "borrar", id, clave }           → { ok }
 //   { accion: "inscribir", id, inscripcion, consentimiento } → { ok }  (inscripcion: nombre, institucion, categoria, elo, fideId, sexo?, nacimiento?, responsable, contacto, nota)
 //   { accion: "inscripciones", id, clave }    → { ok, inscripciones }
-//   { accion: "marcar", id, clave, ids, estado, comentario? } → { ok, avisados, sinCorreo }
+//   { accion: "marcar", id, clave, ids, estado, comentario?, correo? } → { ok, avisados, sinCorreo, contacto?, nota? }
 //   { accion: "organizador", nombre, logo?, correo?, consentimiento?, id?, clave? } → { ok, id, clave?, correoPendiente? }
 //   { accion: "organizador_estado", id, clave } → { ok, verificado, correo, correoConfirmado, selloPendiente }
 //   { accion: "confirmar_correo", id, token } → { ok }
@@ -22,9 +22,9 @@
 //   { accion: "seguir_confirmar", id, token } → { ok, nombre }
 //   { accion: "seguir_baja", id, token }       → { ok }
 //   { accion: "adjuntos", id, clave, adjuntos } → { ok }   (los enlaces de árbitro adjunto del torneo)
-//   { accion: "cola", id, clave }              → { ok, cola, vistos, mesa }   (mesa: está en un evento de la Mesa del árbitro;
+//   { accion: "cola", id, clave, mesa? }       → { ok, cola, vistos, mesa }   (mesa: está en un evento de la Mesa del árbitro;
 //                                                  sus filas traen asignacion_id, nombre, desde y hasta en vez de codigo)
-//   { accion: "cola_borrar", id, clave, hasta } → { ok }
+//   { accion: "cola_borrar", id, clave, hasta, mesa? } → { ok }   (sin mesa: true, ni lee ni borra las filas de la Mesa)
 //   { accion: "adjunto_entrar", codigo }       → { ok, id, nombre, arbitro, desde, hasta }
 //   { accion: "adjunto_anotar", codigo, evento, ronda, datos } → { ok, id }
 //
@@ -93,6 +93,7 @@ import {
 import { esTorneoAviso, queAvisar, textoFin, textoRonda, type TorneoAviso } from "./avisos.ts";
 import { type LlavesVapid, mandar as mandarPush } from "./webpush.ts";
 import { type Adjunto, limpiarAdjuntos, limpiarCodigo, limpiarEnvio } from "./pareo-adjuntos.ts";
+import { tocar } from "./toque-vivo.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -268,6 +269,14 @@ function mesa(v: unknown) {
     m.ko = true;
     m.slot = Math.round(numero(v.slot, 0, 999));
     if (v.pasa != null && (v.pasa === v.b || v.pasa === v.n)) { m.pasa = v.pasa; m.desempate = texto(v.desempate, 30); }
+    // La doble eliminación: la llave (ganadores, perdedores o final), su fase
+    // y quién llegó a la final desde perdedores (uno de los dos de la mesa).
+    if (v.llave === "G" || v.llave === "P" || v.llave === "F") {
+      m.llave = v.llave;
+      m.fase = Math.round(numero(v.fase, 1, 99));
+      if (v.deP != null && (v.deP === v.b || v.deP === v.n)) m.deP = v.deP;
+    }
+    if (v.tercer === true) m.tercer = true;
   }
   const pgn = pgnLimpio(v.pgn);
   if (pgn) m.pgn = pgn;
@@ -297,7 +306,8 @@ function limpiar(v: unknown) {
     validoElo: ["fide", "nacional", "no"].includes(v.validoElo as string) ? v.validoElo as string : "",
     ritmoTipo: ["clasico", "rapido", "blitz"].includes(v.ritmoTipo as string) ? v.ritmoTipo as string : "",
     // Los sistemas que sabe pintar la página pública; cualquier otra cosa, suizo.
-    sistema: ["todos", "scheveningen", "eliminacion"].includes(v.sistema as string) ? v.sistema as string : "suizo", dobleVuelta: v.dobleVuelta === true,
+    sistema: ["todos", "scheveningen", "eliminacion", "keizer"].includes(v.sistema as string) ? v.sistema as string : "suizo", dobleVuelta: v.dobleVuelta === true,
+    dobleEliminacion: v.sistema === "eliminacion" && v.dobleEliminacion === true, tercerPuesto: v.sistema === "eliminacion" && v.dobleEliminacion !== true && v.tercerPuesto === true,
     rondasTotales: Math.round(numero(v.rondasTotales, 0, 99)),
     tipo: v.tipo === "equipos" ? "equipos" : undefined, tableros: v.tipo === "equipos" ? Math.round(numero(v.tableros, 1, 12)) : undefined,
     puntos: { victoria: numero(puntos.victoria, 0, 10), tablas: numero(puntos.tablas, 0, 10), derrota: numero(puntos.derrota, 0, 10), bye: numero(puntos.bye, 0, 10) },
@@ -508,6 +518,8 @@ Deno.serve(async (req) => {
       const adjuntos = limpiarAdjuntos(body.adjuntos);
       if (adjuntos) await sincronizarAdjuntos(pid, adjuntos);
       enSegundoPlano(avisarSeguidores(pid, fila.datos, t as unknown as TorneoAviso));
+      // La página pública que tiene abierto este torneo lo vuelve a leer ya (ver toque-vivo.ts).
+      enSegundoPlano(tocar(SUPABASE_URL, SERVICE_ROLE_KEY, "pareo-publico-" + pid, "actualizado"));
       return json({ ok: true, id: pid });
     }
 
@@ -745,9 +757,25 @@ Deno.serve(async (req) => {
     // El comentario de quien organiza (el motivo, si la rechaza) queda con la
     // inscripción y va en el aviso. Volver a «pendiente» lo borra.
     const comentario = estado === "pendiente" ? "" : texto(body.comentario, 300);
+    // El correo que agrega quien organiza cuando la familia dejó un teléfono
+    // (o uno que no servía): de una inscripción a la vez. Pasa a ser el
+    // contacto, y el teléfono queda en la nota para no perderlo.
+    const correoNuevo = texto(body.correo, 120);
+    // Sin `avisado: null`: no se reenvía la decisión ya avisada (ver aviso_estado abajo).
+    const cambios: Record<string, unknown> = { estado, comentario };
+    if (correoNuevo) {
+      if (!esCorreo(correoNuevo)) return json({ ok: false, error: "Ese correo no es válido." }, 400);
+      if (cuales.length !== 1 || estado === "pendiente") return json({ ok: false, error: "El correo se agrega de una inscripción a la vez." }, 400);
+      const { data: antes } = await admin.from("pareo_preinscripciones").select("contacto, nota").eq("publicado_id", pid).eq("id", cuales[0]).maybeSingle();
+      if (!antes) return json({ ok: false, error: "Esa inscripción ya no está." }, 404);
+      cambios.contacto = correoNuevo;
+      if (antes.contacto && !esCorreo(antes.contacto) && !String(antes.nota || "").includes(antes.contacto)) {
+        cambios.nota = [antes.nota, "Teléfono: " + antes.contacto].filter(Boolean).join(" · ").slice(0, 300);
+      }
+    }
     const { data: marcadas, error } = await admin.from("pareo_preinscripciones")
-      .update({ estado, comentario }).eq("publicado_id", pid).in("id", cuales)
-      .select("id, nombre, responsable, contacto, institucion, categoria, sexo, nacimiento, elo, fide_id, aviso_estado");
+      .update(cambios).eq("publicado_id", pid).in("id", cuales)
+      .select("id, nombre, responsable, contacto, nota, institucion, categoria, sexo, nacimiento, elo, fide_id, aviso_estado");
     if (error) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
     // El aviso a quien inscribió, si dejó un correo como contacto (con un
     // teléfono no se puede: Pareo le dice al árbitro que le avise él). Las
@@ -784,7 +812,10 @@ Deno.serve(async (req) => {
       }
       if (avisados.length) await admin.from("pareo_preinscripciones").update({ avisado: new Date().toISOString(), aviso_estado: estado }).in("id", avisados);
     }
-    return json({ ok: true, avisados, sinCorreo });
+    // Con un correo agregado, el contacto y la nota como quedaron, para que
+    // el panel los pinte sin volver a pedir la lista.
+    const una = correoNuevo ? (marcadas ?? [])[0] : null;
+    return json(una ? { ok: true, avisados, sinCorreo, contacto: una.contacto, nota: una.nota } : { ok: true, avisados, sinCorreo });
   }
 
   // ---------- Los árbitros adjuntos ----------
@@ -794,6 +825,12 @@ Deno.serve(async (req) => {
     const pid = texto(body.id, 40);
     const falla = await sinClave(pid, texto(body.clave, 100));
     if (falla) return falla;
+    // Las filas de la Mesa del árbitro (asignacion_id, sin código) solo se le dan —y se le dejan
+    // borrar— a un Pareo que dice que las entiende (`mesa: true`). Un Pareo de antes del 13/11 las
+    // leía, no encontraba a su adjunto, las descartaba y las BORRABA igual: el resultado se perdía
+    // sin aviso (pasó en el Tacho Chess 2). Con esto, ese Pareo viejo solo ve las de sus adjuntos.
+    // deno-lint-ignore no-explicit-any
+    const conMesa = (q: any) => (body.mesa === true ? q : q.not("codigo", "is", null));
     if (accion === "adjuntos") {
       const lista = limpiarAdjuntos(body.adjuntos);
       if (!lista) return json({ ok: false, error: "Falta la lista de árbitros." }, 400);
@@ -802,7 +839,7 @@ Deno.serve(async (req) => {
     }
     if (accion === "cola") {
       const [{ data: cola, error }, { data: vistos }, { data: enMesa }] = await Promise.all([
-        admin.from("pareo_cola").select("id, codigo, asignacion_id, nombre, desde, hasta, evento, ronda, datos, creado").eq("publicado_id", pid).order("id").range(0, 499),
+        conMesa(admin.from("pareo_cola").select("id, codigo, asignacion_id, nombre, desde, hasta, evento, ronda, datos, creado").eq("publicado_id", pid)).order("id").range(0, 499),
         admin.from("pareo_adjuntos").select("codigo, visto").eq("publicado_id", pid).eq("activo", true),
         // ¿Está en un evento de la Mesa del árbitro? Entonces su Pareo lee la cola aunque no tenga adjuntos propios.
         admin.from("centroamericano_torneos").select("tnr").eq("pareo_id", pid).eq("archivado", false).limit(1),
@@ -812,7 +849,7 @@ Deno.serve(async (req) => {
     }
     const hasta = Number(body.hasta);
     if (!Number.isSafeInteger(hasta) || hasta < 1) return json({ ok: false, error: "Falta hasta dónde borrar." }, 400);
-    const { error } = await admin.from("pareo_cola").delete().eq("publicado_id", pid).lte("id", hasta);
+    const { error } = await conMesa(admin.from("pareo_cola").delete().eq("publicado_id", pid).lte("id", hasta));
     if (error) return json({ ok: false, error: "No se pudo borrar. Intenta de nuevo." }, 502);
     return json({ ok: true });
   }

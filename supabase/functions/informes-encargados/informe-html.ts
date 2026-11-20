@@ -156,6 +156,7 @@ export const SECCIONES: Record<string, { nombre: string; emoji: string; unidad?:
   "buscaminas":           { nombre: "Buscaminas de ajedrez", emoji: "💣" },
   "tipos":                { nombre: "Habilidades",           emoji: "🧠" },
   "memoria":              { nombre: "Memoria",               emoji: "📷" },
+  "oido":                 { nombre: "De oído",               emoji: "👂", unidad: ["pregunta", "preguntas"] },
   "racha":                { nombre: "Racha táctica",         emoji: "⚔️" },
   "bot":                  { nombre: "Partidas contra el bot", emoji: "🤖" },
   "logros":               { nombre: "Logros",                emoji: "🏅" },

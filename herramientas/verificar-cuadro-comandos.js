@@ -446,10 +446,14 @@ async function pruebaDiagnostico(browser) {
   else {
     igual("la posición va contada en palabras, encima del cuadro",
       await page.evaluate(() => /Blancas:.*Negras:/.test(document.querySelector("#q-comandos .cc-pos").textContent)), "true");
+    /* La lectura y el campo van en bloques hermanos: «Piezas» y la lista
+       juntos en .cc-piezas (con la cuenta ciega, ese bloque se muda antes del
+       tablero; ver «Las piezas, arriba del tablero»). */
     igual("y el cuadro va justo después de esa lectura",
       await page.evaluate(() => {
         const pos = document.querySelector("#q-comandos .cc-pos");
-        return !!pos && pos.nextElementSibling && pos.nextElementSibling.classList.contains("cc-form");
+        const b = pos && pos.closest(".cc-piezas");
+        return !!b && !!b.nextElementSibling && b.nextElementSibling.classList.contains("cc-form");
       }), "true");
     const fen = await fenDeLaPantalla(page, "#q-board", "#q-comandos .cc-pos");
     const { Chess } = require("chess.js");
@@ -799,6 +803,102 @@ async function pruebaTemas(browser) {
 /* Las dos son el mismo ejercicio contrarreloj y hasta ahora ni siquiera
    cargaban js/adaptive-mode.js: no tenían Modo Adaptado, ni interruptor, ni
    forma de contestar que no fuera tocar el tablero. */
+/* ============ El dictado: la posición pieza por pieza ============
+
+   La posición de corrido se lee demasiado rápido para ponerla en un tablero de
+   verdad, y eso no falla en ningún lado: se oye, y no da tiempo. «dictar» la
+   dice de a una pieza, y quien escucha marca el ritmo con Intro. Lo que puede
+   salir mal sin avisar: que falte una pieza, que Intro juegue o avance el
+   ejercicio en vez de dictar, o que no haya forma de salir. Todo se mira en
+   el aviso del recuadro, que es lo que se oye. */
+async function pruebaDictado(browser) {
+  console.log("\n=== El dictado, pieza por pieza ===");
+  const { page, ctx, errores } = await abrir(browser, "/entreno/temas.html", true);
+  // La voz, encendida y de mentira: se anota lo que se manda a decir y a qué velocidad.
+  await page.evaluate(() => {
+    localStorage.setItem("oscarSpeechMode_v1", "1");
+    window.__voz = [];
+    window.speechSynthesis.speak = (u) => { window.__voz.push({ texto: u.text, velocidad: u.rate }); };
+    window.speechSynthesis.cancel = () => {};
+  });
+  await page.waitForSelector("button[data-theme]", { timeout: 25000 });
+  await page.click("button[data-theme]");
+  await page.waitForSelector("#board [data-square]", { timeout: 25000 });
+  await page.waitForFunction(() => { const p = document.querySelector(".cc-pos"); return p && p.textContent.length > 20; }, null, { timeout: 25000 });
+
+  const { Chess } = require("chess.js");
+  const fen = await fenDeLaPantalla(page, "#board", ".cc-pos");
+  const juego = new Chess(fen);
+  const enTablero = {};
+  for (const f of "abcdefgh") for (let n = 1; n <= 8; n++) {
+    const c = juego.get(f + n);
+    if (c) enTablero[f + n] = (c.color === "w" ? "Blancas" : "Negras") + " " + c.type;
+  }
+  const total = Object.keys(enTablero).length;
+  const msg = async () => { await page.waitForTimeout(120); return ((await page.textContent(".cc-msg")) || "").trim(); };
+  const escribir = async (t) => { await page.fill(".cc-input", t); await page.press(".cc-input", "Enter"); return msg(); };
+  const tecla = async (k) => { await page.fill(".cc-input", ""); await page.press(".cc-input", k); return msg(); };
+
+  igual("la pista de cómo oírla despacio está junto a la posición",
+    await page.evaluate(() => { const p = document.querySelector(".cc-dictar-pista"); return !!p && p.checkVisibility() && /dictar/.test(p.textContent); }), "true");
+
+  const primero = await escribir("dictar");
+  igual("«dictar» dice cuántas piezas son", new RegExp("^Dictado: " + total + " piezas\\.").test(primero), "true");
+  igual("y explica las teclas", /Intro dice la siguiente/.test(primero) && /Escape termina/.test(primero), "true");
+  igual("empieza por la primera pieza", /pieza 1 de \d+: /.test(primero), "true");
+  igual("mientras dicta, el recuadro lo dice (lo mira la capa de la cuenta ciega)",
+    await page.evaluate(() => document.querySelector(".cc-input").dataset.dictando), "1");
+
+  const segundo = await tecla("Enter");
+  igual("Intro, con el recuadro vacío, dice la segunda", /pieza 2 de \d+: /.test(segundo), "true");
+  igual("y no juega ni cambia el ejercicio", await fenDeLaPantalla(page, "#board", ".cc-pos"), fen);
+  igual("flecha arriba la repite", await tecla("ArrowUp"), segundo);
+  igual("flecha izquierda vuelve a la primera", /pieza 1 de \d+: /.test(await tecla("ArrowLeft")), "true");
+
+  // Hasta el final, anotando cada pieza: tienen que ser las del tablero, todas y una sola vez.
+  const NOMBRE = { rey: "k", dama: "q", torre: "r", alfil: "b", caballo: "n", "peón": "p" };
+  const COL = { anna: "a", bella: "b", cesar: "c", david: "d", eva: "e", felix: "f", gustav: "g", hector: "h" };
+  const dictadas = {};
+  let paso = await msg(), vueltas = 0, fin = "";
+  for (;;) {
+    const m = paso.match(/(Blancas|Negras), pieza \d+ de \d+: (\S+) en (\S+) (\d)\.$/);
+    if (m) dictadas[COL[m[3]] + m[4]] = m[1] + " " + NOMBRE[m[2]];
+    if (/^Fin del dictado/.test(paso)) { fin = paso; break; }
+    if (++vueltas > 40) break;
+    paso = await tecla("Enter");
+  }
+  const ordenado = (o) => Object.keys(o).sort().map((k) => k + " " + o[k]).join(", ");
+  igual("dictó todas las piezas del tablero, cada una en su casilla", ordenado(dictadas), ordenado(enTablero));
+  igual("cierra con la cuenta y quién juega", /^Fin del dictado: .*piezas? blancas? y .*piezas? negras?\. Juegan (blancas|negras)/.test(fin), "true");
+  igual("al terminar, el recuadro deja de dictar",
+    await page.evaluate(() => document.querySelector(".cc-input").dataset.dictando || "no"), "no");
+
+  await escribir("dictar");
+  igual("Escape lo termina", await tecla("Escape"), "Dictado terminado.");
+
+  // Sola, con pausa: avanza sin tocar nada, y una tecla la detiene.
+  const sola = await escribir("dictar solo 2");
+  igual("«dictar solo 2» dice el ritmo", /^Dictado automático: .* una cada 2 segundos\./.test(sola), "true");
+  await page.waitForFunction(() => /pieza 2 de/.test(document.querySelector(".cc-msg").textContent), null, { timeout: 30000 })
+    .then(() => bien("sola, pasa a la segunda pieza sin tocar nada"), () => mal("el dictado automático no avanzó"));
+  igual("Intro la detiene y dice por dónde va", /^Dictado detenido: .*pieza 2 de/.test(await tecla("Enter")), "true");
+  await tecla("Escape");
+
+  // La velocidad de la voz.
+  igual("«voz más lenta» lo dice", /^Voz más lenta: 85 por ciento\./.test(await escribir("voz más lenta")), "true");
+  await escribir("dictar");
+  igual("y la voz sale más lenta",
+    await page.evaluate(() => { const u = window.__voz[window.__voz.length - 1]; return !!u && /^Dictado:/.test(u.texto) && u.velocidad < 0.9; }), "true");
+  await tecla("Escape");
+  await escribir("voz normal");
+  await escribir("posición");
+  igual("«voz normal» la devuelve a la de fábrica",
+    await page.evaluate(() => window.__voz[window.__voz.length - 1].velocidad), "1");
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 async function pruebaContrarreloj(browser, ruta, nombre) {
   console.log("\n=== " + nombre + " ===");
   const { page, ctx, errores } = await abrir(browser, ruta, true);
@@ -818,10 +918,12 @@ async function pruebaContrarreloj(browser, ruta, nombre) {
   igual("el cuadro de comandos se ve",
     await page.evaluate(() => { const c = document.querySelector(".cc-caja"); return c ? getComputedStyle(c).display : "no se montó"; }), "block");
   /* Acá la posición va en dos listas, cada una bajo su encabezado: «Piezas»
-     (h2) y debajo «Blancas» y «Negras» (h3), para llegar con la tecla H. */
+     (h2) y debajo «Blancas» y «Negras» (h3), para llegar con la tecla H. Con
+     la cuenta ciega ese bloque (.cc-piezas) ya no está en el recuadro: va
+     antes del tablero (ver «Las piezas, arriba del tablero»). */
   igual("con la posición en dos listas, «Blancas» y «Negras», bajo «Piezas»",
     await page.evaluate(() => {
-      const caja = document.querySelector("#q-comandos .cc-caja");
+      const caja = document.querySelector(".cc-piezas");
       const hs = Array.from(caja.querySelectorAll(":scope > h2, .cc-pos h3")).map((h) => h.tagName + ":" + h.textContent);
       const listas = Array.from(caja.querySelectorAll(".cc-pos h3 + ul")).map((u) => u.children.length > 0);
       return hs.join("|") + " " + listas.join(",");
@@ -964,6 +1066,36 @@ async function prueba4x4(browser) {
       await page.evaluate(() => /piezas? en el tablero/.test(document.getElementById("board-announcer").textContent)), "false");
   }
 
+  // --- y escrita COMO SE DICE: «de anna 1 a bella 2». La entiende el intérprete
+  // de todo el sitio (js/comandos-tablero.js); antes era «No entendí».
+  const dicha = await page.evaluate(() => {
+    const celdas = () => [...document.querySelectorAll("#board4 [data-square]")];
+    const conPieza = celdas().filter((c) => c.textContent.trim()).map((c) => c.dataset.square);
+    for (const sq of conPieza) {
+      celdas().find((c) => c.dataset.square === sq).click();
+      const destino = celdas().find((x) => x.classList.contains("target-capture"));
+      celdas().find((c) => c.dataset.square === sq).click();
+      if (destino) return { de: sq, a: destino.dataset.square };
+    }
+    return null;
+  });
+  if (!dicha) bien("(no quedó otra captura para probarla escrita con palabras)");
+  else {
+    const COL = { a: "anna", b: "bella", c: "cesar", d: "david" };
+    const frase = "de " + COL[dicha.de[0]] + " " + dicha.de[1] + " a " + COL[dicha.a[0]] + " " + dicha.a[1];
+    const cuantas = (t) => Number((t.match(/(\d+) piezas? en el tablero/) || [])[1] || 0);
+    const antes = cuantas(await enPantalla(page, "#position-readout"));
+    await page.fill("#cmd-input", frase);
+    await page.press("#cmd-input", "Enter");
+    await page.waitForTimeout(400);
+    igual(`escrita con palabras («${frase}») también la hace`,
+      cuantas(await enPantalla(page, "#position-readout")) === antes - 1, "true");
+  }
+  await page.fill("#cmd-input", "hola a1");
+  await page.press("#cmd-input", "Enter");
+  await page.waitForTimeout(200);
+  igual("y lo que no es una captura sigue sin entenderse", /^No entendí «hola a1»/.test(await enPantalla(page, "#cmd-status")), "true");
+
   // --- la voz: UNA frase, con todo dentro
   // No deja rastro en el DOM, así que se engancha en BlindNotation.speak(), que es
   // la puerta por donde el sitio habla. Hace falta porque speak() CANCELA lo
@@ -1022,6 +1154,7 @@ async function prueba4x4Normal(browser) {
     await pruebaArbitraje(browser, "/arbitraje.html", "Examen de arbitraje (docente)");
     await pruebaArbitraje(browser, "/nivel-de-arbitraje.html", "Examen de arbitraje (público)");
     await pruebaTemas(browser);
+    await pruebaDictado(browser);
     await pruebaContrarreloj(browser, "/racha-tactica.html", "Racha táctica");
     await pruebaContrarreloj(browser, "/te-reto.html", "¡Te reto!");
     await prueba4x4(browser);

@@ -50,6 +50,10 @@ BLOQUE = (
     + "var l=localStorage.getItem('plataforma_letra_v1');"
     + "if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);"
     + "var t=localStorage.getItem('plataforma_tema_v1');"
+    # El tema «jornada» (el del panel jornada, js/panel-jornada.js) es de la
+    # Academia: en las páginas públicas (sin la guardia de sesión, que marca
+    # data-academia en <html>) se usa el tema que la cuenta tenía antes.
+    + "if(t==='jornada'&&!document.documentElement.hasAttribute('data-academia'))t=localStorage.getItem('panel_jornada_tema_previo_v1');"
     + "if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;"
     + "document.documentElement.setAttribute('data-tema',t);"
     # La barra del sistema en el celular (la app instalada) la deja escrita

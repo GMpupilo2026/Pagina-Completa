@@ -265,12 +265,18 @@
     document.title = tx("tituloPagina");
   }
 
-  const FICHAS = ["torneo", "jugadores", "rondas", "centro", "clasificacion", "cruzada", "archivos"];
+  // La Portada y Herramientas (el comprobador, el generador y los créditos)
+  // son partes nuevas: ver «Pareo Integral con el aspecto del panel de la
+  // Academia» en docs/decisiones/juegos-y-torneos.md.
+  const FICHAS = ["inicio", "torneo", "jugadores", "rondas", "centro", "clasificacion", "cruzada", "archivos", "herramientas"];
   function pintarFichas() {
+    // Con «Solo lo de los JDE», Herramientas no se ve: si estaba abierta, se va a Archivos.
+    if (estado.ficha === "herramientas" && document.body.classList.contains("pi-modo-jde")) estado.ficha = "archivos";
+    if (!FICHAS.includes(estado.ficha)) estado.ficha = "jugadores";
     for (const f of FICHAS) {
       const b = $("pi-f-" + f);
       const si = f === estado.ficha;
-      b.className = C.ficha;
+      b.className = C.ficha + (f === "herramientas" ? " pi-no-jde" : "");
       b.setAttribute("aria-selected", si ? "true" : "false");
       b.tabIndex = si ? 0 : -1;
       $("pi-p-" + f).hidden = !si;
@@ -450,8 +456,9 @@
   }
 
   function pintarPanel() {
-    ({ torneo: pintarTorneo, jugadores: pintarJugadores, rondas: pintarRondas, centro: pintarCentro,
-      clasificacion: pintarClasificacion, cruzada: pintarCruzada, archivos: pintarEvento })[estado.ficha]();
+    ({ inicio: pintarInicio, torneo: pintarTorneo, jugadores: pintarJugadores, rondas: pintarRondas, centro: pintarCentro,
+      clasificacion: pintarClasificacion, cruzada: pintarCruzada, archivos: pintarEvento, herramientas: () => {} })[estado.ficha]();
+    pintarSiguiente();
   }
 
   function pintarTodo() {
@@ -533,7 +540,7 @@
     const barra = $("pi-barra-estado");
     if (!barra) return;
     const v = estado.t;
-    if (!v) { barra.replaceChildren(); return; }
+    if (!v) { barra.replaceChildren(); pintarResumen(); return; }
     const n = v.jugadores.length;
     const total = T.rondasDelTorneo(v);
     const r = v.rondas.length;
@@ -544,6 +551,211 @@
     ];
     if (estado.guardadoEn) partes.push(tx("estadoGuardado", { h: horaCR(estado.guardadoEn) }));
     barra.replaceChildren(...partes.map((texto) => el("span", { texto })));
+    pintarResumen();
+  }
+
+  // ---------- «Lo siguiente», la portada y lo que dice cada parte ----------
+  // Lo que toca hacer ahora con el torneo abierto, en una frase y con el botón
+  // para hacerlo: arriba de cada parte (#pi-siguiente) y en grande en la
+  // Portada. Ver «Pareo Integral con el aspecto del panel de la Academia» en
+  // docs/decisiones/juegos-y-torneos.md.
+  function mesasDe(R) {
+    const conMesa = R.mesas.filter((m) => m.n);
+    return { total: conMesa.length, faltan: conMesa.filter((m) => !T.rondaCompleta({ mesas: [m] })).length };
+  }
+  function irARonda(r, buscarPendiente) {
+    estado.ronda = r;
+    irA("rondas");
+    const sel = buscarPendiente && [...document.querySelectorAll("#pi-ronda select[data-resultado]")].find((s) => !s.value && s.checkVisibility());
+    if (sel) sel.focus();
+    else $("pi-f-rondas").focus();
+  }
+  function primeroDeLaClasificacion(v) {
+    const k = rondasCompletas();
+    if (!k || !v.jugadores.length) return null;
+    try {
+      const f = E.clasificacion(hasta(k), v.sistema === "eliminacion" ? [] : v.desempates)[0];
+      const j = f && jugador(f.id);
+      return j ? { nombre: j.nombre, puntos: puntosTexto(f.puntos) } : null;
+    } catch (e) { return null; }
+  }
+  function loSiguiente() {
+    const v = estado.t;
+    const n = v.jugadores.length;
+    const hay = v.rondas.length;
+    const total = totalRondas();
+    if (!n) {
+      return { titulo: tx("sigAgregarT"), detalle: tx("sigAgregarD"), ficha: "jugadores",
+        botones: [
+          { texto: tx("sigAgregarBoton"), hacer: () => { irA("jugadores"); $("pi-form-jugador").elements.nombre.focus(); } },
+          { texto: tx("sigSubirBoton"), hacer: () => { irA("torneo"); $("pi-subir-lista").focus(); } },
+        ] };
+    }
+    const ultima = hay ? v.rondas[hay - 1] : null;
+    if (ultima && !T.rondaCompleta(ultima)) {
+      const m = mesasDe(ultima);
+      return { titulo: tx("sigResultadosT", { r: hay }), detalle: tx(m.faltan === 1 ? "sigResultadosD1" : "sigResultadosD", { k: m.faltan, m: m.total }), ficha: "rondas", ronda: hay - 1, alerta: true,
+        botones: [
+          { texto: tx("sigResultadosBoton"), hacer: () => irARonda(hay - 1, true) },
+          { texto: tx("sigClasBoton"), hacer: () => irA("clasificacion") },
+        ] };
+    }
+    if (hay < total) {
+      return { titulo: tx("sigEmparejarT", { r: hay + 1 }), detalle: hay ? tx("sigEmparejarD", { p: hay }) : tx(n === 1 ? "sigEmparejar1D1" : "sigEmparejar1D", { n }), ficha: "rondas", ronda: hay,
+        botones: [
+          { texto: tx("sigEmparejarBoton", { r: hay + 1 }), hacer: () => irARonda(hay) },
+          hay ? { texto: tx("sigClasBoton"), hacer: () => irA("clasificacion") } : { texto: tx("sigRevisarBoton"), hacer: () => irA("jugadores") },
+        ] };
+    }
+    const primero = primeroDeLaClasificacion(v);
+    return { titulo: tx("sigTerminadoT"), detalle: primero ? tx("sigTerminadoD", { j: primero.nombre, p: primero.puntos }) : tx("sigTerminadoD0"), ficha: "clasificacion",
+      botones: [
+        { texto: tx("sigClasBoton"), hacer: () => irA("clasificacion") },
+        { texto: tx("bajarTrf"), hacer: () => irA("archivos") },
+      ] };
+  }
+  // La tira de arriba de cada parte: lo siguiente y su botón (en la parte a la
+  // que ya lleva el botón, sin botón). En la Portada no va: ahí está en grande.
+  function pintarSiguiente() {
+    const caja = $("pi-siguiente");
+    if (!caja) return;
+    const v = estado.t;
+    if (!v || estado.ficha === "inicio") { caja.hidden = true; caja.replaceChildren(); return; }
+    const s = loSiguiente();
+    const aqui = s.ficha === estado.ficha && (s.ronda == null || s.ronda === estado.ronda);
+    const b = s.botones[0];
+    caja.className = "pi-siguiente no-imprimir" + (s.alerta ? " pi-siguiente-alerta" : "");
+    caja.replaceChildren(...[
+      el("span", { class: "pi-siguiente-etiqueta", texto: tx("sigEtiqueta") }),
+      el("span", { class: "pi-siguiente-texto" }, el("b", { texto: s.titulo }), " ", s.detalle),
+      aqui ? null : el("button", { type: "button", class: "pi-boton-rosa", onclick: b.hacer }, b.texto)].filter(Boolean));
+    caja.hidden = false;
+  }
+  // Lo que dice cada parte en la barra lateral: cuántos juegan y cómo va la ronda.
+  function pintarInsignias() {
+    const v = estado.t;
+    const poner = (f, texto, alerta) => {
+      const s = document.querySelector("#pi-f-" + f + " .pi-insignia");
+      if (!s) return;
+      s.textContent = texto || "";
+      s.classList.toggle("pi-insignia-alerta", !!alerta);
+    };
+    if (!v) { for (const f of FICHAS) poner(f, ""); return; }
+    poner("jugadores", String(v.jugadores.length), !v.jugadores.length);
+    const hay = v.rondas.length;
+    const total = Math.max(totalRondas(), hay);
+    const ultima = hay ? v.rondas[hay - 1] : null;
+    const faltan = ultima && !T.rondaCompleta(ultima) ? mesasDe(ultima).faltan : 0;
+    poner("rondas", hay ? tx("insRondas", { r: hay, t: total }) + (faltan ? " · " + tx("insFaltan", { k: faltan }) : "") : (v.jugadores.length ? tx("porEmparejar") : ""), !!faltan);
+    poner("clasificacion", rondasCompletas() ? tx("insTras", { r: rondasCompletas() }) : "");
+  }
+  function pintarResumen() {
+    pintarInsignias();
+    pintarSiguiente();
+    if (estado.ficha === "inicio") pintarInicio();
+  }
+
+  // La Portada: «Lo siguiente» en grande, seis tarjetas de color que llevan a
+  // su parte (cada una con el dato escrito: el color nunca va solo) y «Lo que
+  // viene», la lista de las rondas.
+  // El color de la tarjeta de Resultados (el dato también va escrito).
+  const COLOR_FALTA = "naranja", COLOR_LISTO = "verde";
+  function pintarInicio() {
+    const caja = $("pi-inicio");
+    if (!caja) return;
+    const v = estado.t;
+    if (!v) { caja.replaceChildren(); return; }
+    const s = loSiguiente();
+    const n = v.jugadores.length;
+    const hay = v.rondas.length;
+    const total = Math.max(totalRondas(), hay);
+    const sistema = { suizo: "sistemaSuizoCorto", todos: "sistemaTodosCorto", scheveningen: "sistemaSchevCorto", eliminacion: "sistemaElimCorto", keizer: "sistemaKeizerCorto" }[v.sistema];
+    const chips = [
+      sistema ? tx(sistema) : null,
+      total ? tx(total === 1 ? "iniUnaRonda" : "iniRondas", { n: total }) : null,
+      v.ritmo || null,
+      v.fechaInicio ? fechaCorta(v.fechaInicio) : null,
+      v.ciudad || null,
+    ].filter(Boolean);
+    const heroe = el("div", { class: "pi-heroe" },
+      el("p", { class: "pi-heroe-nombre", texto: v.nombre || tx("estadoSinNombre") }),
+      chips.length ? el("ul", { class: "pi-chips", "aria-label": tx("iniDatos") }, chips.map((c) => el("li", { texto: c }))) : null,
+      el("p", { class: "pi-heroe-etiqueta", texto: tx("sigEtiqueta") }),
+      el("h2", { texto: s.titulo }),
+      el("p", { class: "pi-heroe-detalle", texto: s.detalle }),
+      el("div", { class: "pi-heroe-botones" }, s.botones.map((b, i) =>
+        el("button", { type: "button", class: i === 0 ? "pi-boton-rosa" : "pi-boton-blanco", onclick: b.hacer }, b.texto))));
+
+    const ultima = hay ? v.rondas[hay - 1] : null;
+    const m = ultima ? mesasDe(ultima) : null;
+    const primero = primeroDeLaClasificacion(v);
+    const sala = (color, icono, titulo, numero, detalle, hacer) => el("button", { type: "button", class: "pi-sala pi-sala-" + color, onclick: hacer },
+      el("span", { class: "pi-sala-icono", "aria-hidden": "true", texto: icono }),
+      el("span", { class: "pi-sala-titulo", texto: titulo }),
+      el("span", { class: "pi-sala-numero", texto: numero }),
+      el("span", { class: "pi-sala-detalle", texto: detalle }));
+    const salas = el("div", { class: "pi-salas" },
+      sala("azul", "👥", tx("fJugadores"), String(n), tx("iniJugadoresDet"), () => irA("jugadores")),
+      sala("turquesa", "♟️", tx("iniRonda"), hay ? tx("insRondas", { r: hay, t: total }) : "—", hay ? tx("iniRondaDet") : tx("iniSinEmpezar"), () => irARonda(Math.max(0, hay - 1))),
+      sala(m && m.faltan ? COLOR_FALTA : COLOR_LISTO, "✍️", tx("iniResultados"), !m ? "—" : m.faltan ? tx("insFaltan", { k: m.faltan }) : tx("iniCompletos"), m ? tx("iniResultadosDet", { r: hay }) : tx("iniSinEmpezar"), () => irARonda(Math.max(0, hay - 1), true)),
+      sala("rojo", "🏆", tx("iniPrimero"), primero ? primero.nombre : "—", primero ? tx("iniPuntos", { p: primero.puntos }) : tx("iniSinResultados"), () => irA("clasificacion")),
+      sala("morado", "📲", tx("iniVivo"), estado.enVivo ? tx("iniVivoSi") : tx("iniVivoNo"), tx("verDesdeElCelular"), () => irARonda(Math.max(0, hay - 1))),
+      sala("pizarra", "📁", tx("fArchivos"), "TRF", tx("iniArchivosDet"), () => irA("archivos")));
+
+    const items = [];
+    const enJuego = ultima && !T.rondaCompleta(ultima);
+    for (let r = 0; r < total; r++) {
+      let texto, clase = null;
+      if (r < hay) {
+        const mr = mesasDe(v.rondas[r]);
+        if (mr.faltan) { texto = tx("iniVieneJuego", { k: mr.faltan }); clase = "pi-viene-ahora"; }
+        else texto = tx("iniVieneJugada");
+      } else if (r === hay) { texto = tx("porEmparejar"); if (!enJuego) clase = "pi-viene-ahora"; }
+      else texto = tx("iniVieneLuego");
+      items.push(el("li", { class: clase }, el("span", { class: "pi-viene-que", texto: tx("rondaN", { r: r + 1 }) }), el("span", { class: "pi-viene-det", texto })));
+    }
+    // Las que ya se jugaron, salvo las dos últimas, se juntan en una línea.
+    const jugadas = Math.max(0, Math.min(hay, total) - 2);
+    const lista = jugadas > 1
+      ? [el("li", {}, el("span", { class: "pi-viene-que", texto: tx("iniVieneAntes", { n: jugadas }) }), el("span", { class: "pi-viene-det", texto: tx("iniVieneJugadas") }))].concat(items.slice(jugadas))
+      : items;
+    lista.push(el("li", {}, el("span", { class: "pi-viene-que", texto: tx("iniVieneFin") }), el("span", { class: "pi-viene-det", texto: tx("iniVieneFinDet") })));
+    const viene = el("section", { class: "pi-viene", "aria-labelledby": "pi-viene-titulo" },
+      el("h2", { id: "pi-viene-titulo", texto: tx("iniViene") }), el("ol", {}, lista));
+
+    caja.replaceChildren(el("div", { class: "pi-portada" }, el("div", { class: "pi-portada-principal" }, heroe, salas), viene));
+  }
+  function fechaCorta(iso) {
+    const [a, mes, d] = String(iso).split("-").map(Number);
+    if (!a || !mes || !d) return iso;
+    // Un día de calendario: se arma a mediodía UTC y se muestra en hora de Costa Rica.
+    return new Intl.DateTimeFormat(idioma === "en" ? "en-US" : "es-CR", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Costa_Rica" }).format(new Date(Date.UTC(a, mes - 1, d, 12)));
+  }
+
+  // Los menús de botones (<details class="pi-menu">): se cierran al elegir,
+  // al tocar afuera y con Escape, y nunca queda más de uno abierto.
+  function engancharMenus() {
+    document.addEventListener("click", (e) => {
+      const dentro = e.target.closest("details.pi-menu");
+      for (const d of document.querySelectorAll("details.pi-menu[open]")) {
+        if (d !== dentro) d.open = false;
+        else if (e.target.closest(".pi-menu-lista button")) d.open = false;
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      const abierto = document.querySelector("details.pi-menu[open]");
+      if (!abierto) return;
+      abierto.open = false;
+      abierto.querySelector("summary").focus();
+    });
+  }
+  // Un menú de botones; los que vienen nulos no se ponen, y sin ninguno no hay menú.
+  function menuDeBotones(id, etiqueta, botones) {
+    const lista = botones.filter(Boolean);
+    if (!lista.length) return null;
+    for (const b of lista) b.className = "pi-menu-item";
+    return el("details", { id, class: "pi-menu no-imprimir" }, el("summary", { class: C.botonSec }, etiqueta), el("div", { class: "pi-menu-lista" }, lista));
   }
 
   // Si el torneo cambia el Elo de quien juega: lo dice la lista pública.
@@ -574,8 +786,15 @@
     }
     $("pi-sistema-fijo").hidden = v.rondas.length === 0;
     $("pi-campo-rondas").hidden = T.fijo(v);
-    $("pi-campo-baku").hidden = T.fijo(v);
+    $("pi-campo-baku").hidden = T.fijo(v) || v.sistema === "keizer";
     $("pi-campo-doble").hidden = !T.fijo(v) || v.sistema === "eliminacion";
+    // La doble eliminación y el tercer puesto son de la eliminación directa;
+    // con doble eliminación el tercero sale solo de la llave de perdedores.
+    f.elements.dobleEliminacion.checked = !!v.dobleEliminacion;
+    f.elements.tercerPuesto.checked = !!v.tercerPuesto;
+    $("pi-campo-doble-elim").hidden = v.sistema !== "eliminacion";
+    $("pi-campo-tercer").hidden = v.sistema !== "eliminacion" || !!v.dobleEliminacion;
+    f.elements.dobleEliminacion.disabled = f.elements.tercerPuesto.disabled = v.rondas.length > 0;
     f.elements.dobleVuelta.disabled = v.rondas.length > 0;
     f.elements.colorInicial.disabled = v.rondas.length > 0;
     f.elements.baku.disabled = v.rondas.length > 0;
@@ -785,7 +1004,16 @@
     if (!n) return;
     if (n === "nombre" && v.jde) { e.target.value = v.nombre || ""; return; }
     if (configFija(v) && (n === "ritmo" || n === "sistema" || n.startsWith("p_"))) { pintarTorneo(); return; }
-    if (n === "sistema") { if (v.rondas.length === 0) v.sistema = e.target.value; }
+    if (n === "sistema") {
+      if (v.rondas.length === 0) {
+        v.sistema = e.target.value;
+        // En un Keizer la lista se ordena por sus puntos: van primero, con lo
+        // que vale cada uno. Al salir del Keizer, se van.
+        const sin = (v.desempates || []).filter((c) => c !== "KZ" && c !== "KV");
+        v.desempates = v.sistema === "keizer" ? "KZ,KV".split(",").concat(sin) : sin;
+      }
+    }
+    else if (n === "dobleEliminacion" || n === "tercerPuesto") { if (v.rondas.length === 0) v[n] = e.target.checked; }
     else if (n === "baku" || n === "dobleVuelta") v[n] = e.target.checked;
     else if (n === "rondasTotales") {
       const r = Math.round(Number(e.target.value));
@@ -802,7 +1030,7 @@
     else v[n] = e.target.value;
     guardar();
     if (n === "nombre") pintarLista();
-    if (n === "sistema") pintarTorneo();
+    if (n === "sistema" || n === "dobleEliminacion") pintarTorneo();
   }
 
   function pintarDesempates() {
@@ -908,6 +1136,12 @@
 
   function pintarJugadores() {
     const v = t();
+    // Cada parte empieza por lo que más se usa: con gente inscrita, la lista
+    // va arriba y «Agregar un jugador» debajo (con un botón que lleva ahí).
+    const panelJ = $("pi-p-jugadores"), cajaAgregar = $("pi-jug-agregar"), cajaInscritos = $("pi-jug-inscritos");
+    const listaPrimero = v.jugadores.length > 0;
+    if ((panelJ.firstElementChild === cajaInscritos) !== listaPrimero) panelJ.prepend(listaPrimero ? cajaInscritos : cajaAgregar);
+    $("pi-ir-agregar").hidden = !listaPrimero || E.esDeEquipos(v);
     const num = T.numeros(v);
     const orden = T.ordenInicial(v);
     const tabla = $("pi-tabla-jugadores");
@@ -3284,21 +3518,29 @@
     const R = v.rondas[r];
     const pendientes = R.mesas.filter((m) => m.n && !T.rondaCompleta({ mesas: [m] })).length;
     const ultima = r === v.rondas.length - 1;
+    // Los botones de la ronda, en tres menús (Imprimir, Compartir, Árbitros y
+    // cámaras) en vez de once sueltos; «Deshacer el emparejamiento» va aparte,
+    // al final («Los botones de Rondas, agrupados» en docs/decisiones/juegos-y-torneos.md).
     caja.append(el("div", { class: "flex flex-wrap items-baseline justify-between gap-3 mb-3" },
       el("h2", { class: "font-serif text-xl font-bold", texto: tx("emparejamientosRonda", { r: r + 1 }) + (v.sistema === "eliminacion" ? " · " + nombreRondaElim(v, r) : "") + (v.nombre ? " — " + v.nombre : "") }),
       el("div", { class: "flex flex-wrap gap-2 no-imprimir" },
-        el("button", { type: "button", class: C.botonSec, onclick: () => window.print() }, tx("imprimir")),
-        el("button", { type: "button", class: C.botonSec, onclick: () => imprimirPlantillaMesas(r) }, tx("plantillaMesas")),
-        el("button", { type: "button", id: "pi-planillas-firma", class: C.botonSec, onclick: () => imprimirPlanillasFirma(r) }, tx("planillasFirma")),
-        E.esDeEquipos(v) ? el("button", { type: "button", id: "pi-alineaciones", class: C.botonSec, onclick: () => imprimirAlineaciones(r) }, tx("alineacionesImprimir")) : null,
-        el("button", { type: "button", class: C.botonSec, onclick: () => compartirLectura(r) }, tx("verDesdeElCelular")),
-        el("button", { type: "button", id: "pi-ronda-whatsapp", class: C.botonSec, "aria-expanded": "false", "aria-controls": "pi-ronda-compartir",
-          onclick: (e) => abrirCompartir($("pi-ronda-compartir"), e.currentTarget, PareoCompartir.textoRonda(t(), r, { idioma, enlace: enlaceVivoActual() })) }, tx("whatsappBoton")),
-        ultima ? el("button", { type: "button", id: "pi-adjunto", class: C.botonSec, onclick: () => enlaceAdjunto(r) }, tx("adjuntoBoton")) : null,
-        ultima ? el("button", { type: "button", id: "pi-camaras", class: C.botonSec, onclick: pedirCodigoCamaras }, tx("camarasBoton")) : null,
-        el("button", { type: "button", id: "pi-planillas-anotacion", class: C.botonSec, onclick: () => imprimirPlanillasAnotacion(r) }, tx("anotacionBoton")),
-        el("button", { type: "button", id: "pi-imprimir-todo", class: C.botonSec, onclick: () => imprimirTodoDeRonda(r) }, tx("imprimirTodo")),
-        ultima ? el("button", { type: "button", class: C.miniPeligro + " px-3 py-2", onclick: () => deshacerRonda(r) }, tx("deshacerRonda")) : null)));
+        menuDeBotones("pi-menu-imprimir", tx("menuImprimir"), [
+          el("button", { type: "button", onclick: () => window.print() }, tx("imprimir")),
+          el("button", { type: "button", onclick: () => imprimirPlantillaMesas(r) }, tx("plantillaMesas")),
+          el("button", { type: "button", id: "pi-planillas-firma", onclick: () => imprimirPlanillasFirma(r) }, tx("planillasFirma")),
+          el("button", { type: "button", id: "pi-planillas-anotacion", onclick: () => imprimirPlanillasAnotacion(r) }, tx("anotacionBoton")),
+          E.esDeEquipos(v) ? el("button", { type: "button", id: "pi-alineaciones", onclick: () => imprimirAlineaciones(r) }, tx("alineacionesImprimir")) : null,
+          el("button", { type: "button", id: "pi-imprimir-todo", onclick: () => imprimirTodoDeRonda(r) }, tx("imprimirTodo")),
+        ]),
+        menuDeBotones("pi-menu-compartir", tx("menuCompartir"), [
+          el("button", { type: "button", onclick: () => compartirLectura(r) }, tx("verDesdeElCelular")),
+          el("button", { type: "button", id: "pi-ronda-whatsapp", "aria-expanded": "false", "aria-controls": "pi-ronda-compartir",
+            onclick: (e) => abrirCompartir($("pi-ronda-compartir"), e.currentTarget, PareoCompartir.textoRonda(t(), r, { idioma, enlace: enlaceVivoActual() })) }, tx("whatsappBoton")),
+        ]),
+        ultima ? menuDeBotones("pi-menu-arbitros", tx("menuArbitros"), [
+          el("button", { type: "button", id: "pi-adjunto", onclick: () => enlaceAdjunto(r) }, tx("adjuntoBoton")),
+          el("button", { type: "button", id: "pi-camaras", onclick: pedirCodigoCamaras }, tx("camarasBoton")),
+        ]) : null)));
     caja.append(el("div", { id: "pi-ronda-compartir", class: "no-imprimir", hidden: true }));
     caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", role: "status", texto: pendientes ? tx("faltanResultados", { n: pendientes }) : tx("rondaCompleta") }));
     if (!ultima) caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", texto: tx("avisoCorregir") }));
@@ -3307,7 +3549,8 @@
     const buscarMesa = el("input", { id: "pi-buscar-mesa", type: "search", autocomplete: "off", class: C.campo, "aria-describedby": "pi-atajos-ayuda" });
     caja.append(el("div", { class: "no-imprimir mb-3 max-w-md" },
       el("label", { for: "pi-buscar-mesa", class: "block text-sm font-semibold mb-1", texto: tx("buscarMesa") }), buscarMesa,
-      el("p", { id: "pi-atajos-ayuda", class: C.nota + " mt-1", texto: tx("atajosAyuda") })));
+      el("details", { class: "pi-ayuda" }, el("summary", { texto: tx("atajosTitulo") }),
+        el("p", { id: "pi-atajos-ayuda", class: C.nota + " mt-1", texto: tx("atajosAyuda") }))));
     buscarMesa.addEventListener("input", () => filtrarMesas(buscarMesa.value));
     buscarMesa.addEventListener("keydown", (e) => {
       if (e.key !== "Enter") return;
@@ -3334,6 +3577,10 @@
     pintarRevisionPareo(caja, r);
     pintarConfirmar(caja, r);
     pintarIncidencias(caja, r);
+    if (ultima) caja.append(el("section", { class: "pi-zona-peligro no-imprimir", "aria-labelledby": "pi-peligro-titulo" },
+      el("h3", { id: "pi-peligro-titulo", texto: tx("peligroTitulo") }),
+      el("p", { class: C.nota, texto: tx("peligroAyuda", { r: r + 1 }) }),
+      el("button", { type: "button", class: C.miniPeligro + " px-3 py-2", onclick: () => deshacerRonda(r) }, tx("deshacerRonda"))));
     for (const s of caja.querySelectorAll("select[data-resultado]")) atajosResultado(s);
   }
 
@@ -3435,11 +3682,30 @@
     // organización vincula el torneo con esta pestaña abierta). Lo ajusta leerCola.
     cadaCola(estado.adjuntos.mesa ? ESPERA_COLA_MESA : activos.length ? ESPERA_COLA : ESPERA_COLA_LENTA);
     leerCola();
+    escucharCola(v);
     return true;
+  }
+  // El toque de la Mesa del árbitro: cuando un árbitro de la Mesa deja algo en
+  // la cola, la Edge Function centroamericano-mesa toca el canal
+  // `pareo-cola-<id publicado>` (sin el dato) y esta pestaña la lee en el
+  // momento, en vez de esperar su vuelta. Si el toque no llega, la vuelta
+  // sigue. Ver «El resultado de la mesa, al público al instante».
+  async function escucharCola(v) {
+    const id = v && v.publicado && v.publicado.id;
+    if (!estado.adjuntos || !id || estado.adjuntos.canalCola) return;
+    estado.adjuntos.canalCola = "abriendo";
+    try { await PareoVer.cargarSupabase(); }
+    catch (e) { if (estado.adjuntos) estado.adjuntos.canalCola = null; return; }
+    if (!estado.adjuntos || estado.adjuntos.canalCola !== "abriendo") return;
+    const canal = window.sb.channel("pareo-cola-" + id);
+    canal.on("broadcast", { event: "cola" }, () => leerCola());
+    canal.subscribe();
+    estado.adjuntos.canalCola = canal;
   }
   function desconectarAdjuntos() {
     if (estado.adjuntos) {
       for (const canal of estado.adjuntos.canales.values()) canal.unsubscribe();
+      if (estado.adjuntos.canalCola && estado.adjuntos.canalCola.unsubscribe) estado.adjuntos.canalCola.unsubscribe();
       clearInterval(estado.adjuntos.reloj);
     }
     estado.adjuntos = null;
@@ -3470,8 +3736,10 @@
   // árbitro con torneos de Pareo Integral»).
   const adjuntoDeMesa = (x) => ({ codigo: "a:" + x.asignacion_id, nombre: String(x.nombre || "").slice(0, 80), rango: x.desde + "-" + x.hasta, activo: true, mesa: true });
   let leyendoCola = false;
+  let otraVezCola = false;
   async function leerCola() {
-    if (leyendoCola || !estado.adjuntos || !window.PareoPublicar) return;
+    if (leyendoCola) { otraVezCola = true; return; }
+    if (!estado.adjuntos || !window.PareoPublicar) return;
     const idT = estado.adjuntos.idTorneo;
     const v0 = torneoDelAdjunto();
     if (!v0 || !v0.publicado) return;
@@ -3493,10 +3761,15 @@
         ultimo = x.id;
       }
       if (ultimo) await PareoPublicar.colaBorrar(v0.publicado, ultimo);
-    } finally { leyendoCola = false; }
+    } finally {
+      leyendoCola = false;
+      // Un toque que llegó mientras se leía: otra lectura, un poco después
+      // (y así una ráfaga de toques no se vuelve una ráfaga de lecturas).
+      if (otraVezCola) { otraVezCola = false; setTimeout(leerCola, 1500); }
+    }
   }
   // La lista de enlaces de adjunto, a la base apenas cambia (sin esperar los
-  // 30 segundos de la publicación): un enlace nuevo ya anota por la base.
+  // 5 segundos de la publicación): un enlace nuevo ya anota por la base.
   function sincronizarAdjuntos(v) {
     if (v && v.publicado && window.PareoPublicar) PareoPublicar.adjuntos(v).catch(() => {});
   }
@@ -3520,6 +3793,7 @@
       // Las cámaras de Notara del torneo (su código y el id publicado): el
       // adjunto ve sus mesas en vivo (js/pareo/camaras-adjunto.js). En equipos, no.
       camaras: v.camaras && v.camaras.activo && v.publicado && !deEquipos ? v.camaras.codigo : null, torneo: v.publicado ? v.publicado.id : null,
+      camRetraso: (v.camaras && v.camaras.retraso) || 0,
       // Quién es él, quién es el principal, su chat y sus llamadas.
       arbitro: a.nombre || "", principal: v.arbitro || "",
       chat: chatDe(v, codigo).slice(-30).map((x) => ({ hora: x.hora, de: x.de === "principal" ? x.de : QUIEN_CHAT[x.de === codigo], nombre: x.nombre, texto: x.texto })),
@@ -3615,15 +3889,49 @@
   async function pedirCodigoCamaras() {
     const v = t();
     if (!v.publicado) { Avisos.avisar(tx("camarasSinPublicar"), { tipo: "error" }); return; }
+    // El código ya viene puesto: el que tenía el torneo o uno nuevo. Así no
+    // hace falta pasar antes por Notara: se toca «Recibir» y los QR de las
+    // mesas (abajo) ya lo llevan. Quien ya tiene cámaras andando, lo cambia.
+    try { await cargarVivo(); } catch (e) { Avisos.avisar(tx("errorEnVivo", { e: e.message }), { tipo: "error" }); return; }
     const res = await Avisos.formulario({ titulo: tx("camarasTitulo"), texto: tx("camarasTexto"), aceptar: tx("camarasConectar"), cancelar: tx("cancelar"),
-      campos: [{ nombre: "codigo", etiqueta: tx("camarasCodigo"), valor: (v.camaras && v.camaras.codigo) || "", max: 8 }] });
+      campos: [{ nombre: "codigo", etiqueta: tx("camarasCodigo"), valor: (v.camaras && v.camaras.codigo) || window.PartidaEnVivo.nuevoCodigo(), max: 8, ayuda: tx("camarasCodigoAyuda") },
+        { nombre: "retraso", tipo: "select", etiqueta: tx("camarasRetraso"), valor: String((v.camaras && v.camaras.retraso) || 0), ayuda: tx("camarasRetrasoAyuda"),
+          opciones: window.PartidaEnVivo.RETRASOS.map((r) => [String(r), r ? tx("camarasRetrasoMin", { n: r }) : tx("camarasRetrasoNo")]) }] });
     if (!res || t() !== v) return;
     const codigo = String(res.codigo || "").replace(/\s+/g, "").toLowerCase();
     if (!CODIGO_CAMARAS.test(codigo)) { Avisos.avisar(tx("camarasCodigoMalo"), { tipo: "error" }); return; }
     v.camaras = { codigo, activo: true };
+    // El retraso de la transmisión pública va en el QR de cada mesa (0 no se guarda).
+    if (window.PartidaEnVivo.RETRASOS.includes(Number(res.retraso)) && Number(res.retraso)) v.camaras.retraso = Number(res.retraso);
     guardar();
     if (await conectarCamaras()) Avisos.avisar(tx("camarasConectadas"));
-    pintarRondas();
+    if (estado.ficha === "centro") pintarCentro(); else pintarRondas();
+  }
+  // ---------- Un teléfono para cada mesa ----------
+  // El QR de una mesa abre Notara en el celular que va encima, sin cuenta y
+  // ya transmitiendo ESA mesa de ESTE torneo (PartidaEnVivo.enlaceCamara: el
+  // mismo enlace que arma la hoja de QR de la cámara). Sale de aquí para no
+  // tener que ir a Notara, elegir el torneo y copiar el código a mano: en
+  // papel, uno por mesa para todo el torneo (la mesa es la de la sala y no
+  // cambia de una ronda a otra), o en la pantalla, tocando la mesa en el
+  // Centro del evento. En equipos no: cada tablero lleva su cámara y esa
+  // hoja la arma Notara.
+  const enlaceCamaraDe = (v, mesa) => window.PartidaEnVivo.enlaceCamara({ torneo: v.publicado.id, codigo: v.camaras.codigo, mesa, retraso: v.camaras.retraso || 0 });
+  const conQrDeCamaras = (v) => !!(v.publicado && v.camaras && v.camaras.activo && v.rondas.length && !E.esDeEquipos(v));
+  async function imprimirQrCamaras() {
+    const v = t();
+    if (!conQrDeCamaras(v)) return;
+    try { await PareoQr.cargar(); await cargarVivo(); } catch (e) { Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" }); return; }
+    const mesas = [];
+    for (let i = 0; i < V.mesasQueNecesita(v); i++) mesas.push(V.mesaFisica(v, i));
+    $("pi-firmas").replaceChildren(el("div", { class: "pi-rotulos" }, mesas.map((n) => el("div", { class: "pi-rotulo", "data-rotulo-camara": String(n), "data-enlace": enlaceCamaraDe(v, n) },
+      el("p", { class: "pi-rotulo-mesa", texto: tx("mesa") }),
+      el("p", { class: "pi-rotulo-n", texto: String(n) }),
+      el("p", { class: "pi-rotulo-cat", texto: V.nombreTorneo(v) }),
+      el("div", { class: "pi-rotulo-qr" }, PareoQr.svg(enlaceCamaraDe(v, n), tx("camaraQrEtiqueta", { m: n }))),
+      el("p", { class: "pi-rotulo-ayuda", texto: tx("camaraQrAyuda") })))));
+    document.body.classList.add("pi-imprimiendo-firmas");
+    window.print();
   }
   async function conectarCamaras() {
     const v = t();
@@ -4137,7 +4445,11 @@
       el("p", { id: "pi-camaras-poco", class: "text-sm font-semibold text-red-800 dark:text-red-200 mt-1", hidden: true }),
       el("ul", { id: "pi-camaras-salud", class: "text-sm mt-1 space-y-0.5", hidden: true }),
       listaAlertas, estado.camaras && estado.camaras.idTorneo === estado.id ? informeCamaras() : null,
-      estado.camaras && estado.camaras.idTorneo === estado.id ? pintarLichess(v) : null, el("div", { class: "mt-2" }, dejar));
+      estado.camaras && estado.camaras.idTorneo === estado.id ? pintarLichess(v) : null,
+      conQrDeCamaras(v) ? el("p", { class: C.nota + " mt-2", texto: tx("camarasQrTexto") }) : null,
+      el("div", { class: "mt-2 flex flex-wrap gap-2" },
+        conQrDeCamaras(v) ? el("button", { type: "button", id: "pi-camaras-qr", class: C.mini, onclick: imprimirQrCamaras }, el("span", { "aria-hidden": "true", texto: "🖨️ " }), tx("camarasQrBoton")) : null,
+        dejar));
     relojesCamaras();
   }
 
@@ -4466,8 +4778,21 @@
       else if (ultima && ahora - ultima < SIN_NOTICIAS_MS) est = "transmite";
       return { mesa: f, est };
     }) : null;
-    return { r, total: conRival.length, hechas, ilegales, adjuntos, camaras, publicado: v.publicado ? v.publicado.id : null,
+    return { r, total: conRival.length, hechas, ilegales, adjuntos, camaras, qr: camaras && centroQr, publicado: v.publicado ? v.publicado.id : null,
       confirmar: JSON.stringify([R.discrepancias, R.deCamaras, R.confirmadas]) };
+  }
+  // La mesa cuyo QR de cámara se está mostrando en el Centro (o null).
+  let centroQr = null;
+  async function verQrDeMesa(mesa) {
+    if (centroQr === mesa) centroQr = null;
+    else {
+      try { await PareoQr.cargar(); await cargarVivo(); } catch (e) { Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" }); return; }
+      centroQr = mesa;
+    }
+    if (estado.ficha !== "centro") return;
+    pintarCentro();
+    const b = document.querySelector('[data-centro-camara="' + mesa + '"] button');
+    if (b) b.focus();
   }
   function pintarCentro() {
     const cont = $("pi-centro");
@@ -4524,12 +4849,32 @@
     // Las cámaras de Notara.
     const EST = { transmite: ["centroCamTransmite", "text-green-800 dark:text-green-300"], termino: ["centroCamTermino", "text-brand-600 dark:text-brand-300"],
       ayuda: ["centroCamAyuda", "text-red-800 dark:text-red-200"], sinSenal: ["centroCamSinSenal", "text-accent-700 dark:text-accent-300"], bye: ["centroCamBye", "text-brand-600 dark:text-brand-300"] };
+    // Tocar una mesa muestra su QR: el celular que lo lee queda transmitiendo esa mesa.
+    const qrDeCamaras = conQrDeCamaras(v);
+    // (Con if y no con un ternario: verificar-pareo-pagina.js toma las dos palabras de un ternario como claves de textos.)
+    let etiquetaMesaCam = "div";
+    if (qrDeCamaras) etiquetaMesaCam = "button";
+    const urlQr = qrDeCamaras && M.qr && window.PartidaEnVivo && window.qrcode ? enlaceCamaraDe(v, M.qr) : null;
+    const panelQr = urlQr ? el("div", { class: "mt-3 rounded-xl border border-accent-500 p-3 flex flex-wrap items-start gap-3", "data-centro-qr": String(M.qr), "data-enlace": urlQr },
+      el("div", { class: "w-40 bg-white p-2 rounded-lg shrink-0" }, PareoQr.svg(urlQr, tx("camaraQrEtiqueta", { m: M.qr }))),
+      el("div", { class: "flex-1 min-w-[12rem]" },
+        el("h4", { class: "font-semibold", texto: tx("centroQrTitulo", { m: M.qr }) }),
+        el("p", { class: C.nota + " mt-1", texto: tx("centroQrTexto") }),
+        el("div", { class: "flex flex-wrap gap-2 mt-2" },
+          el("button", { type: "button", class: C.mini, onclick: async () => { try { await navigator.clipboard.writeText(urlQr); Avisos.avisar(tx("enlaceCopiado")); } catch (e) { Avisos.avisar(tx("noCopia"), { tipo: "error" }); } } }, tx("copiarEnlace")),
+          el("button", { type: "button", class: C.mini, onclick: () => verQrDeMesa(M.qr) }, tx("cerrar"))))) : null;
     const camaras = tarjeta("pi-centro-camaras", tx("centroCamaras"),
-      M.camaras ? el("ul", { class: "grid grid-cols-3 sm:grid-cols-5 gap-2" }, M.camaras.map((c) => el("li", { class: "rounded-lg border border-brand-100 dark:border-brand-800 p-2 text-center", "data-centro-camara": String(c.mesa), "data-estado": c.est },
-        el("p", { class: "font-bold", texto: tx("mesa") + " " + c.mesa }),
-        el("p", { class: "text-xs font-semibold " + EST[c.est][1], texto: tx(EST[c.est][0]) }))))
+      M.camaras && qrDeCamaras ? el("p", { class: C.nota + " mb-2", texto: tx("centroCamToca") }) : null,
+      M.camaras ? el("ul", { class: "grid grid-cols-3 sm:grid-cols-5 gap-2" }, M.camaras.map((c) => el("li", { "data-centro-camara": String(c.mesa), "data-estado": c.est },
+        el(etiquetaMesaCam, Object.assign({ class: "block w-full rounded-lg border p-2 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 " + (M.qr === c.mesa ? "border-accent-500 ring-2 ring-accent-500" : "border-brand-100 dark:border-brand-800") },
+          qrDeCamaras ? { type: "button", "aria-expanded": String(M.qr === c.mesa), "aria-controls": "pi-centro-qr", onclick: () => verQrDeMesa(c.mesa) } : {}),
+          el("span", { class: "block font-bold", texto: tx("mesa") + " " + c.mesa }),
+          el("span", { class: "block text-xs font-semibold " + EST[c.est][1], texto: tx(EST[c.est][0]) })))))
         : el("p", { class: C.nota, texto: tx(E.esDeEquipos(v) ? "centroCamEquipos" : "centroSinCamaras") }),
-      M.camaras ? null : el("button", { type: "button", class: C.botonSec + " mt-3", onclick: () => { estado.ronda = M.r; irA("rondas", true); } }, tx("centroIrRonda")));
+      el("div", { id: "pi-centro-qr", hidden: !panelQr }, panelQr),
+      M.camaras && qrDeCamaras ? el("button", { type: "button", id: "pi-centro-camaras-qr", class: C.botonSec + " mt-3", onclick: imprimirQrCamaras }, el("span", { "aria-hidden": "true", texto: "🖨️ " }), tx("camarasQrBoton")) : null,
+      M.camaras || E.esDeEquipos(v) ? null : el("button", { type: "button", id: "pi-centro-camaras-poner", class: C.botonSec + " mt-3", onclick: pedirCodigoCamaras }, tx("centroCamPoner")),
+      M.camaras || !E.esDeEquipos(v) ? null : el("button", { type: "button", class: C.botonSec + " mt-3", onclick: () => { estado.ronda = M.r; irA("rondas", true); } }, tx("centroIrRonda")));
 
     // Los enlaces para compartir.
     const copiar = (url) => async () => {
@@ -5211,6 +5556,7 @@
         el("td", { class: "num", texto: V.mesaFisica(v, i) }), el("td", { class: "num", texto: num.get(m.b) }),
         el("td", { class: "font-semibold" }, nombreDe(m.b), mb ? " " : null, mb), el("td", { class: "num", texto: puntosTexto(antes(m.b)) }),
         el("td", { class: "text-center" }, sel, el("span", { class: "pi-solo-imprimir", texto: m.r ? tx("corto_" + m.r) : "" }),
+          m.ko && (m.llave || m.tercer) ? el("span", { class: "block text-xs " + C.nota, "data-llave": m.tercer ? "T" : m.llave + m.fase, texto: rotuloLlave(m) }) : null,
           m.ko && m.r === "=" ? desempateDeMesa(v, R, m, i) : null,
           m.porAdjunto ? el("span", { class: "block text-xs " + C.nota, texto: typeof m.porAdjunto === "string" ? tx("adjuntoAnotoNombre", { n: m.porAdjunto }) : tx("adjuntoAnoto") }) : null,
           el("button", { type: "button", class: C.mini + " no-imprimir block mx-auto mt-1", "data-pgn": String(i), "aria-label": tx("pgnBotonA", { m: V.mesaFisica(v, i) }),
@@ -5230,7 +5576,19 @@
   // El nombre de la ronda en una eliminación directa: «Final», «Cuartos de final»…
   const RONDA_ELIM = { final: "elimRonda_final", semifinal: "elimRonda_semifinal", cuartos: "elimRonda_cuartos", octavos: "elimRonda_octavos", ronda: "elimRonda_ronda" };
   function nombreRondaElim(v, r) {
-    return tx(RONDA_ELIM[T.nombreRondaEliminacion(v, r)], { r: r + 1 });
+    if (v.dobleEliminacion) return T.fasesDeRonda(v, r).map(nombreFaseDoble).join(" · ");
+    return tx(RONDA_ELIM[T.nombreRondaEliminacion(v, r)], { r: r + 1 }) + (v.tercerPuesto && T.nombreRondaEliminacion(v, r) === "final" ? " · " + tx("tercerNombre") : "");
+  }
+  // Una fase de la doble eliminación: «G2» es la ronda 2 de la llave de
+  // ganadores, «P1» la 1 de perdedores, «F1» la final y «F2» la revancha.
+  function nombreFaseDoble(f) {
+    return f === "F1" ? tx("dobleFinal") : f === "F2" ? tx("dobleRevancha") : tx(f[0] === "G" ? "dobleGanadores" : "doblePerdedores", { n: f.slice(1) });
+  }
+  // De qué llave es una mesa, escrito: va al lado del resultado.
+  function rotuloLlave(m) {
+    if (m.tercer) return tx("tercerNombre");
+    if (!m.llave) return "";
+    return nombreFaseDoble(m.llave + m.fase);
   }
 
   // En la eliminación directa, unas tablas se desempatan en la mesa: quién
@@ -5257,6 +5615,15 @@
       m.pasa ? el("span", { class: "pi-solo-imprimir", texto: tx("elimPasoDesempate", { n: nombreDe(m.pasa), f: m.desempate || formatos[0] }) }) : null);
   }
 
+  // Cómo se llama cada forma de no jugar una ronda. En el Keizer dice además
+  // qué parte de su propio valor suma (T.REGLAS_KEIZER).
+  function rotuloAusencia(v, c) {
+    const base = c === "H" ? tx("byeMedio", { p: puntosTexto(v.puntos.tablas) }) : c === "F" ? tx("byeEntero", { p: puntosTexto(v.puntos.victoria) }) : tx(T.fijo(v) ? "libre" : "byeCero");
+    if (v.sistema !== "keizer") return base;
+    const K = T.REGLAS_KEIZER;
+    return tx(c === "H" ? "keizerAviso" : c === "F" ? "keizerClub" : "keizerFalta", { p: Math.round((c === "H" ? K.medio : c === "F" ? K.club : K.falta) * 5) });
+  }
+
   // Quienes no jugaron esta ronda: byes pedidos, retirados, inscritos después.
   function pintarNoJuegan(caja, r) {
     const v = t();
@@ -5272,9 +5639,9 @@
       for (const id of fuera) {
         const actual = (R.ausencias || {})[id] || "Z";
         const s = el("select", { class: C.campoChico, "aria-label": tx("ausenciaDe", { n: nombreDe(id) }) },
-          el("option", { value: "H", texto: tx("byeMedio", { p: puntosTexto(v.puntos.tablas) }) }),
-          el("option", { value: "Z", texto: tx(T.fijo(v) ? "libre" : "byeCero") }),
-          el("option", { value: "F", texto: tx("byeEntero", { p: puntosTexto(v.puntos.victoria) }) }));
+          el("option", { value: "H", texto: rotuloAusencia(v, "H") }),
+          el("option", { value: "Z", texto: rotuloAusencia(v, "Z") }),
+          el("option", { value: "F", texto: rotuloAusencia(v, "F") }));
         s.value = actual;
         const papel = el("span", { class: "pi-solo-imprimir", texto: s.selectedOptions[0].textContent });
         let antes = s.value;
@@ -6259,8 +6626,12 @@
     if (!v.pedidas || v.pedidas.r !== r) v.pedidas = { r, ausencias: {} };
     const elegidas = v.pedidas.ausencias;
     const pedidas = Object.assign({}, elegidas);
+    // El Keizer se explica y sigue como el suizo: abajo va la lista para
+    // marcar quién no viene, que en un Keizer es lo de todas las noches.
+    if (v.sistema === "keizer") caja.append(el("p", { class: C.nota + " mb-3", texto: tx("keizerAyuda") }));
     if (v.sistema === "eliminacion") {
-      caja.append(el("p", { class: C.nota + " mb-3", texto: tx("elimAyuda") }));
+      caja.append(el("p", { class: C.nota + " mb-3", texto: tx(v.dobleEliminacion ? "elimDobleAyuda" : "elimAyuda") }));
+      if (v.tercerPuesto && !v.dobleEliminacion) caja.append(el("p", { class: C.nota + " mb-3", texto: tx("tercerAyuda") }));
     } else if (v.sistema === "scheveningen") {
       caja.append(el("p", { class: C.nota + " mb-3", texto: tx("schevAyuda") }));
       if (r === 0) caja.append(equiposSchevVista(v));
@@ -6275,7 +6646,7 @@
             el("button", { type: "button", id: "pi-sortear-proyector", class: C.botonSec, onclick: () => abrirSorteo("numeros") }, tx("sorteoProyector"))));
       }
     } else {
-      caja.append(el("p", { class: C.nota + " mb-3", texto: tx("byesAyuda") }));
+      caja.append(el("p", { class: C.nota + " mb-3", texto: tx(v.sistema === "keizer" ? "byesAyudaKeizer" : "byesAyuda") }));
       // El color del n.º 1 en la ronda 1, sorteado a la vista de todos.
       if (r === 0) caja.append(el("div", { class: "flex flex-wrap items-center gap-2 mb-3" },
         el("span", { class: "text-sm", texto: tx("sorteoColorActual", { c: (v.colorInicial === "b" ? tx("negras") : tx("blancas")).toLowerCase() }) }),
@@ -6290,9 +6661,9 @@
         }
         const s = el("select", { class: C.campoChico, "aria-label": tx("juegaRonda", { n: j.nombre, r: r + 1 }) },
           el("option", { value: "", texto: tx("juega") }),
-          el("option", { value: "H", texto: tx("byeMedio", { p: puntosTexto(v.puntos.tablas) }) }),
-          el("option", { value: "Z", texto: tx("byeCero") }),
-          el("option", { value: "F", texto: tx("byeEntero", { p: puntosTexto(v.puntos.victoria) }) }));
+          el("option", { value: "H", texto: rotuloAusencia(v, "H") }),
+          el("option", { value: "Z", texto: rotuloAusencia(v, "Z") }),
+          el("option", { value: "F", texto: rotuloAusencia(v, "F") }));
         const noViene = el("button", { type: "button", class: C.mini });
         const actualizarNoViene = () => {
           const marcado = s.value === "Z";
@@ -6468,6 +6839,12 @@
         const fb = fuera(m.b), fn = fuera(m.n);
         if (fb || fn) m.r = fb && fn ? "--" : fb ? "-+" : "+-";
       }
+    } else if (v.sistema === "keizer") {
+      // El Keizer no pasa por el motor del Holandés: se empareja de arriba
+      // abajo por sus puntos (T.emparejarKeizer).
+      if (E.esDeEquipos(v)) throw new Error(tx("keizerSoloIndividual"));
+      if (T.participantes(v, r, pedidas).length < 2) throw new Error(tx("pocosJugadores"));
+      ronda = { mesas: T.emparejarKeizer(v, r, pedidas), ausencias: Object.assign({}, pedidas) };
     } else {
       const juegan = T.participantes(v, r, pedidas);
       if (juegan.length < 2) throw new Error(tx("pocosJugadores"));
@@ -6582,20 +6959,30 @@
     caja.hidden = !(v.sistema === "eliminacion" && v.rondas.length);
     if (caja.hidden) return;
     const llego = T.alcanceEliminacion(v);
-    const total = T.rondasDelTorneo(v);
-    const final = v.rondas.length === total ? v.rondas[total - 1].mesas[0] : null;
-    const campeon = final ? T.pasaDe(final) : undefined;
-    const enCarrera = v.jugadores.filter((j) => llego.get(j.id) === v.rondas.length && v.rondas[v.rondas.length - 1].mesas.some((m) => m.b === j.id || m.n === j.id)).length;
+    const campeon = T.campeonEliminacion(v);
+    const enCarrera = v.dobleEliminacion ? v.jugadores.filter((j) => llego.get(j.id) === T.EN_CARRERA).length
+      : v.jugadores.filter((j) => llego.get(j.id) === v.rondas.length && v.rondas[v.rondas.length - 1].mesas.some((m) => !m.tercer && (m.b === j.id || m.n === j.id))).length;
     caja.append(el("h3", { class: "font-semibold", texto: tx("elimCuadro") }),
       el("p", { class: "text-sm mb-2", texto: campeon ? tx("elimCampeon", { n: nombreDe(campeon) }) : tx("elimEnJuego", { n: enCarrera }) }));
+    // Una mesa del cuadro, escrita: quiénes, el resultado y qué pasó después.
+    // En la final y en el tercer puesto nadie «pasa»: gana.
+    const linea = (m) => {
+      if (m.n === null) return el("li", { texto: tx("elimLibre", { n: nombreDe(m.b) }) });
+      const g = T.pasaDe(m);
+      const gana = m.tercer || m.llave === "F";
+      const que = g === undefined ? "" : g === null ? tx("elimSinPasar")
+        : m.r === "=" ? tx(gana ? "elimGanoDesempate" : "elimPasoDesempate", { n: nombreDe(g), f: m.desempate || "" }) : tx(gana ? "elimGanoPor" : "elimPasoPor", { n: nombreDe(g) });
+      return el("li", {}, nombreDe(m.b) + " – " + nombreDe(m.n) + (m.r ? " · " + tx("corto_" + m.r) : ""), que ? el("strong", { texto: " · " + que }) : null);
+    };
+    const bloque = (titulo, mesas) => { if (mesas.length) caja.append(el("h4", { class: "font-semibold text-sm mt-3", texto: titulo }), el("ul", { class: "text-sm space-y-1" }, mesas.map(linea))); };
     v.rondas.forEach((R, r) => {
-      caja.append(el("h4", { class: "font-semibold text-sm mt-3", texto: nombreRondaElim(v, r) }),
-        el("ul", { class: "text-sm space-y-1" }, R.mesas.map((m) => {
-          if (m.n === null) return el("li", { texto: tx("elimLibre", { n: nombreDe(m.b) }) });
-          const g = T.pasaDe(m);
-          const que = g === undefined ? "" : g === null ? tx("elimSinPasar") : m.r === "=" ? tx("elimPasoDesempate", { n: nombreDe(g), f: m.desempate || "" }) : tx("elimPasoPor", { n: nombreDe(g) });
-          return el("li", {}, nombreDe(m.b) + " – " + nombreDe(m.n) + (m.r ? " · " + tx("corto_" + m.r) : ""), que ? el("strong", { texto: " · " + que }) : null);
-        })));
+      if (v.dobleEliminacion) {
+        // Cada ronda puede traer mesas de las dos llaves: van por separado.
+        for (const f of T.fasesDeRonda(v, r)) bloque(tx("rondaN", { r: r + 1 }) + " · " + nombreFaseDoble(f), R.mesas.filter((m) => m.llave + m.fase === f));
+        return;
+      }
+      bloque(tx(RONDA_ELIM[T.nombreRondaEliminacion(v, r)], { r: r + 1 }), R.mesas.filter((m) => !m.tercer));
+      bloque(tx("tercerNombre"), R.mesas.filter((m) => m.tercer));
     });
   }
 
@@ -6682,13 +7069,17 @@
 
   // ---------- Publicar en «Torneos en Pareo Integral» ----------
   // El torneo se publica sin cuenta (js/pareo/publicar.js) y queda con su
-  // clave (`t.publicado`): cada vez que se guarda, a los 30 segundos, se pone
-  // al día solo (con una sola llamada aunque se anoten diez resultados en ese
-  // rato). «Dejar de publicar» lo quita del espacio público. Antes de tener
-  // jugadores se publica como anuncio (`t.anuncio`), y se puede abrir la
-  // inscripción previa (`t.inscripcion`): lo que llega se lee acá con la clave
-  // y entra a la lista solo si se acepta.
-  const ESPERA_PUBLICAR = 30000;
+  // clave (`t.publicado`): cada vez que se guarda, a los 5 segundos, se pone
+  // al día solo (con una sola llamada aunque se anoten varios resultados en ese
+  // rato), y la función toca a las páginas públicas que lo tienen abierto para
+  // que lo vuelvan a leer ya. Eran 30 segundos; con la vuelta de un minuto de
+  // la página pública, un resultado tardaba hasta minuto y medio en verse
+  // (ver «El resultado de la mesa, al público al instante»). «Dejar de
+  // publicar» lo quita del espacio público. Antes de tener jugadores se
+  // publica como anuncio (`t.anuncio`), y se puede abrir la inscripción
+  // previa (`t.inscripcion`): lo que llega se lee acá con la clave y entra a
+  // la lista solo si se acepta.
+  const ESPERA_PUBLICAR = 5000;
   // En un evento de la Mesa del árbitro las tablets leen las mesas de lo
   // publicado: lo que pone el principal tiene que llegarles en segundos
   // (ver «El resultado del principal llega solo a las tablets»). Sigue siendo
@@ -6795,7 +7186,10 @@
 
   // La inscripción previa: abrirla o cerrarla (con fecha límite) y leer lo
   // que llegó. Aceptar uno lo agrega a la lista de jugadores como cualquier
-  // otro (agregarJugadores); rechazarlo solo lo marca. Las dos cosas piden
+  // otro (agregarJugadores); rechazarlo solo lo marca. Ya decidida, se puede
+  // cambiar: de rechazada a aceptada entra a la lista, y de aceptada a
+  // rechazada sale de ella si todavía no hay rondas (con rondas, sigue y el
+  // árbitro lo retira, para no tocar emparejamientos ya hechos). Las dos cosas piden
   // un comentario (el motivo, si se rechaza) que queda con la inscripción y,
   // si quien inscribió dejó un correo, le llega en el aviso (pareo-publicar).
   function cajaInscripcion(v) {
@@ -6837,39 +7231,67 @@
     const v = t();
     const pendientes = todas.filter((x) => x.estado === "pendiente");
     const esCorreo = (c) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(c || "").trim());
-    // Antes de marcar: el comentario, y a quién le llega el aviso.
-    const decidir = async (cuales, estadoNuevo, boton) => {
+    // Antes de marcar: el comentario, y a quién le llega el aviso. Con una
+    // sola inscripción que dejó un teléfono, quien organiza puede escribir
+    // el correo y el aviso sale igual. `reaviso`: una ya decidida a la que
+    // no le llegó el aviso (se decidió sin correo, o no salió): se le manda
+    // ahora, sin cambiar la decisión.
+    const decidir = async (cuales, estadoNuevo, boton, reaviso) => {
       const acepta = estadoNuevo === "aceptada";
       const conCorreo = cuales.filter((x) => esCorreo(x.contacto));
       const uno = cuales.length === 1 ? cuales[0] : null;
-      const texto = uno
-        ? (conCorreo.length ? tx(acepta ? "inscAvisoCorreo" : "inscAvisoCorreoRechazo", { c: uno.contacto }) : tx("inscAvisoTelefono", { c: uno.contacto }))
-        : tx("inscAvisoVarios", { a: conCorreo.length, b: cuales.length - conCorreo.length });
+      const pideCorreo = !!uno && !conCorreo.length;
+      // De aceptada a rechazada (cambiar una decisión): el cuadro dice si sale de la lista.
+      const estabaAceptada = !acepta && cuales.some((x) => x.estado === "aceptada");
+      const texto = (uno
+        ? (conCorreo.length ? tx(acepta ? "inscAvisoCorreo" : "inscAvisoCorreoRechazo", { c: uno.contacto }) : tx(reaviso ? "inscAvisoTelefonoReaviso" : "inscAvisoTelefono", { c: uno.contacto }))
+        : tx("inscAvisoVarios", { a: conCorreo.length, b: cuales.length - conCorreo.length }))
+        + (estabaAceptada ? " " + tx(v.rondas.length ? "inscCambioConRondas" : "inscCambioSale") : "");
+      const campos = [Object.assign({ nombre: "comentario", etiqueta: tx(acepta ? "inscComentario" : "inscMotivo"), tipo: "textarea", max: 300, valor: reaviso && uno ? uno.comentario || "" : "" }, acepta ? {} : { ayuda: tx("inscMotivoAyuda") })];
+      if (pideCorreo) campos.unshift({ nombre: "correo", etiqueta: tx("inscCorreoAgregar"), inputmode: "email", max: 120, ayuda: tx(reaviso ? "inscCorreoAgregarAyudaReaviso" : "inscCorreoAgregarAyuda") });
       const r = await Avisos.formulario({
-        titulo: uno ? tx(acepta ? "inscAceptarTitulo" : "inscRechazarTitulo", { n: uno.nombre }) : tx("inscAceptarTodasTitulo", { n: cuales.length }),
-        texto, cancelar: tx("cancelar"), peligro: !acepta,
-        aceptar: tx(conCorreo.length ? (acepta ? "inscAceptarSi" : "inscRechazarSi") : (acepta ? "inscAceptarSinAviso" : "inscRechazarSinAviso")),
-        campos: [Object.assign({ nombre: "comentario", etiqueta: tx(acepta ? "inscComentario" : "inscMotivo"), tipo: "textarea", max: 300 }, acepta ? {} : { ayuda: tx("inscMotivoAyuda") })],
+        titulo: uno ? tx(reaviso ? "inscAvisarTitulo" : acepta ? "inscAceptarTitulo" : "inscRechazarTitulo", { n: uno.nombre }) : tx("inscAceptarTodasTitulo", { n: cuales.length }),
+        texto, cancelar: tx("cancelar"), peligro: !acepta && !reaviso,
+        aceptar: tx(reaviso ? "inscAvisarSi" : conCorreo.length ? (acepta ? "inscAceptarSi" : "inscRechazarSi") : (acepta ? "inscAceptarSinAviso" : "inscRechazarSinAviso")),
+        campos,
       });
       if (!r) { if (boton && boton.isConnected) boton.focus(); return; }
-      marcar(cuales, estadoNuevo, boton, String(r.comentario || "").trim().slice(0, 300));
+      const correo = String(r.correo || "").trim();
+      if (correo && !esCorreo(correo)) { Avisos.avisar(tx("inscCorreoMalo", { c: correo }), { tipo: "error" }); if (boton && boton.isConnected) boton.focus(); return; }
+      if (reaviso && !correo && !conCorreo.length) { Avisos.avisar(tx("inscCorreoFalta"), { tipo: "error" }); if (boton && boton.isConnected) boton.focus(); return; }
+      marcar(cuales, estadoNuevo, boton, String(r.comentario || "").trim().slice(0, 300), { correo, reaviso: !!reaviso });
     };
-    const marcar = async (cuales, estadoNuevo, boton, comentario) => {
+    const marcar = async (cuales, estadoNuevo, boton, comentario, extra) => {
+      const { correo = "", reaviso = false } = extra || {};
       if (boton) boton.disabled = true;
-      if (estadoNuevo === "aceptada") {
+      // Al volver a avisar a una aceptada, ya está en la lista: no se agrega otra vez.
+      if (estadoNuevo === "aceptada" && !reaviso) {
         // El sexo y la fecha de nacimiento, si la inscripción los trae (el
         // formulario de la Eliminatoria Cantonal JDN de Pérez Zeledón): sin
         // ellos no hay clasificación femenina ni revisión del año.
         agregarJugadores(cuales.map((x) => Object.assign({ nombre: x.nombre, institucion: x.institucion || "", categoria: x.categoria || "", elo: x.elo || 0, fideId: x.fide_id || "", titulo: "", fed: "" },
           x.sexo === "M" || x.sexo === "F" ? { sexo: x.sexo } : {}, /^\d{4}-\d{2}-\d{2}$/.test(x.nacimiento || "") ? { nacimiento: x.nacimiento } : {})));
       }
-      const r = await PareoPublicar.marcar(v.publicado, cuales.map((x) => x.id), estadoNuevo, comentario);
+      const r = await PareoPublicar.marcar(v.publicado, cuales.map((x) => x.id), estadoNuevo, comentario, correo);
       if (!r.ok) { if (boton) boton.disabled = false; Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" }); return; }
+      // De aceptada a rechazada: sale de la lista si todavía no hay rondas
+      // (uno solo con ese nombre, el último que entró).
+      if (estadoNuevo === "rechazada" && !v.rondas.length) {
+        const quitados = [];
+        for (const x of cuales.filter((y) => y.estado === "aceptada")) {
+          const nom = (x.nombre || "").toUpperCase();
+          const k = v.jugadores.map((j) => (j.nombre || "").toUpperCase()).lastIndexOf(nom);
+          if (k >= 0) { v.jugadores.splice(k, 1); quitados.push(x.nombre); }
+        }
+        if (quitados.length) { guardar(); pintarJugadores(); Avisos.avisar(tx("inscQuitadoDeLista", { n: quitados.join(", ") })); }
+      }
       const avisados = new Set(r.avisados || []);
       const ahora = new Date().toISOString();
       for (const x of cuales) { x.estado = estadoNuevo; x.comentario = comentario; x.avisado = avisados.has(x.id) ? ahora : null; }
+      if (correo && cuales.length === 1) { cuales[0].contacto = r.contacto || correo; if (typeof r.nota === "string") cuales[0].nota = r.nota; }
       pintarInscripciones(lista, todas);
-      Avisos.avisar(tx(estadoNuevo === "aceptada" ? "inscAceptadas" : "inscRechazadas", { n: cuales.length }) + (avisados.size ? " " + tx("inscAvisados", { n: avisados.size }) : ""));
+      if (reaviso) { if (avisados.size) Avisos.avisar(tx("inscAvisados", { n: avisados.size })); }
+      else Avisos.avisar(tx(estadoNuevo === "aceptada" ? "inscAceptadas" : "inscRechazadas", { n: cuales.length }) + (avisados.size ? " " + tx("inscAvisados", { n: avisados.size }) : ""));
       // Lo que el árbitro tiene que hacer él: avisar a quien dejó un teléfono
       // y a quien no le salió el correo.
       const conTelefono = cuales.filter((x) => !esCorreo(x.contacto));
@@ -6885,7 +7307,13 @@
       const acciones = x.estado === "pendiente"
         ? [el("button", { type: "button", class: C.mini, "data-aceptar": x.id, "aria-label": tx("inscAceptarA", { n: x.nombre }), onclick: (e) => decidir([x], "aceptada", e.currentTarget) }, tx("inscAceptar")),
            el("button", { type: "button", class: C.miniPeligro, "data-rechazar": x.id, "aria-label": tx("inscRechazarA", { n: x.nombre }), onclick: (e) => decidir([x], "rechazada", e.currentTarget) }, tx("inscRechazar"))]
-        : [el("span", { class: "pi-sello " + (x.estado === "aceptada" ? "pi-sello-listo" : "pi-sello-falta"), texto: (x.estado === "aceptada" ? "✓ " : "✗ ") + tx(x.estado === "aceptada" ? "inscEstadoAceptada" : "inscEstadoRechazada") })];
+        : [el("span", { class: "pi-sello " + (x.estado === "aceptada" ? "pi-sello-listo" : "pi-sello-falta"), texto: (x.estado === "aceptada" ? "✓ " : "✗ ") + tx(x.estado === "aceptada" ? "inscEstadoAceptada" : "inscEstadoRechazada") }),
+           // Ya decidida y sin aviso: mandarlo ahora (con un teléfono, escribiendo el correo).
+           x.avisado ? null : el("button", { type: "button", class: C.mini, "data-reavisar": x.id, "aria-label": tx("inscAvisarA", { n: x.nombre }), onclick: (e) => decidir([x], x.estado, e.currentTarget, true) }, tx("inscAvisar")),
+           // Y cambiar la decisión.
+           x.estado === "aceptada"
+             ? el("button", { type: "button", class: C.miniPeligro, "data-cambiar": x.id, "aria-label": tx("inscCambiarRechazadaA", { n: x.nombre }), onclick: (e) => decidir([x], "rechazada", e.currentTarget) }, tx("inscCambiarRechazada"))
+             : el("button", { type: "button", class: C.mini, "data-cambiar": x.id, "aria-label": tx("inscCambiarAceptadaA", { n: x.nombre }), onclick: (e) => decidir([x], "aceptada", e.currentTarget) }, tx("inscCambiarAceptada"))];
       return el("li", { class: "pi-dm-tarjeta", "data-insc": x.id },
         el("p", { class: "font-semibold", texto: x.nombre + (yaEsta && x.estado === "pendiente" ? " · " + tx("inscYaEsta") : "") }),
         el("p", { class: "text-xs", texto: [x.institucion, x.categoria, x.sexo === "F" ? "Femenino" : x.sexo === "M" ? "Masculino" : "", x.nacimiento ? "Nació " + x.nacimiento.split("-").reverse().join("/") : "", x.elo ? "Elo " + x.elo : "", x.fide_id ? "FIDE " + x.fide_id : ""].filter(Boolean).join(" · ") }),
@@ -7662,18 +8090,26 @@
     const fichas = $("pi-fichas");
     fichas.addEventListener("click", (e) => { const b = e.target.closest("[data-ficha]"); if (b) irA(b.dataset.ficha); });
     fichas.addEventListener("keydown", (e) => {
-      const i = FICHAS.indexOf(estado.ficha);
-      const k = { ArrowRight: 1, ArrowLeft: -1, Home: -i, End: FICHAS.length - 1 - i }[e.key];
+      // La barra es vertical en la computadora y horizontal en el celular: sirven las cuatro flechas.
+      const visibles = FICHAS.filter((f) => $("pi-f-" + f).checkVisibility());
+      const i = Math.max(0, visibles.indexOf(estado.ficha));
+      const k = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1, Home: -i, End: visibles.length - 1 - i }[e.key];
       if (k == null) return;
       e.preventDefault();
-      irA(FICHAS[(i + k + FICHAS.length) % FICHAS.length], true);
+      irA(visibles[(i + k + visibles.length) % visibles.length], true);
     });
+    engancharMenus();
+    $("pi-ir-agregar").addEventListener("click", () => { $("pi-jug-agregar").scrollIntoView({ block: "start" }); $("pi-form-jugador").elements.nombre.focus(); });
 
     // «Solo lo de los JDE»: esconde el comprobador, el generador y los créditos.
     const modoJde = $("pi-modo-jde");
     modoJde.checked = leer(CLAVE_MODO_JDE) === "1";
     document.body.classList.toggle("pi-modo-jde", modoJde.checked);
-    modoJde.addEventListener("change", () => { escribir(CLAVE_MODO_JDE, modoJde.checked ? "1" : "0"); document.body.classList.toggle("pi-modo-jde", modoJde.checked); });
+    modoJde.addEventListener("change", () => {
+      escribir(CLAVE_MODO_JDE, modoJde.checked ? "1" : "0");
+      document.body.classList.toggle("pi-modo-jde", modoJde.checked);
+      if (modoJde.checked && estado.ficha === "herramientas") irA("archivos");
+    });
     const sonido = $("pi-sonido-ronda");
     sonido.checked = leer(CLAVE_SONIDO) === "1";
     sonido.addEventListener("change", () => { escribir(CLAVE_SONIDO, sonido.checked ? "1" : "0"); if (sonido.checked) sonar(); });

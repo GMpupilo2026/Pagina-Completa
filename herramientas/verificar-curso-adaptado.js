@@ -675,6 +675,99 @@ function pruebaNotacionEspanola() {
   });
 }
 
+/* ============ 9. Avanzar sin escribir, y de un diagrama al siguiente ============
+
+   Las quejas de los alumnos ciegos: «los diagramas no avanzan». En «Repasar mis
+   clases», con el recuadro vacío, Intro avanza una jugada; en los cursos no
+   pasaba nada. Y al terminar una línea no había cómo llegar al diagrama
+   siguiente sin salir del recuadro. Nada de eso da un error: el recuadro se
+   queda callado. */
+async function pruebaAvanzar(browser) {
+  console.log("\n=== Avanzar con Intro y pasar de un diagrama al siguiente ===");
+  const abrirLeccion = async (curso, cual, visor) => {
+    const r = await abrirCurso(browser, curso, true);
+    await r.page.evaluate((n) => {
+      const ds = Array.from(document.querySelectorAll("#course-content-body details")).filter((d) => !d.parentElement.closest("details"));
+      ds[n].classList.remove("ac-bloqueada"); ds[n].open = true; ds[n].dataset.prueba = "1";
+    }, cual);
+    await r.page.waitForSelector("details[data-prueba] " + visor + " .cc-input", { timeout: 20000 });
+    return r;
+  };
+
+  // --- Un curso de diagramas: la lección 1 de «El mapa de los finales».
+  {
+    const { page, ctx, errores } = await abrirLeccion("el-mapa-de-los-finales", 1, ".f100-viewer");
+    const V = "details[data-prueba] .f100-viewer";
+    const uno = page.locator(V).nth(0), dos = page.locator(V).nth(1);
+    const campo = uno.locator(".cc-input");
+    const ply = () => uno.locator(".f100-ply").textContent();
+    const tecla = async (k) => { await campo.fill(""); await campo.press(k); await page.waitForTimeout(150); };
+    const total = Number((await ply()).split("/")[1]);
+    if (!(total > 1)) mal("el primer diagrama de la lección no trae línea (" + (await ply()) + ")");
+
+    await campo.focus();
+    await tecla("Enter");
+    igual("Intro, con el recuadro vacío, avanza una jugada", await ply(), "1/" + total);
+    igual("y la jugada se dice", /^Jugada 1 de /.test((await uno.locator(".f100-anuncio").textContent()) || ""), "true");
+    await tecla("ArrowRight");
+    igual("flecha derecha, otra", await ply(), "2/" + total);
+    await tecla("ArrowLeft");
+    igual("flecha izquierda vuelve", await ply(), "1/" + total);
+    await tecla("End");
+    igual("Fin va a la última", await ply(), total + "/" + total);
+    await tecla("Enter");
+    igual("en la última, Intro dice cómo seguir", /última jugada.*«diagrama siguiente»/.test((await uno.locator(".cc-msg").textContent()) || ""), "true");
+    await tecla("Home");
+    igual("Inicio vuelve a la posición inicial", await ply(), "0/" + total);
+
+    await campo.fill("diagrama siguiente"); await campo.press("Enter");
+    await page.waitForTimeout(250);
+    igual("«diagrama siguiente» lleva el foco al recuadro del segundo diagrama",
+      await dos.evaluate((e) => document.activeElement === e.querySelector(".cc-input")), "true");
+    const aviso = (await dos.locator(".cc-msg").textContent()) || "";
+    igual("y dice cuál es", /^Diagrama 2 de \d+: .+«dictar»/.test(aviso), "true");
+    await dos.locator(".cc-input").fill("diagrama anterior"); await dos.locator(".cc-input").press("Enter");
+    await page.waitForTimeout(250);
+    igual("«diagrama anterior» vuelve al primero",
+      await uno.evaluate((e) => document.activeElement === e.querySelector(".cc-input")), "true");
+    await campo.fill("diagrama anterior"); await campo.press("Enter");
+    await page.waitForTimeout(150);
+    igual("en el primero, lo dice", (await uno.locator(".cc-msg").textContent()) || "", "Este es el primer diagrama de la lección.");
+
+    // Cada diagrama es un encabezado: la tecla H del lector salta de uno a otro.
+    const enc = await page.evaluate((sel) => {
+      const leccion = document.querySelector("details[data-prueba]");
+      const h = leccion.querySelector("summary h4, summary h5");
+      return {
+        leccion: h ? Number(h.tagName[1]) : 0,
+        visores: Array.from(leccion.querySelectorAll(sel)).map((v) => {
+          const r = v.querySelector(".f100-num");
+          return r && r.getAttribute("role") === "heading" ? Number(r.getAttribute("aria-level")) : 0;
+        }),
+      };
+    }, ".f100-viewer");
+    igual("todos los diagramas de la lección son encabezados", enc.visores.filter((n) => n > 0).length, String(enc.visores.length));
+    igual("por debajo del de la lección", enc.visores.every((n) => n > enc.leccion && n <= 6), "true");
+    igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+    await ctx.close();
+  }
+
+  // --- Un curso de partidas: Intro recorre la partida.
+  {
+    const { page, ctx, errores } = await abrirLeccion("partidas-modelo", 1, ".cp-viewer");
+    const v = page.locator("details[data-prueba] .cp-viewer").first();
+    const campo = v.locator(".cc-input");
+    await campo.focus();
+    await campo.press("Enter"); await page.waitForTimeout(150);
+    await campo.press("Enter"); await page.waitForTimeout(150);
+    igual("en una partida, dos Intro son dos jugadas", ((await v.locator(".cp-ply").textContent()) || "").split("/")[0], "2");
+    igual("y se dice la segunda", /^Jugada 2 de /.test((await v.locator(".cp-anuncio").textContent()) || ""), "true");
+    igual("su rótulo es un encabezado", await v.locator(".cp-players").getAttribute("role"), "heading");
+    igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+    await ctx.close();
+  }
+}
+
 (async () => {
   pruebaPlurales();
   pruebaNotacionEspanola();
@@ -690,6 +783,7 @@ function pruebaNotacionEspanola() {
     await pruebaTableroTeclado(browser);
     await pruebaPreguntasEscritas(browser);
     await pruebaPartidasCiega(browser);
+    await pruebaAvanzar(browser);
   } finally {
     await browser.close();
   }

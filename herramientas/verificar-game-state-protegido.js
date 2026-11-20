@@ -32,12 +32,16 @@ for (const f of fs.readdirSync(DIR).filter((x) => x.endsWith(".sql")).sort()) {
   const m = sql.match(/function\s+public\.protect_game_state_teacher_columns\(\)[\s\S]*?\$(\w*)\$([\s\S]*?)\$\1\$/i);
   if (!m) continue;
   const cols = new Set([...m[2].matchAll(/new\.(\w+)\s*:=\s*old\.\1\b/gi)].map((x) => x[1].toLowerCase()));
-  versiones.push({ f, cols });
+  // Una columna que la MISMA migración borra de game_state ya no se le puede
+  // abrir a nadie: dejar de nombrarla no es perderla (llamada_libre, que
+  // reemplazó llamada_modo minutos después de crearla).
+  const borradas = new Set([...sql.matchAll(/alter\s+table\s+public\.game_state\s+drop\s+column\s+(?:if\s+exists\s+)?(\w+)/gi)].map((x) => x[1].toLowerCase()));
+  versiones.push({ f, cols, borradas });
 }
 if (versiones.length < 2) mal(`se esperaban varias versiones de la función, hay ${versiones.length}`);
 for (let i = 1; i < versiones.length; i++) {
   const antes = versiones[i - 1], ahora = versiones[i];
-  const perdidas = [...antes.cols].filter((c) => !ahora.cols.has(c));
+  const perdidas = [...antes.cols].filter((c) => !ahora.cols.has(c) && !ahora.borradas.has(c));
   if (perdidas.length) mal(`${ahora.f} ya no le devuelve al alumno ${perdidas.join(", ")} (lo hacía ${antes.f})`);
 }
 const ultima = versiones[versiones.length - 1];

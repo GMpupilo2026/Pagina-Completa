@@ -28,6 +28,14 @@
 # Un PR que solo cambia docs/ o un .md de la raíz (CLAUDE.md, RESTAURAR.md…)
 # no corre las tandas con navegador: ninguna lee esos archivos, y la rápida sí
 # corre (verificar-alumno-sin-correo.js lee CLAUDE.md).
+#
+# Desde el 19/11/2026, en un PR corren solo los verificadores que leen algo de
+# lo que cambió (--cambios-desde; ver herramientas/lib/verificadores-afectados.js).
+# Ante la duda corren todos: un archivo que ningún verificador nombra, o algo
+# que usan todos (el corredor, package*.json, este archivo). Simulado sobre los
+# 60 PR anteriores, la parte con navegador bajó de 113 a 72 minutos de
+# promedio. Lo que esa lectura no alcanza a ver (una ruta armada con
+# variables) lo atrapa la corrida completa de los domingos (schedule).
 name: Verificar
 
 on:
@@ -35,6 +43,10 @@ on:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
+  # Todos, los domingos a las 3 de la mañana de Costa Rica (9:00 UTC): la red
+  # por si la elección por cambios dejó afuera alguno que hacía falta.
+  schedule:
+    - cron: "0 9 * * 0"
 
 permissions:
   contents: read
@@ -65,6 +77,7 @@ jobs:
         run: |
           if [ "$EVENTO" != pull_request ]; then echo "toca=si" >> "$GITHUB_OUTPUT"; exit 0; fi
           git fetch -q --depth=1 origin "$BASE_SHA"
+          git update-ref refs/remotes/base FETCH_HEAD
           git diff --name-only FETCH_HEAD HEAD
           if git diff --name-only FETCH_HEAD HEAD | grep -qvE '^(docs/|[^/]+\.md$)'; then toca=si; else toca=no; fi
           echo "toca=$toca" >> "$GITHUB_OUTPUT"
@@ -85,7 +98,7 @@ jobs:
         if: runner.environment == 'self-hosted'
         run: |
           node -e 'require("net").connect(8777,"127.0.0.1").on("connect",()=>{console.error("::error::Hay algo escuchando en el 8777 de esta máquina: apágalo, o los verificadores probarían ese sitio y no este PR.");process.exit(1)}).on("error",()=>process.exit(0))'
-      - run: node herramientas/verificar-todo.js --sin-navegador --paralelo=2
+      - run: node herramientas/verificar-todo.js --sin-navegador --paralelo=2 ${{ github.event_name == 'pull_request' && '--cambios-desde=refs/remotes/base' || '' }}
 
   navegador:
     name: Con navegador (${{ matrix.parte }})
@@ -100,6 +113,14 @@ jobs:
         parte: ${{ fromJSON(vars.RUNNER == 'self-hosted' && '["1/1"]' || '["1/4","2/4","3/4","4/4"]') }}
     steps:
       - uses: actions/checkout@v7
+      # La base del PR, para elegir los verificadores que toca el cambio.
+      - name: Base del PR
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch -q --depth=1 origin "$BASE_SHA"
+          git update-ref refs/remotes/base FETCH_HEAD
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -124,4 +145,4 @@ jobs:
         if: runner.environment == 'self-hosted'
         run: |
           node -e 'require("net").connect(8777,"127.0.0.1").on("connect",()=>{console.error("::error::Hay algo escuchando en el 8777 de esta máquina: apágalo, o los verificadores probarían ese sitio y no este PR.");process.exit(1)}).on("error",()=>process.exit(0))'
-      - run: node herramientas/verificar-todo.js --solo-navegador --parte=${{ matrix.parte }} --paralelo=${{ vars.RUNNER == 'self-hosted' && 4 || 1 }}
+      - run: node herramientas/verificar-todo.js --solo-navegador --parte=${{ matrix.parte }} --paralelo=${{ vars.RUNNER == 'self-hosted' && 4 || 1 }} ${{ github.event_name == 'pull_request' && '--cambios-desde=refs/remotes/base' || '' }}

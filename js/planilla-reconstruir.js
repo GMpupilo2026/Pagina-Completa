@@ -37,7 +37,7 @@
   // --------------------------------------------------------------- distancia
   // Las confusiones de la letra a mano (y del lector) cuestan menos que un
   // cambio cualquiera: un «5» por una «s» es casi la misma jugada.
-  const PARECIDAS = ["0O", "0o", "oO", "0D", "1l", "1I", "lI", "1i", "5s", "5S", "2z", "2Z", "6b", "8B", "9g", "gq", "4A", "ce", "ft", "hb", "nh", "7f", "38", "aA", "cC", "tT", "dD", "rR", "bB", "4a", "eC", "5f"];
+  const PARECIDAS = ["0O", "0o", "oO", "0D", "1l", "1I", "lI", "1i", "5s", "5S", "2z", "2Z", "6b", "8B", "9g", "gq", "4A", "ce", "ft", "hb", "nh", "7f", "38", "aA", "cC", "tT", "dD", "rR", "bB", "4a", "eC", "5f", "4u", "4y", "7z", "7t"];
   const CASI = new Set();
   PARECIDAS.forEach((p) => { CASI.add(p[0] + p[1]); CASI.add(p[1] + p[0]); });
   // La misma letra en mayúscula o minúscula casi no cuesta: hay planillas enteras con las piezas en minúscula
@@ -70,6 +70,11 @@
     let t = String(s || "").trim();
     t = t.replace(/^\d{1,2}\s*[.)]+\s*(\.\.)?/, "");
     t = t.replace(/e\.?p\.?$/i, "");
+    // Un «+» antes de un número no es un jaque (ese va al final): es una f de mano, con la raya
+    // cruzada. La segunda planilla de verdad de Pareo (18/11) traía «+4» por 1.f4, y sin la f
+    // empataba con «E4» de la otra hoja: salía 1.e4, y el «e3» de las dos planillas en la jugada 3
+    // se volvía c3.
+    t = t.replace(/\+(?=[1-8])/g, "f");
     t = t.replace(/[\s+#!?:=xX×*·.,'"\-–—]/g, "");
     if (/^[0oOD]{2,3}$/.test(t)) return t.length === 3 ? "OOO" : "OO";
     t = t.replace(/^P(?=[a-h])/, "");
@@ -413,7 +418,9 @@
     };
     const poner = (w, u) => {
       const i = (u.fila - 1) * 2 + (u.negras ? 1 : 0);
-      (hojas[u.hi].celdas[i] = hojas[u.hi].celdas[i] || []).push(w);
+      // dónde empieza y termina la palabra dentro del bloque (0: el número, 1: el bloque siguiente)
+      const p = Object.assign({}, w, { rx0: (w.x0 - u.xNum) / u.ancho, rx1: (w.x1 - u.xNum) / u.ancho });
+      (hojas[u.hi].celdas[i] = hojas[u.hi].celdas[i] || []).push(p);
     };
     ws.forEach((w) => {
       if (usadas.has(w)) return;
@@ -426,7 +433,25 @@
       hojas: hojas.map((h) => {
         const out = [];
         const largo = h.celdas.length;
+        // Una jugada corta de las Negras escrita pegada a la raya («d5») tiene el centro antes de
+        // NEGRAS_DESDE y caía en las Blancas («Cf3d5»), con las Negras vacías. Si la casilla de las
+        // Negras quedó vacía y la última palabra de las Blancas va aparte y empieza pasada la mitad
+        // del bloque (donde ya están las Negras en cualquier planilla), es de las Negras. Pasó al
+        // hacer la planilla imprimible con Blancas y Negras del mismo ancho (19/11).
+        for (let i = 0; i + 1 < largo; i += 2) {
+          const bl = (h.celdas[i] || []).sort((a, b) => a.cx - b.cx);
+          if (bl.length < 2 || (h.celdas[i + 1] || []).length) continue;
+          const ult = bl[bl.length - 1], ant = bl[bl.length - 2];
+          if (ult.rx0 >= 0.48 && ult.rx0 - ant.rx1 >= 0.01) h.celdas[i + 1] = [bl.pop()];
+        }
         for (let i = 0; i < largo; i++) out.push((h.celdas[i] || []).sort((a, b) => a.cx - b.cx).map((w) => w.t).join(""));
+        // El número del final de las Blancas que Vision le pegó a las Negras: «De» | «20-0» era
+        // «De2» | «0-0» (segunda planilla de verdad de Pareo, 18/11). Se devuelve solo si las
+        // dos celdas quedan más parecidas a una jugada.
+        for (let i = 0; i + 1 < out.length; i += 2) {
+          const b = out[i], n = out[i + 1];
+          if (b && /^[1-8]./.test(n) && forma(b + n[0]) > forma(b) && forma(n.slice(1)) > forma(n)) { out[i] = b + n[0]; out[i + 1] = n.slice(1); }
+        }
         return out;
       }).filter((h) => h.some(Boolean)),
     };

@@ -43,3 +43,12 @@ begin
 end;
 $$;
 revoke execute on function public.avisar_diagnostico_supervisor() from public, anon, authenticated;
+
+-- El disparador se vuelve a declarar (va DESPUÉS del insert, cuando el otro
+-- trigger ya puso supervisor_id): es idempotente y mantiene la invariante que
+-- comprueba verificar-aviso-diagnostico.js (la última migración que define la
+-- función también deja el trigger).
+drop trigger if exists diagnosticos_publicos_avisa on public.diagnosticos_publicos;
+create trigger diagnosticos_publicos_avisa
+  after insert on public.diagnosticos_publicos
+  for each row execute function public.avisar_diagnostico_supervisor();

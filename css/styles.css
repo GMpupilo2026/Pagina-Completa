@@ -1615,6 +1615,191 @@ section:has(> .proyector-contenido) > #status-banner:empty { padding: 0; margin:
   .certificado-qr { width: 26mm; height: 26mm; }
 }
 
+/* ===== El diploma de un rango (certificado.html con curso 'rango:…') =====
+   Diseño de Gemini adaptado al sitio: marco azul con bisel dorado, papel
+   claro con la marca de agua de Ajedrez Integral (la misma imagen de los
+   PDF), medallón 3D con la pieza del rango y un sello. Sin fuentes de afuera
+   (las del sitio: Merriweather, Cinzel, Inter). Las medidas van en cqw (el
+   ancho del papel): se ve igual en pantalla y al imprimir en carta. Cada
+   rango cambia solo sus variables (.rango-<id>). Contraste: todo el texto va
+   en azul oscuro sobre el papel claro, o claro sobre el fondo oscuro de la
+   cinta (lo mide verificar-certificados.js). Ver «El diploma de rango» en
+   docs/decisiones/puntos-y-premios.md. */
+.certificado.es-diploma {
+  aspect-ratio: 11 / 8.5; background: #102a43; border-radius: 0.5rem; container-type: inline-size;
+  --dip-navy: #102a43; --dip-navy-oscuro: #091929; --dip-dorado: #f0b429; --dip-dorado-oscuro: #b47b09;
+  --dip-texto: #102a43; --dip-suave: #334e68;
+  --rango-metal: linear-gradient(145deg, #ffffff 0%, #94a3b8 48%, #334155 100%);
+  --rango-oscuro: #1e293b; --rango-brillo: rgba(100, 116, 139, 0.45);
+  --rango-cinta: linear-gradient(135deg, #1e293b 0%, #475569 100%); --rango-cinta-texto: #f8fafc; --rango-borde: #64748b;
+}
+.es-diploma.rango-peon { --rango-metal: linear-gradient(145deg, #f3d0b1 0%, #b87333 48%, #5c310e 100%); --rango-oscuro: #5c310e; --rango-brillo: rgba(184, 115, 51, 0.4); --rango-cinta: linear-gradient(135deg, #5c310e 0%, #9a5b25 100%); --rango-cinta-texto: #fff7ed; --rango-borde: #b87333; }
+.es-diploma.rango-alfil { --rango-metal: linear-gradient(145deg, #a7f3d0 0%, #10b981 45%, #064e3b 100%); --rango-oscuro: #064e3b; --rango-brillo: rgba(16, 185, 129, 0.4); --rango-cinta: linear-gradient(135deg, #064e3b 0%, #047857 100%); --rango-cinta-texto: #ecfdf5; --rango-borde: #059669; }
+.es-diploma.rango-torre { --rango-metal: linear-gradient(145deg, #dbeafe 0%, #3b82f6 45%, #1e3a8a 100%); --rango-oscuro: #1e3a8a; --rango-brillo: rgba(59, 130, 246, 0.4); --rango-cinta: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%); --rango-cinta-texto: #eff6ff; --rango-borde: #2563eb; }
+.es-diploma.rango-dama_rey { --rango-metal: linear-gradient(145deg, #fef9c3 0%, #f0b429 45%, #854d0e 100%); --rango-oscuro: #784f04; --rango-brillo: rgba(240, 180, 41, 0.5); --rango-cinta: linear-gradient(135deg, #784f04 0%, #a16207 100%); --rango-cinta-texto: #fefce8; --rango-borde: #d97706; }
+.es-diploma.rango-dragon { --rango-metal: linear-gradient(145deg, #fef08a 0%, #f97316 35%, #dc2626 70%, #7f1d1d 100%); --rango-oscuro: #7f1d1d; --rango-brillo: rgba(239, 68, 68, 0.55); --rango-cinta: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 60%, #9a3412 100%); --rango-cinta-texto: #fef2f2; --rango-borde: #dc2626; }
+
+.diploma-hoja {
+  position: absolute; inset: 0; display: flex; padding: 1.7cqw;
+  box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.25), inset 0 -3px 6px rgba(0, 0, 0, 0.6);
+  font-family: 'Inter', system-ui, sans-serif; color: var(--dip-texto);
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.diploma-hoja[hidden] { display: none; }
+.diploma-bisel {
+  flex: 1; display: flex; padding: 0.6cqw; border-radius: 4px;
+  background: linear-gradient(135deg, #fce588 0%, #f0b429 25%, #9c6b08 50%, #f0b429 75%, #fce588 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+.diploma-marco {
+  flex: 1; display: flex; padding: 0.95cqw; border: 2px solid var(--rango-borde);
+  background: linear-gradient(160deg, var(--dip-navy) 0%, var(--dip-navy-oscuro) 100%);
+}
+.diploma-lienzo {
+  position: relative; flex: 1; overflow: hidden; isolation: isolate;
+  display: grid; grid-template-rows: auto 1fr auto; gap: 1cqw; padding: 2.4cqw 4.2cqw;
+  background: radial-gradient(circle at 50% 45%, #ffffff 0%, #fdfbf7 65%, #efe9dc 100%);
+  border: 1px solid rgba(180, 123, 9, 0.45);
+  box-shadow: inset 0 0 35px rgba(16, 42, 67, 0.08), inset 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+/* La marca de agua: la imagen de siempre, repetida en diagonal y muy tenue. */
+.diploma-lienzo::before {
+  content: ""; position: absolute; inset: -50%; z-index: -1; pointer-events: none;
+  background: url("../img/marca-agua-ajedrez-integral.png") repeat center / 13cqw auto;
+  opacity: 0.045; transform: rotate(-24deg);
+}
+.diploma-esquina { position: absolute; width: 3.2cqw; height: 3.2cqw; border: 3px solid var(--dip-dorado-oscuro); pointer-events: none; }
+.diploma-esquina::after {
+  content: ""; position: absolute; width: 0.95cqw; height: 0.95cqw; background: var(--rango-metal);
+  border: 1px solid var(--dip-navy); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+.diploma-esquina-ai { top: 1cqw; left: 1cqw; border-right: 0; border-bottom: 0; }
+.diploma-esquina-ad { top: 1cqw; right: 1cqw; border-left: 0; border-bottom: 0; }
+.diploma-esquina-bi { bottom: 1cqw; left: 1cqw; border-right: 0; border-top: 0; }
+.diploma-esquina-bd { bottom: 1cqw; right: 1cqw; border-left: 0; border-top: 0; }
+.diploma-esquina-ai::after { top: 0.4cqw; left: 0.4cqw; }
+.diploma-esquina-ad::after { top: 0.4cqw; right: 0.4cqw; }
+.diploma-esquina-bi::after { bottom: 0.4cqw; left: 0.4cqw; }
+.diploma-esquina-bd::after { bottom: 0.4cqw; right: 0.4cqw; }
+
+.diploma-cabeza { display: flex; flex-direction: column; align-items: center; gap: 0.9cqw; text-align: center; }
+.diploma-marca {
+  display: inline-flex; align-items: center; gap: 0.8cqw; padding: 0.5cqw 2cqw; border-radius: 6px;
+  background: linear-gradient(180deg, #163756 0%, var(--dip-navy) 100%); border: 2px solid var(--dip-dorado);
+  box-shadow: 0 6px 14px rgba(16, 42, 67, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  font-family: 'Merriweather', Georgia, serif; font-weight: 700; font-size: 2cqw; color: #fff;
+}
+.diploma-marca img { height: 3.4cqw; width: auto; }
+.diploma-dorado { color: var(--dip-dorado); }
+.diploma-kicker {
+  font-family: 'Cinzel', Georgia, serif; font-weight: 700; font-size: 1.35cqw; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--dip-navy); padding-bottom: 0.3cqw; border-bottom: 2px solid var(--dip-dorado);
+}
+
+.diploma-cuerpo { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 0.6cqw; }
+.diploma-frase { font-size: 1.6cqw; font-weight: 500; color: var(--dip-suave); }
+.diploma-nombre {
+  font-family: 'Merriweather', Georgia, serif; font-weight: 700; font-size: 4.4cqw; line-height: 1.15;
+  color: var(--dip-navy-oscuro); max-width: 92%; overflow-wrap: anywhere;
+  padding: 0.3cqw 2.4cqw 0.7cqw; border-bottom: 2px solid var(--dip-dorado);
+  text-shadow: 0 1px 0 #fff, 0 3px 6px rgba(16, 42, 67, 0.14);
+}
+.diploma-vitrina {
+  margin-top: 0.8cqw; display: flex; align-items: center; gap: 2.2cqw; padding: 1.1cqw 2.8cqw; border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(241, 245, 249, 0.75) 100%);
+  border: 1px solid rgba(16, 42, 67, 0.12); box-shadow: 0 10px 25px rgba(16, 42, 67, 0.1), inset 0 2px 3px #fff;
+}
+.diploma-medallon {
+  position: relative; flex-shrink: 0; width: 9.5cqw; height: 9.5cqw; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 30% 25%, #243b53 0%, var(--dip-navy-oscuro) 85%);
+  border: 0.4cqw solid var(--dip-dorado);
+  box-shadow: 0 10px 20px rgba(9, 25, 41, 0.35), 0 0 22px var(--rango-brillo),
+    inset 0 3px 6px rgba(255, 255, 255, 0.3), inset 0 -4px 8px rgba(0, 0, 0, 0.7);
+}
+.diploma-medallon::before { content: ""; position: absolute; inset: 0.4cqw; border-radius: 50%; border: 1.5px dashed rgba(240, 180, 41, 0.55); }
+/* La pieza tallada en el metal del rango (el dragón es un emoji: lleva su color). */
+.diploma-pieza {
+  font-size: 6cqw; line-height: 1; transform: translateY(-0.2cqw);
+  font-family: 'Segoe UI Symbol', 'DejaVu Sans', 'Noto Sans Symbols 2', serif;
+  background: var(--rango-metal); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2px 0 var(--rango-oscuro)) drop-shadow(0 5px 8px rgba(0, 0, 0, 0.65));
+}
+.rango-dragon .diploma-medallon {
+  background: radial-gradient(circle at 50% 65%, #991b1b 0%, #450a0a 55%, #091929 100%); border-color: #f97316;
+  box-shadow: 0 10px 24px rgba(185, 28, 28, 0.45), 0 0 26px rgba(249, 115, 22, 0.6), inset 0 0 16px rgba(251, 191, 36, 0.45);
+}
+.rango-dragon .diploma-pieza {
+  font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 5.4cqw;
+  background: none; color: #fbbf24;
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.85)) drop-shadow(0 3px 2px #7f1d1d) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.8));
+}
+.diploma-info { display: flex; flex-direction: column; gap: 0.4cqw; text-align: left; }
+.diploma-etiqueta { font-size: 1.15cqw; font-weight: 700; text-transform: uppercase; letter-spacing: 0.16em; color: var(--dip-suave); }
+.diploma-rango { font-family: 'Merriweather', Georgia, serif; font-weight: 700; font-size: 3.3cqw; line-height: 1.1; color: var(--dip-navy-oscuro); text-shadow: 0 1px 0 #fff; }
+.diploma-cinta {
+  width: fit-content; padding: 0.3cqw 1.2cqw; border-radius: 999px; background: var(--rango-cinta); color: var(--rango-cinta-texto);
+  font-size: 1.1cqw; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+.diploma-cinta:empty { display: none; }
+
+.diploma-pie {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 2cqw;
+  padding-top: 0.8cqw; border-top: 1px solid rgba(16, 42, 67, 0.14);
+}
+.diploma-datos { display: flex; flex-direction: column; gap: 0.5cqw; font-size: 1.45cqw; color: var(--dip-navy); }
+.diploma-datos dt { display: inline; font-weight: 700; color: var(--dip-navy-oscuro); }
+.diploma-datos dd { display: inline; }
+.diploma-datos [hidden] { display: none; }
+.diploma-sello {
+  width: 7cqw; height: 7cqw; border-radius: 50%; padding: 0.55cqw; transform: rotate(-8deg);
+  background: linear-gradient(145deg, #fce588 0%, #f0b429 50%, #b47b09 100%); border: 2px solid #784f04;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.22), inset 0 2px 3px rgba(255, 255, 255, 0.75);
+}
+.diploma-sello span {
+  display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border-radius: 50%;
+  border: 1px dashed #422006; text-align: center; font-family: 'Cinzel', Georgia, serif; font-weight: 700;
+  font-size: 0.85cqw; line-height: 1.15; color: #271302; text-transform: uppercase;
+}
+.diploma-comprobar { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5cqw; font-size: 1.25cqw; color: var(--dip-navy); }
+.diploma-comprobar strong { font-family: ui-monospace, Consolas, monospace; font-weight: 700; color: var(--dip-navy-oscuro); background: rgba(16, 42, 67, 0.08); padding: 0.15cqw 0.5cqw; border-radius: 4px; }
+.diploma-qr {
+  width: 11.4cqw; height: 11.4cqw; padding: 0.4cqw; background: #fff; border: 2px solid var(--dip-navy); border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(16, 42, 67, 0.14), inset 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.diploma-qr svg { width: 100%; height: 100%; display: block; }
+.es-diploma .certificado-anulado { z-index: 5; }
+
+/* En un celular angosto, el diploma no cabe apaisado: se apila hacia abajo. */
+@media (max-width: 640px) {
+  .certificado.es-diploma { aspect-ratio: auto; }
+  .diploma-hoja { position: relative; inset: auto; padding: 8px; }
+  .diploma-lienzo { padding: 20px 14px; gap: 14px; }
+  .diploma-marca { font-size: 1rem; padding: 6px 12px; gap: 8px; }
+  .diploma-marca img { height: 1.75rem; }
+  .diploma-kicker { font-size: 0.7rem; }
+  .diploma-frase { font-size: 0.95rem; }
+  .diploma-nombre { font-size: 1.8rem; }
+  .diploma-vitrina { flex-direction: column; gap: 10px; padding: 14px; }
+  .diploma-medallon { width: 84px; height: 84px; border-width: 3px; }
+  .diploma-pieza { font-size: 3.2rem; }
+  .rango-dragon .diploma-pieza { font-size: 2.8rem; }
+  .diploma-info { align-items: center; text-align: center; gap: 4px; }
+  .diploma-etiqueta { font-size: 0.7rem; }
+  .diploma-rango { font-size: 1.6rem; }
+  .diploma-cinta { font-size: 0.7rem; padding: 2px 10px; }
+  .diploma-pie { flex-direction: column; align-items: center; text-align: center; gap: 12px; }
+  .diploma-datos { font-size: 0.9rem; align-items: center; gap: 4px; }
+  .diploma-sello { display: none; }
+  .diploma-comprobar { align-items: center; font-size: 0.8rem; gap: 6px; }
+  .diploma-qr { width: 110px; height: 110px; }
+  .diploma-esquina { width: 22px; height: 22px; }
+}
+@page diploma-rango { size: letter landscape; margin: 0; }
+@media print {
+  .certificado.es-diploma { page: diploma-rango; width: 11in; height: 8.5in; }
+}
+
 /* ===== La navegación entre páginas (ver «La navegación se siente
    inmediata» en docs/decisiones/sitio-e-infraestructura.md) ===== */
 
@@ -1880,6 +2065,10 @@ html.dark .comparar-serie-3 { background: #199e70; }
 .dark .pi-tabla th, .dark .pi-tabla td { border-bottom-color: rgb(var(--c-brand-700, 36 59 83)); }
 .pi-tabla th { font-weight: 600; white-space: nowrap; }
 .pi-tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
+/* «text-align: left» de arriba le gana a la clase text-center de Tailwind
+   (td + clase pesa más que una clase sola): sin esto, la columna «Resultado»
+   de la ronda quedaba pegada a la izquierda. */
+.pi-tabla .text-center { text-align: center; }
 .pi-tabla abbr { text-decoration: none; cursor: help; }
 .pi-solo-imprimir { display: none; }
 @media print {
@@ -1893,98 +2082,221 @@ html.dark .comparar-serie-3 { background: #199e70; }
   body:has(#pi-fichas) [role="tabpanel"] { box-shadow: none !important; padding: 0 !important; background: #fff !important; color: #000 !important; }
   .pi-tabla th, .pi-tabla td { border-bottom-color: #999 !important; color: #000 !important; }
 }
-/* ----- Pareo Integral como programa de computadora -----
-   El editor es una ventana: la barra de título (nombre, manual e idioma), la
-   barra de herramientas (el torneo abierto y sus botones), las pestañas
-   pegadas al panel, el panel como área de trabajo y la barra de estado abajo
-   (pintarEstado en js/pareo/pagina.js). Todo va colgado de #pi-editor, así
-   que el enlace de solo lectura (#ver=, #vivo=) no cambia; y en papel la
-   ventana desaparece y queda solo la hoja. Esquinas de 3 px, sin sombras de
-   tarjeta y las tablas como cuadrícula. Los colores salen de los del tema
-   (--c-brand-*), con su contraste medido como el resto del sitio. */
-.pi-escritorio:has(> .pi-ventana:not([hidden])) { padding-top: 1.5rem; background: rgb(var(--c-brand-100)); }
-.dark .pi-escritorio:has(> .pi-ventana:not([hidden])) { background: rgb(var(--c-brand-950)); }
-#pi-editor.pi-ventana {
-  max-width: 88rem; padding: 0; margin-left: auto; margin-right: auto;
-  border: 1px solid rgb(var(--c-brand-300)); border-radius: 6px;
-  background: rgb(var(--c-brand-50)); box-shadow: 0 10px 30px -12px rgb(var(--c-brand-900) / 0.35);
+/* ----- Pareo Integral con el aspecto del panel de la Academia -----
+   El editor como el panel de la Academia (tema «jornada», #1406): barra
+   lateral turquesa con las partes del torneo y lo que dice cada una, la tira
+   «Lo siguiente», la Portada con su recuadro grande, las tarjetas de color y
+   «Lo que viene», y las partes en tarjetas redondeadas. Todo va colgado de
+   #pi-editor, así que el enlace de solo lectura (#ver=, #vivo=) no cambia, y
+   en papel desaparece y queda solo la hoja. Los colores son los del tema
+   jornada (turquesa y rosado), que se calibró a la luminancia del Clásico:
+   adentro de #pi-editor se redefinen --c-brand-* y --c-accent-*, y cada clase
+   de Tailwind (text-brand-600, bg-brand-800…) toma el turquesa con el mismo
+   contraste medido que tiene en el resto del sitio. Ver «Pareo Integral con
+   el aspecto del panel de la Academia» en docs/decisiones/juegos-y-torneos.md. */
+#pi-editor {
+  --c-brand-50: 239 244 246; --c-brand-100: 216 227 230; --c-brand-200: 173 208 215; --c-brand-300: 126 186 197;
+  --c-brand-350: 89 170 184; --c-brand-400: 54 133 145; --c-brand-450: 44 119 131; --c-brand-500: 35 107 119;
+  --c-brand-600: 22 83 93; --c-brand-700: 15 63 72; --c-brand-800: 9 45 53; --c-brand-900: 7 33 40; --c-brand-950: 4 23 29;
+  --c-accent-50: 254 250 251; --c-accent-100: 253 239 243; --c-accent-300: 247 192 205; --c-accent-400: 243 170 187;
+  --c-accent-500: 232 132 155; --c-accent-600: 217 93 120; --c-accent-700: 207 45 78; --c-accent-900: 150 31 51;
+  /* Las tarjetas de la Portada: blanco encima, cada una ≥ 5,7:1 (medido). */
+  --pi-azul: #2457c5; --pi-turquesa: #0e6973; --pi-verde: #1d7442; --pi-rojo: #b02a4f;
+  --pi-morado: #6538b8; --pi-naranja: #a84a0c; --pi-pizarra: #3d5560;
+  /* Lo que falta: ámbar con letra oscura (7,2:1), y el texto lo dice. */
+  --pi-falta: #f5a524; --pi-falta-tinta: #3a2400;
 }
-.dark #pi-editor.pi-ventana { border-color: rgb(var(--c-brand-700)); background: rgb(var(--c-brand-900)); }
+.pi-escritorio:has(> .pi-ventana:not([hidden])) { padding-top: 1.5rem; background: rgb(239 244 246); }
+.dark .pi-escritorio:has(> .pi-ventana:not([hidden])) { background: rgb(4 23 29); }
+#pi-editor.pi-ventana { max-width: 88rem; padding: 0; margin-left: auto; margin-right: auto; background: transparent; }
 @media (max-width: 1440px) { #pi-editor.pi-ventana { margin-left: 1rem; margin-right: 1rem; } }
 @media (max-width: 640px) { #pi-editor.pi-ventana { margin-left: 0.5rem; margin-right: 0.5rem; } }
-#pi-editor .rounded-2xl, #pi-editor .rounded-xl, #pi-editor .rounded-lg { border-radius: 3px; }
-#pi-editor .rounded-md { border-radius: 2px; }
+#pi-editor .rounded-2xl { border-radius: 18px; }
+#pi-editor .rounded-xl { border-radius: 12px; }
 #pi-editor .shadow-md { box-shadow: none; }
 
-/* La barra de título. */
+/* La barra de arriba, corta: el nombre, el manual y el idioma en una línea. */
 #pi-editor .pi-barra-titulo {
-  margin: 0; gap: 0.5rem 1rem; align-items: center; padding: 0.5rem 0.9rem; border-radius: 5px 5px 0 0;
-  background-color: rgb(var(--c-brand-800)); background-image: linear-gradient(rgb(var(--c-brand-800)), rgb(var(--c-brand-900))); color: #fff;
+  margin: 0; gap: 0.5rem 1rem; align-items: center; padding: 0.6rem 1.1rem; border-radius: 18px 18px 0 0;
+  background-color: rgb(var(--c-brand-800)); background-image: linear-gradient(110deg, rgb(var(--c-brand-800)), rgb(var(--c-brand-600))); color: #fff;
 }
 #pi-editor .pi-barra-titulo > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.15rem 0.9rem; }
-#pi-editor .pi-barra-titulo h1 { font-family: inherit; font-size: 1rem; line-height: 1.5; color: #fff; }
+#pi-editor .pi-barra-titulo h1 { font-family: inherit; font-size: 1.05rem; line-height: 1.5; color: #fff; }
 #pi-editor .pi-barra-titulo h1 + p { margin: 0; font-size: 0.75rem; color: rgb(var(--c-brand-100)); max-width: none; }
 #pi-editor .pi-barra-titulo p + p { margin: 0; font-size: 0.75rem; }
 #pi-editor .pi-barra-titulo a { color: #fff; }
-#pi-editor .pi-barra-titulo button { padding: 0.15rem 0.6rem; font-size: 0.75rem; color: #fff; border-color: rgb(255 255 255 / 0.55); }
+#pi-editor .pi-barra-titulo button { padding: 0.15rem 0.7rem; font-size: 0.75rem; color: #fff; border-color: rgb(255 255 255 / 0.6); border-radius: 999px; }
 #pi-editor .pi-barra-titulo button:hover { background: rgb(255 255 255 / 0.12); }
+@media (max-width: 1024px) { #pi-editor .pi-barra-titulo h1 + p { display: none; } }
 
-/* Lo que aparece entre la barra de título y el área de trabajo. */
 #pi-editor > #pi-otra-pestana, #pi-editor > p { margin: 0.75rem; }
 
-/* La barra de herramientas. */
+/* La barra de herramientas: el torneo abierto, «Nuevo torneo» y «Más opciones». */
 #pi-editor .pi-barra-herramientas {
-  margin: 0; padding: 0.5rem 0.9rem; border-radius: 0;
-  background: rgb(var(--c-brand-50)); border-bottom: 1px solid rgb(var(--c-brand-200));
+  margin: 0; padding: 0.55rem 1.1rem; border-radius: 0 0 18px 18px;
+  background: #fff; border: 1px solid rgb(var(--c-brand-200)); border-top: 0;
 }
-.dark #pi-editor .pi-barra-herramientas { background: rgb(var(--c-brand-900)); border-bottom-color: rgb(var(--c-brand-700)); }
-#pi-editor .pi-barra-herramientas > div:first-of-type { gap: 0.5rem 0.75rem; }
-#pi-editor .pi-barra-herramientas select, #pi-editor .pi-barra-herramientas button { padding-top: 0.3rem; padding-bottom: 0.3rem; }
-#pi-editor .pi-barra-herramientas label > span.block { font-size: 0.75rem; margin-bottom: 0.15rem; }
-#pi-editor .pi-barra-herramientas label.pb-2 { padding-bottom: 0.35rem; }
+.dark #pi-editor .pi-barra-herramientas { background: rgb(var(--c-brand-900)); border-color: rgb(var(--c-brand-700)); }
+#pi-editor .pi-barra-herramientas > div:first-of-type { gap: 0.5rem 0.75rem; align-items: center; }
+#pi-editor .pi-barra-herramientas label.flex-1 { display: flex; align-items: center; gap: 0.6rem; }
+#pi-editor .pi-barra-herramientas label.flex-1 > span.block { margin: 0; font-size: 0.8rem; white-space: nowrap; }
+#pi-editor .pi-barra-herramientas select, #pi-editor .pi-barra-herramientas button, #pi-editor .pi-barra-herramientas summary { padding-top: 0.35rem; padding-bottom: 0.35rem; border-radius: 999px; }
 #pi-editor .pi-barra-herramientas > p { margin-top: 0.35rem; }
 
-/* Las pestañas, pegadas al panel; la abierta es del color del panel. */
+/* Los menús de botones (<details class="pi-menu">): «Más opciones», y en
+   Rondas Imprimir, Compartir y Árbitros y cámaras. */
+.pi-menu { position: relative; display: inline-block; }
+.pi-menu > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; }
+.pi-menu > summary::-webkit-details-marker { display: none; }
+.pi-menu > summary::after { content: "▾"; font-size: 0.8em; }
+.pi-menu[open] > summary { background: rgb(var(--c-brand-100)); }
+.dark .pi-menu[open] > summary { background: rgb(var(--c-brand-800)); }
+.pi-menu-lista {
+  position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; min-width: 15rem; max-width: min(22rem, 90vw);
+  display: grid; gap: 2px; padding: 6px; border-radius: 12px; text-align: left;
+  background: #fff; color: rgb(var(--c-brand-900)); border: 1px solid rgb(var(--c-brand-200));
+  box-shadow: 0 12px 30px -8px rgb(var(--c-brand-900) / 0.3);
+}
+.pi-menu-derecha .pi-menu-lista { left: auto; right: 0; }
+.dark .pi-menu-lista { background: rgb(var(--c-brand-900)); color: #fff; border-color: rgb(var(--c-brand-700)); }
+.pi-menu-lista > button, .pi-menu-item {
+  display: block; width: 100%; text-align: left; padding: 0.55rem 0.75rem; border: 0; border-radius: 8px;
+  background: none; color: inherit; font-size: 0.875rem; font-weight: 600; cursor: pointer;
+}
+.pi-menu-lista > button:hover, .pi-menu-item:hover { background: rgb(var(--c-brand-100)); }
+.dark .pi-menu-lista > button:hover, .dark .pi-menu-item:hover { background: rgb(var(--c-brand-800)); }
+.pi-menu-lista > button:focus-visible, .pi-menu-casilla:focus-within { outline: 3px solid rgb(var(--c-accent-500)); outline-offset: -3px; }
+.pi-menu-casilla { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.75rem; border-radius: 8px; font-size: 0.875rem; cursor: pointer; }
+.pi-menu-casilla:hover { background: rgb(var(--c-brand-100)); }
+.dark .pi-menu-casilla:hover { background: rgb(var(--c-brand-800)); }
+.pi-menu-nota { margin: 4px 0 0; padding: 0.55rem 0.75rem 0.35rem; font-size: 0.75rem; line-height: 1.45; color: rgb(var(--c-brand-600)); border-top: 1px solid rgb(var(--c-brand-200)); }
+.dark .pi-menu-nota { color: rgb(var(--c-brand-300)); border-top-color: rgb(var(--c-brand-700)); }
+
+/* El cuerpo: la barra lateral y, a la derecha, lo abierto. */
+#pi-editor .pi-cuerpo { display: grid; grid-template-columns: 15.5rem minmax(0, 1fr); gap: 1.25rem; padding: 1.25rem 0; align-items: start; }
 #pi-editor .pi-pestanas {
-  margin: 0; padding: 0.5rem 0.75rem 0; gap: 2px; flex-wrap: nowrap; overflow-x: auto;
-  background: rgb(var(--c-brand-100)); border-bottom: 1px solid rgb(var(--c-brand-300));
+  position: sticky; top: 1rem; display: flex; flex-direction: column; gap: 3px; margin: 0; padding: 0.75rem 0.6rem;
+  border-radius: 18px; background: rgb(var(--c-brand-800)); color: #fff;
 }
-.dark #pi-editor .pi-pestanas { background: rgb(var(--c-brand-950)); border-bottom-color: rgb(var(--c-brand-700)); }
 .pi-ficha {
-  flex: none; position: relative; margin-bottom: -1px; padding: 0.4rem 0.9rem; white-space: nowrap;
-  border: 1px solid rgb(var(--c-brand-300)); border-bottom-color: transparent; border-radius: 4px 4px 0 0;
-  background: rgb(var(--c-brand-50)); color: rgb(var(--c-brand-700));
+  display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.6rem 0.7rem; text-align: left; white-space: nowrap;
+  border: 0; border-radius: 12px; background: none; color: #fff; cursor: pointer;
 }
-.pi-ficha:hover { background: #fff; color: rgb(var(--c-brand-900)); }
-.pi-ficha[aria-selected="true"] {
-  background: #fff; color: rgb(var(--c-brand-900)); border-bottom-color: #fff;
-  box-shadow: inset 0 3px 0 rgb(var(--c-accent-500));
+.pi-ficha:hover { background: rgb(255 255 255 / 0.1); }
+.pi-ficha[aria-selected="true"] { background: #fff; color: rgb(var(--c-brand-800)); }
+.dark .pi-ficha[aria-selected="true"] { background: rgb(var(--c-brand-100)); }
+.pi-ficha-icono { width: 1.3rem; text-align: center; flex: none; }
+.pi-insignia {
+  margin-left: auto; padding: 1px 8px; border-radius: 999px; white-space: nowrap;
+  font-size: 0.72rem; font-weight: 700; background: rgb(255 255 255 / 0.18);
 }
-.dark .pi-ficha { border-color: rgb(var(--c-brand-700)); border-bottom-color: transparent; background: rgb(var(--c-brand-800)); color: rgb(var(--c-brand-100)); }
-.dark .pi-ficha:hover { background: rgb(var(--c-brand-700)); color: #fff; }
-.dark .pi-ficha[aria-selected="true"] { background: rgb(var(--c-brand-900)); color: #fff; border-bottom-color: rgb(var(--c-brand-900)); }
+.pi-insignia:empty { display: none; }
+.pi-ficha[aria-selected="true"] .pi-insignia { background: rgb(var(--c-brand-100)); }
+.dark .pi-ficha[aria-selected="true"] .pi-insignia { background: #fff; }
+.pi-ficha .pi-insignia.pi-insignia-alerta { background: var(--pi-falta); color: var(--pi-falta-tinta); }
 
-/* El área de trabajo: la ficha abierta, sin tarjeta alrededor. */
-#pi-editor > [role="tabpanel"] { border-radius: 0; box-shadow: none; padding: 1rem 1.1rem; background: #fff; }
-.dark #pi-editor > [role="tabpanel"] { background: rgb(var(--c-brand-900)); }
-#pi-editor > [role="tabpanel"].space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
-#pi-editor > [role="tabpanel"].space-y-6 > * { box-shadow: none; border: 1px solid rgb(var(--c-brand-200)); }
-.dark #pi-editor > [role="tabpanel"].space-y-6 > * { border-color: rgb(var(--c-brand-700)); }
+/* Las partes, en tarjetas redondeadas. */
+#pi-editor .pi-contenido > [role="tabpanel"]:not(.space-y-6):not(#pi-p-inicio) {
+  border-radius: 18px; box-shadow: none; padding: 1.25rem; background: #fff; border: 1px solid rgb(var(--c-brand-200));
+}
+.dark #pi-editor .pi-contenido > [role="tabpanel"]:not(.space-y-6):not(#pi-p-inicio) { background: rgb(var(--c-brand-900)); border-color: rgb(var(--c-brand-700)); }
+#pi-editor .pi-contenido > [role="tabpanel"].space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
+#pi-editor .pi-contenido > [role="tabpanel"].space-y-6 > * { box-shadow: none; border: 1px solid rgb(var(--c-brand-200)); border-radius: 18px; }
+.dark #pi-editor .pi-contenido > [role="tabpanel"].space-y-6 > * { border-color: rgb(var(--c-brand-700)); }
 
-/* Los botones de cada ronda, como un selector segmentado. */
+/* «Lo siguiente»: la tira de arriba de cada parte. */
+.pi-siguiente {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.9rem; margin-bottom: 1rem; padding: 0.7rem 1rem;
+  border-radius: 14px; color: #fff; background: linear-gradient(110deg, rgb(var(--c-brand-800)), rgb(var(--c-brand-500)));
+}
+.pi-siguiente[hidden] { display: none; }
+.pi-siguiente-alerta { box-shadow: inset 6px 0 0 var(--pi-falta); padding-left: 1.3rem; }
+.pi-siguiente-etiqueta, .pi-heroe-etiqueta {
+  display: inline-block; margin: 0;
+  padding: 2px 10px; border-radius: 999px; background: rgb(0 0 0 / 0.28);
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.pi-siguiente-texto b { font-size: 1rem; }
+.pi-siguiente > button { margin-left: auto; }
+.pi-boton-rosa, .pi-boton-blanco {
+  display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1.1rem; border: 0; border-radius: 999px;
+  font-size: 0.9rem; font-weight: 700; cursor: pointer;
+}
+.pi-boton-rosa { background: rgb(var(--c-accent-400)); color: rgb(var(--c-brand-900)); }
+.pi-boton-rosa:hover { background: rgb(var(--c-accent-300)); }
+.pi-boton-blanco { background: #fff; color: rgb(var(--c-brand-800)); }
+.pi-boton-blanco:hover { background: rgb(var(--c-brand-100)); }
+.pi-boton-rosa:focus-visible, .pi-boton-blanco:focus-visible, .pi-sala:focus-visible, .pi-ficha:focus-visible { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 6px rgb(var(--c-brand-900)); }
+
+/* La Portada. */
+.pi-portada { display: grid; grid-template-columns: minmax(0, 1fr) 17rem; gap: 1.25rem; align-items: start; }
+.pi-portada-principal { display: grid; gap: 1.25rem; }
+.pi-heroe {
+  position: relative; overflow: hidden; padding: 1.6rem 1.75rem; border-radius: 22px; color: #fff;
+  background: linear-gradient(120deg, rgb(var(--c-brand-800)) 0%, rgb(var(--c-brand-600)) 55%, rgb(var(--c-brand-500)) 100%);
+}
+.pi-heroe::after { content: "♞"; position: absolute; right: 1.5rem; bottom: -1.2rem; font-size: 10rem; line-height: 1; opacity: 0.13; pointer-events: none; }
+.pi-heroe-nombre { margin: 0 0 0.5rem; font-weight: 700; font-size: 0.95rem; color: rgb(var(--c-brand-100)); position: relative; }
+.pi-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 0.9rem; padding: 0; list-style: none; position: relative; }
+.pi-chips li { padding: 3px 12px; border-radius: 999px; background: rgb(0 0 0 / 0.28); font-size: 0.8rem; font-weight: 700; }
+.pi-heroe h2 { margin: 0.5rem 0 0.35rem; font-family: inherit; font-size: 2rem; line-height: 1.15; font-weight: 800; max-width: 38rem; position: relative; }
+.pi-heroe-detalle { margin: 0 0 1.1rem; font-size: 1rem; max-width: 36rem; position: relative; }
+.pi-heroe-botones { display: flex; flex-wrap: wrap; gap: 0.6rem; position: relative; }
+
+.pi-salas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.9rem; }
+.pi-sala {
+  position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 0.3rem; min-height: 8.5rem; padding: 1rem 1.1rem;
+  border: 0; border-radius: 18px; color: #fff; text-align: left; cursor: pointer;
+}
+.pi-sala::before { content: ""; position: absolute; right: -1.9rem; top: -1.9rem; width: 7rem; height: 7rem; border-radius: 50%; background: rgb(255 255 255 / 0.12); }
+.pi-sala:hover { filter: brightness(1.08); }
+.pi-sala-icono { position: absolute; right: 1rem; top: 0.85rem; font-size: 1.35rem; }
+.pi-sala-titulo { font-weight: 700; font-size: 0.95rem; }
+.pi-sala-numero { font-size: 1.75rem; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
+.pi-sala-detalle { margin-top: auto; align-self: flex-start; padding: 2px 10px; border-radius: 999px; background: rgb(0 0 0 / 0.25); font-size: 0.8rem; font-weight: 700; }
+.pi-sala-azul { background: var(--pi-azul); } .pi-sala-turquesa { background: var(--pi-turquesa); } .pi-sala-verde { background: var(--pi-verde); }
+.pi-sala-rojo { background: var(--pi-rojo); } .pi-sala-morado { background: var(--pi-morado); } .pi-sala-naranja { background: var(--pi-naranja); }
+.pi-sala-pizarra { background: var(--pi-pizarra); }
+
+.pi-viene { padding: 1.1rem; border-radius: 18px; background: #fff; border: 1px solid rgb(var(--c-brand-200)); }
+.dark .pi-viene { background: rgb(var(--c-brand-900)); border-color: rgb(var(--c-brand-700)); }
+.pi-viene h2 { margin: 0 0 0.75rem; font-size: 1.1rem; font-weight: 700; }
+.pi-viene ol { display: grid; gap: 0.8rem; margin: 0; padding: 0; list-style: none; }
+.pi-viene li { display: grid; padding-left: 0.75rem; border-left: 3px solid rgb(var(--c-brand-300)); }
+.pi-viene li.pi-viene-ahora { border-left-color: var(--pi-falta); border-left-width: 6px; }
+.pi-viene-que { font-weight: 700; }
+.pi-viene-det { font-size: 0.85rem; color: rgb(var(--c-brand-600)); }
+.dark .pi-viene-det { color: rgb(var(--c-brand-300)); }
+
+/* Las explicaciones plegadas: «¿Cómo funciona?». */
+.pi-ayuda { margin-top: 0.4rem; font-size: 0.875rem; }
+.pi-ayuda > summary { display: inline-block; cursor: pointer; font-weight: 600; color: rgb(var(--c-brand-700)); text-decoration: underline; text-underline-offset: 2px; border-radius: 4px; }
+.dark .pi-ayuda > summary { color: rgb(var(--c-brand-200)); }
+.pi-ayuda > summary:focus-visible { outline: 2px solid rgb(var(--c-accent-500)); outline-offset: 2px; }
+.pi-ayuda > p { margin: 0.35rem 0 0; color: rgb(var(--c-brand-600)); line-height: 1.5; }
+.dark .pi-ayuda > p { color: rgb(var(--c-brand-300)); }
+
+/* «Deshacer el emparejamiento», aparte y al final de la ronda. */
+.pi-zona-peligro { margin-top: 1.25rem; padding: 1rem; border-radius: 14px; border: 1px solid #e8b4b0; background: #fff7f6; }
+.pi-zona-peligro h3 { margin: 0 0 0.3rem; font-size: 1rem; font-weight: 700; color: #a3241c; }
+.pi-zona-peligro p { margin: 0 0 0.6rem; }
+.dark .pi-zona-peligro { border-color: #7a2a26; background: rgb(var(--c-brand-950)); }
+.dark .pi-zona-peligro h3 { color: #f4a8a2; }
+
+/* Los botones de cada ronda. */
 .pi-ronda-boton {
-  padding: 0.3rem 0.75rem; border: 1px solid rgb(var(--c-brand-300)); border-radius: 3px;
-  background: rgb(var(--c-brand-50)); color: rgb(var(--c-brand-700));
+  padding: 0.3rem 0.8rem; border: 1px solid rgb(var(--c-brand-300)); border-radius: 999px;
+  background: #fff; color: rgb(var(--c-brand-700));
 }
 .pi-ronda-boton:hover { background: rgb(var(--c-brand-100)); color: rgb(var(--c-brand-900)); }
 .pi-ronda-boton[aria-pressed="true"] { background: rgb(var(--c-brand-800)); border-color: rgb(var(--c-brand-800)); color: #fff; }
 .dark .pi-ronda-boton { border-color: rgb(var(--c-brand-600)); background: rgb(var(--c-brand-800)); color: rgb(var(--c-brand-100)); }
 .dark .pi-ronda-boton:hover { background: rgb(var(--c-brand-700)); color: #fff; }
-.dark .pi-ronda-boton[aria-pressed="true"] { background: rgb(var(--c-accent-500)); border-color: rgb(var(--c-accent-500)); color: rgb(var(--c-brand-900)); }
+.dark .pi-ronda-boton[aria-pressed="true"] { background: rgb(var(--c-accent-400)); border-color: rgb(var(--c-accent-400)); color: rgb(var(--c-brand-900)); }
 
-/* Las tablas, como la cuadrícula de una hoja de cálculo. */
+/* Las tablas. */
 #pi-editor .pi-tabla { border: 1px solid rgb(var(--c-brand-200)); }
-#pi-editor .pi-tabla th, #pi-editor .pi-tabla td { padding: 0.3rem 0.5rem; border: 1px solid rgb(var(--c-brand-200)); }
+#pi-editor .pi-tabla th, #pi-editor .pi-tabla td { padding: 0.35rem 0.55rem; border: 1px solid rgb(var(--c-brand-200)); }
 #pi-editor .pi-tabla thead th { background: rgb(var(--c-brand-100)); color: rgb(var(--c-brand-900)); font-size: 0.8rem; }
 #pi-editor .pi-tabla tbody tr:nth-child(even) { background: rgb(var(--c-brand-50)); }
 #pi-editor .pi-tabla tbody tr:hover { background: rgb(var(--c-brand-100) / 0.7); }
@@ -1995,23 +2307,42 @@ html.dark .comparar-serie-3 { background: #199e70; }
 
 /* La barra de estado. */
 .pi-barra-estado {
-  display: flex; flex-wrap: wrap; min-height: 1.6rem; font-size: 0.75rem;
-  background: rgb(var(--c-brand-100)); color: rgb(var(--c-brand-800)); border-top: 1px solid rgb(var(--c-brand-300));
+  display: flex; flex-wrap: wrap; min-height: 1.8rem; font-size: 0.78rem; border-radius: 14px;
+  background: rgb(var(--c-brand-900)); color: rgb(var(--c-brand-50));
 }
 .pi-barra-estado:empty { display: none; }
-.pi-barra-estado > span { padding: 0.25rem 0.9rem; border-right: 1px solid rgb(var(--c-brand-300)); }
-.pi-barra-estado > span:first-child { font-weight: 600; }
-.pi-barra-estado { border-radius: 0 0 5px 5px; }
+.pi-barra-estado > span { padding: 0.35rem 1rem; border-right: 1px solid rgb(255 255 255 / 0.2); }
+.pi-barra-estado > span:first-child { font-weight: 700; }
 .pi-barra-estado > span:last-child { border-right: 0; }
 .pi-barra-estado > span:nth-child(4) { margin-left: auto; }
-.dark .pi-barra-estado { background: rgb(var(--c-brand-950)); color: rgb(var(--c-brand-100)); border-top-color: rgb(var(--c-brand-700)); }
-.dark .pi-barra-estado > span { border-right-color: rgb(var(--c-brand-700)); }
+
+/* En el celular y la tableta: la barra lateral se vuelve una fila que se desliza. */
+@media (max-width: 1100px) {
+  .pi-portada { grid-template-columns: minmax(0, 1fr); }
+  .pi-salas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  #pi-editor .pi-cuerpo { grid-template-columns: minmax(0, 1fr); gap: 0.9rem; padding-top: 0.9rem; }
+  #pi-editor .pi-pestanas { position: static; flex-direction: row; overflow-x: auto; padding: 0.45rem; }
+  .pi-ficha { width: auto; flex: none; padding: 0.5rem 0.75rem; }
+  .pi-heroe h2 { font-size: 1.55rem; }
+  .pi-barra-estado > span:nth-child(2) { display: none; }
+}
+@media (max-width: 520px) {
+  .pi-salas { gap: 0.6rem; }
+  .pi-sala { min-height: 7.5rem; padding: 0.85rem; }
+  .pi-sala-numero { font-size: 1.35rem; }
+  .pi-heroe { padding: 1.2rem; }
+  .pi-siguiente > button { margin-left: 0; }
+}
 
 @media print {
   .pi-escritorio:has(> .pi-ventana:not([hidden])) { background: #fff !important; padding-top: 0 !important; }
   #pi-editor.pi-ventana { border: 0 !important; box-shadow: none !important; background: #fff !important; margin: 0 !important; max-width: none !important; }
   #pi-editor .pi-tabla tbody tr:nth-child(even) { background: none !important; }
   #pi-editor .pi-tabla thead th { background: none !important; }
+  #pi-editor .pi-cuerpo { display: block !important; padding: 0 !important; }
+  #pi-editor .pi-contenido > [role="tabpanel"] { border: 0 !important; border-radius: 0 !important; }
 }
 
 /* La plantilla de resultados por mesa (imprimirPlantillaMesas() en
@@ -2458,6 +2789,24 @@ body.pi-imprimiendo-plantilla.pi-imprimiendo-firmas .pi-plantilla { break-after:
 .arbol-gana { background: #0f3d1f; }
 .arbol-tablas { background: #7f7f7f; }
 .arbol-pierde { background: #f9d9d9; }
+/* La misma barra en la ficha del rival (js/preparacion-pintar.js), a lo ancho. */
+.ficha-barra { display: flex; width: 100%; height: 0.75rem; margin-top: 0.5rem; }
+/* Sus últimas partidas: la letra (G, T, P) es el dato; el fondo, los tonos de
+   la barra. Texto contra fondo: blanco sobre #0f3d1f, negro sobre #7f7f7f y
+   #102a43 sobre #f9d9d9, los tres por encima de 4,5:1 (medidos en
+   verificar-preparacion-rivales.js). */
+.ficha-res { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 0.5rem; font-weight: 700; font-size: 0.875rem; border: 1px solid rgb(var(--c-brand-500, 72 101 129)); cursor: default; }
+.dark .ficha-res { border-color: rgb(var(--c-brand-300, 159 179 200)); }
+.ficha-res-G { background: #0f3d1f; color: #fff; }
+.ficha-res-T { background: #7f7f7f; color: #000; }
+.ficha-res-P { background: #f9d9d9; color: #102a43; }
+/* «Él saca» con su barrita en las tablas: solo a la vista (el porcentaje va
+   escrito al lado). La raya del medio marca el 50 %. */
+.saca-barra { position: relative; display: inline-block; width: 3.5rem; height: 0.5rem; border-radius: 9999px; overflow: hidden; border: 1px solid rgb(var(--c-brand-500, 72 101 129)); flex: none; }
+.dark .saca-barra { border-color: rgb(var(--c-brand-300, 159 179 200)); }
+.saca-barra::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgb(var(--c-accent-500, 222 145 29)); }
+.saca-lleno { display: block; height: 100%; background: rgb(var(--c-brand-700, 51 78 104)); }
+.dark .saca-lleno { background: rgb(var(--c-brand-200, 188 204 220)); }
 /* La clasificación para la pared (imprimirClasificacionPared): una hoja A3
    con letra grande, para leerla de pie a un metro y medio. La hora en que se
    imprimió va arriba: una hoja vieja en la pared engaña. */
@@ -3108,5 +3457,21 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 /* Con una ventana abierta, la profe se aparta: la ventana va primero. */
 body:has(dialog[open]) .profe-ayuda-boton, body:has(dialog[open]) .profe-ayuda-panel { display: none; }
 @media print { .profe-ayuda-boton, .profe-ayuda-panel { display: none; } }
+
+/* Interruptor de encendido (mensualidades.html, «Automático»): un botón con
+   role="switch". Lo que dice si está encendido es aria-checked, no una clase,
+   y el estado también va escrito al lado («Encendido»/«Apagado») porque el
+   color nunca va solo. */
+.interruptor { position: relative; width: 3.25rem; height: 2rem; border-radius: 9999px; border: 2px solid rgb(var(--c-brand-400, 130 154 177)); background: rgb(var(--c-brand-100, 217 226 236)); transition: background-color .15s; }
+.interruptor::before { content: ""; position: absolute; top: 2px; left: 2px; width: 1.5rem; height: 1.5rem; border-radius: 9999px; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / .3); transition: transform .15s; }
+.interruptor[aria-checked="true"] { background: #15803d; border-color: #15803d; }
+.interruptor[aria-checked="true"]::before { transform: translateX(1.25rem); }
+.interruptor { margin-bottom: 1rem; }
+.interruptor::after { content: "Apagado"; position: absolute; left: 50%; top: calc(100% + 2px); transform: translateX(-50%); font-size: .75rem; font-weight: 600; white-space: nowrap; color: rgb(var(--c-brand-700, 72 101 129)); }
+.interruptor[aria-checked="true"]::after { content: "Encendido"; color: #166534; }
+html.dark .interruptor::after { color: rgb(var(--c-brand-200, 188 204 220)); }
+html.dark .interruptor[aria-checked="true"]::after { color: #86efac; }
+.interruptor:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 240 180 41)); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .interruptor, .interruptor::before { transition: none; } }
 
 /*! rev bfb5bbb0d2d82f9f */

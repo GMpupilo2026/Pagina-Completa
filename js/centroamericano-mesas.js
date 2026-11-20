@@ -69,7 +69,7 @@
   // `dia` («AAAA-MM-DD», hora de Costa Rica), el que elige la organización (el último día de SU torneo); un día que ya pasó no sirve.
   function vencimiento(opcion, ahora, hoy, dia) {
     if (opcion === "fecha") {
-      if (!/^d{4}-d{2}-d{2}$/.test(String(dia || ""))) throw new Error("Elige el día en que vence el enlace.");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dia || ""))) throw new Error("Elige el día en que vence el enlace.");
       const d = new Date(dia + "T23:59:59-06:00");
       if (isNaN(d.getTime()) || d.getTime() <= ahora.getTime()) throw new Error("El día en que vence el enlace ya pasó: elige otro.");
       return d;

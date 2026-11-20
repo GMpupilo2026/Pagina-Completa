@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,12 +57,30 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: El rey rival tiene pocos defensores: ¿qué casilla de su enroque se abre si entregas una pieza? Juegan las blancas; el rival acaba de jugar … alfil eva 6.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
 
-<p>El caballo es la pieza que más se sacrifica en ataques contra el rey. Se entrega en las casillas cercanas al rey rival, como f7, e6 o g5 y h5 según la estructura, para romper la protección de peones, para atraer al rey a una casilla donde recibe jaques o para desviar a una pieza que estaba defendiendo algo importante. Como vale tres puntos, el sacrificio es menos costoso que el de una torre, y por eso aparece en muchas más partidas.</p>
-<p>Las señales: el rey rival en el centro o con su enroque débil, muchas de tus piezas cerca y pocas defensoras del rival, una casilla clave como f7 defendida solo por el rey, o un peón rival que, si captura el caballo, abre una columna o una diagonal hacia su rey. La pregunta que decide es qué entra después: si después del sacrificio llegan la dama, una torre y un alfil con jaques o amenazas, vale la pena calcularlo.</p>
+<h2 id="s1">1. De qué trata esta lección</h2>
+
+<p>El caballo es la pieza que más se sacrifica en ataques contra el rey. Se entrega en las casillas cercanas al rey rival, como felix 7, eva 6 o gustav 5 y hector 5 según la estructura, para romper la protección de peones, para atraer al rey a una casilla donde recibe jaques o para desviar a una pieza que estaba defendiendo algo importante. Como vale tres puntos, el sacrificio es menos costoso que el de una torre, y por eso aparece en muchas más partidas.</p>
+<p>Las señales: el rey rival en el centro o con su enroque débil, muchas de tus piezas cerca y pocas defensoras del rival, una casilla clave como felix 7 defendida solo por el rey, o un peón rival que, si captura el caballo, abre una columna o una diagonal hacia su rey. La pregunta que decide es qué entra después: si después del sacrificio llegan la dama, una torre y un alfil con jaques o amenazas, vale la pena calcularlo.</p>
 <p>El error típico es entregar el caballo por intuición y no tener nada preparado para la segunda jugada. Un sacrificio sin continuación es solo una pieza menos. Cuenta las piezas que entran en el ataque, las que defienden y, sobre todo, mira qué pasa si el rival no captura el caballo y en vez de eso contesta con calma. Si ni así tienes ventaja, guarda el caballo para otro momento: los ataques que funcionan suelen madurar con una o dos jugadas más de preparación.</p>
 
 
@@ -65,42 +89,71 @@
   <dt>El sacrificio</dt>
   <dd>Entregar material a cambio de algo que no es material: tiempo, líneas abiertas, el rey rival expuesto o una casilla. Un sacrificio correcto se calcula hasta el final o se apoya en una ventaja que se puede explicar.</dd>
   <dd><strong>El error de siempre:</strong> Sacrificar por entusiasmo. Si no puedes decir con palabras qué recibes a cambio, y ver hasta dónde llega la secuencia, no es un sacrificio: es regalar una pieza.</dd>
-  <dd><strong>Para verlo:</strong> El clásico alfil captura hector 7 jaque existe porque después del jaque llega el caballo a g5 y la dama a h5. Sin esas dos piezas listas, es solo un alfil menos.</dd>
+  <dd><strong>Para verlo:</strong> El clásico alfil captura hector 7 jaque existe porque después del jaque llega el caballo a gustav 5 y la dama a hector 5. Sin esas dos piezas listas, es solo un alfil menos.</dd>
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>La estructura de peones</dt>
   <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
-  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: eva 4-david 5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: El rey rival tiene pocos defensores: ¿qué casilla de su enroque se abre si entregas una pieza? Juegan las blancas; el rival acaba de jugar … alfil eva 6.</h3>
+  <h3 id="posicion-1">Posición 1: El rey rival tiene pocos defensores: ¿qué casilla de su enroque se abre si entregas una pieza? Juegan las blancas; el rival acaba de jugar … alfil eva 6.</h3>
   
-  <p>Piezas blancas: rey en h1; dama en f5; torre en a1; alfiles en d3, e1; caballo en e4; peones en b2, c2, g2, h3.</p>
-  <p>Piezas negras: rey en g8; dama en b6; torres en a8, f8; alfiles en e6, g7; peones en d4, f7, g5, h6.</p>
+  <h4>Piezas blancas: 10</h4>
+  <ul>
+    <li>Rey en hector 1.</li>
+    <li>Dama en felix 5.</li>
+    <li>Torre en anna 1.</li>
+    <li>Alfil en david 3.</li>
+    <li>Alfil en eva 1.</li>
+    <li>Caballo en eva 4.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 3.</li>
+  </ul>
+  <h4>Piezas negras: 10</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en bella 6.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en felix 8.</li>
+    <li>Alfil en eva 6.</li>
+    <li>Alfil en gustav 7.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 5.</li>
+    <li>Peón en hector 6.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 25. caballo felix 6 jaque, alfil captura felix 6, 26. dama hector 7 jaque mate</p>
+  <h4>La línea: 3 jugadas</h4>
+  <ul>
+    <li>25. Blancas: caballo felix 6 jaque.</li>
+    <li>25. Negras: alfil captura felix 6.</li>
+    <li>26. Blancas: dama hector 7 jaque mate.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>25. caballo felix 6 jaque, alfil captura felix 6, 26. dama hector 7 jaque mate. Hay un sacrificio: se entrega material para ganar más. Mira cómo el caballo entregado abre el camino para que las demás piezas lleguen al rey: el valor está en lo que entra después. (Ejercicio 0gAkg de la base abierta de Lichess (CC0), rating 1041. Stockfish 16 a profundidad 18: caballo felix 6 jaque es la mejor (mate en 2) y la segunda queda en -5,1.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r4rk1/5pb1/1q2b2p/5Qp1/3pN3/3B3P/1PP3P1/R3B2K w - - 6 25</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r4rk1/5pb1/1q2b2p/5Qp1/3pN3/3B3P/1PP3P1/R3B2K w - - 6 25</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Toma cinco partidas de ataque famosas y en cada una cuenta cuántas piezas atacaban antes del sacrificio.</li>
   <li>En tu próxima partida, si sientes ganas de sacrificar, escribe antes en la planilla qué recibes a cambio. Si no te sale la frase, no lo hagas.</li>
   <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
   <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
-  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Arma en el tablero un peón aislado en david 4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +206,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

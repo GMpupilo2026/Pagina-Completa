@@ -39,6 +39,7 @@ const { Chess } = require("chess.js");
 const RAIZ = path.join(__dirname, "..");
 const { tablero } = require("./lib/tablero-svg.js");
 const { describir } = require("./lib/describir-fen.js");
+const { posicionHtml, lineaHtml, jugadasHtml } = require("./lib/posicion-accesible.js");
 const N = require("./lib/notacion.js");
 const { unir, proteger } = require("./lib/pdf-armar.js");
 
@@ -376,12 +377,12 @@ const htmlMarca = `<!doctype html><html lang="es"><head><meta charset="utf-8">
    dichas («alfil captura felix 6»), que es como se entienden con lector de
    pantalla. */
 function accesible() {
-  const oido = (t) => N.textoHablado(t, "espanol");
+  const oido = (t) => N.casillasHabladas(N.textoHablado(t, "espanol"));
   const posicion = (it) => {
-    const d = describir(it.fen);
-    return `<p class="posicion"><strong>La posición.</strong> ${it.partida ? `Partida ${esc(it.partida)}. ` : ""}${d.turno} Piezas blancas: ${esc(d.blancas)}. Piezas negras: ${esc(d.negras)}.
-      Las ${RIVAL[it.juegan]} acaban de jugar ${esc(oido((it.juegan === "w" ? "…" : "") + it.ultima))}.
-      <span class="fen">FEN: ${esc(it.fen)}</span></p>`;
+    return posicionHtml(it.fen, {
+      antes: it.partida ? `Partida ${esc(it.partida)}.` : "",
+      despues: `Las ${RIVAL[it.juegan]} acaban de jugar ${esc(oido((it.juegan === "w" ? "…" : "") + it.ultima))}.`,
+    });
   };
   const leccionA = (l) => {
     const ejs = EJEMPLOS(l.n);
@@ -392,7 +393,8 @@ function accesible() {
       ${ejs.map((it, i) => `<h4>Ejemplo${ejs.length > 1 ? " " + (i + 1) : ""} de la lección ${l.n}</h4>
       <p>${esc(oido(l.pregunta || ""))}</p>
       ${posicion(it)}
-      <p><strong>Solución.</strong> ${esc(oido(it.linea))}. ${it.explica ? esc(oido(it.explica.replace(/\.?$/, "."))) + " " : ""}${esc(oido(l.enlace || ""))}</p>
+      ${lineaHtml(oido(it.linea), { rotulo: "Solución" })}
+      <p>${it.explica ? esc(oido(it.explica.replace(/\.?$/, "."))) + " " : ""}${esc(oido(l.enlace || ""))}</p>
       <p class="comprobado">${esc(oido(it.comprobado))}</p>`).join("")}
       <p><strong>Para practicar.</strong> ${esc(oido(l.practica))}</p>
       <h4>Ejercicios de la lección ${l.n}</h4>
@@ -401,7 +403,7 @@ function accesible() {
   };
   const ejercicioA = (it, conPista) => `<article><h5>Ejercicio ${it.num}</h5>${conPista && pista(it) ? `<p>Pista: ${esc(oido(pista(it)))}</p>` : ""}${posicion(it)}</article>`;
   const solucionA = (it) => `<article><h4>Solución del ejercicio ${it.num}</h4>
-      <p>${esc(oido(it.linea))}</p>
+      ${lineaHtml(oido(it.linea))}
       <p>${it.explica ? esc(oido(it.explica.replace(/\.?$/, "."))) + " " : ""}${it.uso === "repaso" ? `Tema: ${esc(POR_N[it.leccion].titulo)}, lección ${it.leccion}.` : esc(oido(POR_N[it.leccion].enlace))}</p>
       <p class="comprobado">${esc(oido(it.comprobado))}</p></article>`;
 

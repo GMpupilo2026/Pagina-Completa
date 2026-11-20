@@ -54,6 +54,7 @@
   }
 
   // null si algún dato de la plantilla falta (la línea no sale).
+  const esPlantilla = (t) => /\{[^{}]+\}/.test(String(t || ""));
   function llenar(plantilla, fila, extra) {
     let falta = false;
     const t = String(plantilla || "").replace(/\{([^{}]+)\}/g, (_, dentro) => {
@@ -82,7 +83,8 @@
      cuenta aparte por cada código: «{Fed} {n}» da CRC 01, CRC 02… y TTO 01. */
   function gafetes(diseno, filas) {
     const cuenta = new Map();
-    return filas.map((fila) => {
+    const poses = Array.isArray(diseno.dorso.ilustraciones) ? diseno.dorso.ilustraciones.filter(Boolean) : [];
+    return filas.map((fila, n) => {
       const d = diseno;
       const prop = (t) => (t != null && d.nombre.propio ? nombrePropio(t) : t);
       let codigo = null;
@@ -112,6 +114,16 @@
         claveColor,
         color: colorDe(d, claveColor),
         iconos: d.iconos.map((ic) => !!(ic.columna && marcado(valor(fila, ic.columna)))),
+        // El QR de esta persona, si la dirección lleva una columna («{QR}»):
+        // la Eliminatoria JDN de PZ lleva a cada jugador a su ficha en Pareo.
+        // Sin el dato, ese gafete sale sin QR (nunca con el de otro).
+        ...(esPlantilla(d.dorso.qr) ? { qr: llenar(d.dorso.qr, fila) || "" } : {}),
+        // Con `dorso.ilustraciones` (varias imágenes del diseño), el dorso de
+        // cada gafete lleva una, por turno: la profe Karina en distintas poses.
+        // ...salvo que la fila traiga la suya (`dorso.poseColumna`: el personal).
+        ilustracionDorso: (d.dorso.poseColumna && valor(fila, d.dorso.poseColumna)) || (poses.length ? poses[n % poses.length] : null),
+        // El texto de arriba del QR, si es una plantilla, es de cada fila.
+        ...(esPlantilla(d.dorso.qrTexto) ? { qrTexto: llenar(d.dorso.qrTexto, fila) || "" } : {}),
       };
     });
   }
@@ -197,13 +209,27 @@
       bandera: caja(6, 88, 16, 12), paisTexto: { x: 25 * sx, y: 96.3 * sy, tam: 10 * s },
       ilustracion: caja(48, 64, 52, 52),
       foto: caja(61, 65, 33, 42.4),      // 3,3 × 4,24: la proporción del pasaporte
+      // Con `fotoCentro` (la Eliminatoria JDN de PZ): la foto en el medio, el
+      // nombre debajo y los detalles centrados debajo del nombre.
+      fotoCentro: caja(35, 39.5, 30, 38.5),
+      nombreCentro: { y1: 87 * sy, y2: 95.5 * sy, solo: 91 * sy, tam: 19 * s, max: 90 * sx },
+      detallesCentro: { y: 102 * sy, paso: 4.8 * sy, tam: 9 * s, max: 88 * sx },
       franja: caja(0, 115.5, 100, 14),
       icono: { lado: 10 * s, margen: 3 * sx },
       dorsoLogoIzq: caja(4, 3, 22, 10), dorsoLogoDer: caja(74, 3, 22, 10),
       vertical: caja(3, 16, 16, 106),
       tabla: caja(22, 16, 48, 104),
+      // Con `dorso.horarioCentro`: el horario centrado en lo que queda libre
+      // entre el texto de lado y el borde derecho (Eliminatoria JDN de PZ).
+      tablaCentro: caja(33, 16, 48, 104),
       patrocinador: caja(72, 48, 24, 22),
-      qr: caja(71, 102, 25, 25),
+      // La ilustración del dorso, abajo y pegada al QR: la profe Karina lo
+      // muestra con la mano (Eliminatoria JDN de PZ).
+      dorsoIlustracion: caja(24, 64, 40, 64),   // termina antes del texto del QR
+      // Cuadrado siempre (con el lado chico de la escala): en un gafete que no
+      // es de 10 × 14, como el de 5,5 × 8,5, salía más alto que ancho y le
+      // sobraba blanco abajo. Pegado a la misma esquina de abajo a la derecha.
+      qr: { x: 96 * sx - 25 * s, y: 127 * sy - 25 * s, w: 25 * s, h: 25 * s },
       cinta: caja(0, 129.5, 100, 10.5),
       codigo: { x: 5 * sx, y: 137.2 * sy, tam: 15 * s },
     };
@@ -212,6 +238,29 @@
   /* ===================== Imágenes ===================== */
 
   // Cabe entera en la caja; `alinear` es "izq", "der" o "centro"; abajo si `abajo`.
+  // La imagen sin el margen claro o transparente de alrededor (un lienzo del
+  // tamaño de lo dibujado). Si no encuentra nada que recortar, la deja igual.
+  function sinMargen(img) {
+    const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+    if (!w || !h) return img;
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0);
+    const px = ctx.getImageData(0, 0, w, h).data;
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      const tinta = px[i + 3] > 20 && 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2] < 230;
+      if (tinta) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    if (x1 < 0 || (x0 === 0 && y0 === 0 && x1 === w - 1 && y1 === h - 1)) return img;
+    const r = document.createElement("canvas");
+    r.width = x1 - x0 + 1; r.height = y1 - y0 + 1;
+    r.getContext("2d").drawImage(c, x0, y0, r.width, r.height, 0, 0, r.width, r.height);
+    return r;
+  }
+
   function contener(ctx, img, c, alinear, abajo) {
     const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
     if (!w0 || !h0) return;
@@ -355,6 +404,12 @@
         try { imagenes[id] = await cargarImagen(im.datos); } catch (e) { /* una imagen dañada no frena el resto */ }
       }
     }
+    // Con `logosSinMargen`, los dos logos pierden el blanco (o lo
+    // transparente) que traen alrededor: así el dibujo de cada uno llena su
+    // caja y salen del mismo alto aunque los archivos traigan márgenes
+    // distintos (en la PZ, el de la ADAPZ ocupaba el 73 % del alto de su
+    // archivo y el del CCDR el 65 %).
+    if (diseno.logosSinMargen) for (const id of ["logoIzq", "logoDer"]) if (imagenes[id]) imagenes[id] = sinMargen(imagenes[id]);
     const iconos = [];
     for (const ic of diseno.iconos) {
       const propia = ic.imagen && imagenes[ic.imagen];
@@ -366,7 +421,8 @@
       texto: await fuente("texto"),
       imagenes,
       iconos,
-      qr: diseno.dorso.qr ? matrizQr(diseno.dorso.qr) : null,
+      // Una dirección con columnas ({QR}) es de cada persona: va en `g.qr`.
+      qr: diseno.dorso.qr && !esPlantilla(diseno.dorso.qr) ? matrizQr(diseno.dorso.qr) : null,
       marca: diseno.dorso.qr && diseno.dorso.qrMarca ? await marcaBlanca() : null,
       async bandera(iso) {
         if (!iso) return null;
@@ -419,9 +475,10 @@
     // depende de su QR (si trae uno propio, `g.qr`) y de cuántas filas tiene su
     // horario (el marco de la tabla va en el fondo).
     const filasDorso = (diseno.dorso.horario || []).filter((r) => r.some((c) => String(c || "").trim())).length;
-    const clave = JSON.stringify([lado, color, lado === "frente" ? [g.iso && bandera ? g.iso : null, g.iconos, g.fotoClave || null] : [g.qr || null, filasDorso]]);
+    const clave = JSON.stringify([lado, color, lado === "frente" ? [g.iso && bandera ? g.iso : null, g.iconos, g.fotoClave || null] : [g.qr || null, filasDorso, g.ilustracionDorso || null]]);
 
     if (lado === "frente") {
+      const centro = !!(g.foto && diseno.fotoCentro);
       const fondo = (ctx) => {
         ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, M.W, M.H);
         if (img.fondoFrente) cubrir(ctx, img.fondoFrente, M.W, M.H);
@@ -431,7 +488,7 @@
         // `g.foto`), en un marco tamaño pasaporte que ocupa el lugar de la
         // ilustración. Sin foto, todo queda como siempre.
         if (g.foto) {
-          const fo = M.foto;
+          const fo = centro ? M.fotoCentro : M.foto;
           ctx.save(); rectRedondo(ctx, fo.x, fo.y, fo.w, fo.h, 1.2 * M.s); ctx.clip();
           cubrirCaja(ctx, g.foto, fo); ctx.restore();
           ctx.strokeStyle = color; ctx.lineWidth = 0.8 * M.s;
@@ -468,16 +525,21 @@
       lineas.forEach((l, i) => escribir(recursos.texto, l, M.titulo.tam, { x: M.W / 2, y: M.titulo.y + i * M.titulo.paso, alinear: "centro", color: diseno.titulo.color, max: M.W - 8 * M.sx }));
 
       const nombre = g.nombre;
+      const MN = centro ? M.nombreCentro : M.nombre;
       if (nombre.length) {
         // Las dos líneas del nombre van del mismo tamaño: el de la que menos cabe.
-        let tam = M.nombre.tam;
-        for (const l of nombre) { const a = anchoDe(recursos.titulo, l, tam, 0); if (a > M.nombre.max) tam = tam * M.nombre.max / a; }
-        if (nombre.length === 1) escribir(recursos.titulo, nombre[0], tam, { x: M.W / 2, y: M.nombre.solo, alinear: "centro", color, max: M.nombre.max });
-        else nombre.slice(0, 2).forEach((l, i) => escribir(recursos.titulo, l, tam, { x: M.W / 2, y: i ? M.nombre.y2 : M.nombre.y1, alinear: "centro", color, max: M.nombre.max }));
+        let tam = MN.tam;
+        for (const l of nombre) { const a = anchoDe(recursos.titulo, l, tam, 0); if (a > MN.max) tam = tam * MN.max / a; }
+        // `nombre.color` fija el color del nombre (en la PZ, negro); sin él,
+        // el del rol o la edad.
+        const colorNombre = /^#[0-9a-f]{6}$/i.test(diseno.nombre.color || "") ? diseno.nombre.color : color;
+        if (nombre.length === 1) escribir(recursos.titulo, nombre[0], tam, { x: M.W / 2, y: MN.solo, alinear: "centro", color: colorNombre, max: MN.max });
+        else nombre.slice(0, 2).forEach((l, i) => escribir(recursos.titulo, l, tam, { x: M.W / 2, y: i ? MN.y2 : MN.y1, alinear: "centro", color: colorNombre, max: MN.max }));
       }
-      g.detalles.slice(0, 3).forEach((d, i) => escribir(recursos.texto, d, M.detalles.tam, {
-        x: M.detalles.x, y: M.detalles.y + i * M.detalles.paso, color: i === 0 ? color : NEGRO_TEXTO, max: M.detalles.max,
-      }));
+      const MD = centro ? M.detallesCentro : M.detalles;
+      g.detalles.slice(0, 3).forEach((d, i) => escribir(recursos.texto, d, MD.tam, centro
+        ? { x: M.W / 2, y: MD.y + i * MD.paso, alinear: "centro", color: i === 0 ? color : NEGRO_TEXTO, max: MD.max }
+        : { x: MD.x, y: MD.y + i * MD.paso, color: i === 0 ? color : NEGRO_TEXTO, max: MD.max }));
       if (g.pais && diseno.bandera.texto) {
         escribir(recursos.texto, g.pais.toUpperCase(), M.paisTexto.tam, { x: bandera ? M.paisTexto.x : M.bandera.x, y: M.paisTexto.y, color: NEGRO_TEXTO, max: 22 * M.sx });
       }
@@ -496,8 +558,9 @@
     // El QR: el del diseño, o el propio de este gafete (el Metropolitano lleva
     // a cada jugador a su ronda y su mesa).
     const qr = g.qr ? matrizQr(g.qr) : recursos.qr;
+    const ilDorso = (g.ilustracionDorso && img[g.ilustracionDorso]) || img.ilustracionDorso;
     const filas = (diseno.dorso.horario || []).filter((r) => r.some((c) => String(c || "").trim()));
-    const T = M.tabla;
+    const T = diseno.dorso.horarioCentro ? M.tablaCentro : M.tabla;
     const enc = diseno.dorso.encabezados;
     const altoEnc = 6 * M.sy;
     const altoFila = filas.length ? Math.min(5.6 * M.sy, (T.h - altoEnc) / filas.length) : 0;
@@ -523,6 +586,7 @@
         rectRedondo(ctx, T.x, T.y, T.w, altoTabla, 2 * M.s); ctx.stroke();
       }
       if (img.patrocinador) contener(ctx, img.patrocinador, M.patrocinador, "centro");
+      if (ilDorso) contener(ctx, ilDorso, M.dorsoIlustracion, "der", true);
       const c = M.cinta;
       ctx.fillStyle = color; ctx.fillRect(c.x, c.y, c.w, c.h);
       if (qr) {     // el QR se apoya sobre la cinta con un borde blanco
@@ -558,6 +622,20 @@
             : { x: xc + columnas[i] / 2, y, alinear: "centro", color: NEGRO_TEXTO, max: columnas[i] - 1.5 * M.s });
           xc += columnas[i];
         });
+      });
+    }
+    // Para qué es el QR (opcional, `dorso.qrTexto`, hasta tres renglones
+    // separados por «|»), arriba de él y pegado a su derecha: «Escanéalo: tu
+    // mesa…» en la PZ. Con la ilustración del dorso al lado, no pasa del
+    // ancho del QR (si no, se le montaría encima).
+    const textoQr = g.qrTexto != null ? g.qrTexto : diseno.dorso.qrTexto;
+    if (qr && textoQr) {
+      const lineas = String(textoQr).split(/\n|\|/).map((l) => l.trim()).filter(Boolean).slice(0, 3);
+      const der = M.qr.x + M.qr.w, max = ilDorso ? M.qr.w + 6 * M.sx : der - T.x;
+      const tam = 7.6 * M.s, paso = tam * PT * 1.4;
+      lineas.forEach((l, i) => {
+        const ancho = Math.min(anchoDe(recursos.texto, l, tam, 0), max);
+        escribir(recursos.texto, l, tam, { x: der - ancho, y: M.qr.y - 2.6 * M.sy - (lineas.length - 1 - i) * paso, color, max });
       });
     }
     if (g.codigo) {

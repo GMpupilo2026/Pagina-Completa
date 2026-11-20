@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,13 +57,31 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Berthold Englisch – Wilhelm Steinitz, Londres 1883. Juegan las negras, con los dos alfiles. ¿Cómo se aprovechan?</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Hoy casi todos los grandes maestros prefieren el alfil al caballo en la mayoría de las posiciones, y la pareja de alfiles contra alfil y caballo es una ventaja real. Pero no gana sola: hay que darle trabajo. Los alfiles necesitan diagonales abiertas, y el plan suele ser avanzar los peones para quitarle casillas al caballo rival y abrir líneas.</p>
 <p>Con la pareja, no hay apuro por cambiar. Solo se devuelve un alfil cuando el cambio deja algo concreto: un final de peones ganado, una pieza rival activa que desaparece, un rey que entra.</p>
-<p>Wilhelm Steinitz, el primer campeón del mundo, fue quien mostró la técnica de la pareja de alfiles. Contra Englisch, primero quitó casillas al caballo de b3 con …b6 y …c5, y solo al final cambió alfiles para llegar a un final de peones ganado.</p>
+<p>Wilhelm Steinitz, el primer campeón del mundo, fue quien mostró la técnica de la pareja de alfiles. Contra Englisch, primero quitó casillas al caballo de bella 3 con …bella 6 y …cesar 5, y solo al final cambió alfiles para llegar a un final de peones ganado.</p>
 
 
 <h2>2. Conceptos clave</h2>
@@ -65,42 +89,84 @@
   <dt>La estructura de peones</dt>
   <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
-  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: eva 4-david 5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
   <dt>El par de alfiles y el alfil malo</dt>
   <dd>Tener los dos alfiles contra alfil y caballo, o contra dos caballos, es una pequeña ventaja duradera: entre los dos cubren las casillas de los dos colores. Un alfil es malo cuando sus propios peones están en casillas de su color.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar un alfil por un caballo sin motivo. El cambio es correcto muchas veces —contra un caballo en puesto avanzado, o en posiciones cerradas—, pero hay que poder decir por qué.</dd>
-  <dd><strong>Para verlo:</strong> En la Francesa, el alfil de c8 del negro queda detrás de la cadena e6-d5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.</dd>
+  <dd><strong>Para verlo:</strong> En la Francesa, el alfil de cesar 8 del negro queda detrás de la cadena eva 6-david 5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.</dd>
   <dt>Cómo hacer un plan</dt>
-  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a d5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
+  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a david 5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
   <dd><strong>El error de siempre:</strong> Jugar sin plan, mirando solo la jugada que sigue. El otro error es enamorarse del plan y no cambiarlo cuando la posición cambia.</dd>
   <dd><strong>Para verlo:</strong> El método corto: qué material hay, cómo están los reyes, cómo es la estructura, qué pieza mía es la peor. La respuesta a la última pregunta suele ser el plan.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Berthold Englisch – Wilhelm Steinitz, Londres 1883. Juegan las negras, con los dos alfiles. ¿Cómo se aprovechan?</h3>
+  <h3 id="posicion-1">Posición 1: Berthold Englisch – Wilhelm Steinitz, Londres 1883. Juegan las negras, con los dos alfiles. ¿Cómo se aprovechan?</h3>
   
-  <p>Piezas blancas: rey en g1; torres en a1, f1; alfil en e3; caballo en b3; peones en a2, b2, c3, f2, g2, h2.</p>
-  <p>Piezas negras: rey en g8; torres en d8, e8; alfiles en g4, g7; peones en a7, b7, c7, f7, g6, h7.</p>
+  <h4>Piezas blancas: 11</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en felix 1.</li>
+    <li>Alfil en eva 3.</li>
+    <li>Caballo en bella 3.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 3.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 11</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Torre en david 8.</li>
+    <li>Torre en eva 8.</li>
+    <li>Alfil en gustav 4.</li>
+    <li>Alfil en gustav 7.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en cesar 7.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 6.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 17… bella 6, 18. hector 3, alfil eva 6, 19. torre felix david 1, cesar 5, 20. alfil gustav 5, felix 6, 21. alfil felix 4, rey felix 7, 22. felix 3, gustav 5, 23. torre captura david 8, torre captura david 8, 24. alfil eva 3</p>
+  <h4>La línea: 14 jugadas</h4>
+  <ul>
+    <li>17. Negras: bella 6.</li>
+    <li>18. Blancas: hector 3.</li>
+    <li>18. Negras: alfil eva 6.</li>
+    <li>19. Blancas: torre felix david 1.</li>
+    <li>19. Negras: cesar 5.</li>
+    <li>20. Blancas: alfil gustav 5.</li>
+    <li>20. Negras: felix 6.</li>
+    <li>21. Blancas: alfil felix 4.</li>
+    <li>21. Negras: rey felix 7.</li>
+    <li>22. Blancas: felix 3.</li>
+    <li>22. Negras: gustav 5.</li>
+    <li>23. Blancas: torre captura david 8.</li>
+    <li>23. Negras: torre captura david 8.</li>
+    <li>24. Blancas: alfil eva 3.</li>
+  </ul>
   <p>Resultado: Posición para jugar</p>
-  <p>17… bella 6 y …c5 le quitan al caballo de b3 todas sus casillas de salida. Las negras siguen ganando terreno con …f6, … rey felix 7 y …g5, y no cambian nada mientras no les sirva. Solo más tarde cambian los alfiles, uno por uno, cuando el final que queda está ganado. (Stockfish 17 a profundidad 22: b6 es la que elige el motor (−0,2).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 3rr1k1/ppp2pbp/6p1/8/6b1/1NP1B3/PP3PPP/R4RK1 b - - 0 17</p>
+  <p>17… bella 6 y …cesar 5 le quitan al caballo de bella 3 todas sus casillas de salida. Las negras siguen ganando terreno con …felix 6, … rey felix 7 y …gustav 5, y no cambian nada mientras no les sirva. Solo más tarde cambian los alfiles, uno por uno, cuando el final que queda está ganado. (Stockfish 17 a profundidad 22: bella 6 es la que elige el motor (−0,2).)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 3rr1k1/ppp2pbp/6p1/8/6b1/1NP1B3/PP3PPP/R4RK1 b - - 0 17</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
-  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Arma en el tablero un peón aislado en david 4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
   <li>Juega tres partidas propias hasta el final y anota en cada una si tu alfil era bueno o malo y por qué.</li>
   <li>Arma un final de alfil bueno contra alfil malo con el mismo material y juégalo desde los dos lados.</li>
   <li>Para en la jugada 15 de tu próxima partida y escribe tu plan en una frase. Al final, mira si lo cumpliste.</li>
   <li>Toma cinco posiciones de partidas de maestros en la jugada 20, escribe tu plan, y compáralo con lo que pasó.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -141,7 +207,7 @@
   </li>
   <li>
     <p>¿De qué depende dónde atacar?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena e4-d5 el juego es en el flanco de rey; con d4-e3, en el de dama.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena eva 4-david 5 el juego es en el flanco de rey; con david 4-eva 3, en el de dama.</p>
   </li>
   <li>
     <p>¿Cada cuánto se revisa un plan?</p>
@@ -153,7 +219,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Cambiar o no cambiar» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

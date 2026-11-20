@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Después de 33. rey gustav 2</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Se suele decir que torre y alfil son mejores que torre y caballo. Kárpov muestra la excepción: con el centro abierto, su caballo encuentra casillas, su rey se mete entre los peones negros y la ventaja pequeña de la apertura se convierte, de a poco, en un final ganado. La jugada 12 no viene escrita en el libro (va en un diagrama): 12. alfil captura eva 4, hector 6 es la única pareja de jugadas que deja legal el resto de la partida.</p>
 <p>Recórrela jugada a jugada en el tablero (Defensa Eslava; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Las reglas sobre el valor de las piezas son promedios: la posición concreta manda. Con el rey activo y el caballo bien apoyado, la torre y el caballo pueden más que la torre y el alfil. La ventaja pequeña del medio juego se cobra en el final, con el rey.</p>
@@ -62,9 +86,9 @@
 <h2>2. Conceptos clave</h2>
 <dl>
   <dt>El centro</dt>
-  <dd>Las cuatro casillas del medio —d4, e4, d5, e5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.</dd>
-  <dd><strong>El error de siempre:</strong> Confundir ocupar con controlar. Un peón en e4 ocupa; un alfil en g7 y un caballo en f6 controlan e4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.</dd>
-  <dd><strong>Para verlo:</strong> Un caballo en e5 ataca ocho casillas; el mismo caballo en a1 ataca dos. Es el mismo caballo y vale cuatro veces menos.</dd>
+  <dd>Las cuatro casillas del medio —david 4, eva 4, david 5, eva 5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.</dd>
+  <dd><strong>El error de siempre:</strong> Confundir ocupar con controlar. Un peón en eva 4 ocupa; un alfil en gustav 7 y un caballo en felix 6 controlan eva 4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.</dd>
+  <dd><strong>Para verlo:</strong> Un caballo en eva 5 ataca ocho casillas; el mismo caballo en anna 1 ataca dos. Es el mismo caballo y vale cuatro veces menos.</dd>
   <dt>El rey activo en el final</dt>
   <dd>Cuando se van las damas, el rey deja de ser un problema y se vuelve una pieza de ataque que vale más o menos como una pieza menor. En el final se lleva al centro.</dd>
   <dd><strong>El error de siempre:</strong> Seguir escondiendo el rey por costumbre. La jugada más común que falta en los finales de club es simplemente acercar el rey.</dd>
@@ -75,21 +99,41 @@
   <dd><strong>Para verlo:</strong> Tres principios que resuelven casi toda apertura: un peón al centro, las piezas menores antes que las mayores, y enrocar. Lo que sobre, para después.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Después de 33. rey gustav 2</h3>
+  <h3 id="posicion-1">Posición 1: Después de 33. rey gustav 2</h3>
   
-  <p>Piezas blancas: rey en g2; torre en d7; caballo en e3; peones en a2, b4, f2, g3, h2.</p>
-  <p>Piezas negras: rey en g6; torre en c1; alfil en c7; peones en a6, b5, f6, f7, h6.</p>
+  <h4>Piezas blancas: 8</h4>
+  <ul>
+    <li>Rey en gustav 2.</li>
+    <li>Torre en david 7.</li>
+    <li>Caballo en eva 3.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 3.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 8</h4>
+  <ul>
+    <li>Rey en gustav 6.</li>
+    <li>Torre en cesar 1.</li>
+    <li>Alfil en cesar 7.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 5.</li>
+    <li>Peón en felix 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en hector 6.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
   
   
   <p>Sin damas, el rey se pone en marcha.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/2bR1p2/p4pkp/1p6/1P6/4N1P1/P4PKP/2r5 b - - 6 33</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/2bR1p2/p4pkp/1p6/1P6/4N1P1/P4PKP/2r5 b - - 6 33</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Pon un caballo en el centro y otro en la esquina y cuenta las casillas que ataca cada uno. Hazlo con alfil, torre y dama.</li>
   <li>En tus tres últimas partidas, marca en qué jugada se resolvió el centro (se abrió, se cerró o se cambió) y qué hiciste después.</li>
@@ -99,7 +143,7 @@
   <li>Toma diez partidas de grandes maestros y cuenta en qué jugada terminaron de desarrollar. El número es más bajo de lo que crees.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -136,7 +180,7 @@
   </li>
   <li>
     <p>¿Por qué los caballos antes que los alfiles?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (f3 y c3, f6 y c6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (felix 3 y cesar 3, felix 6 y cesar 6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
   </li>
   <li>
     <p>¿Qué es una ventaja de desarrollo y cómo se aprovecha?</p>
@@ -152,7 +196,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Ganar con poco» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

@@ -39,6 +39,7 @@
  *       onEnviar: function (texto, api) { ... api.decir('…'); }
  *     });
  *     cmd.posicion(game);          // la posición en palabras, encima del cuadro
+ *                                  // (con la cuenta ciega, encima del TABLERO)
  *     cmd.etiqueta('Escribe la letra de la opción');
  *
  * Y aparte, las tres lecturas que necesita quien reciba ese texto:
@@ -170,6 +171,10 @@ window.CuadroComandos = (function () {
     ".cc-pos .bn-piezas-color { margin: .4rem 0 .1rem; font-size: 1rem; font-weight: 700; }",
     ".cc-pos .bn-piezas-lista { margin: 0 0 .3rem; padding-left: 1.2rem; list-style: disc; }",
     ".cc-pos { margin: 0 0 .6rem; font-size: 1rem; line-height: 1.6; }",
+    /* Fuera del recuadro cae a veces en una grilla o una fila flex (el visor
+       de los cursos): ocupa el renglón entero, para no correr al tablero de
+       su columna. */
+    ".cc-piezas-fuera { grid-column: 1 / -1; flex: 1 1 100%; }",
     ".cc-form { display: flex; flex-wrap: wrap; gap: .5rem; align-items: flex-end; }",
     ".cc-campo { flex: 1 1 12rem; }",
     ".cc-etiqueta { display: block; font-size: .9rem; margin-bottom: .25rem; }",
@@ -179,7 +184,7 @@ window.CuadroComandos = (function () {
     ".cc-btn { padding: .5rem 1rem; font-size: 1rem; font-family: inherit; font-weight: 700;",
     "  color: inherit; background: rgba(127,127,127,.12); border: 2px solid currentColor;",
     "  border-radius: .4rem; cursor: pointer; }",
-    ".cc-ayuda { margin: .5rem 0 0; font-size: .85rem; opacity: .85; }",
+    ".cc-ayuda, .cc-dictar-pista { margin: .5rem 0 0; font-size: .85rem; opacity: .85; }",
     ".cc-msg { margin: .4rem 0 0; font-size: .95rem; font-weight: 600; min-height: 1.3em; }",
     /* `.cc-ayuda-det` NO va acá: vive en css/styles.css porque la usan dos
        módulos —este y js/juegos-blind.js— y el bloque de ayuda tiene que verse
@@ -243,8 +248,13 @@ window.CuadroComandos = (function () {
     tit.className = "cc-pos-titulo bn-piezas-titulo";
     tit.textContent = cfg.encabezadoPosicion || "Piezas";
     tit.hidden = true;
-    caja.appendChild(tit);
-    caja.appendChild(pos);
+    /* El encabezado y la lista van juntos en un bloque, que con la cuenta ciega
+       se muda ANTES del tablero (ver `colocar()`, más abajo). */
+    var bloque = document.createElement("div");
+    bloque.className = "cc-piezas";
+    bloque.appendChild(tit);
+    bloque.appendChild(pos);
+    caja.appendChild(bloque);
 
     var form = document.createElement("form");
     form.className = "cc-form";
@@ -274,6 +284,17 @@ window.CuadroComandos = (function () {
     var ayuda = document.createElement("p");
     ayuda.className = "cc-ayuda";
     caja.appendChild(ayuda);
+
+    /* Cómo oír la posición despacio, dicho en el recuadro: quien la pone en su
+       tablero de verdad no llega a seguirla de corrido, y un comando que no se
+       conoce no se usa. Solo donde hay tablero y quien dicte. Va debajo de la
+       ayuda y con su propia clase: la posición sigue pegada al recuadro. */
+    if (typeof cfg.juego === "function" && window.ComandosTablero && window.BlindNotation && BlindNotation.pasosDeDictado) {
+      var pista = document.createElement("p");
+      pista.className = "cc-dictar-pista";
+      pista.textContent = "Para poner la posición en tu tablero, escribe «dictar»: la dice pieza por pieza, a tu ritmo.";
+      caja.appendChild(pista);
+    }
 
     /* El aviso va con `role="status"` y SIN un `aria-live` encima: el rol ya
        vale por una región viva cortés, y poner los dos deja a los lectores de
@@ -306,6 +327,46 @@ window.CuadroComandos = (function () {
 
     destino.appendChild(caja);
 
+    /* Las piezas, ARRIBA del tablero. Con la cuenta ciega, el bloque «Piezas»
+       no se queda en el recuadro —que va DEBAJO del tablero— sino que se muda
+       justo antes del tablero: primero se lee la posición y después se
+       resuelve (ver «Las piezas, arriba del tablero» en
+       docs/decisiones/accesibilidad.md). Lo hace el recuadro y no cada página
+       para que haya una sola copia: el tablero lo da `tablero().el` (el de
+       js/tablero-accesible.js) o, donde no hay ese, `tableroEl`.
+       Se pone delante del pedazo de página que contiene al tablero y no al
+       recuadro (el hijo del ancestro común que lleva el tablero): así no se
+       mete dentro del envoltorio del tablero, que suele tener las coordenadas
+       en posición absoluta (si cae en una grilla, ocupa el renglón entero:
+       ver `.cc-piezas-fuera` en el estilo). Si el recuadro deja la página
+       (un visor que se vuelve a armar), el bloque vuelve a él y se va con él;
+       y si el recuadro no se ve, el bloque tampoco. */
+    function elTablero() {
+      var t = cfg.tablero, e = cfg.tableroEl;
+      try { if (typeof t === "function") t = t(); } catch (x) { t = null; }
+      if (t && t.el && t.el.nodeType === 1) return t.el;
+      try { if (typeof e === "function") e = e(); } catch (x) { e = null; }
+      return e && e.nodeType === 1 ? e : null;
+    }
+    function colocar() {
+      var tab = cuentaCiega() && caja.isConnected ? elTablero() : null;
+      var ancla = null;
+      if (tab && tab.isConnected && !tab.contains(caja)) {
+        ancla = tab;
+        while (ancla.parentNode && !ancla.parentNode.contains(caja)) ancla = ancla.parentNode;
+        if (!ancla.parentNode) ancla = null;
+      }
+      if (ancla) {
+        if (bloque.parentNode !== ancla.parentNode || bloque.nextSibling !== ancla) ancla.parentNode.insertBefore(bloque, ancla);
+        bloque.classList.add("cc-piezas-fuera");
+        bloque.hidden = !seVe(caja);
+      } else if (bloque.parentNode !== caja) {
+        caja.insertBefore(bloque, caja.firstChild);
+        bloque.classList.remove("cc-piezas-fuera");
+        bloque.hidden = false;
+      }
+    }
+
     var api = {
       el: caja,
       input: input,
@@ -335,6 +396,7 @@ window.CuadroComandos = (function () {
     };
 
     function escribir(juegoOTexto) {
+      colocar();
       if (porColor() && juegoOTexto && typeof juegoOTexto !== "string") {
         pintarPorColor(pos, juegoOTexto);
         tit.hidden = false;
@@ -358,6 +420,7 @@ window.CuadroComandos = (function () {
        esta se calla: dos encabezados iguales seguidos son una parada de más. */
     var manual = false, ultima = null;
     function lecturaSola() {
+      colocar();
       if (manual || !cuentaCiega()) return;
       var g = null;
       try { g = cfg.juego(); } catch (e) { g = null; }
@@ -415,6 +478,114 @@ window.CuadroComandos = (function () {
        vacío: con texto, las flechas y Inicio/Fin siguen moviendo el cursor
        dentro de lo escrito, que es lo que el lector de pantalla espera. Cada
        función recibe `api` para decir si ya no hay a dónde ir. */
+    /* ------------------------------------------------------------ el dictado
+       «dictar» dice la posición PIEZA POR PIEZA, para ponerla en un tablero de
+       verdad. La posición de corrido se lee demasiado rápido: mientras se
+       busca la torre ya van por los peones, y volver a pedirla la empieza de
+       nuevo. Acá manda quien escucha: con el recuadro vacío, Intro (o →) dice
+       la siguiente, ↑ repite, ← vuelve a la anterior y Escape termina.
+       «dictar solo» las dice sola, con una pausa entre una y otra, para quien
+       tiene las dos manos en el tablero; cualquiera de esas teclas la detiene
+       y se sigue a mano.
+
+       Mientras se dicta, esas teclas son del dictado y no de `recorrer`: Intro
+       no avanza la partida a mitad de armar la posición. Y el dictado se
+       termina solo si la posición cambia o si se escribe otra cosa: nadie
+       queda encerrado en él. Los pasos los arma js/blind-notation.js
+       (pasosDeDictado), con las mismas palabras que el resto del sitio. */
+    var PAUSA_KEY = "oscarDictadoPausa_v1";
+    function pausaGuardada() {
+      var v = NaN;
+      try { v = parseInt(localStorage.getItem(PAUSA_KEY), 10); } catch (e) {}
+      return isFinite(v) ? Math.max(2, Math.min(30, v)) : 5;
+    }
+    var dictado = null;
+    function huellaActual() {
+      try { var g = cfg.juego(); return g ? huella(g) : null; } catch (e) { return null; }
+    }
+    function decirDictado(texto, alTerminar) {
+      // Vaciar y repoblar: «repetir» escribe lo mismo, y una región viva solo
+      // habla cuando el texto cambia.
+      msg.textContent = "";
+      window.setTimeout(function () { msg.textContent = texto; }, 40);
+      var hablo = false;
+      if (window.BlindNotation && BlindNotation.speak) hablo = BlindNotation.speak(texto, alTerminar ? { alTerminar: alTerminar } : undefined);
+      return hablo;
+    }
+    function terminarDictado(aviso) {
+      if (!dictado) return;
+      window.clearTimeout(dictado.reloj);
+      dictado = null;
+      delete input.dataset.dictando;
+      if (aviso) decirDictado(aviso);
+    }
+    function pasoDictado(i, prefijo) {
+      if (!dictado) return;
+      window.clearTimeout(dictado.reloj);
+      if (dictado.huella !== huellaActual()) {
+        terminarDictado("La posición cambió y el dictado se terminó. Escribe «dictar» para empezar con la nueva.");
+        return;
+      }
+      var d = dictado;
+      if (i < 0) { decirDictado("Es la primera pieza. " + d.pasos[0]); d.i = 0; return; }
+      if (i >= d.pasos.length) { terminarDictado(d.fin); return; }
+      d.i = i;
+      d.turno += 1;
+      var turno = d.turno, texto = (prefijo || "") + d.pasos[i];
+      if (!d.auto) { decirDictado(texto); return; }
+      /* Sola: la pausa empieza a contar cuando la voz termina de decir la
+         pieza. Con lector de pantalla no hay forma de saber cuándo terminó, así
+         que se le da el tiempo de leerla (lo que mide la frase) más la pausa. */
+      var hecho = false;
+      var sigue = function () {
+        if (hecho) return;
+        hecho = true;
+        if (!dictado || dictado !== d || d.turno !== turno || !d.auto) return;
+        window.clearTimeout(d.reloj);
+        d.reloj = window.setTimeout(function () { if (dictado === d && d.turno === turno && d.auto) pasoDictado(d.i + 1); }, d.segundos * 1000);
+      };
+      var hablo = decirDictado(texto, sigue);
+      /* Y un plazo por si la voz no avisa que terminó (hay navegadores que no
+         lo hacen, y sin voces instaladas no avisa nunca): el dictado no se
+         queda esperando para siempre. */
+      d.reloj = window.setTimeout(sigue, hablo ? 3000 + texto.length * 130 : 1200 + texto.length * 70);
+    }
+    function empezarDictado(r) {
+      terminarDictado();
+      if (!r.pasos || !r.pasos.length) { decirDictado("No hay piezas que dictar."); return; }
+      var segundos = pausaGuardada();
+      if (r.auto && r.segundos) {
+        segundos = Math.max(2, Math.min(30, r.segundos));
+        try { localStorage.setItem(PAUSA_KEY, String(segundos)); } catch (e) {}
+      }
+      dictado = { pasos: r.pasos, fin: r.fin, i: 0, turno: 0, auto: !!r.auto, segundos: segundos, huella: huellaActual(), reloj: 0 };
+      input.dataset.dictando = "1";
+      var cuantas = r.total === 1 ? "una pieza" : r.total + " piezas";
+      pasoDictado(0, r.auto
+        ? "Dictado automático: " + cuantas + ", una cada " + segundos + " segundos. Intro lo detiene y sigues a tu ritmo; Escape termina. "
+        : "Dictado: " + cuantas + ". Con el recuadro vacío, Intro dice la siguiente, flecha arriba la repite, flecha izquierda vuelve atrás y Escape termina. ");
+    }
+    // Una tecla del dictado. Sola iba; al tocarla se detiene y se sigue a mano.
+    function teclaDeDictado(que) {
+      if (!dictado) return false;
+      var solaIba = dictado.auto;
+      dictado.auto = false;
+      window.clearTimeout(dictado.reloj);
+      if (que === "terminar") { terminarDictado("Dictado terminado."); return true; }
+      if (solaIba && que === "siguiente") { pasoDictado(dictado.i, "Dictado detenido: ahora Intro dice la siguiente. Vas por: "); return true; }
+      pasoDictado(que === "siguiente" ? dictado.i + 1 : que === "anterior" ? dictado.i - 1 : dictado.i);
+      return true;
+    }
+    input.addEventListener("keydown", function (ev) {
+      if (!dictado || input.value !== "" || ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
+      var que = { ArrowRight: "siguiente", ArrowLeft: "anterior", ArrowUp: "repetir", Escape: "terminar" }[ev.key];
+      if (!que) return;
+      ev.preventDefault();
+      // Que ni `recorrer` ni un diálogo que cierre con Escape la tomen también.
+      ev.stopImmediatePropagation();
+      teclaDeDictado(que);
+    });
+
     var recorrer = cfg.recorrer || null;
     if (recorrer) {
       input.setAttribute("aria-keyshortcuts", "Enter ArrowRight ArrowLeft Home End");
@@ -422,7 +593,7 @@ window.CuadroComandos = (function () {
       ayuda.id = id + "-ayuda";
       input.setAttribute("aria-describedby", ayuda.id);
       input.addEventListener("keydown", function (ev) {
-        if (input.value !== "" || ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
+        if (dictado || input.value !== "" || ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
         var f = { ArrowRight: "siguiente", ArrowLeft: "anterior", Home: "inicio", End: "final" }[ev.key];
         if (!f || typeof recorrer[f] !== "function") return;
         ev.preventDefault();
@@ -434,11 +605,26 @@ window.CuadroComandos = (function () {
       ev.preventDefault();
       var texto = input.value;
       if (!String(texto).trim()) {
-        if (recorrer && typeof recorrer.siguiente === "function") { input.value = ""; recorrer.siguiente(api); }
+        input.value = "";
+        if (teclaDeDictado("siguiente")) return;
+        if (recorrer && typeof recorrer.siguiente === "function") recorrer.siguiente(api);
         return;
+      }
+      /* Mientras se dicta, las palabras de siempre son del dictado; cualquier
+         otra cosa lo termina y sigue su camino (una jugada, «siguiente»…). */
+      if (dictado) {
+        var orden = normalizar(texto).replace(/[.!¡¿?,]/g, " ").replace(/\s+/g, " ").trim();
+        // Nunca una letra sola: «a» es también la opción A de una pregunta.
+        var que = /^(siguiente|sigue|otra)$/.test(orden) ? "siguiente"
+          : /^(repetir|repite|otra vez)$/.test(orden) ? "repetir"
+          : /^(atras|anterior)$/.test(orden) ? "anterior"
+          : /^(salir|terminar|fin|basta|parar|listo)$/.test(orden) ? "terminar" : null;
+        if (que) { input.value = ""; teclaDeDictado(que); return; }
+        terminarDictado();
       }
       if (window.ComandosTablero && (cfg.juego || cfg.tablero)) {
         var r = ComandosTablero.interpretar(texto, { juego: cfg.juego, tablero: cfg.tablero });
+        if (r.manejado && r.tipo === "dictado") { input.value = ""; empezarDictado(r); return; }
         if (r.manejado) {
           input.value = "";
           if (r.tipo === "ayuda") { api.abrirAyuda(); api.decir("Ayuda desplegada debajo del recuadro."); }

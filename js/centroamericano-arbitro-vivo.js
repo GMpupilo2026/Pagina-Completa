@@ -33,6 +33,47 @@
   const CADA_MS = 10000;               // con transmisión: cada 10 s
   const SIN_CONEXION_MS = 5 * 60000;   // si no está conectada, se vuelve a preguntar cada 5 min
 
+  // ---------------------------------------------------------------- ahorro de datos: solo las jugadas nuevas
+  // La tablet le dice a la función cuántas jugadas ya tiene de cada mesa y su huella; la función le manda solo las que
+  // faltan (`desde`). La huella es la MISMA que la de supabase/functions/centroamericano-mesas-vivo/index.ts
+  // (verificar-centroamericano-mesas-vivo.js comprueba que den lo mismo).
+  function huellaJugadas(jugadas, n) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < n && i < jugadas.length; i++) {
+      const t = String(jugadas[i]) + "\n";
+      for (let j = 0; j < t.length; j++) { h ^= t.charCodeAt(j); h = Math.imul(h, 0x01000193) >>> 0; }
+    }
+    return n + ":" + h.toString(16);
+  }
+  // Lo que se le manda a la función: de cada mesa de LiveChess que ya se tiene, cuántas jugadas y su huella.
+  function pedidoTengo(crudas) {
+    const tengo = [];
+    if (!crudas || !crudas.porMesa) return tengo;
+    crudas.porMesa.forEach((j, mesa) => { if (j.length) tengo.push({ mesa, n: j.length, h: huellaJugadas(j, j.length) }); });
+    return tengo;
+  }
+  // Une lo que llegó con lo que ya se tenía. Devuelve las mesas con TODAS sus jugadas, lo que hay que recordar para la
+  // próxima y si faltó algo (una mesa con `desde` que esta tablet ya no tiene: la próxima vez se pide todo).
+  function unirJugadas(crudas, data) {
+    const antes = crudas && crudas.ronda === data.ronda ? crudas.porMesa : new Map();
+    const porMesa = new Map();
+    let incompleta = false;
+    const mesas = (data.mesas || []).map((m) => {
+      if (!m || m.fuente !== "livechess") return m;
+      let jugadas = Array.isArray(m.jugadas) ? m.jugadas.map(String) : [];
+      if (typeof m.desde === "number" && m.desde > 0) {
+        const prev = antes.get(m.mesa);
+        if (!prev || prev.length < m.desde) { incompleta = true; return null; }
+        jugadas = prev.slice(0, m.desde).concat(jugadas);
+      }
+      porMesa.set(m.mesa, jugadas);
+      const x = Object.assign({}, m, { jugadas });
+      delete x.desde;
+      return x;
+    }).filter(Boolean);
+    return { mesas, crudas: incompleta ? { ronda: data.ronda, porMesa: new Map() } : { ronda: data.ronda, porMesa }, incompleta };
+  }
+
   // ---------------------------------------------------------------- LiveChess: las jugadas con su reloj
   // Cada jugada viene como «Nf3 5482+5»: la jugada, lo que marca el reloj de quien la hizo justo después (en segundos) y
   // los segundos que pensó. `primera` es la hora (ms) de la primera jugada; la de las demás sale de sumar lo que pensó
@@ -413,7 +454,7 @@
   }
 
   // ---------------------------------------------------------------- en el navegador
-  let o = null, datos = null, leidaMs = null, conectada = null, preguntado = 0, dialogo = null, cada = null, pidiendo = null, ultimaLectura = 0;
+  let o = null, datos = null, leidaMs = null, conectada = null, preguntado = 0, dialogo = null, cada = null, pidiendo = null, ultimaLectura = 0, crudas = null;
   let ensayo = null;   // { inicio, antes: { datos, leidaMs, conectada } } mientras se ensaya
   const vistas = new Set();
   const pendientesIlegal = new Map();   // las jugadas no registradas que se están esperando (alertasNoRegistrada)
@@ -446,7 +487,9 @@
     if (pidiendo) return pidiendo;
     pidiendo = (async () => {
       try {
-        const { data, error } = await raiz.sb.functions.invoke("centroamericano-mesas-vivo", { body: { action: "mesas", arbitro_token: o.token() } });
+        const cuerpo = { action: "mesas", arbitro_token: o.token() };
+        if (crudas && crudas.ronda) { cuerpo.ronda = crudas.ronda; cuerpo.tengo = pedidoTengo(crudas); }
+        const { data, error } = await raiz.sb.functions.invoke("centroamericano-mesas-vivo", { body: cuerpo });
         preguntado = Date.now();
         if (ensayo) return datos;   // empezó un ensayo mientras se leía: lo real se guarda para después
         if (error || !data || !data.ok) { if (data && data.conectada === false) conectada = false; return datos; }
@@ -454,7 +497,11 @@
         if (conectada) {
           leidaMs = Date.now();
           const primera = !datos;
-          datos = Object.assign({}, data, { mesas: (data.mesas || []).map((m) => normalizar(m, leidaMs)) });
+          const u = unirJugadas(crudas, data);
+          crudas = u.crudas;
+          // Si faltó algo (rarísimo), se queda con lo de antes y la próxima lectura (sin `tengo`) trae todo.
+          if (u.incompleta && datos) return datos;
+          datos = Object.assign({}, data, { mesas: u.mesas.map((m) => normalizar(m, leidaMs)) });
           ultimaLectura = leidaMs;
           // La primera lectura también avisa: si el árbitro abre la tablet con una repetición ya hecha, tiene que saberlo.
           const nuevas = alertasNuevas(datos.mesas, data.ronda, vistas);
@@ -617,7 +664,7 @@
     return v && Date.now() - v.leida < 60000 ? sugerencia(v.m, Date.now(), v.leida) : null;
   }
 
-  const api = { relojes, lectura, texto, hms, leerJugadas, control, tablas, normalizar, alertasNuevas, bandera, alertasBandera, noRegistrada, alertasNoRegistrada, pgnDe, esp,
+  const api = { huellaJugadas, pedidoTengo, unirJugadas, relojes, lectura, texto, hms, leerJugadas, control, tablas, normalizar, alertasNuevas, bandera, alertasBandera, noRegistrada, alertasNoRegistrada, pgnDe, esp,
     sugerencia, reclamo, aIngles, datosEnsayo, ESCENARIOS, PASO_MS,
     iniciar, leer, abrir, deLaMesa, noReconoce, sugerenciaDe, revisarReclamo, iniciarEnsayo, terminarEnsayo, enEnsayo: () => !!ensayo, conectada: () => conectada };
   if (enNode) module.exports = api;

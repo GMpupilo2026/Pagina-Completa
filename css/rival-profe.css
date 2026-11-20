@@ -1,0 +1,28 @@
+/* El profe Oscar como rival (js/rival-profe.js): solo el tamaño y las
+   animaciones; los colores son las clases de Tailwind que ya usa bot.html.
+   Con «reducir movimiento» no se mueve nada: la cara cambia y listo. */
+.rival-cara {
+  width: 7.5rem;
+  height: 9.5rem;
+  flex-shrink: 0;
+  object-fit: contain;
+  transform-origin: 50% 100%;
+  animation: rival-respira 3.2s ease-in-out infinite;
+}
+.rival-miniatura { width: 3.5rem; height: 4.5rem; flex-shrink: 0; object-fit: contain; }
+@media (max-width: 480px) { .rival-cara { width: 5.5rem; height: 7rem; } }
+
+.rival-cara.rival-salto { animation: rival-salto 0.5s cubic-bezier(0.2, 1.6, 0.4, 1), rival-respira 3.2s ease-in-out 0.5s infinite; }
+.rival-cara.rival-sacudida { animation: rival-sacudida 0.55s ease-in-out, rival-respira 3.2s ease-in-out 0.55s infinite; }
+.rival-globo.rival-entra { animation: rival-entra 0.3s ease-out; }
+
+@keyframes rival-respira { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.015); } }
+@keyframes rival-salto { 0% { transform: scale(0.8) translateY(6px); } 60% { transform: scale(1.08) translateY(-4px); } 100% { transform: scale(1) translateY(0); } }
+@keyframes rival-sacudida { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-7deg); } 40% { transform: rotate(6deg); } 60% { transform: rotate(-4deg); } 80% { transform: rotate(3deg); } }
+@keyframes rival-entra { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rival-cara, .rival-cara.rival-salto, .rival-cara.rival-sacudida, .rival-globo.rival-entra { animation: none; }
+}
+
+/*! rev bfb5bbb0d2d82f9f */

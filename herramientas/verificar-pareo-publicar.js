@@ -11,7 +11,7 @@
  *     de la clasificación;
  *   - sin marcar el permiso no se publica nada;
  *   - publicar guarda la clave en el torneo, y cada cambio se pone al día
- *     solo a los 30 segundos (una sola llamada aunque haya varios cambios);
+ *     solo a los 5 segundos (una sola llamada aunque haya varios cambios);
  *   - «Dejar de publicar» pregunta, borra con la clave y lo olvida;
  *   - un evento se publica entero de un clic;
  *   - la página pública: la lista con su buscador, la clasificación, las
@@ -88,13 +88,34 @@ function pruebaSinNavegador() {
   const borra = fn.indexOf("delete j.fideId"), pone = fn.indexOf("await ponerIdentidad(t.jugadores)"), guarda = fn.indexOf('from("pareo_publicados").insert(');
   ok(borra > 0 && pone > 0 && pone < guarda && pone < fn.indexOf('from("pareo_publicados").update(cambio)'), "la función borra el ID FIDE (deja su huella) antes de guardar el torneo");
   ok(/ritmoTipo: \["clasico", "rapido", "blitz"\]\.includes\(v\.ritmoTipo/.test(fn), "y el ritmo (sin eso, el filtro de ritmo de la lista no encuentra nada)");
-  ok(/sistema: \["todos", "scheveningen", "eliminacion"\]\.includes\(v\.sistema/.test(fn), "y el sistema, también el Scheveningen y la eliminación directa (sin eso, la lista los muestra como suizo)");
+  ok(/sistema: \["todos", "scheveningen", "eliminacion", "keizer"\]\.includes\(v\.sistema/.test(fn), "y el sistema, también el Scheveningen, la eliminación directa y el Keizer (sin eso, la lista los muestra como suizo)");
+  ok(/m\.llave = v\.llave/.test(fn) && /m\.tercer = true/.test(fn) && /dobleEliminacion: v\.sistema === "eliminacion"/.test(fn), "y la doble eliminación y el tercer puesto: la llave de cada mesa y las dos casillas del torneo (sin eso, la clasificación pública no sabe quién quedó fuera)");
   ok(/if \(v\.ko === true\)[\s\S]{0,200}m\.pasa = v\.pasa/.test(fn) && /v\.pasa === v\.b \|\| v\.pasa === v\.n/.test(fn),
     "y en la eliminación directa, quién pasó de cada mesa (y solo si es uno de los dos)");
   // Las pruebas abren Pareo Integral en localhost y la publicación es
   // automática: sin este candado cada corrida del CI llenaba la lista pública.
   ok(/req\.headers\.get\("origin"\) !== SITE_URL\) return json\(/.test(fn) && fn.indexOf('get("origin") !== SITE_URL') < fn.indexOf("await req.text()"),
     "la función solo publica lo que llega desde ajedrez-integral.com (antes de leer nada)");
+  // El resultado de la mesa, al público al instante (ver su sección en
+  // docs/decisiones/juegos-y-torneos.md).
+  const leer = (r) => require("fs").readFileSync(require("path").join(__dirname, "..", r), "utf8");
+  const actualizar = fn.slice(fn.indexOf('from("pareo_publicados").update(cambio)'), fn.indexOf('return json({ ok: true, id: pid });'));
+  ok(/tocar\(SUPABASE_URL, SERVICE_ROLE_KEY, "pareo-publico-" \+ pid, "actualizado"\)/.test(actualizar),
+    "al poner al día un torneo, la función toca su canal pareo-publico-<id> (la página pública lo vuelve a leer ya)");
+  ok(/const conMesa = \(q: any\) => \(body\.mesa === true \? q : q\.not\("codigo", "is", null\)\)/.test(fn)
+    && /conMesa\(admin\.from\("pareo_cola"\)\.select\(/.test(fn) && /conMesa\(admin\.from\("pareo_cola"\)\.delete\(\)/.test(fn),
+    "las filas de la Mesa del árbitro solo se le dan —y se le dejan borrar— a un Pareo que dice que las entiende (un Pareo viejo las borraba sin anotarlas)");
+  const mesa = leer("supabase/functions/centroamericano-mesa/index.ts");
+  const aCola = mesa.slice(mesa.indexOf("const aCola = async"), mesa.indexOf("const leerPareoFresco"));
+  ok(/from\("pareo_cola"\)\.insert\(/.test(aCola) && /else await tocar\(SUPABASE_URL, SERVICE_ROLE_KEY, "pareo-cola-" \+ torneoInfo\.pareo_id, "cola"\)/.test(aCola),
+    "la Mesa del árbitro, al dejar algo en la cola, toca pareo-cola-<id> (el Pareo del principal la lee ya)");
+  const armar = leer("herramientas/funciones-armar.js");
+  ok(/"pareo-publicar": \[[^\]]*"toque-vivo\.ts"/.test(armar) && /"centroamericano-mesa": \[[^\]]*"toque-vivo\.ts"/.test(armar),
+    "las dos funciones llevan toque-vivo.ts al desplegarse");
+  const toque = leer("supabase/functions/_compartido/toque-vivo.ts");
+  ok(/\/realtime\/v1\/api\/broadcast/.test(toque) && /catch \{\s*return false;/.test(toque) && !/payload: \{[^}]/.test(toque),
+    "el toque va por la API de Broadcast, sin el dato, y si falla no tira (las vueltas de siempre siguen)");
+  ok(leer("js/pareo/pagina.js").includes("const ESPERA_PUBLICAR = 5000;"), "Pareo publica a los 5 segundos de un cambio (eran 30)");
 }
 
 // El doble de la Edge Function: anota cada pedido y contesta como ella.
@@ -137,12 +158,12 @@ async function pruebaPublicar(browser) {
   console.log("\n=== Se pone al día solo ===");
   await page.click('[data-ficha="rondas"]');
   await P.anotar(page, "1-0");
-  await page.clock.runFor(10000);
-  igual("antes de 30 segundos no se manda nada", pedidos.length, 1);
-  await page.clock.runFor(25000);
+  await page.clock.runFor(2000);
+  igual("antes de 5 segundos no se manda nada", pedidos.length, 1);
+  await page.clock.runFor(4000);
   await page.waitForFunction(() => true);
   const despues = pedidos.slice(1).map((x) => x.accion);
-  igual("a los 30 segundos, UNA actualización aunque se anotaron dos resultados", despues, ["actualizar"]);
+  igual("a los 5 segundos, UNA actualización", despues, ["actualizar"]);
   ok(pedidos[1] && pedidos[1].clave === "clave-1" && pedidos[1].torneo.rondas[1].mesas[0].r === "1-0", "con la clave y el resultado nuevo");
   await page.click('[data-ficha="archivos"]');
   await page.click("#pi-publicar-ahora");
@@ -209,6 +230,14 @@ async function pruebaPagina(browser) {
   const deLaLista = await P.dobleListaPareo(page, filas);
   await page.goto(BASE + "/torneos-pareo.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#tp-lista li");
+  // Un doble del canal en vivo (Broadcast): anota qué canales abre y deja
+  // disparar el toque «actualizado» que manda la función al poner al día.
+  await page.evaluate(() => {
+    const h = {};
+    window.__vivo = { abiertos: [], cerrados: [], llega: (c, e) => (h[c + "|" + e] || []).forEach((f) => f({ payload: {} })) };
+    window.sb.channel = (nombre) => { window.__vivo.abiertos.push(nombre); return { nombre, on(t, f, cb) { (h[nombre + "|" + f.event] = h[nombre + "|" + f.event] || []).push(cb); return this; }, subscribe() { return this; } }; };
+    window.sb.removeChannel = (c) => { window.__vivo.cerrados.push(c.nombre); return Promise.resolve("ok"); };
+  });
   igual("la lista trae los dos, el más reciente primero", await page.$$eval("#tp-lista [data-torneo]", (l) => l.map((a) => a.dataset.torneo.slice(0, 1))), ["1", "2"]);
   igual("cada uno dice cómo va y cuántos son", await page.$eval("#tp-lista li", (li) => ["participantes", "rondas"].map((c) => li.querySelector('[data-col="' + c + '"] .tp-dato-valor').textContent)), ["6", "1/3"]);
   await page.fill("#tp-buscar", "sub-14");
@@ -239,7 +268,13 @@ async function pruebaPagina(browser) {
   await page.selectOption("#tp-jugador", { label: "PRUEBA A 12" });
   await page.waitForSelector("#tp-tabla-jugador");
   const filasJ = await page.$$eval("#tp-tabla-jugador tbody tr", (l) => l.map((tr) => [...tr.children].map((td) => td.textContent).join("|")));
-  igual("ronda, rival, su Elo, el color y lo que sacó", filasJ, ["1|PRUEBA D 12|1500|Blancas|1", "2|PRUEBA B 12|1700|Negras|jugando"]);
+  igual("ronda, mesa, rival, su Elo, el color y lo que sacó", filasJ, ["1|11|PRUEBA D 12|1500|Blancas|1", "2|11|PRUEBA B 12|1700|Negras|jugando"]);
+  // «Ahora»: lo que ve quien llega por el QR de su gafete (la Eliminatoria
+  // JDN de PZ), arriba y en grande: la ronda que se juega, su mesa, su rival
+  // y su puesto con sus puntos. La mesa es la de la sala: este torneo empieza en la 11.
+  igual("«Ahora»: la ronda, la mesa, el rival y el puesto", await page.$eval("#tp-ahora", (x) => [...x.children].map((p) => p.textContent)),
+    ["Ronda 2 · se está jugando", "Mesa 11", "Con negras contra PRUEBA B 12 (1700)", "Puesto 1 de 6 · 1 punto tras la ronda 1"]);
+  ok(await page.$eval("#tp-ahora-mesa", (x) => x.checkVisibility() && parseFloat(getComputedStyle(x).fontSize) >= 40), "el número de la mesa se ve, en grande");
   await page.waitForFunction(() => /Aparece en 1 torneo más/.test((document.getElementById("tp-otros-estado") || {}).textContent || ""));
   ok(/PRUEBA SUB-14/.test(await page.textContent("#tp-otros-lista")), "trae el otro torneo publicado donde jugó");
   ok(pedidos.some((x) => x.datos && x.datos.startsWith("cs.")), "lo busca por su nombre en los datos");
@@ -248,7 +283,28 @@ async function pruebaPagina(browser) {
   igual("y lleva a su ficha en ese torneo", await page.$eval("#tp-jugador", (s) => s.selectedOptions[0].textContent), "PRUEBA A 12");
 
   console.log("\n=== Se vuelve a leer sola ===");
-  const antes = pedidos.filter((x) => x.id && x.id.startsWith("eq.")).length;
+  const leidas = () => pedidos.filter((x) => x.id && x.id.startsWith("eq.")).length;
+  const vivo = await page.evaluate(() => window.__vivo);
+  igual("escucha el canal en vivo del torneo abierto, y al cambiar de torneo cierra el anterior",
+    [vivo.abiertos.slice(-2), vivo.cerrados], [["pareo-publico-11111111-1111-4111-8111-111111111111", "pareo-publico-22222222-2222-4222-8222-222222222222"], ["pareo-publico-11111111-1111-4111-8111-111111111111"]]);
+  let antes = leidas();
+  await page.evaluate(() => { for (let i = 0; i < 5; i++) window.__vivo.llega("pareo-publico-22222222-2222-4222-8222-222222222222", "actualizado"); });
+  await page.clock.runFor(500);
+  await page.waitForFunction(() => true);
+  igual("con el toque «actualizado» lo vuelve a leer en el momento, una sola vez aunque lleguen cinco", leidas() - antes, 1);
+  antes = leidas();
+  await page.evaluate(() => window.__vivo.llega("pareo-publico-22222222-2222-4222-8222-222222222222", "actualizado"));
+  await page.clock.runFor(1000);
+  await page.waitForFunction(() => true);
+  igual("otro toque enseguida espera unos segundos (no es una ráfaga de lecturas)", leidas() - antes, 0);
+  await page.clock.runFor(3000);
+  await page.waitForFunction(() => true);
+  igual("y después sí lo lee", leidas() - antes, 1);
+  await page.evaluate(() => window.__vivo.llega("pareo-publico-11111111-1111-4111-8111-111111111111", "actualizado"));
+  await page.clock.runFor(4000);
+  await page.waitForFunction(() => true);
+  igual("el toque de otro torneo no hace nada", leidas() - antes, 1);
+  antes = leidas();
   await page.clock.runFor(61000);
   await page.waitForFunction(() => true);
   ok(pedidos.filter((x) => x.id && x.id.startsWith("eq.")).length > antes, "al minuto vuelve a pedir el torneo abierto");
