@@ -27,6 +27,14 @@
                                                           (para repartir en el CI)
      node herramientas/verificar-todo.js --paralelo=3     de a tres a la vez
      node herramientas/verificar-todo.js panel tareas     solo los que se llaman así
+     node herramientas/verificar-todo.js --cambios-desde=origin/main
+                                                          solo los que toca lo que cambió
+                                                          desde ese commit (lo usa el CI;
+                                                          ver lib/verificadores-afectados.js)
+     node herramientas/verificar-todo.js --tiempos=t.json deja cuánto tardó cada uno
+
+   Al terminar dice los diez más lentos: con eso se pone al día DURACION (que
+   reparte las tandas) y se sabe cuáles conviene aligerar.
 */
 "use strict";
 
@@ -132,6 +140,8 @@ const sinNavegador = bandera("--sin-navegador");
 const soloNavegador = bandera("--solo-navegador");
 const paralelo = Math.max(1, parseInt(valor("--paralelo") || "1", 10));
 const parte = valor("--parte");
+const cambiosDesde = valor("--cambios-desde");
+const archivoTiempos = valor("--tiempos");
 const nombres = args.filter((a) => !a.startsWith("--"));
 
 // ------------------------------------------------------------ la lista
@@ -158,6 +168,19 @@ if (nombres.length) {
   lista = lista.filter((v) => nombres.some((n) => v.nombre === n || v.archivo === n));
   const faltan = nombres.filter((n) => !lista.some((v) => v.nombre === n || v.archivo === n));
   if (faltan.length) { console.error("No existe: " + faltan.join(", ")); process.exit(2); }
+}
+if (cambiosDesde) {
+  // Antes de repartir en tandas: las cuatro máquinas eligen lo mismo (mismo
+  // commit, misma carpeta) y reparten lo elegido.
+  const { afectados, cambiosDesde: leerCambios } = require("./lib/verificadores-afectados");
+  const cambios = leerCambios(cambiosDesde);
+  const r = afectados(cambios, lista.map((v) => v.archivo));
+  if (r.todos) console.log("Corren todos: " + r.motivo + ".\n");
+  else {
+    const antes = lista.length;
+    lista = lista.filter((v) => r.elegidos.has(v.archivo));
+    console.log("El cambio toca " + cambios.length + " archivo(s): corren " + lista.length + " de " + antes + " verificadores (los demás no leen nada de lo que cambió).\n");
+  }
 }
 if (sinNavegador) lista = lista.filter((v) => !v.navegador || v.aceptaSinNavegador);
 if (soloNavegador) lista = lista.filter((v) => v.navegador);
@@ -268,6 +291,14 @@ async function asegurarSitio() {
     await obrero();
   }
   if (servidor) servidor.kill();
+
+  const lentos = [...resultados].sort((a, b) => b.ms - a.ms).slice(0, 10);
+  if (resultados.length > 10) console.log("\nLos diez más lentos:\n" + lentos.map((r) => "  " + (r.ms / 1000).toFixed(0).padStart(4) + " s  " + r.v.archivo).join("\n"));
+  if (archivoTiempos) {
+    const t = {};
+    for (const r of resultados) t[r.v.archivo] = Math.round(r.ms / 1000);
+    fs.writeFileSync(archivoTiempos, JSON.stringify(t, null, 2) + "\n");
+  }
 
   const malos = resultados.filter((r) => r.codigo !== 0);
   for (const r of malos) {

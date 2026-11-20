@@ -29,9 +29,10 @@ archivos: `grep -rn "X" docs/decisiones/` la encuentra.
   se empuja cuando el cambio está terminado, no a cada paso.
 - Si el PR de la rama ya se mergeó, la siguiente tarea arranca de `main` al día.
 - **No se mergea con el CI en rojo.** Mergear sin preguntar solo es seguro
-  porque «Verificar» (abajo) corre todas las comprobaciones antes.
+  porque «Verificar» (abajo) corre antes todas las comprobaciones que toca el
+  cambio (y, ante la duda, todas).
 
-## El CI: todas las comprobaciones, en cada PR
+## El CI: las comprobaciones que toca el cambio, en cada PR
 
 `.github/workflows/verificar.yml` corre `herramientas/verificar-todo.js` en
 cada PR contra `main` que no sea borrador: un trabajo sin navegador y, si pasa,
@@ -41,6 +42,13 @@ lo probó junto con `main`); el porqué y lo que costaba, en la cabecera del flu
 acordaba del que tocaba, y un verificador que no corre no da ningún error:
 `verificar-alumno-sin-correo.js` estuvo roto en `main` sin que nadie lo viera.
 
+- **En un PR corren los verificadores que leen algo de lo que cambió**
+  (`--cambios-desde`, `herramientas/lib/verificadores-afectados.js`), y
+  **ante la duda, todos**: un archivo que ningún verificador nombra, o lo que
+  usan todos. Los domingos corren todos (la red por lo que esa lectura no ve).
+  Para que un verificador corra cuando cambia un archivo, **tiene que nombrarlo**
+  (o abrir la página que lo carga), no armar la ruta con variables (ver «En un
+  PR corren los verificadores que toca el cambio»).
 - **`package.json` y `package-lock.json` se commitean** y fijan las versiones
   (chess.js 0.10.3, playwright, tailwindcss 3, supabase-js igual al de
   `js/vendor/`). `npm install` las deja todas; ya no hace falta instalarlas de a
