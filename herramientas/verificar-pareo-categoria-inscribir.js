@@ -1,5 +1,5 @@
 /* Pareo Integral: la categoría al inscribir a un jugador a mano se elige de una
- * lista (js/pareo/pagina.js, categoriasParaInscribir y pintarCategorias):
+ * lista (js/pareo/pagina-jugadores.js, categoriasParaInscribir y pintarCategorias):
  *
  *   - en un torneo de los JDE, sin fecha de nacimiento salen las cinco (A–E) y
  *     la nota pide elegirla; con la fecha, solo las que le permite su año

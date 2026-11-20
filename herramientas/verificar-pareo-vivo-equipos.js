@@ -1,6 +1,6 @@
 /* Pareo Integral: en el enlace para ver desde el celular, un torneo por
  * equipos se puede abrir encuentro por encuentro (js/pareo/ver.js: tablas;
- * js/pareo/evento.js: tablerosVista; js/pareo/pagina.js: datosLecturaActual).
+ * js/pareo/evento.js: tablerosVista; js/pareo/pagina-vivo.js: datosLecturaActual).
  *
  * Lo que se prueba, porque se rompe sin dar ningún error:
  *   - tocar un equipo abre sus tableros (quién juega con cada color y cómo

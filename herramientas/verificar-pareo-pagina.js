@@ -46,7 +46,7 @@ const igual = (m, a, b) => ok(JSON.stringify(a) === JSON.stringify(b), m, "esper
 (async () => {
   console.log("=== 1. Los textos ===");
   {
-    const js = fs.readFileSync(path.join(raiz, "js/pareo/pagina.js"), "utf8");
+    const js = require("./lib/pareo-pagina-fuente").leer();   // js/pareo/pagina.js y sus partes
     const html = fs.readFileSync(path.join(raiz, "pareo.html"), "utf8");
     const usadas = new Set([
       ...[...js.matchAll(/\btx\("([A-Za-z0-9_]+)"/g)].map((m) => m[1]),

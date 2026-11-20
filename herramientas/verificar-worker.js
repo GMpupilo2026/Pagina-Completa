@@ -505,7 +505,8 @@ async function cargarWorker(real) {
       /var RUTAS = \[[^\]]*"\/js\/"/.test(fs.readFileSync(path.join(raiz, "js", "supabase-client.js"), "utf8")), true);
     // Que no se cuele nada que use el público: un archivo de la lista no lo
     // carga ninguna página fuera de la de su herramienta.
-    const paginaDe = { "bases-torneo": "bases-torneo.html", "inscripcion-jde": "inscripcion-jde.html", "normas-titulo": "normas-titulo.html", "aula-arbitraje": "aula-arbitraje.html" };
+    const paginaDe = { "bases-torneo": "bases-torneo.html", "inscripcion-jde": "inscripcion-jde.html", "normas-titulo": "normas-titulo.html", "aula-arbitraje": "aula-arbitraje.html",
+      "ajedrez-estudiantil": "ajedrez-estudiantil.html", "estadisticas-colegios": "estadisticas-colegios.html", "historial-jugador": "historial-jugador.html", "ranking-estudiantil": "ranking-estudiantil.html" };
     const ajenas = [];
     const htmls = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
       ["node_modules", ".git", "herramientas", "docs", "supabase"].includes(e.name) ? [] :

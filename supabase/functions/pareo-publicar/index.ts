@@ -8,7 +8,7 @@
 //   { accion: "crear", torneo }              → { ok, id, clave }
 //   { accion: "actualizar", id, clave, torneo } → { ok }
 //   { accion: "borrar", id, clave }           → { ok }
-//   { accion: "inscribir", id, inscripcion, consentimiento } → { ok }  (inscripcion: nombre, institucion, categoria, elo, fideId, sexo?, nacimiento?, responsable, contacto, nota)
+//   { accion: "inscribir", id, inscripcion, consentimiento } → { ok }  (inscripcion: nombre, institucion, categoria, elo, fideId, sexo?, nacimiento?, responsable, contacto, nota; lo obligatorio y la categoría según la configuración del torneo, inscripcion.ts)
 //   { accion: "inscripciones", id, clave }    → { ok, inscripciones }
 //   { accion: "marcar", id, clave, ids, estado, comentario?, correo? } → { ok, avisados, sinCorreo, contacto?, nota? }
 //   { accion: "organizador", nombre, logo?, correo?, consentimiento?, id?, clave? } → { ok, id, clave?, correoPendiente? }
@@ -86,6 +86,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { cabeceraCorreo } from "./marca-correo.ts";
+import { cerrada, limpiarInscripcion, revisar } from "./inscripcion.ts";
 import {
   type Correo, correoAvisoFin, correoAvisoRonda, correoConfirmar, correoDecision, correoInscripcion, correoRecuperar, correoReporteAdmin, correoReporteOrganizador,
   correoSeguirConfirmar, correoSelloAdmin, esCorreo,
@@ -321,7 +322,9 @@ function limpiar(v: unknown) {
     // El anuncio de un torneo que todavía no empieza (lo que se publica a
     // propósito: la hora, el contacto de la organización y las bases).
     anuncio: esObj(v.anuncio) ? { hora: /^\d{2}:\d{2}$/.test(String(v.anuncio.hora)) ? v.anuncio.hora : "", contacto: texto(v.anuncio.contacto, 120), texto: texto(v.anuncio.texto, 1500) } : undefined,
-    inscripcion: esObj(v.inscripcion) ? { abierta: v.inscripcion.abierta === true, hasta: fecha(v.inscripcion.hasta) } : undefined,
+    // { abierta, hasta } y, si la trae, la configuración del formulario
+    // (cierre con hora, categorías por año, campos, textos): inscripcion.ts.
+    inscripcion: esObj(v.inscripcion) ? limpiarInscripcion(v.inscripcion) : undefined,
     // Los códigos de los enlaces en vivo (ya van en sus QR): con ellos, un
     // enlace en vivo que ya nadie transmite lleva al torneo publicado.
     vivo: codigo(v.vivo), codigoEvento: codigo(v.codigoEvento),
@@ -722,10 +725,13 @@ Deno.serve(async (req) => {
     const { data: pub } = await admin.from("pareo_publicados").select("datos, nombre, organizador_id").eq("id", pid).maybeSingle();
     if (!pub) return json({ ok: false, error: "Ese torneo ya no está publicado." }, 404);
     const ins = esObj(pub.datos) && esObj(pub.datos.inscripcion) ? pub.datos.inscripcion : null;
-    const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date());
-    if (!ins || ins.abierta !== true || (typeof ins.hasta === "string" && ins.hasta && ins.hasta < hoy)) {
-      return json({ ok: false, error: "La inscripción de este torneo está cerrada." }, 409);
-    }
+    // Abierta, antes del «hasta» (un día) y del «cierre» (una hora de Costa Rica).
+    if (cerrada(ins)) return json({ ok: false, error: "La inscripción de este torneo está cerrada." }, 409);
+    // Lo obligatorio y la categoría por el año, si el torneo los configuró
+    // (js/inscripcion-evento.js); sin configuración, como siempre.
+    const revision = revisar(ins, fila, pid);
+    if ("error" in revision) return json({ ok: false, error: revision.error }, 400);
+    fila.categoria = revision.categoria;
     const { data: freno, error: frenoError } = await admin.rpc("pareo_inscribir_frenar", { p_ip: ipDe(req), p_publicado: pid });
     if (frenoError) return json({ ok: false, error: "No se pudo inscribir. Intenta de nuevo." }, 502);
     if (freno) return json({ ok: false, error: freno }, 429);
@@ -761,7 +767,8 @@ Deno.serve(async (req) => {
     // (o uno que no servía): de una inscripción a la vez. Pasa a ser el
     // contacto, y el teléfono queda en la nota para no perderlo.
     const correoNuevo = texto(body.correo, 120);
-    const cambios: Record<string, unknown> = { estado, comentario, avisado: null };
+    // Sin `avisado: null`: no se reenvía la decisión ya avisada (ver aviso_estado abajo).
+    const cambios: Record<string, unknown> = { estado, comentario };
     if (correoNuevo) {
       if (!esCorreo(correoNuevo)) return json({ ok: false, error: "Ese correo no es válido." }, 400);
       if (cuales.length !== 1 || estado === "pendiente") return json({ ok: false, error: "El correo se agrega de una inscripción a la vez." }, 400);
@@ -774,7 +781,7 @@ Deno.serve(async (req) => {
     }
     const { data: marcadas, error } = await admin.from("pareo_preinscripciones")
       .update(cambios).eq("publicado_id", pid).in("id", cuales)
-      .select("id, nombre, responsable, contacto, nota, institucion, categoria, sexo, nacimiento, elo, fide_id");
+      .select("id, nombre, responsable, contacto, nota, institucion, categoria, sexo, nacimiento, elo, fide_id, aviso_estado");
     if (error) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
     // El aviso a quien inscribió, si dejó un correo como contacto (con un
     // teléfono no se puede: Pareo le dice al árbitro que le avise él). Las
@@ -800,12 +807,16 @@ Deno.serve(async (req) => {
         url: `${SITE_URL}/torneos-pareo.html#t=${pid}`,
       };
       for (const x of marcadas ?? []) {
+        // Ya se avisó ESTA decisión: no reenviar. Así marcar en bucle (o el
+        // ciclo aceptada→pendiente→aceptada) no manda el mismo correo otra vez.
+        // Ver «aviso_estado» en la migración pareo_preinscripciones_aviso_estado.
+        if (x.aviso_estado === estado) continue;
         if (!esCorreo(x.contacto)) { sinCorreo.push(x.id); continue; }
         const salio = await mandar([x.contacto], correoDecision(cabecera(estado === "aceptada" ? "¡Bienvenida al torneo!" : "Inscripción rechazada"),
           fila.nombre || "el torneo", org?.nombre || "", x, estado as "aceptada" | "rechazada", comentario, !!responderA, evento), responderA);
         if (salio) avisados.push(x.id);
       }
-      if (avisados.length) await admin.from("pareo_preinscripciones").update({ avisado: new Date().toISOString() }).in("id", avisados);
+      if (avisados.length) await admin.from("pareo_preinscripciones").update({ avisado: new Date().toISOString(), aviso_estado: estado }).in("id", avisados);
     }
     // Con un correo agregado, el contacto y la nota como quedaron, para que
     // el panel los pinte sin volver a pedir la lista.

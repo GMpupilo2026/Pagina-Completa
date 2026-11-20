@@ -142,6 +142,11 @@ Deno.serve(async (req) => {
 
   // ------------------------------------------- con qué entra a la Academia
   if (accion === "cuenta") {
+    // Cambiar el correo DE ENTRADA es solo de «cuentas»: con «cobros» (que
+    // pasa el portón por la ficha de contacto) se podía poner el correo propio
+    // y quedarse con la cuenta por «olvidé mi contraseña». Admin y supervisión
+    // tienen todas las funciones, así que esto no los frena.
+    if (!cuentas) return json({ error: "Cambiar con qué entra a la Academia es solo de quien coordina cuentas" }, 403);
     if (alumno.role !== "alumno") {
       return json({ error: "Esto es para corregir el correo de un alumno, no el de una cuenta del equipo docente" }, 400);
     }
@@ -253,6 +258,9 @@ Deno.serve(async (req) => {
 
   // ------------------------------------------ a dónde va el informe a casa
   if (accion === "encargado_guardar") {
+    // A dónde va el informe a casa es de «cuentas», no de «cobros»: con los
+    // encargados se redirige lo que recibe la familia.
+    if (!cuentas) return json({ error: "Los encargados del informe a casa los maneja quien coordina cuentas" }, 403);
     const email = String(body.email ?? "").trim().toLowerCase();
     if (!CORREO.test(email)) return json({ error: "Eso no parece un correo" }, 400);
     if (esCorreoInterno(email)) {
@@ -278,6 +286,7 @@ Deno.serve(async (req) => {
   }
 
   if (accion === "encargado_quitar") {
+    if (!cuentas) return json({ error: "Los encargados del informe a casa los maneja quien coordina cuentas" }, 403);
     const id = String(body.encargado_id ?? "").trim();
     if (!id) return json({ error: "Falta cuál" }, 400);
     const { error } = await admin.from("encargados").delete().eq("id", id).eq("student_id", alumnoId);

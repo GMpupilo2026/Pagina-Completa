@@ -63,10 +63,21 @@ herramientas/datos
 herramientas/libro-ninos
 herramientas/mil-lecciones
 herramientas/pareo-cli
-# Los cuestionarios de «Formación Ajedrez» traen las respuestas: los lee
-# herramientas/formacion-cuestionarios.js, no una página, y en la base solo
-# los ven quienes tienen el curso compartido.
-herramientas/cursos/*-kahoot.json
+# Las fuentes editoriales de la revista «Arbitraje de Ajedrez» del Aula de
+# Arbitraje: el producto de pago son los PDF, que sirve el worker con la
+# licencia (/descargas/aula-arbitraje/). Estas fuentes (notas, originales) no
+# las pide ninguna página; publicadas, regalaban el material. OJO: otras
+# carpetas de herramientas/ SÍ sirven scripts de página (p. ej.
+# herramientas/torneos-universitarios/*.js en cenfotec/utn/tacho), así que la
+# exclusión va carpeta por carpeta, nunca herramientas/ entera.
+herramientas/revistas-arbitraje
+# Los cuestionarios de «Formación Ajedrez» traen las respuestas (el campo
+# "correcta"): los lee herramientas/formacion-cuestionarios.js, no una página,
+# y en la base solo los ven quienes tienen el curso compartido. Son los tres:
+# el kahoot, el banco y la prueba final; el patrón los cubre a todos. Lo único
+# de herramientas/cursos/ que el navegador SÍ pide es catalogo.json (el armador
+# de planes, la tienda), que no cae en este patrón.
+herramientas/cursos/formacion-ajedrez*.json
 
 # El estado local de `wrangler dev`: no es del sitio.
 .wrangler
