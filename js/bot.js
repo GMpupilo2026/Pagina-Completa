@@ -736,8 +736,8 @@ function alMover(info) {
         // ya no está en la casilla de origen) y desharía el movimiento.
         anotar(info, info);
         refrescar();
-        anotarPosicion();
         rival("trasTuJugada", ad, ultimaAnotada());
+        anotarPosicion();
         if (revisarFinal()) return;
         setTimeout(turnoDelBot, BotOscar.demora(nivel));
         return;
@@ -750,8 +750,8 @@ function alMover(info) {
     else ad.motor.load(info.fen);
     anotar(info, info);
     refrescar();
-    anotarPosicion();
     rival("trasTuJugada", ad, ultimaAnotada());
+    anotarPosicion();
     if (revisarFinal()) return;
     setTimeout(turnoDelBot, BotOscar.demora(nivel));
 }
@@ -769,8 +769,8 @@ function turnoDelBot() {
     const hecho = ad.jugar(jugada);
     anotar(hecho, jugada);
     refrescar();
-    anotarPosicion();
     rival("trasSuJugada", ad, ultimaAnotada());
+    anotarPosicion();
     if (revisarFinal()) return;
     // "Doble turno" (Ajedrez de Cartas) le devuelve el turno a quien acaba de
     // mover: si sigue siendo el del bot, que juegue otra vez.
@@ -911,8 +911,8 @@ function jugarEscrita() {
     $("ciegas-input").value = "";
     anotar(hecho, {});
     refrescar();
-    anotarPosicion();
     rival("trasTuJugada", ad, ultimaAnotada());
+    anotarPosicion();
     if (revisarFinal()) return;
     setTimeout(turnoDelBot, BotOscar.demora(nivel));
 }
