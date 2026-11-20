@@ -190,7 +190,7 @@ const vivo = leer("js/centroamericano-arbitro-vivo.js");
 ok("la tablet le pide a la función nueva, con el token de su enlace", /functions\.invoke\("centroamericano-mesas-vivo", \{ body: \{ action: "mesas", arbitro_token: o\.token\(\) \} \}\)/.test(vivo));
 const org = leer("centroamericano-mesas.html");
 ok("la organización: la conexión con su clave en un campo de contraseña", /id="vivo-token" type="password"/.test(org) && /id="vivo-enlace"/.test(org) && /src="js\/centroamericano-vivo-conectar\.js"/.test(org));
-ok("la organización: pegar la tabla de LiveChess, que la función prueba y guarda", /id="livechess-texto"/.test(org) && /llamar\("livechess_guardar", \{ texto \}\)/.test(leer("js/centroamericano-vivo-conectar.js")));
+ok("la organización: pegar la tabla de LiveChess, que la función prueba y guarda", /id="livechess-texto"/.test(org) && /llamar\("livechess_guardar", Object\.assign\(\{ texto \}/.test(leer("js/centroamericano-vivo-conectar.js")));
 ok("la organización: la clave se borra del campo al conectar", /\$\("vivo-token"\)\.value = ""/.test(leer("js/centroamericano-vivo-conectar.js")));
 const dgt = leer("js/pareo/dgt.js");
 ok("Pareo para DGT: la visibilidad privada llega a Lichess", /d\.visibilidad === "private" \? d\.visibilidad/.test(dgt));

@@ -1223,4 +1223,10 @@ body[data-entrada="si"] .cam-fab, body[data-entrada="si"] #ver-todas-mesas { dis
 .cam-confirmar .cam-btn { width: 100%; min-height: 52px; font-size: 1.05rem; font-weight: 800; justify-content: center; }
 .cam-por-confirmar { font-weight: 700; }
 
+/* El evento sobre el que se trabaja, debajo de la barra de título (ver «Cada evento de la Mesa, por separado»). */
+.cam-evento-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.8rem; background: #fff; color: var(--cac-morado-hondo); padding: 0.5rem 0.8rem; border-bottom: 1px solid #dfe0f7; }
+.cam-evento-barra[hidden] { display: none; }
+.dark .cam-evento-barra { background: rgb(var(--c-brand-900, 10 31 51)); color: #fff; border-bottom-color: #3a4a6b; }
+.cam-evento-barra .cam-select { min-height: 44px; width: auto; max-width: 100%; }
+
 /*! rev bfb5bbb0d2d82f9f */
