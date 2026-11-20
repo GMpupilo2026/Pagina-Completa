@@ -942,6 +942,72 @@
     }
   }
 
+  /* Su ficha: lo que se mira antes que nada de un rival. Por ritmo, su Elo
+     (el de su última partida, el máximo y el de hace unos tres meses) y su
+     rendimiento; y sus últimas partidas, con la racha en que viene.
+     - **Por ritmo, nunca mezclado**: en Lichess y Chess.com el Elo de bullet,
+       el de blitz y el de rápidas son escalas distintas; un promedio de los
+       tres no es el Elo de nadie.
+     - **El rendimiento** es el Elo que corresponde a sus resultados contra
+       esos rivales (el de la FIDE: el Elo medio de sus rivales más la
+       diferencia que da su porcentaje, con el tope de ±800). Más que el Elo
+       de su perfil, dice cómo está jugando en estas partidas. Con menos de 5
+       partidas con los dos Elo no se calcula: dice poco.
+     - `esperado` es lo que tendría que haber sacado por los Elo de cada
+       partida: si saca más, rinde por encima de su Elo. */
+  const FICHA_MIN_ELO = 5;
+  function difElo(p) {
+    if (p >= 1) return 800;
+    if (p <= 0) return -800;
+    return Math.max(-800, Math.min(800, -400 * Math.log10(1 / p - 1)));
+  }
+  function fichaDe(lista) {
+    const conFecha = lista.filter((x) => x.fecha).sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
+    const ritmos = ORDEN_RITMO.map((ritmo) => {
+      const xs = lista.filter((x) => x.ritmo === ritmo);
+      if (!xs.length) return null;
+      const c = vacio();
+      xs.forEach((x) => sumar(c, x.res));
+      const conElo = xs.filter((x) => x.elo && x.eloRival);
+      const fechados = conFecha.filter((x) => x.ritmo === ritmo && x.elo);
+      const fila = { ritmo, ...resumen(c), actual: null, maximo: null, antes: null, rendimiento: null, rivales: null, esperado: null, conElo: conElo.length };
+      if (fechados.length) {
+        fila.actual = fechados[0].elo;
+        fila.maximo = fechados.reduce((m, x) => Math.max(m, x.elo), 0);
+        // El de hace unos tres meses: su última partida de 90 días antes o más.
+        const corte = new Date(Date.parse(fechados[0].fecha) - 90 * 86400000).toISOString().slice(0, 10);
+        const vieja = fechados.find((x) => x.fecha <= corte);
+        if (vieja) fila.antes = { elo: vieja.elo, fecha: vieja.fecha };
+      } else {
+        const elos = xs.map((x) => x.elo).filter(Boolean);
+        if (elos.length) { fila.actual = mediana(elos); fila.maximo = Math.max(...elos); }
+      }
+      if (conElo.length >= FICHA_MIN_ELO) {
+        const cc = vacio();
+        conElo.forEach((x) => sumar(cc, x.res));
+        const p = puntos(cc);
+        const rivales = conElo.reduce((s, x) => s + x.eloRival, 0) / conElo.length;
+        fila.rivales = Math.round(rivales);
+        fila.rendimiento = Math.round(rivales + difElo(p));
+        fila.esperado = conElo.reduce((s, x) => s + 1 / (1 + Math.pow(10, (x.eloRival - x.elo) / 400)), 0) / conElo.length;
+        fila.puntosConElo = p;
+      }
+      return fila;
+    }).filter(Boolean);
+    const ultimas = conFecha.slice(0, 10).map((x) => ({
+      fecha: x.fecha, res: x.res, color: x.color, ritmo: x.ritmo,
+      oponente: x.oponente || "", eloRival: x.eloRival || null, enlace: x.enlace || null,
+    }));
+    // La racha: cuántas seguidas lleva con el mismo resultado, desde la última.
+    let racha = null;
+    if (conFecha.length) {
+      let n = 0;
+      while (n < conFecha.length && conFecha[n].res === conFecha[0].res) n += 1;
+      racha = { res: conFecha[0].res, n };
+    }
+    return { ritmos, ultimas, racha };
+  }
+
   function analizar(partidas, rival, opciones) {
     const o = opciones || {};
     const clave = claveNombre(rival);
@@ -1032,6 +1098,8 @@
       masAlla: masAllaDe(lista, puntos(global), minN),
       derrotas: derrotasDe(lista),
       reciente: formaReciente(lista),
+      // Su ficha: Elo y rendimiento por ritmo, sus últimas partidas (fichaDe).
+      ficha: fichaDe(lista),
       certeza: certezaDe(lista),
       // Qué táctica hace y con cuál pierde (js/preparacion-tactica.js).
       tactica: Tactica ? Tactica.analizar(lista) : null,

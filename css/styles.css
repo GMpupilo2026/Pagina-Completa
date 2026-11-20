@@ -2647,6 +2647,24 @@ body.pi-imprimiendo-plantilla.pi-imprimiendo-firmas .pi-plantilla { break-after:
 .arbol-gana { background: #0f3d1f; }
 .arbol-tablas { background: #7f7f7f; }
 .arbol-pierde { background: #f9d9d9; }
+/* La misma barra en la ficha del rival (js/preparacion-pintar.js), a lo ancho. */
+.ficha-barra { display: flex; width: 100%; height: 0.75rem; margin-top: 0.5rem; }
+/* Sus últimas partidas: la letra (G, T, P) es el dato; el fondo, los tonos de
+   la barra. Texto contra fondo: blanco sobre #0f3d1f, negro sobre #7f7f7f y
+   #102a43 sobre #f9d9d9, los tres por encima de 4,5:1 (medidos en
+   verificar-preparacion-rivales.js). */
+.ficha-res { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 0.5rem; font-weight: 700; font-size: 0.875rem; border: 1px solid rgb(var(--c-brand-500, 72 101 129)); cursor: default; }
+.dark .ficha-res { border-color: rgb(var(--c-brand-300, 159 179 200)); }
+.ficha-res-G { background: #0f3d1f; color: #fff; }
+.ficha-res-T { background: #7f7f7f; color: #000; }
+.ficha-res-P { background: #f9d9d9; color: #102a43; }
+/* «Él saca» con su barrita en las tablas: solo a la vista (el porcentaje va
+   escrito al lado). La raya del medio marca el 50 %. */
+.saca-barra { position: relative; display: inline-block; width: 3.5rem; height: 0.5rem; border-radius: 9999px; overflow: hidden; border: 1px solid rgb(var(--c-brand-500, 72 101 129)); flex: none; }
+.dark .saca-barra { border-color: rgb(var(--c-brand-300, 159 179 200)); }
+.saca-barra::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgb(var(--c-accent-500, 222 145 29)); }
+.saca-lleno { display: block; height: 100%; background: rgb(var(--c-brand-700, 51 78 104)); }
+.dark .saca-lleno { background: rgb(var(--c-brand-200, 188 204 220)); }
 /* La clasificación para la pared (imprimirClasificacionPared): una hoja A3
    con letra grande, para leerla de pie a un metro y medio. La hora en que se
    imprimió va arriba: una hoja vieja en la pared engaña. */

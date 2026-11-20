@@ -142,6 +142,10 @@
                 <p id="filtros-aviso" role="status" class="text-sm font-semibold text-accent-700 dark:text-accent-400 mb-2"></p>
                 <p id="motor-estado" role="status" class="text-sm text-brand-600 dark:text-brand-200 mb-1"></p>
                 <p id="teoria-estado" role="status" class="text-sm text-brand-600 dark:text-brand-200 mb-4"></p>
+                <!-- Su ficha (Elo y rendimiento por ritmo, sus últimas partidas)
+                     y el índice de las tarjetas: los pinta js/preparacion-pintar.js. -->
+                <div id="ficha" class="mb-6"></div>
+                <nav id="indice" hidden aria-label="Partes del análisis" class="rounded-2xl bg-white dark:bg-brand-900 shadow-md px-5 py-4 mb-6"></nav>
                 <!-- El tablero para recorrer una línea del plan (js/visor-linea.js).
                      Se abre al tocar una jugada del plan o «Ver» en un error. -->
                 <section id="visor-caja" hidden aria-labelledby="visor-caja-titulo" class="scroll-mt-28 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
@@ -195,17 +199,10 @@
                         </div>
                     </form>
                 </section>
-                <!-- Su árbol de aperturas, para recorrerlo jugada a jugada
-                     (js/preparacion-arbol.js, con r.explorador del análisis). -->
-                <section id="arbol-caja" aria-labelledby="arbol-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
-                    <h3 id="arbol-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">Su árbol de aperturas</h3>
-                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Recorre su repertorio rama por rama: en cada posición, qué se jugó en sus partidas, cuántas veces y cómo le fue a él después. Toca una jugada para avanzar; con ◀ vuelves. Las partidas no salen de tu computadora.</p>
-                    <div id="arbol"></div>
-                </section>
                 <!-- Cruzar con las partidas del alumno que lo va a enfrentar
                      (js/preparacion-cruce.js, en el trabajador). -->
                 <section id="alumno-caja" aria-labelledby="alumno-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
-                    <h3 id="alumno-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">Cruzarlo con tu alumno</h3>
+                    <h3 id="alumno-titulo" class="scroll-mt-28 font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">Cruzarlo con tu alumno</h3>
                     <p id="alumno-ayuda" class="text-sm text-brand-500 dark:text-brand-300 mb-4">Trae las partidas del alumno que lo va a enfrentar: se compara su repertorio con el plan (¿ya lo juega?) y con lo que el rival juega (¿dónde le conviene jugar lo suyo?).</p>
                     <form id="alumno-bajar-form" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end" novalidate>
                         <fieldset>
@@ -240,6 +237,15 @@
                     <p id="alumno-estado" role="status" class="text-sm text-brand-600 dark:text-brand-200 mt-3"></p>
                 </section>
                 <div id="resultado-cuerpo" class="space-y-6"></div>
+                <!-- Su árbol de aperturas, para recorrerlo jugada a jugada
+                     (js/preparacion-arbol.js, con r.explorador del análisis).
+                     Va después del análisis: es para explorar, y arriba tapaba
+                     «Qué hacer contra él» con un tablero entero. -->
+                <section id="arbol-caja" aria-labelledby="arbol-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mt-6">
+                    <h3 id="arbol-titulo" class="scroll-mt-28 font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">Su árbol de aperturas</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Recorre su repertorio rama por rama: en cada posición, qué se jugó en sus partidas, cuántas veces y cómo le fue a él después. Toca una jugada para avanzar; con ◀ vuelves. Las partidas no salen de tu computadora.</p>
+                    <div id="arbol"></div>
+                </section>
             </section>
 
             <section aria-labelledby="titulo-guardados" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
