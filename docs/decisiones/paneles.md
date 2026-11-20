@@ -5415,6 +5415,35 @@ el sitio, con una sola cuenta.
     números escritos debajo, que son lo que lee el lector de pantalla; el
     SVG es adorno. Para contar las completadas, `tareas_con_avance` se pide
     ahora con `p_pendientes: false`.
+- **Las otras pestañas, con la forma del Inicio** (20/11/2026, a pedido del
+  dueño). Clases, Entrenar, Jugar y Perfil abren con su banner (sus piezas
+  en la ilustración, dos botones) y cuatro salas de color
+  (`armarCabeceras`). Los números salen de las MISMAS consultas del Inicio:
+  una sala puede estar en varias pestañas y `sala()` pinta todas las que se
+  llamen igual (lo mismo `grafico()`). Las salas nuevas (semana, mes,
+  próxima clase) se calculan de lo que ya se pedía; las de atajo (repasar,
+  cuaderno, preparar a un rival, competir) no piden nada. Con una sección
+  elegida, las salas de la cabecera se apartan: se busca una tarjeta.
+- **Entrenar abre con una portada, no con todo** (mismo día: «en vez de
+  salirle todo»). Eran más de treinta tarjetas de golpe. Ahora la pestaña
+  entera muestra el plan de hoy («Hoy te toca»), una carta por sección (con
+  cuántas herramientas trae y las primeras tres, leídas de la grilla real
+  por `llenarPortada`, así que nunca promete una que no está; un grupo que
+  la cuenta no tiene no lleva carta) y los gráficos de la semana y de los
+  meses. Una carta abre su sección, igual que el menú; en el celular el
+  primer botón de la fila dice «Resumen» en vez de «Todo». Buscar sigue
+  destapando todas las tarjetas, y `clases.html#<grupo>` abre ese grupo
+  como sección (si no, la portada lo dejaría tapado).
+- **El tema «jornada» es de la Academia, no del sitio público** (mismo día:
+  en el Inicio del sitio el turquesa «perdió color»). La guardia de sesión
+  (`academia-cabecera.py`) marca `data-academia` en `<html>`, y el bloque
+  del tema (`tema-cabecera.py`), si el tema guardado es «jornada» y la
+  página no tiene esa marca, usa el de antes
+  (`panel_jornada_tema_previo_v1`; sin él, el Clásico). Cambiaron los dos
+  bloques en línea, así que se corrió `csp-hashes.js`. Las tres páginas de
+  la Academia sin guardia (`SIN_GUARDIA`: cobros, batalla naval y «Aprende
+  a jugar») quedan también con el tema de antes: es aceptable para una
+  cuenta en prueba.
 - Lo revisa `verificar-panel-jornada.js`: sin la fila, el panel no cambia;
   con ella, cinco pestañas, cada sección en la suya, buscar destapa todo, los
   puntos en Perfil y la barra abajo en el celular y a la izquierda en la

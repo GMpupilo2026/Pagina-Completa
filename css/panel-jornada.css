@@ -334,4 +334,58 @@ body.jornada .jornada-sala-grande[data-contando]::after { color: #fff; }
     body.jornada .jornada-sala { padding: .85rem .9rem; }
 }
 
+/* ---- Las otras pestañas, con la forma del Inicio (armarCabeceras) ----
+   Banner y cuatro salas de color arriba de cada pestaña. Las salas nuevas
+   repiten los colores ya medidos de las seis del Inicio (blanco encima,
+   5,1:1 o más), sin repetir color dentro de una misma pestaña. Con una
+   sección elegida (Entrenar · Aprender) las salas se apartan: lo que se
+   busca son las tarjetas. */
+.jornada-cabecera { display: grid; gap: 1rem; margin-bottom: 1.5rem; }
+.jornada-cabecera .jornada-salas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 900px) { .jornada-cabecera .jornada-salas { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+body.jornada-con-seccion .jornada-cabecera .jornada-salas { display: none; }
+div.jornada-sala { cursor: default; }
+.jornada-sala[data-sala="semana"] { --sala-a: #0b6a72; --sala-b: #0e7a81; }
+.jornada-sala[data-sala="mes"] { --sala-a: #156c3b; --sala-b: #1a7b44; }
+.jornada-sala[data-sala="proxima"] { --sala-a: #1f56b8; --sala-b: #2d68cc; }
+.jornada-sala[data-sala="repasar"] { --sala-a: #5b3cb0; --sala-b: #6c4cc4; }
+.jornada-sala[data-sala="cuaderno"] { --sala-a: #a8264c; --sala-b: #c0345e; }
+.jornada-sala[data-sala="rival"] { --sala-a: #9c450b; --sala-b: #b1500e; }
+.jornada-sala[data-sala="competir"] { --sala-a: #1f56b8; --sala-b: #2d68cc; }
+
+/* ---- La portada de Entrenar (armarPortada) ----
+   Seis cartas blancas, cada una con su color en el ícono, el borde y la
+   pastilla «Abrir» (blanco sobre esos colores: 5,1:1 o más). Lo que trae
+   va en brand-500 sobre blanco (6,1:1); en oscuro, brand-300 sobre
+   brand-900. */
+.jornada-portada { display: grid; gap: 1rem; margin-bottom: 1.5rem; }
+.jornada-portada-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 640px) { .jornada-portada-lista { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1200px) { .jornada-portada-lista { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.jornada-portada-carta {
+    display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "icono nombre" "icono trae" "icono ir";
+    column-gap: .85rem; row-gap: .2rem; align-items: start; width: 100%; height: 100%; text-align: left; font: inherit; cursor: pointer;
+    background: #fff; border: 0; border-left: 5px solid var(--carta); border-radius: 1.1rem; padding: 1rem 1.1rem;
+    box-shadow: 0 0 0 1px rgb(var(--c-brand-100)), 0 6px 16px -12px rgb(var(--c-brand-800) / .5);
+}
+.dark .jornada-portada-carta { background: rgb(var(--c-brand-900)); box-shadow: 0 0 0 1px rgb(var(--c-brand-800)); }
+.jornada-portada-carta:focus-visible { outline: 3px solid var(--carta); outline-offset: 3px; }
+.jornada-portada-icono {
+    grid-area: icono; width: 2.9rem; height: 2.9rem; border-radius: .9rem; display: grid; place-items: center;
+    font-size: 1.45rem; color: #fff; background: var(--carta);
+}
+.jornada-portada-nombre { grid-area: nombre; font-size: 1rem; color: rgb(var(--c-brand-800)); }
+.jornada-portada-trae { grid-area: trae; font-size: .8rem; color: rgb(var(--c-brand-500)); }
+.dark .jornada-portada-nombre { color: #fff; }
+.dark .jornada-portada-trae { color: rgb(var(--c-brand-300)); }
+.jornada-portada-ir {
+    grid-area: ir; justify-self: start; margin-top: .35rem; font-size: .75rem; font-weight: 700; color: #fff;
+    background: var(--carta); padding: .2rem .7rem; border-radius: 999px;
+}
+.jornada-portada-ir::after { content: " →"; }
+@media (prefers-reduced-motion: no-preference) {
+    .jornada-portada-carta { transition: transform .18s ease, box-shadow .18s ease; }
+    .jornada-portada-carta:hover, .jornada-portada-carta:focus-visible { transform: translateY(-2px); }
+}
+
 /*! rev bfb5bbb0d2d82f9f */

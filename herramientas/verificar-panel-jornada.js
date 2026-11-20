@@ -170,7 +170,19 @@ async function pruebaSecciones(browser) {
   igual("el título dice la sección", await page.$eval("#jornada-titulo", (t) => t.textContent), "Entrenar · Aprender");
   await page.click(".jornada-nav button[data-pestana='entrenar']");
   const todos = await page.evaluate(GRUPOS_VISIBLES_DE, "entrenar");
-  igual("la pestaña Entrenar vuelve a mostrar todo, Estudiar incluido", todos.includes("Estudiar") && todos.includes("Aprender") && todos.length >= 5, true);
+  igual("la pestaña Entrenar abre con su portada: sin tarjetas sueltas", todos, []);
+  const portada = await page.evaluate(() => {
+    const p = document.getElementById("jornada-entrenar-portada");
+    return { ve: !!p && p.checkVisibility(), cartas: Array.from(document.querySelectorAll(".jornada-portada-carta")).filter((b) => b.checkVisibility()).map((b) => [b.dataset.portadaGrupo, b.querySelector(".jornada-portada-trae").textContent]) };
+  });
+  cierto("la portada se ve", portada.ve);
+  const grupos = portada.cartas.map((x) => x[0]);
+  cierto("con una carta por sección, Estudiar y Aprender incluidas (" + grupos.join(", ") + ")", grupos.includes("Estudiar") && grupos.includes("Aprender") && grupos.length >= 5);
+  cierto("cada carta dice cuántas herramientas trae y cuáles", portada.cartas.every((x) => /^\d+ herramientas?: \S/.test(x[1])), JSON.stringify(portada.cartas));
+  await page.click(".jornada-portada-carta[data-portada-grupo='Aprender']");
+  igual("la carta abre su sección", await page.evaluate(GRUPOS_VISIBLES_DE, "entrenar"), ["Aprender"]);
+  igual("y la portada y las salas se apartan", await page.evaluate(() => [document.getElementById("jornada-entrenar-portada").checkVisibility(), document.querySelector("#jornada-cabecera-entrenar .jornada-salas").checkVisibility()]), [false, false]);
+  await page.click(".jornada-nav button[data-pestana='entrenar']");
 
   console.log("\nLa sesión también en Clases");
   await page.click(".jornada-nav button[data-pestana='clases']");
@@ -186,7 +198,7 @@ async function pruebaSecciones(browser) {
   const c = await abrir(browser, ALUMNO, ANOTADO(ALUMNO.id), { viewport: { width: 390, height: 844 } });
   await c.page.click(".jornada-nav button[data-pestana='entrenar']");
   igual("la fila de Entrenar se ve y trae todo", await c.page.$$eval(".jornada-fila[data-jornada='entrenar']", (f) => f.filter((x) => x.checkVisibility()).map((x) => Array.from(x.children).map((b) => b.textContent.trim()))),
-    [["Todo", "Estudiar", "Aprender", "Entrenamiento básico", "Entrenamiento intermedio", "Entrenamiento avanzado", "Habilidades"]]);
+    [["Resumen", "Estudiar", "Aprender", "Entrenamiento básico", "Entrenamiento intermedio", "Entrenamiento avanzado", "Habilidades"]]);
   igual("el menú de la computadora no se ve en el celular", await c.page.$$eval(".jornada-sub", (s) => s.filter((x) => x.checkVisibility()).length), 0);
   await c.page.click(".jornada-fila[data-jornada='entrenar'] button[data-seccion='Mejorar por habilidades']");
   igual("Habilidades queda sola", await c.page.evaluate(GRUPOS_VISIBLES_DE, "entrenar"), ["Mejorar por habilidades"]);
@@ -276,7 +288,7 @@ async function pruebaInicio(browser) {
     const s = document.querySelector('.jornada-sala[data-sala="tareas"] .jornada-sala-grande');
     return s && s.textContent !== "—";
   }, null, { timeout: 15000 }).catch(() => {});
-  const salas = await page.$$eval(".jornada-sala", (as) => as.map((a) => [a.dataset.sala, a.querySelector(".jornada-sala-grande").textContent, a.querySelector(".jornada-sala-det").textContent]));
+  const salas = await page.$$eval("#jornada-inicio .jornada-sala", (as) => as.map((a) => [a.dataset.sala, a.querySelector(".jornada-sala-grande").textContent, a.querySelector(".jornada-sala-det").textContent]));
   const de = (id) => (salas.find((s) => s[0] === id) || [id, "falta", "falta"]);
   igual("las seis salas, en orden", salas.map((s) => s[0]), ["hoy", "tareas", "puntos", "rango", "diagnostico", "clases"]);
   igual("hoy entrenaste: el último día de la semana", de("hoy").slice(1), ["3 ejercicios", "Esta semana: 21"]);
@@ -313,18 +325,44 @@ async function pruebaInicio(browser) {
   cierto("el banner saluda con la hora y la fecha de Costa Rica", /^Buen(os días|as tardes|as noches), Oscarov\. /.test(banner.saludo), banner.saludo);
   igual("trae sus atajos", banner.atajos, ["Tareas", "Entrenar", "Jugar", "Repasar mis clases", "Mi cuaderno"]);
   igual("y su ilustración, que es adorno", [banner.dibujo, banner.dibujoOculto], [true, "true"]);
-  const datosDe = (id) => page.$$eval('.jornada-grafico[data-grafico="' + id + '"] .jornada-grafico-datos li', (lis) => lis.map((li) => li.textContent.trim()));
-  igual("los cuatro gráficos", await page.$$eval(".jornada-grafico", (g) => g.map((x) => x.dataset.grafico)), ["semana", "rango", "tareas", "meses"]);
+  const datosDe = (id) => page.$$eval('#jornada-inicio .jornada-grafico[data-grafico="' + id + '"] .jornada-grafico-datos li', (lis) => lis.map((li) => li.textContent.trim()));
+  igual("los cuatro gráficos", await page.$$eval("#jornada-inicio .jornada-grafico", (g) => g.map((x) => x.dataset.grafico)), ["semana", "rango", "tareas", "meses"]);
   igual("la semana, con sus números escritos", await datosDe("semana"), ["Esta semana21 ejercicios", "Hoy3", "Tu mejor día6"]);
   igual("el camino al rango: de Alfil (3000) a Torre (7000) con 3200", await datosDe("rango"), ["Rango actualAlfil", "Hacia Torre5 %", "Te faltan" + new Intl.NumberFormat("es-CR").format(3800) + " puntos"]);
   igual("las tareas por cómo van (la programada no cuenta)", await datosDe("tareas"), ["Completadas1", "Por hacer2", "Vencidas1"]);
   igual("el entrenamiento por mes", await datosDe("meses"), ["Este mes40", "El mes pasado40", "En seis meses240"]);
-  igual("cada gráfico dibuja su SVG, que es adorno", await page.$$eval(".jornada-grafico-dibujo svg", (s) => s.map((x) => x.getAttribute("aria-hidden"))), ["true", "true", "true", "true"]);
-  igual("las barras: una por día, y la de hoy distinta", await page.$$eval('.jornada-grafico[data-grafico="semana"] svg rect', (r) => r.length), 7);
+  igual("cada gráfico dibuja su SVG, que es adorno", await page.$$eval("#jornada-inicio .jornada-grafico-dibujo svg", (s) => s.map((x) => x.getAttribute("aria-hidden"))), ["true", "true", "true", "true"]);
+  igual("las barras: una por día, y la de hoy distinta", await page.$$eval('#jornada-inicio .jornada-grafico[data-grafico="semana"] svg rect', (r) => r.length), 7);
 
   igual("«Hoy te toca» completo pasó a Entrenar", await page.$eval("#progreso-alumno", (s) => s.dataset.jornada), "entrenar");
-  await page.click('.jornada-sala[data-sala="hoy"]');
+  await page.click('#jornada-inicio .jornada-sala[data-sala="hoy"]');
   igual("la sala de hoy lleva a Entrenar", await page.$eval(".jornada-nav button[aria-current='page']", (b) => b.dataset.pestana), "entrenar");
+
+  console.log("\nLas otras pestañas, con la forma del Inicio: banner y salas de color");
+  const cabecera = (p) => page.evaluate((p) => {
+    const c = document.getElementById("jornada-cabecera-" + p);
+    if (!c || !c.checkVisibility()) return "no se ve";
+    return { titulo: c.querySelector(".jornada-clase-titulo").textContent,
+      salas: Array.from(c.querySelectorAll(".jornada-sala")).map((a) => [a.dataset.sala, a.querySelector(".jornada-sala-grande").textContent, a.querySelector(".jornada-sala-det").textContent]) };
+  }, p);
+  const e = await cabecera("entrenar");
+  igual("Entrenar: su banner", e.titulo, "Entrenar");
+  igual("y sus salas, con los números del Inicio", e.salas, [["hoy", "3 ejercicios", "Esta semana: 21"], ["semana", "21 ejercicios", "6 días con entrenamiento"], ["mes", "40 ejercicios", "El mes pasado: 40"], ["diagnostico", "Intermedio", "El " + new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", weekday: "long", day: "numeric", month: "long" }).format(new Date("2026-10-26T16:00:00Z"))]]);
+  igual("los dos gráficos de Entrenar, con sus números", await page.$$eval("#jornada-entrenar-portada .jornada-grafico", (g) => g.map((x) => [x.dataset.grafico, x.querySelector(".jornada-grafico-datos li").textContent.trim(), !!x.querySelector("svg")])),
+    [["semana", "Esta semana21 ejercicios", true], ["meses", "Este mes40", true]]);
+  igual("en Entrenar no se ve la cabecera de otra pestaña", await page.$$eval(".jornada-cabecera", (cs) => cs.filter((c) => c.checkVisibility()).map((c) => c.id)), ["jornada-cabecera-entrenar"]);
+  await page.click(".jornada-nav button[data-pestana='clases']");
+  const cl = await cabecera("clases");
+  igual("Clases: su banner", cl.titulo, "Tus clases");
+  igual("sus salas", cl.salas.map((x) => x[0]), ["clases", "proxima", "repasar", "cuaderno"]);
+  igual("la próxima clase: mañana", [cl.salas[1][1], cl.salas[1][2].startsWith("A las ")], ["Mañana", true]);
+  await page.click(".jornada-nav button[data-pestana='jugar']");
+  const j = await cabecera("jugar");
+  igual("Jugar: banner y salas", [j.titulo, j.salas.map((x) => x[0]), j.salas[0][1]], ["Jugar y competir", ["rango", "puntos", "rival", "competir"], "Alfil"]);
+  await page.click(".jornada-nav button[data-pestana='perfil']");
+  const pf = await cabecera("perfil");
+  igual("Perfil: banner y salas", [pf.titulo, pf.salas.map((x) => x[0]), pf.salas[0][1]], ["Tu perfil", ["puntos", "rango", "diagnostico", "tareas"], new Intl.NumberFormat("es-CR").format(1250)]);
+  igual("en Inicio no hay cabecera de pestaña (su banner es el de la clase)", await page.evaluate(() => { window.PanelJornada.ir("inicio"); return Array.from(document.querySelectorAll(".jornada-cabecera")).filter((c) => c.checkVisibility()).length; }), 0);
   igual("sin errores", errores, []);
   await ctx.close();
 
@@ -332,7 +370,7 @@ async function pruebaInicio(browser) {
   const datos2 = Object.assign(ANOTADO(ALUMNO.id), { lanzar: ["tareas_con_avance", "mi_rango"] });
   const c = await abrir(browser, ALUMNO, datos2, { viewport: { width: 1366, height: 900 } });
   await c.page.waitForTimeout(800);
-  const malas = await c.page.$$eval(".jornada-sala", (as) => as.filter((a) => ["tareas", "rango"].includes(a.dataset.sala)).map((a) => [a.querySelector(".jornada-sala-grande").textContent, a.querySelector(".jornada-sala-det").textContent]));
+  const malas = await c.page.$$eval("#jornada-inicio .jornada-sala", (as) => as.filter((a) => ["tareas", "rango"].includes(a.dataset.sala)).map((a) => [a.querySelector(".jornada-sala-grande").textContent, a.querySelector(".jornada-sala-det").textContent]));
   igual("tareas y rango quedan en «—» y lo dicen", malas, [["—", "No se pudo cargar"], ["—", "No se pudo cargar"]]);
   await c.ctx.close();
 }
@@ -407,6 +445,23 @@ async function pruebaAnimaciones(browser) {
   await b.ctx.close();
 }
 
+async function pruebaPublicas(browser) {
+  console.log("\nLas páginas públicas (el Inicio del sitio) no llevan el tema jornada");
+  for (const [previo, esperado] of [[null, null], ["bosque", "bosque"]]) {
+    const ctx = await browser.newContext({ serviceWorkers: "block" });
+    await ctx.addInitScript((p) => { localStorage.setItem("plataforma_tema_v1", "jornada"); if (p) localStorage.setItem("panel_jornada_tema_previo_v1", p); }, previo);
+    await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+    await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
+    const page = await ctx.newPage();
+    await page.goto(BASE + "/index.html", { waitUntil: "domcontentloaded" });
+    igual("index.html con el tema de antes (" + (previo || "ninguno: Clásico") + ")", await page.evaluate(() => [document.documentElement.getAttribute("data-tema"), document.documentElement.hasAttribute("data-academia")]), [esperado, false]);
+    await ctx.close();
+  }
+  const a = await abrir(browser, ALUMNO, ANOTADO(ALUMNO.id), {}, "", { plataforma_tema_v1: "jornada" });
+  igual("y en la Academia (clases.html) sí lo lleva", await a.page.evaluate(() => [document.documentElement.getAttribute("data-tema"), document.documentElement.hasAttribute("data-academia")]), ["jornada", true]);
+  await a.ctx.close();
+}
+
 async function pruebaHash(browser) {
   console.log("\nclases.html#tus-clases abre la pestaña donde vive");
   const { ctx, page } = await abrir(browser, ALUMNO, ANOTADO(ALUMNO.id), { viewport: { width: 1280, height: 900 } }, "#tus-clases");
@@ -417,7 +472,7 @@ async function pruebaHash(browser) {
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
-    for (const p of [pruebaSinAnotar, pruebaProfesoraAnotada, pruebaPestanas, pruebaCelular, pruebaSecciones, pruebaAspecto, pruebaInicio, pruebaAnimaciones, pruebaHash]) await p(browser);
+    for (const p of [pruebaSinAnotar, pruebaProfesoraAnotada, pruebaPestanas, pruebaCelular, pruebaSecciones, pruebaAspecto, pruebaInicio, pruebaAnimaciones, pruebaPublicas, pruebaHash]) await p(browser);
   } finally {
     await browser.close();
   }

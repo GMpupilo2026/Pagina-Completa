@@ -501,7 +501,7 @@ def guardia():
     login solo acepta un `next` que termine en .html, así que se le devuelve
     la extensión. El login va con ruta absoluta por lo mismo: una relativa
     cambiaría con la profundidad de la carpeta."""
-    return (GUARDIA_INICIO + "<script>(function(){try{if(window.sb||localStorage.getItem("
+    return (GUARDIA_INICIO + "<script>(function(){document.documentElement.setAttribute('data-academia','');try{if(window.sb||localStorage.getItem("
             + json.dumps("sb-" + proyecto_supabase() + "-auth-token") + "))return;}catch(e){return;}"
             + "try{window.stop()}catch(e){}"
             + "var p=location.pathname.replace(/^\\/+/,'');"
