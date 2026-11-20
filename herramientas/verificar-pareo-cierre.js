@@ -147,7 +147,7 @@ async function pruebaPagina(browser) {
   ok(todos[0].rondas[0].incidencias.some((x) => x.tipo === "correccion" && /por una sanción/.test(x.texto)), "el resultado cambia y queda la corrección", JSON.stringify(todos[0].rondas[0].incidencias));
 
   console.log("\n=== Las planillas de anotación ===");
-  await page.click("#pi-planillas-anotacion");
+  await P.clicEnMenu(page, "#pi-planillas-anotacion");
   const planillas = await page.$$eval("#pi-firmas .pi-planilla", (l) => l.map((x) => [x.textContent, x.querySelectorAll("tbody tr").length]));
   igual("una planilla por mesa, con 30 filas (60 jugadas)", planillas.map((x) => x[1]), [30, 30]);
   const lados = await page.$$eval("#pi-firmas .pi-planilla:first-child .pi-pl-lado", (l) => l.map((x) => [...x.children].map((c) => c.textContent)));
@@ -185,7 +185,7 @@ async function pruebaPagina(browser) {
   await page.click('[data-ficha="rondas"]');
   await page.click("#pi-emparejar");
   await page.waitForFunction(() => document.querySelector("#pi-ronda section select"));
-  await page.click("#pi-adjunto");
+  await P.clicEnMenu(page, "#pi-adjunto");
   await page.waitForSelector(dialogo);
   await page.fill(dialogo + ' [name="arbitro"]', "PRUEBA ADJUNTA");
   await page.click(dialogo + " [data-avisos-aceptar]");

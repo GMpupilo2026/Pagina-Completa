@@ -52,7 +52,7 @@ async function prueba(browser) {
   await page.click("#pi-emparejar");
   await page.waitForSelector("#pi-enc-0-t0");
   await page.selectOption("#pi-enc-0-t0", "1-0");
-  await page.click('#pi-ronda button:has-text("Ver desde el celular")');
+  await P.clicEnMenu(page, '#pi-ronda button:has-text("Ver desde el celular")');
   await page.check("#pi-ver-en-vivo");
   await page.waitForFunction(() => window.__enviados.some((x) => /^pareo-vivo-/.test(x.canal)));
   // Otro resultado: lo que le llega al celular después.

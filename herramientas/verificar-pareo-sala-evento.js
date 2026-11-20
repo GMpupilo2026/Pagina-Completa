@@ -85,7 +85,7 @@ async function pruebaSala(browser) {
   igual("«Numerar seguido»: el SUB-12 empieza en la mesa 5", await page.$$eval("#pi-sala-tabla tbody tr", (l) => l.map((f) => f.lastElementChild.textContent)), ["4", "7"]);
   await page.click('[data-ficha="rondas"]');
   igual("la ronda dice la mesa de la sala", await page.$$eval("#pi-ronda table tbody tr[data-nombres] td:first-child", (l) => l.map((x) => x.textContent)), ["5", "6", "7"]);
-  await page.click('#pi-ronda button:has-text("Plantilla para la pared")');
+  await P.clicEnMenu(page, '#pi-ronda button:has-text("Plantilla para la pared")');
   igual("la plantilla de la pared, también", await page.$$eval("#pi-plantilla .pi-plantilla-num", (l) => l.map((x) => x.textContent)), ["5", "6", "7"]);
   await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
 

@@ -66,12 +66,12 @@ async function pruebaPrincipal(browser) {
     await sembrar(torneo())(p);
   });
   await page.click('[data-ficha="rondas"]');
-  await page.click("#pi-adjunto");
+  await P.clicEnMenu(page, "#pi-adjunto");
   await page.waitForSelector(dialogo);
   await page.click(dialogo + " [data-avisos-aceptar]");
   await page.waitForFunction(() => /Escribe el nombre del árbitro adjunto/.test(document.body.textContent)).catch(() => {});
   ok(/Escribe el nombre del árbitro adjunto/.test(await page.textContent("body")) && !(await page.$(".pi-adjunto-url")), "sin nombre no se crea");
-  await page.click("#pi-adjunto");
+  await P.clicEnMenu(page, "#pi-adjunto");
   await page.waitForSelector(dialogo);
   await page.fill(dialogo + ' [name="arbitro"]', "PRUEBA ADJUNTA");
   await page.click(dialogo + " [data-avisos-aceptar]");
@@ -209,7 +209,7 @@ async function pruebaBase(browser) {
   await page.click('[data-ficha="rondas"]');
   await page.waitForSelector(".pi-adjunto-codigo");
   igual("la tarjeta del adjunto muestra su código para escribirlo a mano", await page.textContent(".pi-adjunto-codigo strong"), "PRUE-BA23");
-  await page.click("#pi-adjunto");
+  await P.clicEnMenu(page, "#pi-adjunto");
   await page.waitForSelector(dialogo);
   await page.fill(dialogo + ' [name="arbitro"]', "PRUEBA SEGUNDA");
   await page.fill(dialogo + ' [name="desde"]', "3");
