@@ -11,9 +11,14 @@ function dobleSupabase() {
   window.__enviados = [];
   const handlers = {};
   window.__llega = (canal, evento, payload) => (handlers[canal + "|" + evento] || []).forEach((f) => f({ payload }));
+  // Los canales que la página abrió (para esperar a que escuche antes de tocarlo).
+  window.__canales = new Set();
   window.sb = {
+    removeChannel(c) { if (c && c.__nombre) window.__canales.delete(c.__nombre); return Promise.resolve("ok"); },
     channel(nombre) {
+      window.__canales.add(nombre);
       return {
+        __nombre: nombre,
         on(tipo, filtro, f) { (handlers[nombre + "|" + filtro.event] = handlers[nombre + "|" + filtro.event] || []).push(f); return this; },
         subscribe(cb) { if (cb) setTimeout(() => cb("SUBSCRIBED"), 0); return this; },
         send(m) { window.__enviados.push({ canal: nombre, evento: m.event, payload: m.payload }); return Promise.resolve("ok"); },

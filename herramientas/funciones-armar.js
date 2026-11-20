@@ -119,7 +119,7 @@ const FUNCIONES = {
   // arriba de los correos es la de siempre. Ver su cabecera.
   // Los avisos push de quien sigue a un jugador usan el mismo cifrado que
   // los de la Academia (notificar): una sola copia en _compartido.
-  "pareo-publicar": ["marca-correo.ts", "webpush.ts", "pareo-adjuntos.ts"],
+  "pareo-publicar": ["marca-correo.ts", "webpush.ts", "pareo-adjuntos.ts", "toque-vivo.ts"],
   "notificar": ["webpush.ts"],
   // Los torneos próximos de ajedrezcostarica.com, una vez al día (pg_cron,
   // con su secreto). Su leer.ts es suyo. Ver su cabecera.
@@ -138,7 +138,7 @@ const FUNCIONES = {
   // Fair Play lee los torneos de Pareo Integral desde lo publicado (partidasDePareo); fuente-pareo.ts trae
   // con él la lectura compartida y sus dos ayudantes.
   "centroamericano-fair-play": ["fuente-pareo.ts", "lecturas-cache.ts", "chess-results-ingreso.ts", "inscritos-fed.ts"],
-  "centroamericano-mesa": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "pareos-publicos.ts", "inscritos-fed.ts", "fuente-pareo.ts", "pareo-adjuntos.ts"],
+  "centroamericano-mesa": ["chess-results-ingreso.ts", "avance-ronda.ts", "drive-puente.ts", "lecturas-cache.ts", "pareos-publicos.ts", "inscritos-fed.ts", "fuente-pareo.ts", "pareo-adjuntos.ts", "toque-vivo.ts"],
 };
 
 function armar(nombre) {

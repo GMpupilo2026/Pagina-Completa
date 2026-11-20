@@ -3451,11 +3451,30 @@
     // organización vincula el torneo con esta pestaña abierta). Lo ajusta leerCola.
     cadaCola(estado.adjuntos.mesa ? ESPERA_COLA_MESA : activos.length ? ESPERA_COLA : ESPERA_COLA_LENTA);
     leerCola();
+    escucharCola(v);
     return true;
+  }
+  // El toque de la Mesa del árbitro: cuando un árbitro de la Mesa deja algo en
+  // la cola, la Edge Function centroamericano-mesa toca el canal
+  // `pareo-cola-<id publicado>` (sin el dato) y esta pestaña la lee en el
+  // momento, en vez de esperar su vuelta. Si el toque no llega, la vuelta
+  // sigue. Ver «El resultado de la mesa, al público al instante».
+  async function escucharCola(v) {
+    const id = v && v.publicado && v.publicado.id;
+    if (!estado.adjuntos || !id || estado.adjuntos.canalCola) return;
+    estado.adjuntos.canalCola = "abriendo";
+    try { await PareoVer.cargarSupabase(); }
+    catch (e) { if (estado.adjuntos) estado.adjuntos.canalCola = null; return; }
+    if (!estado.adjuntos || estado.adjuntos.canalCola !== "abriendo") return;
+    const canal = window.sb.channel("pareo-cola-" + id);
+    canal.on("broadcast", { event: "cola" }, () => leerCola());
+    canal.subscribe();
+    estado.adjuntos.canalCola = canal;
   }
   function desconectarAdjuntos() {
     if (estado.adjuntos) {
       for (const canal of estado.adjuntos.canales.values()) canal.unsubscribe();
+      if (estado.adjuntos.canalCola && estado.adjuntos.canalCola.unsubscribe) estado.adjuntos.canalCola.unsubscribe();
       clearInterval(estado.adjuntos.reloj);
     }
     estado.adjuntos = null;
@@ -3486,8 +3505,10 @@
   // árbitro con torneos de Pareo Integral»).
   const adjuntoDeMesa = (x) => ({ codigo: "a:" + x.asignacion_id, nombre: String(x.nombre || "").slice(0, 80), rango: x.desde + "-" + x.hasta, activo: true, mesa: true });
   let leyendoCola = false;
+  let otraVezCola = false;
   async function leerCola() {
-    if (leyendoCola || !estado.adjuntos || !window.PareoPublicar) return;
+    if (leyendoCola) { otraVezCola = true; return; }
+    if (!estado.adjuntos || !window.PareoPublicar) return;
     const idT = estado.adjuntos.idTorneo;
     const v0 = torneoDelAdjunto();
     if (!v0 || !v0.publicado) return;
@@ -3509,10 +3530,15 @@
         ultimo = x.id;
       }
       if (ultimo) await PareoPublicar.colaBorrar(v0.publicado, ultimo);
-    } finally { leyendoCola = false; }
+    } finally {
+      leyendoCola = false;
+      // Un toque que llegó mientras se leía: otra lectura, un poco después
+      // (y así una ráfaga de toques no se vuelve una ráfaga de lecturas).
+      if (otraVezCola) { otraVezCola = false; setTimeout(leerCola, 1500); }
+    }
   }
   // La lista de enlaces de adjunto, a la base apenas cambia (sin esperar los
-  // 30 segundos de la publicación): un enlace nuevo ya anota por la base.
+  // 5 segundos de la publicación): un enlace nuevo ya anota por la base.
   function sincronizarAdjuntos(v) {
     if (v && v.publicado && window.PareoPublicar) PareoPublicar.adjuntos(v).catch(() => {});
   }
@@ -6812,13 +6838,17 @@
 
   // ---------- Publicar en «Torneos en Pareo Integral» ----------
   // El torneo se publica sin cuenta (js/pareo/publicar.js) y queda con su
-  // clave (`t.publicado`): cada vez que se guarda, a los 30 segundos, se pone
-  // al día solo (con una sola llamada aunque se anoten diez resultados en ese
-  // rato). «Dejar de publicar» lo quita del espacio público. Antes de tener
-  // jugadores se publica como anuncio (`t.anuncio`), y se puede abrir la
-  // inscripción previa (`t.inscripcion`): lo que llega se lee acá con la clave
-  // y entra a la lista solo si se acepta.
-  const ESPERA_PUBLICAR = 30000;
+  // clave (`t.publicado`): cada vez que se guarda, a los 5 segundos, se pone
+  // al día solo (con una sola llamada aunque se anoten varios resultados en ese
+  // rato), y la función toca a las páginas públicas que lo tienen abierto para
+  // que lo vuelvan a leer ya. Eran 30 segundos; con la vuelta de un minuto de
+  // la página pública, un resultado tardaba hasta minuto y medio en verse
+  // (ver «El resultado de la mesa, al público al instante»). «Dejar de
+  // publicar» lo quita del espacio público. Antes de tener jugadores se
+  // publica como anuncio (`t.anuncio`), y se puede abrir la inscripción
+  // previa (`t.inscripcion`): lo que llega se lee acá con la clave y entra a
+  // la lista solo si se acepta.
+  const ESPERA_PUBLICAR = 5000;
   // En un evento de la Mesa del árbitro las tablets leen las mesas de lo
   // publicado: lo que pone el principal tiene que llegarles en segundos
   // (ver «El resultado del principal llega solo a las tablets»). Sigue siendo
