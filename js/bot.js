@@ -632,6 +632,11 @@ const claseOpcion = (sel) => "w-full text-left px-4 py-3 rounded-xl border-2 tex
          : "border-brand-100 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300");
 
 /* ---------------- Jugar ---------------- */
+/* El profe como rival (js/rival-profe.js): solo para las cuentas en la prueba;
+   a las demás estas llamadas no les hacen nada. */
+const rival = (que, ...args) => (window.RivalProfe && RivalProfe.activo ? RivalProfe[que](...args) : undefined);
+const ultimaAnotada = () => historial[historial.length - 1] || "";
+
 function prepararVistaJuego(m) {
     $("setup-view").classList.add("hidden");
     $("game-view").classList.remove("hidden");
@@ -653,13 +658,14 @@ function empezar() {
     pensando = false;
     posiciones.reiniciar();
 
-    if (m.tablero === "duelo") { empezarDuelo(); return; }
+    if (m.tablero === "duelo") { rival("alEmpezar", { miColor, nivel, empiezaHumano: true }, null); empezarDuelo(); return; }
 
     ad = m.crear();
     anotarPosicion();
     montarTablero(m);
     pintarHistorial();
     actualizar();
+    rival("alEmpezar", { miColor, nivel, empiezaHumano: ad.turno() === miColor }, ad);
     if (ad.turno() !== miColor) setTimeout(turnoDelBot, 500);
 }
 
@@ -731,6 +737,7 @@ function alMover(info) {
         anotar(info, info);
         refrescar();
         anotarPosicion();
+        rival("trasTuJugada", ad, ultimaAnotada());
         if (revisarFinal()) return;
         setTimeout(turnoDelBot, BotOscar.demora(nivel));
         return;
@@ -744,6 +751,7 @@ function alMover(info) {
     anotar(info, info);
     refrescar();
     anotarPosicion();
+    rival("trasTuJugada", ad, ultimaAnotada());
     if (revisarFinal()) return;
     setTimeout(turnoDelBot, BotOscar.demora(nivel));
 }
@@ -753,13 +761,16 @@ function turnoDelBot() {
     pensando = true;
     actualizar();
     if (MODALIDADES[modalidad].tablero === "cartas") jugarCartaBot(ad.motor, ad.turno());
-    const jugada = BotOscar.jugar(ad, nivel);
+    // El profe, en los niveles bajos, a veces cambia su jugada por un regalo.
+    const normal = BotOscar.jugar(ad, nivel);
+    const jugada = rival("elegirJugada", ad, normal) || normal;
     pensando = false;
     if (!jugada) { revisarFinal(); return; }
     const hecho = ad.jugar(jugada);
     anotar(hecho, jugada);
     refrescar();
     anotarPosicion();
+    rival("trasSuJugada", ad, ultimaAnotada());
     if (revisarFinal()) return;
     // "Doble turno" (Ajedrez de Cartas) le devuelve el turno a quien acaba de
     // mover: si sigue siendo el del bot, que juegue otra vez.
@@ -852,6 +863,7 @@ function revisarFinal() {
     if (!d.fin || d.texto === "Tablas") d = tablasPorReglamento() || d;
     if (!d.fin) return false;
     terminada = true;
+    rival("alTerminar", d.ganador, miColor);
     const gane = d.ganador === miColor;
     avisar(d.ganador === null
         ? `${d.texto}. La partida terminó en tablas.`
@@ -900,6 +912,7 @@ function jugarEscrita() {
     anotar(hecho, {});
     refrescar();
     anotarPosicion();
+    rival("trasTuJugada", ad, ultimaAnotada());
     if (revisarFinal()) return;
     setTimeout(turnoDelBot, BotOscar.demora(nivel));
 }
@@ -972,6 +985,7 @@ async function avanzarDuelo() {
         board.render();
         if (res.gameOver) {
             terminada = true;
+            rival("alTerminar", res.result === "draw" ? null : res.result, miColor);
             const gane = res.result === miColor;
             avisar(res.result === "draw" ? "Tablas." : (gane ? "🎉 ¡Ganaste!" : "Ganó el bot — a la próxima."), gane ? "logro" : "fin");
             $("duelo-controles").classList.add("hidden");
@@ -1012,6 +1026,7 @@ $("rendirse-btn").addEventListener("click", async () => {
     // Mientras el diálogo estaba abierto la partida pudo terminar sola.
     if (terminada) return;
     terminada = true;
+    rival("alRendirte");
     avisar("Te rendiste. Ganó el bot.", "fin");
 });
 $("ciegas-btn").addEventListener("click", jugarEscrita);
