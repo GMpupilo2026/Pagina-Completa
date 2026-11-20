@@ -214,7 +214,13 @@
     // con letra más grande, el QR y la ilustración más grandes, y el texto de
     // lado de arriba abajo.
     const grande = !!(diseno.dorso && diseno.dorso.grande);
-    const ladoQr = (grande ? 30 : 25) * s;
+    // `dorso.qrEscala`: el QR del dorso más grande (el de 5,5 × 9,5 de la PZ:
+    // 1,25). La ilustración de al lado se angosta para no tocarlo.
+    const qrEscala = Math.max(1, Number(diseno.dorso && diseno.dorso.qrEscala) || 1);
+    const ladoQr = (grande ? 30 : 25) * s * qrEscala;
+    const anchoIl = Math.min(40, (96 * sx - ladoQr) / sx - 1.5 - 21);
+    // `escalaLetras`: el nombre y los renglones de abajo, un poco más grandes.
+    const le = Math.max(1, Number(diseno.escalaLetras) || 1);
     return {
       W, H, s, sx, sy,
       logoIzq: caja(5, 4, 30, 15), logoDer: caja(65, 4, 30, 15),
@@ -229,8 +235,8 @@
       // nombre debajo y los detalles centrados debajo del nombre.
       // (más grande desde el 20/11: aprovecha el espacio entre el título y el nombre)
       fotoCentro: abajo ? caja(19, 22, 62, 72) : caja(30, 38, 40, 48),
-      nombreCentro: abajo ? { y1: 101.5 * sy, y2: 109.5 * sy, solo: 105.5 * sy, tam: 18 * s, max: 90 * sx } : { y1: 92 * sy, y2: 100 * sy, solo: 96 * sy, tam: 18 * s, max: 90 * sx },
-      detallesCentro: abajo ? { y: 115.5 * sy, paso: 4.4 * sy, tam: 8.5 * s, max: 88 * sx } : { y: 106 * sy, paso: 4.4 * sy, tam: 8.5 * s, max: 88 * sx },
+      nombreCentro: abajo ? { y1: 101.5 * sy, y2: 109.5 * sy, solo: 105.5 * sy, tam: 18 * s * le, max: 90 * sx } : { y1: 92 * sy, y2: 100 * sy, solo: 96 * sy, tam: 18 * s, max: 90 * sx },
+      detallesCentro: abajo ? { y: 115.5 * sy, paso: 4.4 * sy, tam: 8.5 * s * le, max: 88 * sx } : { y: 106 * sy, paso: 4.4 * sy, tam: 8.5 * s, max: 88 * sx },
       franja: abajo ? caja(0, 126, 100, 14) : caja(0, 115.5, 100, 14),
       icono: { lado: 10 * s, margen: 3 * sx },
       dorsoLogoIzq: grande ? caja(4, 4.5, 22, 9.5) : caja(4, 3, 22, 10), dorsoLogoDer: grande ? caja(74, 4.5, 22, 9.5) : caja(74, 3, 22, 10),
@@ -243,7 +249,7 @@
       patrocinador: caja(72, 48, 24, 22),
       // La ilustración del dorso, abajo y pegada al QR: la profe Karina lo
       // muestra con la mano (Eliminatoria JDN de PZ).
-      dorsoIlustracion: grande ? caja(21, 77, 40, 49) : linea ? caja(24, 68, 40, 60 - sube) : caja(24, 64, 40, 64 - sube),   // termina antes del texto del QR y debajo del horario
+      dorsoIlustracion: grande ? caja(21, 77, anchoIl, 49) : linea ? caja(24, 68, 40, 60 - sube) : caja(24, 64, 40, 64 - sube),   // termina antes del texto del QR y debajo del horario
       // Cuadrado siempre (con el lado chico de la escala): en un gafete que no
       // es de 10 × 14, como el de 5,5 × 8,5, salía más alto que ancho y le
       // sobraba blanco abajo. Pegado a la misma esquina de abajo a la derecha.

@@ -101,6 +101,21 @@
     "Árbitro principal | Angulo Cubero | Oscar | Árbitro Internacional (IA) | oscar-arbitro",
     "Asistente | Mora Chavarría | Sebastián | Gracias por su colaboración | oscar-te-toca",
   ].join("\n");
+  /* La misma Eliminatoria en 5,5 × 9,5 cm, en hoja carta horizontal (4 × 2,
+     8 por hoja): lo pidió el dueño el 20/11, con las letras un poco más
+     grandes y el QR del dorso también. Otro nombre, para no pisar el de
+     5,5 × 8,5 (ni su PDF). Ver «Los gafetes de 5,5 × 9,5 en hoja horizontal». */
+  async function disenoJdnPzAlto() {
+    const d = await disenoJdnPz();
+    d.nombreDiseno = "Eliminatoria JDN PZ 2026 - 5,5x9,5";
+    d.tamano = { ancho: 55, alto: 95 };
+    d.escalaLetras = 1.15;
+    d.dorso.qrEscala = 1.25;
+    // Volteando por el borde corto, el corrimiento de la Brother cae en otro
+    // eje: sin ajuste medido todavía, calle de 8 mm y sangrado de 4.
+    d.salida = { separarPor: "", formato: "carta", horizontal: true, dorsoX: 0, dorsoY: 0, cortesCompletos: true, calle: 8 };
+    return d;
+  }
   const POSES_KARINA = ["presentando", "te-toca", "reloj-de-ajedrez", "caballo", "muy-bien", "tu-puedes", "campeones", "hola"];
   async function disenoJdnPz() {
     const d = disenoNuevo();
@@ -861,9 +876,12 @@
      izquierda del frente queda a la derecha del dorso. `dorsoX`/`dorsoY`
      corren los dorsos (mm) por si la impresora no calza exacto. Las marcas
      de corte van en los márgenes del frente, nunca encima de un gafete. */
-  const CARTA = { w: 215.9, h: 279.4 }, MARGEN_CASA = 5;
+  const CARTA_V = { w: 215.9, h: 279.4 }, MARGEN_CASA = 5;
   function hojaCarta(d) {
     const w = d.tamano.ancho, h = d.tamano.alto;
+    // `salida.horizontal`: la hoja acostada (27,94 × 21,59). Los dorsos van en
+    // espejo igual (columna al revés): se imprime volteando por el borde CORTO.
+    const CARTA = d.salida.horizontal ? { w: CARTA_V.h, h: CARTA_V.w } : CARTA_V;
     // `salida.calle`: los mm de papel entre gafete y gafete. Sin calle, los
     // gafetes van pegados y un solo corte separa dos; con calle, cada uno
     // tiene sus cuatro cortes y las franjas del borde se prolongan media
@@ -994,7 +1012,7 @@
       $("g-resultado-texto").textContent = carta
         ? `${todos.length} gafetes en ${hojas} ${hojas === 1 ? "hoja carta" : "hojas carta"} (${H.porHoja} por hoja), frente y dorso` +
           (archivos.length > 1 ? `, en ${archivos.length} PDF dentro de un .zip` : "") +
-          ". Imprímelo al 100 % (tamaño real, sin «Ajustar a la página») y por ambos lados, volteando por el borde largo. Corta por las marcas."
+          `. Imprímelo al 100 % (tamaño real, sin «Ajustar a la página») y por ambos lados, volteando por el borde ${diseno.salida.horizontal ? "corto (la hoja va acostada)" : "largo"}. Corta por las marcas.`
         : `${todos.length} gafetes (${total} páginas de ${String(diseno.tamano.ancho / 10).replace(".", ",")} × ${String(diseno.tamano.alto / 10).replace(".", ",")} cm)` +
           (archivos.length > 1 ? `, en ${archivos.length} PDF dentro de un .zip` : "") +
           `. Cada página es una imagen de fondo a ${DPI} dpi y el texto en curvas, sin marcas de corte.`;
@@ -1140,6 +1158,10 @@
     $("g-ejemplo-pz").addEventListener("click", async () => {
       if (!(await Avisos.confirmar("Se reemplaza el diseño actual por el de los gafetes de la Eliminatoria JDN de Pérez Zeledón 2026.", { titulo: "¿Partir de la Eliminatoria JDN PZ 2026?", aceptar: "Usar ese diseño" }))) return;
       diseno = await disenoJdnPz(); recursos = null; if (datos) detectarColores(); llenarFormulario(); await guardarLocal(diseno); refrescar();
+    });
+    $("g-ejemplo-pz-alto").addEventListener("click", async () => {
+      if (!(await Avisos.confirmar("Se reemplaza el diseño actual por el de la Eliminatoria JDN PZ 2026 en 5,5 × 9,5 cm, 8 por hoja carta horizontal.", { titulo: "¿Partir de la Eliminatoria JDN PZ en 5,5 × 9,5?", aceptar: "Usar ese diseño" }))) return;
+      diseno = await disenoJdnPzAlto(); recursos = null; if (datos) detectarColores(); llenarFormulario(); await guardarLocal(diseno); refrescar();
     });
     $("g-pareo-pz").addEventListener("click", traerJdnPz);
     $("g-fotos").addEventListener("change", (e) => { const l = [...e.target.files]; e.target.value = ""; if (l.length) subirFotos(l); });

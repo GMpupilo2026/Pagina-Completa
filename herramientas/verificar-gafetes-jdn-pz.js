@@ -403,6 +403,35 @@ async function aceptar(page, boton) {
   const ds2 = ubicar(cont2(pags2[1])), fr2 = ubicar(cont2(pags2[0]));
   igual("«a la derecha 1,5 mm» corre solo los dorsos", [Math.round((ds2[0][2] - ds[0][2]) * 10) / 10, Math.round((fr2[0][2] - fr[0][2]) * 10) / 10], [1.5, 0]);
 
+  // La variante de 5,5 × 9,5 en hoja carta horizontal (pedido del dueño el
+  // 20/11): otro diseño con otro nombre, 8 por hoja (4 × 2), los dorsos en
+  // espejo para voltear por el borde corto, letras y QR más grandes.
+  console.log("\nLa variante de 5,5 × 9,5 en hoja horizontal");
+  await page.click("#g-aprobar");
+  await aceptar(page, "Cambiar el diseño");
+  await page.click("#g-ejemplo-pz-alto");
+  await aceptar(page, "Usar ese diseño");
+  const alto = await page.evaluate(() => { const d = window.Gafetes._estado().diseno; return [d.nombreDiseno, d.tamano.alto, d.salida.horizontal, d.escalaLetras, d.dorso.qrEscala]; });
+  igual("otro nombre, 9,5 cm de alto, hoja acostada, letras y QR más grandes", alto, ["Eliminatoria JDN PZ 2026 - 5,5x9,5", 95, true, 1.15, 1.25]);
+  await page.click("#g-aprobar");
+  const [hoja3] = await Promise.all([page.waitForEvent("download", { timeout: 180000 }), page.click("#g-crear")]);
+  igual("su PDF tiene otro nombre (no pisa el de 5,5 × 8,5)", hoja3.suggestedFilename(), "Gafetes carta - Eliminatoria JDN PZ 2026 - 5,5x9,5.pdf");
+  const hp3 = fs.readFileSync(await hoja3.path()).toString("latin1");
+  const objs3 = new Map([...hp3.matchAll(/(\d+) 0 obj\n([\s\S]*?)\nendobj\n/g)].map((m) => [Number(m[1]), m[2]]));
+  const pags3 = [...objs3.values()].filter((o) => /\/Type \/Page\b/.test(o));
+  igual("la hoja va acostada (27,94 × 21,59 cm)", [...new Set(pags3.map((p) => (p.match(/\/MediaBox \[([^\]]+)\]/) || [])[1]))], ["0 0 792 612"]);
+  const cont3 = (p) => { const o = objs3.get(Number(p.match(/\/Contents (\d+) 0 R/)[1])); const i = o.indexOf("stream\n"), largo = Number(o.match(/\/Length (\d+)/)[1]); return require("zlib").inflateSync(Buffer.from(o.slice(i + 7, i + 7 + largo), "latin1")).toString("latin1"); };
+  const fr3 = ubicar(cont3(pags3[0])), ds3 = ubicar(cont3(pags3[1]));
+  igual("cada cara mide 5,5 × 9,5 cm", [...new Set([...fr3, ...ds3].map((u) => u[0].toFixed(1) + "×" + u[1].toFixed(1)))], ["55.0×95.0"]);
+  // 4 columnas con calles de 8 mm: (279,4 − 4 × 55 − 3 × 8) / 2 = 17,7 mm.
+  igual("cuatro por fila, con calles de 8 mm", fr3.slice(0, 4).every((f, k) => Math.abs(f[2] - (17.7 + 63 * k)) < 0.05), true);
+  igual("cada dorso, en el espejo de su frente (volteando por el borde corto)", fr3.every((f, k) => Math.abs(f[2] + ds3[k][2] - (279.4 - 55)) < 0.05 && Math.abs(f[3] - ds3[k][3]) < 0.05), true);
+  await page.click("#g-aprobar");
+  await aceptar(page, "Cambiar el diseño");
+  await page.click("#g-ejemplo-pz");
+  await aceptar(page, "Usar ese diseño");
+  await page.click("#g-aprobar");
+
   console.log("\nEl PDF para la imprenta");
   await page.click("#g-aprobar");
   await aceptar(page, "Cambiar el diseño");
