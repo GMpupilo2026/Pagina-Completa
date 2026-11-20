@@ -239,11 +239,11 @@
       tabla: caja(22, 16, 48, 104),
       // Con `dorso.horarioCentro`: el horario centrado en lo que queda libre
       // entre el texto de lado y el borde derecho (Eliminatoria JDN de PZ).
-      tablaCentro: grande ? caja(22, 20.5, 75, 107) : linea ? caja(33, 21, 48, 99) : caja(33, 16, 48, 104),
+      tablaCentro: grande ? caja(22, 17, 75, 107) : linea ? caja(33, 21, 48, 99) : caja(33, 16, 48, 104),
       patrocinador: caja(72, 48, 24, 22),
       // La ilustración del dorso, abajo y pegada al QR: la profe Karina lo
       // muestra con la mano (Eliminatoria JDN de PZ).
-      dorsoIlustracion: grande ? caja(21, 79, 40, 47) : linea ? caja(24, 68, 40, 60 - sube) : caja(24, 64, 40, 64 - sube),   // termina antes del texto del QR y debajo del horario
+      dorsoIlustracion: grande ? caja(21, 77, 40, 49) : linea ? caja(24, 68, 40, 60 - sube) : caja(24, 64, 40, 64 - sube),   // termina antes del texto del QR y debajo del horario
       // Cuadrado siempre (con el lado chico de la escala): en un gafete que no
       // es de 10 × 14, como el de 5,5 × 8,5, salía más alto que ancho y le
       // sobraba blanco abajo. Pegado a la misma esquina de abajo a la derecha.
@@ -630,9 +630,12 @@
       if (ancho > V.h) tam *= V.h / ancho;
       escribir(recursos.titulo, g.vertical, tam, { x: V.x + k * tam * PT, y: V.y + V.h / 2, vertical: true, color, espaciado: 0.02 });
     }
-    // El renglón de arriba del horario (`dorso.lineaArriba`: el lugar).
+    // El renglón del lugar (`dorso.lineaArriba`): con el dorso grande, arriba
+    // y centrado entre los dos logos; si no, encima del horario.
     if (diseno.dorso.lineaArriba) {
-      escribir(recursos.texto, String(diseno.dorso.lineaArriba), 7.6 * M.s, { x: T.x + T.w / 2, y: T.y - 1.8 * M.sy, alinear: "centro", color, max: T.w + 8 * M.sx });
+      const L = String(diseno.dorso.lineaArriba);
+      if (M.tablaEscala > 1) escribir(recursos.texto, L, 7.6 * M.s, { x: M.W / 2, y: 10.6 * M.sy, alinear: "centro", color, max: 48 * M.sx });
+      else escribir(recursos.texto, L, 7.6 * M.s, { x: T.x + T.w / 2, y: T.y - 1.8 * M.sy, alinear: "centro", color, max: T.w + 8 * M.sx });
     }
     if (filas.length) {
       const tamEnc = Math.min(8.5 * M.s * M.tablaEscala, altoEnc / PT * 0.62), tamFila = Math.min(7.6 * M.s * M.tablaEscala, altoFila / PT * 0.62);
@@ -647,7 +650,11 @@
         const y = T.y + altoEnc + k * altoFila + altoFila / 2 + kT * tamFila * PT / 2;
         f.slice(0, 3).forEach((celda, i) => {
           const t = String(celda || "").trim();
-          if (t) escribir(recursos.texto, t, tamFila, i === 0
+          // Con el dorso grande, todas las columnas centradas (también la de
+          // las actividades): se ve más ordenado (lo pidió el dueño).
+          if (t) escribir(recursos.texto, t, tamFila, i === 0 && M.tablaEscala > 1
+            ? { x: xc + columnas[i] / 2, y, alinear: "centro", color, max: columnas[i] - 1.5 * M.s }
+            : i === 0
             ? { x: xc + 1.5 * M.s, y, color, max: columnas[i] - 2.5 * M.s }
             : { x: xc + columnas[i] / 2, y, alinear: "centro", color: NEGRO_TEXTO, max: columnas[i] - 1.5 * M.s });
           xc += columnas[i];

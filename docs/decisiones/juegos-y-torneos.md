@@ -16386,8 +16386,9 @@ sus pts y su puesto actual».
   En el frente, el título va **entre los dos logos** (`tituloEntreLogos`), la
   franja del club **justo en el borde de abajo** (`franjaAbajo`) y con eso la
   foto crece a 62 × 72 en la escala de 10 × 14 (unos 3,4 × 4,4 cm); el lugar
-  («Hotel del Sur, Pérez Zeledón») pasa al dorso, **arriba del horario**
-  (`dorso.lineaArriba`). En el dorso (`dorso.grande`), la tabla del horario va
+  («Hotel del Sur, Pérez Zeledón») pasa al dorso, **arriba y centrado entre
+  los dos logos** (`dorso.lineaArriba`), y en el horario todas las columnas van
+  centradas, también la de las actividades («para que se vea ordenado»). En el dorso (`dorso.grande`), la tabla del horario va
   más ancha y con la letra un 25 % más grande, el QR crece (30 en vez de 25),
   el texto de lado va de arriba abajo, y su franja de abajo mide lo mismo que la
   del frente y llega al borde: a contraluz coinciden y el corte pasa igual por
