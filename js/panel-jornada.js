@@ -122,6 +122,7 @@
                 else { delete s.dataset.jornada; delete s.dataset.grupo; }
             });
         }
+        llenarPortada();
     }
 
     function buscando() {
@@ -132,12 +133,17 @@
     function aplicar() {
         if (!activo) return;
         const todo = buscando();
+        // Entrenar sin sección elegida abre con su portada, no con todas las tarjetas.
+        const portada = actual === "entrenar" && !seccion;
         document.body.classList.toggle("jornada-buscando", todo);
+        document.body.classList.toggle("jornada-con-seccion", !!seccion);
         document.querySelectorAll("[data-jornada]").forEach((el) => {
             const enLaPestana = pestanasDe(el).includes(actual);
             // Con una sección elegida, de los grupos de tarjetas solo queda ese.
             const otroGrupo = !!(seccion && el.dataset.grupo && el.dataset.grupo !== seccion);
-            el.classList.toggle("jornada-fuera", !todo && (!enLaPestana || otroGrupo));
+            const tapadoPorPortada = portada && !!el.dataset.grupo;
+            const portadaFuera = el.hasAttribute("data-portada") && !!seccion;
+            el.classList.toggle("jornada-fuera", !todo && (!enLaPestana || otroGrupo || tapadoPorPortada || portadaFuera));
         });
         /* La pestaña abierta lleva aria-current="page"; con una sección suya
            elegida, la sección es la página y la pestaña queda en "true". */
@@ -188,7 +194,7 @@
        de otra. Nada se esconde para esperar: la clase se quita sola y, sin
        ella, todo está donde siempre. */
     const conMovimiento = () => { try { return window.matchMedia("(prefers-reduced-motion: no-preference)").matches; } catch (e) { return false; } };
-    const PIEZAS = ".jornada-clase, .jornada-sala, .jornada-inicio-lado, .grid > a, .grid > div:not(.contents), .grid > .contents > *";
+    const PIEZAS = ".jornada-clase, .jornada-sala, .jornada-portada-carta, .jornada-grafico, .jornada-inicio-lado, .grid > a, .grid > div:not(.contents), .grid > .contents > *";
     const TOPE_ESCALON = 5; // la sexta pieza y las siguientes entran juntas: la última no espera
     let quitarEntrada = 0;
 
@@ -296,7 +302,8 @@
             todo.type = "button";
             todo.dataset.seccion = "";
             todo.dataset.pestanaDe = pestana;
-            todo.textContent = "Todo";
+            // En Entrenar, la pestaña entera es su portada: un resumen, no «todo».
+            todo.textContent = pestana === "entrenar" ? "Resumen" : "Todo";
             todo.addEventListener("click", () => ir(pestana, true));
             fila.appendChild(todo);
             SUBSECCIONES[pestana].forEach((s) => fila.appendChild(botonDeSeccion(pestana, s)));
@@ -339,6 +346,8 @@
         const ancla = buscador ? buscador.nextSibling : titulo.nextSibling;
         armarFilas(contenedor, ancla);
         armarInicio(contenedor, ancla);
+        armarCabeceras(contenedor, ancla);
+        armarPortada();
 
         document.body.classList.add("jornada");
         activo = true;
@@ -390,27 +399,58 @@
         return e;
     }
 
-    const SALAS = [
-        { id: "hoy", icono: "⚡", nombre: "Hoy entrenaste", ir: "entrenar" },
-        { id: "tareas", icono: "📋", nombre: "Tareas por hacer", href: "tareas.html" },
-        { id: "puntos", icono: "🪙", nombre: "Puntos Ajedrez", href: "puntos-tienda.html" },
-        { id: "rango", icono: "♗", nombre: "Tu rango", href: "puntos-tienda.html" },
-        { id: "diagnostico", icono: "📈", nombre: "Tu nivel", href: "entreno/diagnostico.html" },
-        { id: "clases", icono: "🗓️", nombre: "Clases esta semana", ir: "clases" }
-    ];
+    /* Todas las salas (tarjetas de color). Una misma sala puede estar en dos
+       pestañas: llenarInicio() las pinta todas a la vez. Las que traen
+       `grande` fijo son atajos, sin número que pedir. */
+    const SALAS = {
+        hoy: { icono: "⚡", nombre: "Hoy entrenaste", ir: "entrenar" },
+        tareas: { icono: "📋", nombre: "Tareas por hacer", href: "tareas.html" },
+        puntos: { icono: "🪙", nombre: "Puntos Ajedrez", href: "puntos-tienda.html" },
+        rango: { icono: "♗", nombre: "Tu rango", href: "puntos-tienda.html" },
+        diagnostico: { icono: "📈", nombre: "Tu nivel", href: "entreno/diagnostico.html" },
+        clases: { icono: "🗓️", nombre: "Clases esta semana", ir: "clases" },
+        semana: { icono: "📅", nombre: "Esta semana" },
+        mes: { icono: "📊", nombre: "Este mes" },
+        proxima: { icono: "⏰", nombre: "Tu próxima clase" },
+        repasar: { icono: "🎬", nombre: "Repasar mis clases", href: "repasar-clases.html", grande: "Repasar", det: "Lo que viste en cada clase" },
+        cuaderno: { icono: "📓", nombre: "Mi cuaderno", href: "cuaderno.html", grande: "Anotar", det: "Tus apuntes y partidas" },
+        rival: { icono: "🔍", nombre: "Preparar a un rival", href: "plan-rival.html", grande: "Preparar", det: "Su ficha y cómo juega" },
+        competir: { icono: "⚔️", nombre: "Competir", href: "competir.html", grande: "Torneos", det: "Retos y partidas en vivo" }
+    };
+    const SALAS_INICIO = ["hoy", "tareas", "puntos", "rango", "diagnostico", "clases"];
 
-    /* La ilustración del banner: un tablero en perspectiva con un caballo y un
-       rey, hecha para el sitio (no es la de ninguna otra página). Es adorno:
-       va con aria-hidden y no lleva nada que se tenga que leer. */
-    const ILUSTRACION = '<svg viewBox="0 0 260 170" aria-hidden="true" focusable="false">' +
-        
+    function armarSalas(ids, idTitulo) {
+        const ul = el("ul", "jornada-salas");
+        ul.setAttribute("aria-labelledby", idTitulo);
+        ids.forEach((id) => {
+            const s = SALAS[id];
+            const li = el("li");
+            const a = s.href ? el("a", "jornada-sala") : s.ir ? el("button", "jornada-sala") : el("div", "jornada-sala");
+            if (s.href) a.href = s.href;
+            else if (s.ir) { a.type = "button"; a.addEventListener("click", () => ir(s.ir, true)); }
+            a.dataset.sala = id;
+            a.appendChild(el("span", "jornada-sala-icono", s.icono)).setAttribute("aria-hidden", "true");
+            a.appendChild(el("span", "jornada-sala-nombre", s.nombre));
+            a.appendChild(el("span", "jornada-sala-grande", s.grande || "—"));
+            a.appendChild(el("span", "jornada-sala-det", s.det || "Cargando…"));
+            li.appendChild(a);
+            ul.appendChild(li);
+        });
+        return ul;
+    }
+
+    /* La ilustración del banner: un tablero en perspectiva con dos piezas
+       (cada pestaña las suyas), hecha para el sitio (no es la de ninguna otra
+       página). Es adorno: va con aria-hidden y no lleva nada que se tenga que
+       leer. */
+    const ilustracion = (blanca, negra) => '<svg viewBox="0 0 260 170" aria-hidden="true" focusable="false">' +
         '<ellipse cx="130" cy="150" rx="118" ry="14" fill="#000" opacity=".18"/>' +
         '<g transform="translate(130 92) scale(1 .5) rotate(45)">' +
         [0, 1, 2, 3, 4, 5].map((f) => [0, 1, 2, 3, 4, 5].map((c) =>
             '<rect x="' + (c * 22 - 66) + '" y="' + (f * 22 - 66) + '" width="22" height="22" fill="' + ((f + c) % 2 ? "#0f3f48" : "#e9f3f5") + '"/>').join("")).join("") +
         '<rect x="-66" y="-66" width="132" height="132" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="2"/></g>' +
-        '<text x="104" y="96" font-size="74" text-anchor="middle" fill="#fff" stroke="#092d35" stroke-width="2" font-family="\'Segoe UI Symbol\',\'Noto Sans Symbols 2\',\'DejaVu Sans\',serif">♘</text>' +
-        '<text x="172" y="104" font-size="52" text-anchor="middle" fill="#092d35" stroke="#fff" stroke-width="1.5" font-family="\'Segoe UI Symbol\',\'Noto Sans Symbols 2\',\'DejaVu Sans\',serif">♚</text>' +
+        '<text x="104" y="96" font-size="74" text-anchor="middle" fill="#fff" stroke="#092d35" stroke-width="2" font-family="\'Segoe UI Symbol\',\'Noto Sans Symbols 2\',\'DejaVu Sans\',serif">' + blanca + '</text>' +
+        '<text x="172" y="104" font-size="52" text-anchor="middle" fill="#092d35" stroke="#fff" stroke-width="1.5" font-family="\'Segoe UI Symbol\',\'Noto Sans Symbols 2\',\'DejaVu Sans\',serif">' + negra + '</text>' +
         '<circle cx="214" cy="30" r="5" fill="#f3aabb"/><circle cx="36" cy="44" r="3.5" fill="#fff" opacity=".7"/><circle cx="226" cy="64" r="2.5" fill="#fff" opacity=".7"/>' +
         '</svg>';
 
@@ -471,41 +511,16 @@
         botones.append(boton, entrenar, buscar);
         texto.append(marca, chip, titulo, linea, atajos, saludo, botones);
         const dibujo = el("div", "jornada-clase-dibujo");
-        dibujo.innerHTML = ILUSTRACION;
+        dibujo.innerHTML = ilustracion("♘", "♚");
         clase.append(texto, dibujo);
         izq.appendChild(clase);
 
         const tituloSalas = el("h2", "jornada-titulo-sec", "Tus salas");
         tituloSalas.id = "jornada-salas-titulo";
-        const salas = el("ul", "jornada-salas");
-        salas.setAttribute("aria-labelledby", "jornada-salas-titulo");
-        SALAS.forEach((s) => {
-            const li = el("li");
-            const a = s.href ? el("a", "jornada-sala") : el("button", "jornada-sala");
-            if (s.href) a.href = s.href; else { a.type = "button"; a.addEventListener("click", () => ir(s.ir, true)); }
-            a.dataset.sala = s.id;
-            a.appendChild(el("span", "jornada-sala-icono", s.icono)).setAttribute("aria-hidden", "true");
-            a.appendChild(el("span", "jornada-sala-nombre", s.nombre));
-            a.appendChild(el("span", "jornada-sala-grande", "—"));
-            a.appendChild(el("span", "jornada-sala-det", "Cargando…"));
-            li.appendChild(a);
-            salas.appendChild(li);
-        });
-        izq.append(tituloSalas, salas);
+        izq.append(tituloSalas, armarSalas(SALAS_INICIO, "jornada-salas-titulo"));
 
         // Los cuatro gráficos: cada uno con sus números escritos debajo.
-        const graficos = el("div", "jornada-graficos");
-        GRAFICOS.forEach((g) => {
-            const t = el("section", "jornada-grafico");
-            t.dataset.grafico = g.id;
-            t.setAttribute("aria-labelledby", "jornada-g-" + g.id);
-            const h = el("h3", "jornada-grafico-titulo", g.titulo);
-            h.id = "jornada-g-" + g.id;
-            t.append(h, el("p", "jornada-grafico-sub", g.sub), el("div", "jornada-grafico-dibujo"), el("ul", "jornada-grafico-datos"));
-            t.querySelector(".jornada-grafico-datos").appendChild(el("li", null, "Cargando…"));
-            graficos.appendChild(t);
-        });
-        izq.appendChild(graficos);
+        izq.appendChild(armarGraficos(GRAFICOS.map((g) => g.id), ""));
 
         const tituloViene = el("h2", "jornada-titulo-sec", "Lo que viene");
         tituloViene.id = "jornada-viene-titulo";
@@ -519,14 +534,144 @@
         llenarInicio();
     }
 
+    // Los gráficos de la lista `ids`; `prefijo` hace únicos los id de sus títulos.
+    function armarGraficos(ids, prefijo) {
+        const graficos = el("div", "jornada-graficos");
+        ids.forEach((id) => {
+            const g = GRAFICOS.find((x) => x.id === id);
+            const t = el("section", "jornada-grafico");
+            t.dataset.grafico = g.id;
+            t.setAttribute("aria-labelledby", "jornada-g-" + prefijo + g.id);
+            const h = el("h3", "jornada-grafico-titulo", g.titulo);
+            h.id = "jornada-g-" + prefijo + g.id;
+            t.append(h, el("p", "jornada-grafico-sub", g.sub), el("div", "jornada-grafico-dibujo"), el("ul", "jornada-grafico-datos"));
+            t.querySelector(".jornada-grafico-datos").appendChild(el("li", null, "Cargando…"));
+            graficos.appendChild(t);
+        });
+        return graficos;
+    }
+
+    /* ---------- Las otras pestañas, con la forma del Inicio ----------
+       Cada una abre con su banner (sus piezas, sus atajos) y cuatro salas de
+       color. Los números son los mismos del Inicio, de las mismas consultas:
+       llenarInicio() pinta todas las salas que se llamen igual. */
+    const CABECERAS = {
+        clases: {
+            titulo: "Tus clases", linea: "Tu horario, la clase en vivo y lo que viste en cada una.", piezas: ["♖", "♔"],
+            salas: ["clases", "proxima", "repasar", "cuaderno"],
+            botones: [{ nombre: "Repasar mis clases", href: "repasar-clases.html" }, { nombre: "Mi cuaderno", href: "cuaderno.html" }]
+        },
+        entrenar: {
+            titulo: "Entrenar", linea: "Elige qué quieres mejorar hoy: cada sección trae sus ejercicios.", piezas: ["♗", "♚"],
+            salas: ["hoy", "semana", "mes", "diagnostico"],
+            botones: [{ nombre: "Mis tareas", href: "tareas.html" }, { nombre: "Hacer el diagnóstico", href: "entreno/diagnostico.html" }]
+        },
+        jugar: {
+            titulo: "Jugar y competir", linea: "Partidas, torneos y retos con tus compañeros.", piezas: ["♘", "♛"],
+            salas: ["rango", "puntos", "rival", "competir"],
+            botones: [{ nombre: "Competir", href: "competir.html" }, { nombre: "Preparar a un rival", href: "plan-rival.html" }]
+        },
+        perfil: {
+            titulo: "Tu perfil", linea: "Tus puntos, tu rango y tu nivel, de un vistazo.", piezas: ["♕", "♔"],
+            salas: ["puntos", "rango", "diagnostico", "tareas"],
+            botones: [{ nombre: "Tienda de puntos", href: "puntos-tienda.html" }, { nombre: "Configuración", href: "configuracion.html" }]
+        }
+    };
+
+    function armarCabeceras(contenedor, antes) {
+        Object.keys(CABECERAS).forEach((pestana) => {
+            const c = CABECERAS[pestana];
+            const caja = el("section", "jornada-cabecera");
+            caja.id = "jornada-cabecera-" + pestana;
+            caja.dataset.jornada = pestana;
+            caja.setAttribute("aria-labelledby", "jornada-cab-" + pestana);
+            const banner = el("div", "jornada-clase");
+            const texto = el("div", "jornada-clase-texto");
+            const titulo = el("h3", "jornada-clase-titulo", c.titulo);
+            titulo.id = "jornada-cab-" + pestana;
+            const botones = el("div", "jornada-clase-botones");
+            c.botones.forEach((b, i) => {
+                const a = el("a", i === 0 ? "jornada-clase-boton" : "jornada-clase-boton2", b.nombre);
+                a.href = b.href;
+                botones.appendChild(a);
+            });
+            texto.append(el("span", "jornada-clase-marca", "Academia Ajedrez Integral"), titulo, el("p", "jornada-clase-linea", c.linea), botones);
+            const dibujo = el("div", "jornada-clase-dibujo");
+            dibujo.innerHTML = ilustracion(c.piezas[0], c.piezas[1]);
+            banner.append(texto, dibujo);
+            const tituloSalas = el("h2", "sr-only", "De un vistazo: " + c.titulo.toLowerCase());
+            tituloSalas.id = "jornada-cab-salas-" + pestana;
+            caja.append(banner, tituloSalas, armarSalas(c.salas, tituloSalas.id));
+            contenedor.insertBefore(caja, antes);
+        });
+    }
+
+    /* ---------- La portada de Entrenar ----------
+       Al tocar Entrenar no salen todas las tarjetas de golpe (eran más de
+       treinta): salen sus seis secciones como cartas, cada una con cuántas
+       herramientas trae y cuáles, y sus dos gráficos. Una carta abre su
+       sección, igual que el menú. El plan de hoy («Hoy te toca») queda
+       arriba de las cartas. Lo que trae cada carta se lee de la grilla real
+       (llenarPortada), así que nunca promete una tarjeta que no está. */
+    const PORTADA = {
+        "Estudiar": { icono: "📖", color: "#1f56b8" },
+        "Aprender": { icono: "🎓", color: "#5b3cb0" },
+        "Entrenamiento básico": { icono: "♙", color: "#156c3b" },
+        "Entrenamiento intermedio": { icono: "♘", color: "#0b6a72" },
+        "Entrenamiento avanzado": { icono: "♛", color: "#a8264c" },
+        "Mejorar por habilidades": { icono: "🎯", color: "#9c450b" }
+    };
+
+    function armarPortada() {
+        const ancla = document.getElementById("progreso-alumno") || document.getElementById("jornada-cabecera-entrenar");
+        if (!ancla) return;
+        const p = el("section", "jornada-portada");
+        p.id = "jornada-entrenar-portada";
+        p.dataset.jornada = "entrenar";
+        p.setAttribute("data-portada", "");
+        p.setAttribute("aria-labelledby", "jornada-portada-titulo");
+        const h = el("h2", "jornada-titulo-sec", "¿Qué quieres entrenar hoy?");
+        h.id = "jornada-portada-titulo";
+        const ul = el("ul", "jornada-portada-lista");
+        SUBSECCIONES.entrenar.forEach((s) => {
+            const li = el("li");
+            const b = el("button", "jornada-portada-carta");
+            b.type = "button";
+            b.dataset.portadaGrupo = s.grupo;
+            b.style.setProperty("--carta", PORTADA[s.grupo].color);
+            b.appendChild(el("span", "jornada-portada-icono", PORTADA[s.grupo].icono)).setAttribute("aria-hidden", "true");
+            b.appendChild(el("b", "jornada-portada-nombre", s.nombre));
+            b.appendChild(el("span", "jornada-portada-trae", ""));
+            b.appendChild(el("span", "jornada-portada-ir", "Abrir")).setAttribute("aria-hidden", "true");
+            b.addEventListener("click", () => ir("entrenar", true, s.grupo));
+            li.appendChild(b);
+            ul.appendChild(li);
+        });
+        p.append(h, ul, armarGraficos(["semana", "meses"], "e-"));
+        ancla.after(p);
+        llenarPortada();
+    }
+
+    function llenarPortada() {
+        document.querySelectorAll(".jornada-portada-carta").forEach((b) => {
+            const s = Array.from(document.querySelectorAll("#tile-grid > section")).find((x) => x.dataset.grupo === b.dataset.portadaGrupo);
+            const nombres = s ? Array.from(s.querySelectorAll("span.flex-col > span.font-semibold:first-child")).map((x) => x.textContent.trim()).filter(Boolean) : [];
+            // Un grupo que esta cuenta no tiene no ofrece carta.
+            b.parentElement.hidden = !nombres.length;
+            b.querySelector(".jornada-portada-trae").textContent = nombres.length
+                ? (nombres.length === 1 ? "1 herramienta: " : nombres.length + " herramientas: ") + nombres.slice(0, 3).join(", ") + (nombres.length > 3 ? "…" : "")
+                : "";
+        });
+    }
+
     // `numero`, si viene, es la cifra con la que empieza `grande`: esa cuenta hacia arriba.
     function sala(id, grande, det, numero) {
-        const a = document.querySelector('.jornada-sala[data-sala="' + id + '"]');
-        if (!a) return;
-        const span = a.querySelector(".jornada-sala-grande");
-        span.textContent = grande;
-        a.querySelector(".jornada-sala-det").textContent = det;
-        if (typeof numero === "number" && grande.startsWith(fmtN(numero))) contar(span, numero, grande.slice(fmtN(numero).length));
+        document.querySelectorAll('.jornada-sala[data-sala="' + id + '"]').forEach((a) => {
+            const span = a.querySelector(".jornada-sala-grande");
+            span.textContent = grande;
+            a.querySelector(".jornada-sala-det").textContent = det;
+            if (typeof numero === "number" && grande.startsWith(fmtN(numero))) contar(span, numero, grande.slice(fmtN(numero).length));
+        });
     }
 
     async function llenarInicio() {
@@ -555,16 +700,25 @@
         const abierta = !misClases.error && Array.isArray(misClases.data) && misClases.data.find((c) => c.clase_abierta);
         const prox = !proxima.error && Array.isArray(proxima.data) && proxima.data[0] && proxima.data[0].inicio ? proxima.data[0] : null;
         pintarClase(abierta, prox, !!(proxima.error && misClases.error));
+        if (abierta) sala("proxima", "Ahora", "Tu clase está abierta");
+        else if (prox) {
+            const inicio = new Date(prox.inicio);
+            const cuando = cuandoEs(inicio);
+            sala("proxima", cuando.charAt(0).toUpperCase() + cuando.slice(1), "A las " + F_HORA.format(inicio) + (prox.titulo ? " · " + String(prox.titulo).slice(0, 30) : ""));
+        } else sala("proxima", "—", proxima.error ? sinDato : "Sin clase programada");
 
         // Hoy entrenaste (y la semana): los días de entreno_mi_semana(), el último es hoy.
-        if (entreno.error || !entreno.data) { sala("hoy", "—", sinDato); grafico("semana", null, [], true); }
+        const ejercicios = (n) => fmtN(n) + (n === 1 ? " ejercicio" : " ejercicios");
+        if (entreno.error || !entreno.data) { sala("hoy", "—", sinDato); sala("semana", "—", sinDato); grafico("semana", null, [], true); }
         else {
             const dias = Array.isArray(entreno.data.dias) ? entreno.data.dias : [];
             const hoy = dias.length ? Number(dias[dias.length - 1].n) || 0 : 0;
             const semana = dias.reduce((s, d) => s + (Number(d.n) || 0), 0);
-            sala("hoy", fmtN(hoy) + (hoy === 1 ? " ejercicio" : " ejercicios"), "Esta semana: " + fmtN(semana), hoy);
+            sala("hoy", ejercicios(hoy), "Esta semana: " + fmtN(semana), hoy);
             const lista = dias.map((d, i) => ({ n: Number(d.n) || 0, corto: i === dias.length - 1 ? "hoy" : diaCorto(d.dia) }));
             const mejor = lista.reduce((a, d) => (d.n > a.n ? d : a), { n: -1 });
+            const conEntreno = lista.filter((d) => d.n > 0).length;
+            sala("semana", ejercicios(semana), conEntreno === 1 ? "1 día con entrenamiento" : conEntreno + " días con entrenamiento", semana);
             grafico("semana", lista.length ? barras(lista) : null, [
                 { nombre: "Esta semana", valor: fmtN(semana) + (semana === 1 ? " ejercicio" : " ejercicios") },
                 { nombre: "Hoy", valor: fmtN(hoy) },
@@ -591,10 +745,12 @@
         }
 
         // Tu entrenamiento por mes.
-        if (porMes.every((r) => r.error || !r.data)) grafico("meses", null, [], true);
+        if (porMes.every((r) => r.error || !r.data)) { grafico("meses", null, [], true); sala("mes", "—", sinDato); }
         else {
             const lista = meses.map((m, i) => ({ corto: m.corto, n: porMes[i] && porMes[i].data ? Number(porMes[i].data.ejercicios) || 0 : 0 }));
             const total = lista.reduce((a, m) => a + m.n, 0);
+            const este = lista[lista.length - 1].n;
+            sala("mes", ejercicios(este), "El mes pasado: " + fmtN(lista[lista.length - 2].n), este);
             grafico("meses", linea(lista), [
                 { nombre: "Este mes", valor: fmtN(lista[lista.length - 1].n) },
                 { nombre: "El mes pasado", valor: fmtN(lista[lista.length - 2].n) },
@@ -701,21 +857,22 @@
         const s = svgEl("svg", { viewBox: "0 0 " + ancho + " " + alto, "aria-hidden": "true", focusable: "false" });
         return s;
     }
+    // Pinta todos los gráficos con ese id (el de la semana está en Inicio y en Entrenar).
     function grafico(id, dibujo, datos, fallo) {
-        const t = document.querySelector('.jornada-grafico[data-grafico="' + id + '"]');
-        if (!t) return;
-        const d = t.querySelector(".jornada-grafico-dibujo");
-        const ul = t.querySelector(".jornada-grafico-datos");
-        d.textContent = "";
-        ul.textContent = "";
-        if (fallo) { ul.appendChild(el("li", null, "No se pudo cargar")); return; }
-        if (dibujo) d.appendChild(dibujo);
-        datos.forEach((x) => {
-            const li = el("li");
-            if (x.color) { const m = el("span", "jornada-grafico-marca"); m.style.background = x.color; m.setAttribute("aria-hidden", "true"); li.appendChild(m); }
-            li.appendChild(el("span", null, x.nombre));
-            li.appendChild(el("b", null, x.valor));
-            ul.appendChild(li);
+        document.querySelectorAll('.jornada-grafico[data-grafico="' + id + '"]').forEach((t, i) => {
+            const d = t.querySelector(".jornada-grafico-dibujo");
+            const ul = t.querySelector(".jornada-grafico-datos");
+            d.textContent = "";
+            ul.textContent = "";
+            if (fallo) { ul.appendChild(el("li", null, "No se pudo cargar")); return; }
+            if (dibujo) d.appendChild(i === 0 ? dibujo : dibujo.cloneNode(true));
+            datos.forEach((x) => {
+                const li = el("li");
+                if (x.color) { const m = el("span", "jornada-grafico-marca"); m.style.background = x.color; m.setAttribute("aria-hidden", "true"); li.appendChild(m); }
+                li.appendChild(el("span", null, x.nombre));
+                li.appendChild(el("b", null, x.valor));
+                ul.appendChild(li);
+            });
         });
     }
     const color = (v) => "rgb(var(--c-" + v + "))";
@@ -832,8 +989,11 @@
         const el = document.getElementById(id);
         const conPestana = el && el.closest("[data-jornada]");
         if (!conPestana) return false;
-        // Si vive en dos pestañas, la primera; y la pestaña entera, sin sección.
-        ir(pestanasDe(conPestana)[0], false);
+        // Si vive en dos pestañas, la primera. Un grupo de Entrenar se abre como
+        // su sección: la pestaña entera es la portada y lo dejaría tapado.
+        const p = pestanasDe(conPestana)[0];
+        const sec = conPestana.dataset.grupo && (SUBSECCIONES[p] || []).some((s) => s.grupo === conPestana.dataset.grupo) ? conPestana.dataset.grupo : null;
+        ir(p, false, sec);
         return true;
     }
 
