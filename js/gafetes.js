@@ -173,7 +173,10 @@
     // Abajo del dorso, la categoría sola: el número (U12 01…) no hace falta.
     d.codigo.plantilla = "{Grupo}";
     // Para la Brother T530 del dueño: hojas carta, frente y dorso, listas para cortar.
-    d.salida = { separarPor: "", formato: "carta", dorsoX: 0, dorsoY: 0, cortesCompletos: true, calle: 4 };
+    d.salida = { separarPor: "", formato: "carta", dorsoX: 0, dorsoY: -2.5, cortesCompletos: true, calle: 6 };
+    // dorsoY −2,5: medido en la Brother DCP-T530DW del dueño (20/11), que
+    // imprime el dorso unos 2,3 mm más abajo que el frente; calle de 6 mm,
+    // sangrado de 3: lo que quede de error, la franja lo cubre.
     for (const [id, ruta] of [["logoIzq", "img/adapz/logo.jpg"], ["logoDer", "img/adapz/ccdr-pz.jpg"], ["ilustracion", "img/avatar-profe-karina/bienvenidos.webp"], ["ilustracionDorso", "img/avatar-profe-karina/presentando.webp"], ...POSES_KARINA.slice(1).map((n, i) => ["karina" + (i + 2), "img/avatar-profe-karina/" + n + ".webp"]), ...POSES_OSCAR.map((n) => ["oscar-" + n, "img/avatar-profe-oscar/" + n + ".webp"]), ["karina-arbitro", "img/avatar-profe-karina/arbitro.webp"]]) {
       try { d.imagenes[id] = { nombre: ruta.split("/").pop(), datos: await aDatos(await (await fetch(ruta)).blob()) }; } catch (e) { /* sin esa imagen */ }
     }

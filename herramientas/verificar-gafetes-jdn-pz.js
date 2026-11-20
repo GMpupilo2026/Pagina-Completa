@@ -367,11 +367,11 @@ async function aceptar(page, boton) {
   igual("cada cara mide 5,5 × 8,5 cm", [...new Set([...fr, ...ds].map((u) => u[0].toFixed(1) + "×" + u[1].toFixed(1)))], ["55.0×85.0"]);
   // Volteando por el borde largo, el dorso de cada uno cae en el espejo de su
   // frente (misma fila, columna al revés): x del frente + x del dorso = ancho
-  // de la hoja − ancho del gafete, y la misma altura.
-  igual("cada dorso queda detrás de su frente al voltear por el borde largo", fr.every((f, k) => Math.abs(f[2] + ds[k][2] - (215.9 - 55)) < 0.05 && Math.abs(f[3] - ds[k][3]) < 0.05), true);
-  // Tres columnas centradas con calles de 4 mm: (215,9 − 3 × 55 − 2 × 4) / 2
-  // = 21,45 mm de margen a cada lado, y un gafete cada 59 mm.
-  igual("los primeros tres, en la primera fila de izquierda a derecha, con calles de 4 mm", fr.slice(0, 3).every((f, k) => Math.abs(f[2] - (21.45 + 59 * k)) < 0.05), true);
+  // de la hoja − ancho del gafete, y 2,5 mm más arriba (el ajuste medido en la Brother: `dorsoY` −2,5).
+  igual("cada dorso queda detrás de su frente al voltear por el borde largo", fr.every((f, k) => Math.abs(f[2] + ds[k][2] - (215.9 - 55)) < 0.05 && Math.abs(ds[k][3] - f[3] - 2.5) < 0.05), true);
+  // Tres columnas centradas con calles de 6 mm: (215,9 − 3 × 55 − 2 × 6) / 2
+  // = 19,45 mm de margen a cada lado, y un gafete cada 61 mm.
+  igual("los primeros tres, en la primera fila de izquierda a derecha, con calles de 6 mm", fr.slice(0, 3).every((f, k) => Math.abs(f[2] - (19.45 + 61 * k)) < 0.05), true);
   // Para la guillotina: las líneas de corte de lado a lado, en gris fino, en
   // las dos caras; una por cada borde de cada gafete (con calle, 6 a lo ancho
   // y 6 a lo largo con 3 × 3), siempre sobre un borde, nunca por dentro.
@@ -380,16 +380,16 @@ async function aceptar(page, boton) {
   igual("de lado a lado de la hoja: 6 verticales y 6 horizontales", [lineas.filter(([x1, y1, x2, y2]) => x1 === x2 && Math.abs(y2 - y1) > 270).length, lineas.filter(([x1, y1, x2, y2]) => y1 === y2 && Math.abs(x2 - x1) > 205).length], [6, 6]);
   const enGafete = (x, y) => fr.some((f) => x > f[2] + 0.1 && x < f[2] + 54.9 && y > f[3] + 0.1 && y < f[3] + 84.9);
   igual("ninguna línea pasa por dentro de un gafete", lineas.some(([x1, y1, x2, y2]) => [0, 0.1, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9, 1].some((t) => enGafete(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t))), false);
-  // El sangrado: las franjas de color que tocan el borde se prolongan 2 mm
+  // El sangrado: las franjas de color que tocan el borde se prolongan 3 mm
   // (media calle) hacia afuera, en las dos caras, para que un dorso corrido
   // no deje una raya blanca al cortar (lo pidió el dueño tras imprimir).
   const rects = (c) => [...c.matchAll(/([\d.]+) ([\d.]+) ([\d.]+) rg ([\d.-]+) ([\d.-]+) ([\d.]+) ([\d.]+) re f/g)].map((m) => m.slice(4).map((v) => Number(v) * 25.4 / 72));
   const sangra = (c, caras) => caras.every((f) => {
-    const mios = rects(c).filter((q) => Math.abs(q[0] - (f[2] - 2)) < 0.05 && Math.abs(q[2] - 59) < 0.05);
-    const abajo = mios.some((q) => Math.abs(q[1] - (f[3] - 2)) < 0.05), arriba = mios.some((q) => Math.abs(q[1] + q[3] - (f[3] + 85 + 2)) < 0.05);
+    const mios = rects(c).filter((q) => Math.abs(q[0] - (f[2] - 3)) < 0.05 && Math.abs(q[2] - 61) < 0.05);
+    const abajo = mios.some((q) => Math.abs(q[1] - (f[3] - 3)) < 0.05), arriba = mios.some((q) => Math.abs(q[1] + q[3] - (f[3] + 85 + 3)) < 0.05);
     return abajo && arriba;
   });
-  igual("las franjas de arriba y de abajo sangran 2 mm hacia la calle, en las dos caras", [sangra(cf, fr), sangra(cd, ds)], [true, true]);
+  igual("las franjas de arriba y de abajo sangran 3 mm hacia la calle, en las dos caras", [sangra(cf, fr), sangra(cd, ds)], [true, true]);
   // El corrimiento del dorso, por si la impresora no calza exacto.
   await page.click("#g-aprobar");
   await aceptar(page, "Cambiar el diseño");
