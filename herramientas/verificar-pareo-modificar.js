@@ -1,6 +1,6 @@
 /* Pareo Integral: modificar la ronda en juego sin deshacerla
  * (V.modificarRonda en js/pareo/evento.js y «Modificar la ronda sin
- * deshacerla» en js/pareo/pagina.js).
+ * deshacerla» en js/pareo/pagina-resultados.js).
  *
  * Lo que se prueba, porque se rompe sin dar ningún error:
  *   - cambiar a dos de lugar, también a uno que no juega por uno que sí (así

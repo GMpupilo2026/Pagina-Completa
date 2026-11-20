@@ -20,7 +20,7 @@
   const CLAVE_BORRADOR = "ij_borrador_v1";
   const CLAVE_DESCARGA = "ij_descarga_v1";   // cuándo se bajó el borrador (.json) por última vez
   const HORA = 3600 * 1000;
-  const CLAVE_PARA_PAREO = "ij_para_pareo_v1";  // la lista que Pareo Integral recoge (js/pareo/pagina.js)
+  const CLAVE_PARA_PAREO = "ij_para_pareo_v1";  // la lista que Pareo Integral recoge (js/pareo/pagina-listas.js)
   const MAX_ESTUDIANTES = 400;
   const MAX_CUERPO = 20;
 

@@ -62,7 +62,7 @@ window.ReporteTextos = (function () {
      espacio. No entiende tablas anidadas: una celda que tenga otra tabla
      adentro trae el texto de las dos mezclado, que para una lista de
      jugadores no pasa. Usado por Pareo Integral para subir una lista desde
-     Word (js/pareo/pagina.js). */
+     Word (js/pareo/pagina-listas.js). */
   async function tablaDeDocx(archivo) {
     const zip = await window.ReporteExcel.abrirZip(await archivo.arrayBuffer());
     const xml = await zip.texto("word/document.xml");
