@@ -975,8 +975,10 @@
         fila.actual = fechados[0].elo;
         fila.maximo = fechados.reduce((m, x) => Math.max(m, x.elo), 0);
         // El de hace unos tres meses: su última partida de 90 días antes o más.
-        const corte = new Date(Date.parse(fechados[0].fecha) - 90 * 86400000).toISOString().slice(0, 10);
-        const vieja = fechados.find((x) => x.fecha <= corte);
+        // Por días entre dos fechas de calendario (las dos a medianoche UTC):
+        // ninguna hora del día entra en la cuenta.
+        const corte = Date.parse(fechados[0].fecha) - 90 * 86400000;
+        const vieja = fechados.find((x) => Date.parse(x.fecha) <= corte);
         if (vieja) fila.antes = { elo: vieja.elo, fecha: vieja.fecha };
       } else {
         const elos = xs.map((x) => x.elo).filter(Boolean);
