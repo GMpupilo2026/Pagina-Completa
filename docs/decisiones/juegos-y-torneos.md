@@ -16382,6 +16382,20 @@ sus pts y su puesto actual».
   (`sinMargen` en `js/gafetes-dibujo.js`) se les quita el margen al
   cargarlos y los dos llenan su caja; el verificador mide el alto dibujado de
   cada uno en el píxel.
+- **20/11, con los gafetes cortados en la mano: aprovechar todo el espacio.**
+  En el frente, el título va **entre los dos logos** (`tituloEntreLogos`), la
+  franja del club **justo en el borde de abajo** (`franjaAbajo`) y con eso la
+  foto crece a 62 × 72 en la escala de 10 × 14 (unos 3,4 × 4,4 cm); el lugar
+  («Hotel del Sur, Pérez Zeledón») pasa al dorso, **arriba del horario**
+  (`dorso.lineaArriba`). En el dorso (`dorso.grande`), la tabla del horario va
+  más ancha y con la letra un 25 % más grande, el QR crece (30 en vez de 25),
+  el texto de lado va de arriba abajo, y su franja de abajo mide lo mismo que la
+  del frente y llega al borde: a contraluz coinciden y el corte pasa igual por
+  las dos. Así ya no queda el blanco de seguridad del primer arreglo (`dorso.subir`
+  queda en 0): lo que corra la impresora se corrige con el ajuste del dorso en
+  milímetros, probando antes una hoja. Y un mismo jugador aceptado dos veces
+  (una inscripción repetida, «Zeledón» y «Zeledòn») sale **una sola vez**: los
+  nombres se comparan sin tildes ni mayúsculas.
 - **El QR abre una vista corta** (20/11, el dueño lo leyó con el celular:
   «hay demasiada información que no interesa al jugador, él solo quiere saber
   su mesa y su rival y su color»). La dirección del QR, `#t=<torneo>&j=<jugador>`

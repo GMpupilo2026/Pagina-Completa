@@ -109,13 +109,23 @@
     d.tamano = { ancho: 55, alto: 85 };
     // Para imprimir en casa por ambos lados (20/11, con los primeros impresos
     // en la mano): una franja delgada arriba, del color del gafete, de guía
-    // para cortar, y lo de abajo del dorso más arriba, con blanco debajo: el
-    // dorso salió corrido y al cortar se iba un pedazo de su franja.
+    // para cortar. El dorso aprovecha todo el espacio y su franja llega al
+    // borde de abajo, igual que la del frente, para que coincida con el corte
+    // (lo pidió el dueño; un primer intento la subía con blanco debajo). Lo
+    // que corra la impresora se corrige con el ajuste del dorso en mm.
     d.franjaArriba = 3;
-    d.dorso.subir = 6;
+    d.dorso.subir = 0;
+    d.dorso.grande = true;
     // Los logos de la ADAPZ y del CCDR, del mismo alto (traen márgenes distintos).
     d.logosSinMargen = true;
-    d.titulo.texto = "ELIMINATORIA CANTONAL JDN\nCCDRPZ – ADAPZ 2026\nHOTEL DEL SUR, PÉREZ ZELEDÓN";
+    // 20/11, con los primeros cortados en la mano: el título va entre los dos
+    // logos y la franja del club justo abajo, para que la foto sea lo más
+    // grande posible; el lugar («Hotel del Sur») pasa al dorso, arriba del
+    // horario (todo lo pidió el dueño).
+    d.titulo.texto = "ELIMINATORIA CANTONAL JDN\nCCDRPZ – ADAPZ 2026";
+    d.tituloEntreLogos = true;
+    d.franjaAbajo = true;
+    d.dorso.lineaArriba = "HOTEL DEL SUR, PÉREZ ZELEDÓN";
     d.titulo.color = "#1b2a4a";
     // El nombre en negro, no del color de la edad: se lee mejor de lejos y
     // es lo que busca el árbitro (lo pidió el dueño).
@@ -191,7 +201,12 @@
       const torneo = Object.keys(t).find((k) => t[k] && t[k].id === x.id);
       const jugadores = ((x.datos && x.datos.jugadores) || []).filter((j) => j && j.nombre && j.retiradoDespuesDe == null);
       jugadores.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
-      for (const j of jugadores) {
+      // Un mismo nombre dos veces (una inscripción repetida que se aceptó:
+      // «Zeledón» y «Zeledòn» el 20/11) sale una sola vez: sin tildes ni
+      // mayúsculas, es la misma persona.
+      const vistos = new Set();
+      const unicos = jugadores.filter((j) => { const k = plano(j.nombre).replace(/[^a-z0-9ñ]+/g, " ").trim(); if (vistos.has(k)) return false; vistos.add(k); return true; });
+      for (const j of unicos) {
         const [apellidos, nombre] = j.nombre.includes(",") ? j.nombre.split(",").map((p) => p.trim()) : [j.nombre.trim(), ""];
         const cat = String(j.categoria || "").trim();
         const edad = (cat.match(/\bU\s?\d{2}\b/i) || [torneo])[0].replace(/\s/g, "").toUpperCase();
