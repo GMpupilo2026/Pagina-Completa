@@ -4530,6 +4530,48 @@ aspecto reemplaza al de «programa de computadora» de la sección anterior
   `P.abrirMenuDe` solo lo abre (para las casillas de «Más opciones»).
   Un botón nuevo de Rondas que entre a un menú se prueba igual.
 
+### Proyectar la ronda y los resultados
+
+El 20/11/2026 el dueño pidió proyectar la ronda y los resultados «a
+pantalla completa, bien bonita», desde el propio Pareo (la computadora del
+árbitro conectada al proyector de la sala). El proyector del evento que ya
+había (`pintarProyector` en `js/pareo/ver.js`) es otra cosa: va en el
+enlace de solo lectura, pasa de torneo en torneo y necesita el evento en
+vivo; este no necesita internet ni enlace.
+
+- **Dónde.** «Proyectar» en Rondas, **a la vista y no en un menú** (es de
+  todos los días en la sala), y «Proyectar la clasificación» en
+  Clasificación. En torneos por equipos no está: la ronda de equipos son
+  encuentros con tableros, y el proyector es de mesas individuales.
+- **Qué muestra.** El nombre del torneo, «Ronda N» (con la fase en una
+  eliminación), la hora de Costa Rica, cuántos resultados van con su barra,
+  y cada mesa en una tarjeta: el número de la sala (`V.mesaFisica`, no la
+  posición), los dos nombres, los puntos de **antes** de la ronda y el
+  resultado corto; las que faltan dicen «en juego» en ámbar (escrito: el
+  color nunca va solo) y quien ganó va en negrita. C (o el botón) cambia a
+  la clasificación tras la última ronda completa.
+- **Páginas.** Nueve filas por columna, dos columnas desde 1000 px: si no
+  caben, pasa de página sola cada 12 segundos (Espacio pausa, las flechas
+  pasan a mano). La letra va en `min(vh, vw)`, para que en un proyector
+  4:3 los nombres no se partan; un nombre largo baja a una segunda línea.
+- **Se pone al día sola.** `guardar()` llama a `actualizarProyector()`:
+  cada resultado que se anota (en la computadora o desde el celular de un
+  adjunto, que también pasa por `guardar`) llega a la pantalla sin volver
+  a abrirla, en la misma página. Si se abrió en la última ronda, al
+  emparejar la siguiente pasa sola a ella.
+- **Una sola copia de las cuentas.** `js/pareo/proyectar.js` solo pinta: el
+  modelo (nombres, puntos y resultados ya escritos) lo arma
+  `modeloProyector` en `pagina.js` con las mismas funciones que la tabla
+  de la ronda, y los textos van en `textos.js` (`proy*`). Todo lo que
+  escribe una persona entra por `textContent`; los anchos van por el CSSOM.
+- **El foco.** Al abrir queda en «Salir»; Tab no sale de la proyección;
+  Escape o «Salir» la cierran y el foco vuelve al botón que la abrió.
+  **Se espera el pedido de pantalla completa antes de devolver el foco**:
+  si se sale enseguida, el pedido todavía está en camino, llega después de
+  cerrar y se lleva el foco (lo encontró el verificador).
+- `verificar-pareo-proyectar.js` lo prueba (se rompió a propósito la
+  actualización al guardar y saltó).
+
 ### Pareo Integral: los adjuntos con nombre, el chat, las llamadas y corregir con constancia
 
 Lo pidió el dueño del sitio (con una captura del formulario del enlace).
