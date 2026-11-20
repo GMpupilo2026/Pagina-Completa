@@ -5251,10 +5251,38 @@ el sitio, con una sola cuenta.
   queda en «—» con «No se pudo cargar»: un número inventado se creería.
   «Hoy te toca» completo pasó a Entrenar, porque en Inicio ya lo resume su
   sala.
+- **Las animaciones** (pedido del dueño el 19/11/2026). Son cuatro, todas
+  en `css/panel-jornada.css` («Las animaciones») y `js/panel-jornada.js`
+  (`animarEntrada`, `contar`):
+  - **Al cambiar de pestaña** (y al entrar al panel), lo que queda a la vista
+    entra con un fundido y sube 8 px en 0,28 s.
+  - **Las tarjetas y las salas, una detrás de otra**: 40 ms entre cada una,
+    con tope en la quinta (`TOPE_ESCALON`), para que la última no se haga
+    esperar: todo está quieto en poco más de medio segundo.
+  - **Los números de las salas cuentan desde 0** (hoy entrenaste, tareas,
+    Puntos Ajedrez y clases de la semana) en 0,8 s. El texto de
+    `.jornada-sala-grande` es el número de verdad desde el principio,
+    transparente mientras dura el conteo: lo lee el lector, guarda el ancho
+    (con `tabular-nums`) y es lo que mide el verificador. El que va contando
+    se pinta encima con `::after` y `content: attr(data-contando) / ""`, cuyo
+    `/ ""` le dice al lector que ese dibujo no se lee.
+  - **Las salas y el botón de la clase suben 2 px con el ratón o con el foco
+    del teclado**, y las tarjetas del panel, que ya subían con el ratón,
+    también con Tab.
+  - **Reglas**: todo va dentro de `prefers-reduced-motion: no-preference`, en
+    el CSS **y** en el JS (si el sistema pide menos movimiento, ni se ponen las
+    clases ni se cuenta). Mientras se busca, nada se anima. Las clases se quitan
+    solas a los 0,9 s, y la animación usa `backwards`, no `forwards`: al
+    terminar no queda ningún `transform` puesto, porque un transform que se
+    queda le cambia la caja a lo que va fijo adentro (un diálogo, la burbuja).
+    El panel adaptado no las tiene porque este módulo no se aplica ahí.
 - Lo revisa `verificar-panel-jornada.js`: sin la fila, el panel no cambia;
   con ella, cinco pestañas, cada sección en la suya, buscar destapa todo, los
   puntos en Perfil y la barra abajo en el celular y a la izquierda en la
   computadora. También que el tema se pone y se devuelve, el aspecto (el
   encabezado blanco, el fondo crema, el borde fino, los títulos en Inter y
   el logo con su máscara) y que cada sala diga exactamente lo que contesta
-  la base, también cuando una consulta falla.
+  la base, también cuando una consulta falla; y las animaciones: que entran y cuentan
+  con movimiento, que al terminar no queda nada puesto, que mientras cuenta
+  el texto ya es el número de verdad, y que con «reducir movimiento» nada se
+  mueve.

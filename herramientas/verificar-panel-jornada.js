@@ -311,6 +311,76 @@ async function pruebaInicio(browser) {
   await c.ctx.close();
 }
 
+/* Las animaciones: se anota todo lo que pasa desde antes de cargar (un
+   MutationObserver), porque el conteo dura menos de un segundo y abrir()
+   ya espera más que eso. */
+const ESPIA_ANIMACION = () => {
+  window.__anim = { entra: 0, contando: [], textoAlContar: [] };
+  new MutationObserver((ms) => ms.forEach((m) => {
+    const t = m.target;
+    if (m.attributeName === "class" && t.classList && t.classList.contains("jornada-entra")) window.__anim.entra += 1;
+    if (m.attributeName === "data-contando" && t.dataset && t.dataset.contando) {
+      window.__anim.contando.push(t.dataset.contando);
+      window.__anim.textoAlContar.push(t.textContent);
+    }
+  })).observe(document, { subtree: true, attributes: true, attributeFilter: ["class", "data-contando"] });
+};
+
+async function pruebaAnimaciones(browser) {
+  console.log("\nLas animaciones: solo si el sistema no pide menos movimiento, y sin esconder datos");
+  const datos = Object.assign(ANOTADO(ALUMNO.id), { rpc: { saldo_de_puntos: 1250 } });
+  const vista = { viewport: { width: 1366, height: 900 } };
+
+  const a = await abrir(browser, ALUMNO, datos, Object.assign({ reducedMotion: "no-preference" }, vista), "", { __espia: "1" });
+  await a.ctx.addInitScript(ESPIA_ANIMACION);
+  await a.page.reload({ waitUntil: "networkidle" });
+  await a.page.waitForSelector("#app:not(.hidden)");
+  await a.page.waitForTimeout(1500);
+  const r = await a.page.evaluate(() => window.__anim);
+  cierto("al entrar, las secciones y tarjetas entran animadas (" + r.entra + ")", r.entra > 3);
+  const cuenta = r.contando.filter((x) => /^[\d\s ]+$/.test(x)).map((x) => Number(x.replace(/\D/g, "")));
+  cierto("los Puntos Ajedrez cuentan hacia arriba hasta 1 250 (" + cuenta.length + " pasos)", cuenta.length > 3 && cuenta[0] < cuenta[cuenta.length - 1]);
+  const mil = new Intl.NumberFormat("es-CR").format(1250);
+  cierto("mientras cuenta, el texto ya es el número de verdad", r.textoAlContar.includes(mil));
+  igual("al terminar, no queda nada contando", await a.page.$$eval("[data-contando]", (n) => n.length), 0);
+  igual("ni ninguna pieza con la animación puesta", await a.page.$$eval(".jornada-entra", (n) => n.length), 0);
+  igual("el número que queda", await a.page.$eval('.jornada-sala[data-sala="puntos"] .jornada-sala-grande', (s) => s.textContent), mil);
+  const antes = await a.page.evaluate(() => window.__anim.entra);
+  await a.page.click('.jornada-nav button[data-pestana="jugar"]');
+  await a.page.waitForTimeout(100);
+  cierto("al cambiar de pestaña, lo de la pestaña entra animado", (await a.page.evaluate(() => window.__anim.entra)) > antes);
+  const fuera = await a.page.$$eval(".jornada-entra", (n) => n.filter((x) => !x.checkVisibility()).length);
+  igual("y solo lo que se ve", fuera, 0);
+  igual("la animación existe en la hoja (no solo la clase)", await a.page.evaluate(() => {
+    const p = document.querySelector(".jornada-entra");
+    return p ? getComputedStyle(p).animationName : "ninguna pieza";
+  }), "jornada-entrar");
+  await a.page.hover('.jornada-nav button[data-pestana="inicio"]');
+  await a.page.click('.jornada-nav button[data-pestana="inicio"]');
+  await a.page.waitForTimeout(900);
+  await a.page.hover('.jornada-sala[data-sala="puntos"]');
+  await a.page.waitForTimeout(400);
+  cierto("una sala sube un poco con el ratón", await a.page.$eval('.jornada-sala[data-sala="puntos"]', (s) => getComputedStyle(s).transform !== "none"));
+  igual("sin errores", a.errores, []);
+  await a.ctx.close();
+
+  const b = await abrir(browser, ALUMNO, datos, Object.assign({ reducedMotion: "reduce" }, vista));
+  await b.ctx.addInitScript(ESPIA_ANIMACION);
+  await b.page.reload({ waitUntil: "networkidle" });
+  await b.page.waitForSelector("#app:not(.hidden)");
+  await b.page.waitForTimeout(1200);
+  await b.page.click('.jornada-nav button[data-pestana="jugar"]');
+  await b.page.waitForTimeout(100);
+  const rb = await b.page.evaluate(() => window.__anim);
+  igual("con «reducir movimiento»: nada entra animado ni cuenta", [rb.entra, rb.contando.length], [0, 0]);
+  await b.page.click('.jornada-nav button[data-pestana="inicio"]');
+  await b.page.hover('.jornada-sala[data-sala="puntos"]');
+  await b.page.waitForTimeout(300);
+  igual("ni sube con el ratón", await b.page.$eval('.jornada-sala[data-sala="puntos"]', (s) => getComputedStyle(s).transform), "none");
+  igual("y los Puntos están igual", await b.page.$eval('.jornada-sala[data-sala="puntos"] .jornada-sala-grande', (s) => s.textContent), mil);
+  await b.ctx.close();
+}
+
 async function pruebaHash(browser) {
   console.log("\nclases.html#tus-clases abre la pestaña donde vive");
   const { ctx, page } = await abrir(browser, ALUMNO, ANOTADO(ALUMNO.id), { viewport: { width: 1280, height: 900 } }, "#tus-clases");
@@ -321,7 +391,7 @@ async function pruebaHash(browser) {
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
-    for (const p of [pruebaSinAnotar, pruebaProfesoraAnotada, pruebaPestanas, pruebaCelular, pruebaSecciones, pruebaAspecto, pruebaInicio, pruebaHash]) await p(browser);
+    for (const p of [pruebaSinAnotar, pruebaProfesoraAnotada, pruebaPestanas, pruebaCelular, pruebaSecciones, pruebaAspecto, pruebaInicio, pruebaAnimaciones, pruebaHash]) await p(browser);
   } finally {
     await browser.close();
   }

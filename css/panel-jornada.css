@@ -150,6 +150,46 @@ body.jornada-buscando .jornada-nav button[aria-current] { background: transparen
 @media (min-width: 640px) { .jornada-salas { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-width: 1200px) { .jornada-inicio { grid-template-columns: minmax(0, 1fr) 18rem; align-items: start; } }
 
+/* ---- Las animaciones (js/panel-jornada.js, animarEntrada y contar) ----
+   Solo con prefers-reduced-motion: no-preference: quien pide menos
+   movimiento en su sistema ve el panel quieto. Ninguna esconde un dato ni
+   retrasa un clic: duran menos de medio segundo y, al terminar, no dejan
+   ningún transform puesto (un transform que se queda le cambia la caja a lo
+   que va fijo adentro). El panel adaptado no las tiene: este módulo no se
+   aplica ahí. */
+@media (prefers-reduced-motion: no-preference) {
+    @keyframes jornada-entrar {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: none; }
+    }
+    /* Al cambiar de pestaña (y al entrar), lo que queda a la vista entra con
+       un fundido y sube un poco; las tarjetas y las salas, una detrás de otra
+       (--jornada-i lo pone el módulo, con tope para que la última no tarde). */
+    body.jornada .jornada-entra {
+        animation: jornada-entrar .28s ease-out backwards;
+        animation-delay: calc(var(--jornada-i, 0) * 40ms);
+    }
+    /* Las tarjetas y las salas suben un poco con el ratón o con el foco del
+       teclado (las del panel ya suben con el ratón; aquí también con Tab). */
+    .jornada-sala, .jornada-clase-boton { transition: transform .18s ease, box-shadow .18s ease; }
+    .jornada-sala:hover, .jornada-sala:focus-visible,
+    .jornada-clase-boton:hover, .jornada-clase-boton:focus-visible { transform: translateY(-2px); }
+    body.jornada #tile-grid a:focus-visible { transform: translateY(-2px); }
+}
+
+/* El número de una sala mientras cuenta: el de verdad sigue en el texto (lo
+   lee el lector y guarda el ancho, con tabular-nums) pero transparente, y el
+   que va contando se pinta encima. El «/ ""» le dice al lector que ese
+   dibujo no se lee. */
+.jornada-sala-grande[data-contando] { position: relative; color: transparent !important; }
+.jornada-sala-grande[data-contando]::after {
+    content: attr(data-contando);
+    content: attr(data-contando) / "";
+    position: absolute; left: 0; top: 0; white-space: nowrap;
+    color: rgb(var(--c-brand-800));
+}
+.dark .jornada-sala-grande[data-contando]::after { color: #fff; }
+
 /* Con el tema «jornada», el menú lateral también lleva borde fino y no sombra. */
 @media (min-width: 1024px) {
     :root[data-tema=jornada] .jornada-nav { box-shadow: 0 0 0 1px rgb(var(--c-brand-100)); }

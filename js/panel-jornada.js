@@ -177,7 +177,61 @@
                 titulo.focus({ preventScroll: true });
             }
             window.scrollTo({ top: 0 });
+            animarEntrada();
         }
+    }
+
+    /* ---------- Las animaciones ----------
+       Solo si el sistema no pide menos movimiento (el CSS también lo exige:
+       css/panel-jornada.css, «Las animaciones»). Al cambiar de pestaña, lo que
+       queda a la vista entra con un fundido; sus tarjetas y salas, una detrás
+       de otra. Nada se esconde para esperar: la clase se quita sola y, sin
+       ella, todo está donde siempre. */
+    const conMovimiento = () => { try { return window.matchMedia("(prefers-reduced-motion: no-preference)").matches; } catch (e) { return false; } };
+    const PIEZAS = ".jornada-clase, .jornada-sala, .jornada-inicio-lado, .grid > a, .grid > div:not(.contents), .grid > .contents > *";
+    const TOPE_ESCALON = 5; // la sexta pieza y las siguientes entran juntas: la última no espera
+    let quitarEntrada = 0;
+
+    function animarEntrada() {
+        if (!activo || !conMovimiento() || buscando()) return;
+        const viejas = document.querySelectorAll(".jornada-entra");
+        viejas.forEach((e) => e.classList.remove("jornada-entra"));
+        const secciones = Array.from(document.querySelectorAll("[data-jornada]:not(.jornada-fuera)"))
+            .filter((e) => !e.checkVisibility || e.checkVisibility());
+        void document.body.offsetWidth; // que la animación vuelva a empezar
+        let n = 0;
+        secciones.forEach((s) => {
+            s.style.setProperty("--jornada-i", "0");
+            s.classList.add("jornada-entra");
+            s.querySelectorAll(PIEZAS).forEach((p) => {
+                n += 1;
+                p.style.setProperty("--jornada-i", String(Math.min(n, TOPE_ESCALON)));
+                p.classList.add("jornada-entra");
+            });
+        });
+        clearTimeout(quitarEntrada);
+        quitarEntrada = setTimeout(() => {
+            document.querySelectorAll(".jornada-entra").forEach((e) => e.classList.remove("jornada-entra"));
+        }, 900);
+    }
+
+    /* El número grande de una sala cuenta desde 0 hasta el de verdad. El
+       texto de .jornada-sala-grande es el número final desde el principio
+       (el lector y el verificador leen ese); el que va contando se dibuja
+       encima con data-contando (ver el CSS) y se quita al llegar. */
+    function contar(span, numero, resto) {
+        if (!conMovimiento() || !(numero > 0) || (span.checkVisibility && !span.checkVisibility())) return;
+        const DURA = 800;
+        const t0 = performance.now();
+        const paso = (t) => {
+            const f = Math.min(1, (t - t0) / DURA);
+            const v = Math.round(numero * (1 - Math.pow(1 - f, 3))); // arranca rápido y frena al llegar
+            if (f >= 1) { span.removeAttribute("data-contando"); return; }
+            span.dataset.contando = fmtN(v) + resto;
+            requestAnimationFrame(paso);
+        };
+        span.dataset.contando = fmtN(0) + resto;
+        requestAnimationFrame(paso);
     }
 
     // Un botón (o enlace) de sección: el mismo para el menú y para la fila del celular.
@@ -299,6 +353,7 @@
         const valida = guardada && (SUBSECCIONES[actual] || []).some((s) => s.grupo && s.grupo === guardada.seccion);
         seccion = valida ? guardada.seccion : null;
         if (!irAlHash()) { aplicar(); if (seccion) abrirGrupo(seccion); }
+        animarEntrada();
 
         if (grilla) new MutationObserver(() => { marcar(); aplicar(); }).observe(grilla, { childList: true });
         const campo = document.getElementById("buscar-panel-campo");
@@ -388,11 +443,14 @@
         llenarInicio();
     }
 
-    function sala(id, grande, det) {
+    // `numero`, si viene, es la cifra con la que empieza `grande`: esa cuenta hacia arriba.
+    function sala(id, grande, det, numero) {
         const a = document.querySelector('.jornada-sala[data-sala="' + id + '"]');
         if (!a) return;
-        a.querySelector(".jornada-sala-grande").textContent = grande;
+        const span = a.querySelector(".jornada-sala-grande");
+        span.textContent = grande;
         a.querySelector(".jornada-sala-det").textContent = det;
+        if (typeof numero === "number" && grande.startsWith(fmtN(numero))) contar(span, numero, grande.slice(fmtN(numero).length));
     }
 
     async function llenarInicio() {
@@ -425,7 +483,7 @@
             const dias = Array.isArray(entreno.data.dias) ? entreno.data.dias : [];
             const hoy = dias.length ? Number(dias[dias.length - 1].n) || 0 : 0;
             const semana = dias.reduce((s, d) => s + (Number(d.n) || 0), 0);
-            sala("hoy", fmtN(hoy) + (hoy === 1 ? " ejercicio" : " ejercicios"), "Esta semana: " + fmtN(semana));
+            sala("hoy", fmtN(hoy) + (hoy === 1 ? " ejercicio" : " ejercicios"), "Esta semana: " + fmtN(semana), hoy);
         }
 
         // Tareas por hacer: las pendientes que no vencieron.
@@ -437,12 +495,12 @@
         else if (!porHacer.length) sala("tareas", "0", "Estás al día");
         else {
             const t = porHacer[0];
-            sala("tareas", fmtN(porHacer.length), "«" + String(t.titulo || "Tarea").slice(0, 40) + "»" + (t.vence_at ? ", vence " + cuandoEs(new Date(t.vence_at)) : ""));
+            sala("tareas", fmtN(porHacer.length), "«" + String(t.titulo || "Tarea").slice(0, 40) + "»" + (t.vence_at ? ", vence " + cuandoEs(new Date(t.vence_at)) : ""), porHacer.length);
         }
 
         // Puntos y rango.
         if (saldo.error || saldo.data == null) sala("puntos", "—", sinDato);
-        else sala("puntos", fmtN(saldo.data), "Canjéalos en la tienda");
+        else sala("puntos", fmtN(saldo.data), "Canjéalos en la tienda", Number(saldo.data));
         const r = !rango.error && Array.isArray(rango.data) ? rango.data[0] : (!rango.error ? rango.data : null);
         if (!r) sala("rango", "—", sinDato);
         else {
@@ -466,7 +524,7 @@
         if (!clases) sala("clases", "—", sinDato);
         else {
             const enSiete = clases.filter((c) => Date.parse(c.inicio) - ahora < 7 * 86400000 && Date.parse(c.fin || c.inicio) > ahora);
-            sala("clases", fmtN(enSiete.length), enSiete.length ? "La próxima, " + cuandoEs(new Date(enSiete[0].inicio)) + " a las " + F_HORA.format(new Date(enSiete[0].inicio)) : "Sin clases en los próximos 7 días");
+            sala("clases", fmtN(enSiete.length), enSiete.length ? "La próxima, " + cuandoEs(new Date(enSiete[0].inicio)) + " a las " + F_HORA.format(new Date(enSiete[0].inicio)) : "Sin clases en los próximos 7 días", enSiete.length);
         }
         pintarLoQueViene(clases || [], porHacer || [], !clases && !porHacer);
     }
