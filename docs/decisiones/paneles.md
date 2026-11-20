@@ -5267,7 +5267,9 @@ el sitio, con una sola cuenta.
   `insert into public.vistas_en_prueba (profile_id, vista) values ('<id>', 'panel_jornada');`
   y para sacarlo, borrar su fila.
 - **El aspecto de Chessgora, en todo el sitio** (pedido del dueño el
-  19/11/2026). Es un tema más de `js/temas-plataforma.js`, «jornada», con
+  19/11/2026; **reemplazado el 20/11** por el de tablero de control, abajo:
+  lo que sigue vale igual salvo los colores y el Inicio). Es un tema más de
+  `js/temas-plataforma.js`, «jornada», con
   `oculto: true` (Configuración no lo ofrece) y `estilo: "jornada"`:
   - **Colores**: crema en brand-50 y 100 (el fondo y los bordes), azul marino
     del 200 en adelante y dorado de acento. Cada tono tiene la misma
@@ -5329,6 +5331,36 @@ el sitio, con una sola cuenta.
     terminar no queda ningún `transform` puesto, porque un transform que se
     queda le cambia la caja a lo que va fijo adentro (un diálogo, la burbuja).
     El panel adaptado no las tiene porque este módulo no se aplica ahí.
+- **El aspecto de tablero de control** (20/11/2026: el dueño trajo de
+  muestra un tablero de control turquesa y pidió reemplazar el de Chessgora,
+  solo para la misma cuenta). Mismo tema «jornada» (así la cuenta no tiene
+  que volver a encenderlo), con otra paleta y otro Inicio:
+  - **Colores**: gris azulado en brand-50 y 100, turquesa del 200 en
+    adelante y rosado de acento; cada tono con la luminancia del Clásico,
+    como siempre.
+  - **Menú lateral oscuro** (brand-800) de alto completo en la computadora,
+    con la opción abierta en blanco. En el celular la barra de abajo sigue
+    clara.
+  - **Banner** en lugar de la tarjeta de la clase: degradado turquesa, la
+    marca de la academia, la clase (o «Sin clase programada»), atajos a lo
+    que más se usa, el saludo con la fecha de Costa Rica, tres botones y una
+    ilustración de ajedrez dibujada para el sitio (un tablero en perspectiva
+    con un caballo y un rey; adorno, con `aria-hidden`). La ilustración se
+    esconde por debajo de 900 px.
+  - **Tarjetas de color**: las seis salas, cada una con su degradado
+    (escrito en el CSS, no en el tema) y el dato abajo en una pastilla. Texto
+    blanco con 5,1:1 o más; cada una se reconoce por su nombre y su número
+    escritos, no solo por el color.
+  - **Cuatro gráficos** en SVG dibujado en `js/panel-jornada.js` (sin
+    librerías): los ejercicios de cada día de la semana (barras, la de hoy
+    distinta), el camino al próximo rango (dona: los puntos desde donde
+    empieza el rango actual, con los umbrales de `js/rangos.js`, que ahora
+    carga `clases.html`), las tareas completadas, por hacer y vencidas
+    (barra apilada; las programadas no cuentan) y el entrenamiento de los
+    últimos seis meses (línea, con `entreno_mi_mes`). Cada uno lleva sus
+    números escritos debajo, que son lo que lee el lector de pantalla; el
+    SVG es adorno. Para contar las completadas, `tareas_con_avance` se pide
+    ahora con `p_pendientes: false`.
 - Lo revisa `verificar-panel-jornada.js`: sin la fila, el panel no cambia;
   con ella, cinco pestañas, cada sección en la suya, buscar destapa todo, los
   puntos en Perfil y la barra abajo en el celular y a la izquierda en la

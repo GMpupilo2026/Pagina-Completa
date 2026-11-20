@@ -126,20 +126,24 @@
       decorado: "lunas",
       vuelan: "magos",
     },
-    /* El aspecto de Chessgora (fondo crema, azul marino y dorado, encabezado
-     * blanco, tarjetas con borde fino, botones de píldora y todo en Inter).
-     * NO se ofrece en Configuración (`oculto`): es de la prueba del panel
-     * jornada y lo enciende js/panel-jornada.js solo a las cuentas de
+    /* El aspecto de tablero de control (turquesa y oscuro, como el que el dueño
+     * trajo de muestra el 20/11/2026): fondo gris claro, encabezado blanco,
+     * tarjetas con borde fino, botones de píldora y todo en Inter; en el panel,
+     * el menú lateral oscuro, un banner con degradado, tarjetas de color y
+     * gráficos (css/panel-jornada.css). Reemplazó al de Chessgora (crema y
+     * dorado). NO se ofrece en Configuración (`oculto`): es de la prueba del
+     * panel jornada y lo enciende js/panel-jornada.js solo a las cuentas de
      * vistas_en_prueba. Los tonos tienen la misma luminancia que el Clásico,
-     * como todos: crema en 50 y 100, azul marino del 200 en adelante. Las
-     * formas (`estilo`) las escribe herramientas/css-construir.js. */
+     * como todos: gris azulado en 50 y 100, turquesa del 200 en adelante y
+     * rosado de acento. Las formas (`estilo`) las escribe
+     * herramientas/css-construir.js. */
     jornada: {
       label: "Jornada",
-      icono: "🏛️",
-      descripcion: "Crema, azul marino y dorado, con tarjetas de borde fino.",
-      brand: { 50: "#f8f3e9", 100: "#e7e0d5", 200: "#c4cadf", 300: "#a7b0d0", 350: "#919dc6", 400: "#6678b4", 450: "#546ab2", 500: "#475dae", 600: "#35468e", 700: "#263473", 800: "#1c2551", 900: "#141b3e", 950: "#0e122f" },
-      accent: { 50: "#fdfbf4", 100: "#f9f2e1", 300: "#e4cd8d", 400: "#d9bb6f", 500: "#c69b38", 600: "#ac7e2e", 700: "#99621b", 900: "#744211" },
-      casillas: "azul",
+      icono: "📊",
+      descripcion: "Turquesa y rosado, con tarjetas de borde fino.",
+      brand: { 50: "#eff4f6", 100: "#d8e3e6", 200: "#add0d7", 300: "#7ebac5", 350: "#59aab8", 400: "#368591", 450: "#2c7783", 500: "#236b77", 600: "#16535d", 700: "#0f3f48", 800: "#092d35", 900: "#072128", 950: "#04171d" },
+      accent: { 50: "#fefafb", 100: "#fdeff3", 300: "#f7c0cd", 400: "#f3aabb", 500: "#e8849b", 600: "#d95d78", 700: "#cf2d4e", 900: "#961f33" },
+      casillas: "turquesa",
       estilo: "jornada",
       oculto: true,
     },
