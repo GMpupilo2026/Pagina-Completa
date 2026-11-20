@@ -144,6 +144,20 @@ async function pruebaAnuncio(browser) {
   igual("se publica sin jugadores, con el anuncio", [crear.torneo.jugadores.length, crear.torneo.anuncio.hora, crear.torneo.anuncio.contacto], [0, "08:30", "prueba@ejemplo.com"]);
   igual("y con el código del enlace en vivo de su evento", crear.torneo.codigoEvento, "evt12345");
 
+  console.log("\n=== La sala: dónde está cada mesa (el plano del QR del gafete) ===");
+  ok(await P.vis(page, "#pi-sala-plano"), "publicado, ofrece «La sala»");
+  await page.fill("#pi-sala-primera", "8");
+  await page.fill("#pi-sala-filas", "3");
+  await page.fill("#pi-sala-porfila", "4");
+  await page.press("#pi-sala-porfila", "Tab");
+  await page.waitForSelector("#pi-sala-vista svg");
+  igual("la vista previa dice dónde queda su primera mesa (la 8: fila 2, la 4.ª desde la derecha)", await page.textContent("#pi-sala-vista p"), "Así lo ve el jugador de la mesa 8: fila 2, la 4.ª mesa desde la derecha.");
+  const [gs] = await P.esperarGuardado(page, (l) => l[0].sala && l[0].sala.porFila === 4);
+  igual("se guarda en el torneo, con la primera mesa", [gs.sala.filas, gs.sala.porFila, gs.sala.derecha, gs.mesaInicial], [3, 4, true, 8]);
+  let conSala = null;
+  for (let i = 0; i < 30 && !conSala; i++) { conSala = pedidos.filter((x) => x.accion === "actualizar" && x.torneo.sala && x.torneo.sala.filas === 3).pop(); if (!conSala) await page.waitForTimeout(500); }
+  ok(conSala && conSala.torneo.sala.filas === 3 && conSala.torneo.mesaInicial === 8, "y se publica sola", JSON.stringify(conSala && conSala.torneo.sala));
+
   console.log("\n=== Abrir la inscripción y revisarla ===");
   await page.check("#pi-insc-abierta");
   await page.waitForFunction(() => true);

@@ -81,6 +81,11 @@ function pruebaSinNavegador() {
   // «Partidas en vivo». Solo con las cámaras conectadas.
   const conCamaras = (c) => PP.datosPublicos(Object.assign(torneo("PRUEBA CAM", false), { camaras: c })).camaras;
   igual("el código de las cámaras va solo si están conectadas", [conCamaras({ codigo: "abcd2345", activo: true }), conCamaras({ codigo: "abcd2345", activo: false }), d.camaras], ["abcd2345", undefined, undefined]);
+  // La sala (el plano del QR del gafete, js/pareo/sala.js): viaja y la función la guarda limpia.
+  const sala = { filas: 2, porFila: 3, derecha: false, zigzag: true, frente: "la entrada", fondo: "la tarima", foto: "" };
+  igual("la sala viaja al publicar (filas, mesas por fila, de qué lado, zigzag, adelante y al fondo)", PP.datosPublicos(Object.assign(torneo("PRUEBA SALA", false), { sala })).sala, sala);
+  ok(/sala: limpiarSala\(v\.sala\)/.test(fn) && /function limpiarSala\(v: unknown\)[\s\S]{0,600}LOGO\.test\(v\.foto\) && v\.foto\.length <= 450000/.test(fn),
+    "y la función la guarda limpia, con la foto solo si es una imagen chica (sin eso, el plano no llega al QR, callado)");
   ok(/camaras: codigo\(v\.camaras\)/.test(fn), "y la función lo guarda (sin eso, «Partidas en vivo» no sale nunca, callado)");
   ok(/validoElo: \["fide", "nacional", "no"\]\.includes\(v\.validoElo/.test(fn), "la función pareo-publicar lo guarda (sin eso se pierde al publicar, callado)");
   ok(/resumen: lista\(v\.resumen, 1000, filaResumen\)/.test(fn) && /provincia: PROVINCIAS\.has/.test(fn), "y el resumen y la provincia (sin eso, el ranking y «Por provincia» quedan vacíos)");

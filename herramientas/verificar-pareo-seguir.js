@@ -47,7 +47,10 @@ function torneo(nombre, ids) {
 const fila = (id, t, actualizado) => ({ id, nombre: t.nombre, evento: "", lugar: "", fecha: "2026-10-22", rondas: 1, rondas_total: 3,
   jugadores: t.jugadores.length, actualizado, datos: PP.datosPublicos(t) });
 const FILAS = [
-  fila(ID1, torneo("PRUEBA ABIERTO", ["a", "b", "c", "d", "e", "f"]), "2026-10-22T15:00:00Z"),
+  // Con la sala (js/pareo/sala.js): 2 filas de 3, la más baja a la derecha,
+  // y la foto del salón. La mesa 2 queda en la fila 1, la 2.ª desde la derecha.
+  fila(ID1, Object.assign(torneo("PRUEBA ABIERTO", ["a", "b", "c", "d", "e", "f"]), { sala: { filas: 2, porFila: 3, derecha: true, zigzag: false, frente: "la entrada", fondo: "la tarima",
+    foto: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" } }), "2026-10-22T15:00:00Z"),
   // En el segundo, PRUEBA E es el «c» (otro id, el mismo nombre).
   fila(ID2, torneo("PRUEBA OTRO", ["g", "h", "e", "i", "j", "k"]), "2026-10-20T15:00:00Z"),
   // Uno con los inscritos y sin pareo todavía (la mañana del torneo).
@@ -222,6 +225,14 @@ async function pruebaQrGafete(browser) {
   igual("«Ahora»: la ronda, la mesa, el color, el rival, lo que sacó y el puesto", await page.$eval("#tp-ahora", (x) => [...x.children].map((p) => p.textContent)),
     ["Ronda 1", "Mesa 2", "Color: Blancas", "Rival: PRUEBA B (1800)", "Resultado: 1 punto", "Puesto 1 de 6 · 1 punto tras la ronda 1"]);
   ok(await page.$eval("#tp-ahora-mesa", (x) => x.checkVisibility() && parseFloat(getComputedStyle(x).fontSize) >= 40), "el número de la mesa se ve, en grande");
+  // Dónde está su mesa en el salón: la frase, el plano con SU mesa marcada
+  // (la única) y la foto del salón (js/pareo/sala.js).
+  igual("dónde está su mesa: la fila y la posición desde la derecha", await page.textContent("#tp-sala-donde"), "📍 Fila 1 · la 2.ª mesa desde la derecha");
+  igual("el plano marca una sola mesa, la suya, y se ve", await page.evaluate(() => {
+    const m = [...document.querySelectorAll("#tp-sala .cac-plano-marcada")];
+    return [m.length, m[0] && m[0].textContent, !!document.querySelector("#tp-sala svg") && document.querySelector("#tp-sala svg").checkVisibility()];
+  }), [1, "2", true]);
+  ok(await page.$eval("#tp-sala-foto", (x) => x.checkVisibility() && x.src.startsWith("data:image/png")), "y la foto del salón, debajo");
   igual("la vista corta: su nombre arriba, y nada de la inscripción, las pestañas ni las tablas",
     [await page.textContent("#tp-titulo"), await page.$$eval("#tp-i-form, nav[aria-label='Partes del torneo'], #tp-tabla-jugador, #tp-tabla-clas", (l) => l.length)], ["PRUEBA E", 0]);
   igual("sin scroll de costado en el celular", await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);

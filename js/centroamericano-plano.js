@@ -232,7 +232,8 @@
             "stroke-dasharray": op.editor && m.duda && !elegida ? "4 3" : "none",
           }));
           // Mirando hacia el fondo, el tablero de la derecha (t[0]) queda a la derecha.
-          const rotuloMesa = [m.t[1], m.t[0]].map((n) => (n ? String(n) : "·")).join(" ");
+          // Una mesa de un solo tablero (la sala de Pareo, js/pareo/sala.js) lleva solo su número.
+          const rotuloMesa = m.t.length === 1 ? String(m.t[0] || "·") : [m.t[1], m.t[0]].map((n) => (n ? String(n) : "·")).join(" ");
           if (op.zonas) {
             // La zona escrita (el color nunca va solo) y debajo los dos tableros, más chicos.
             caja.appendChild(nodo("text", { x: x + M.ancho / 2, y: y + 13, "text-anchor": "middle", "font-size": 12, "font-weight": 700, fill: TINTA }, zona ? "Z" + zona : "—"));
