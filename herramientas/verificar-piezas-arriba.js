@@ -11,6 +11,9 @@
    posición (`id="position-readout"`) y el tablero (`id="board"`)— y exige que
    la lectura venga antes en el HTML, que es el orden en que la lee el lector.
 
+   La lista que arma js/cuadro-comandos.js (las páginas sin lectura propia) no
+   está en el HTML: la mide verificar-piezas-ciego.js, con navegador.
+
    Uso: node herramientas/verificar-piezas-arriba.js */
 const fs = require("fs");
 const path = require("path");
