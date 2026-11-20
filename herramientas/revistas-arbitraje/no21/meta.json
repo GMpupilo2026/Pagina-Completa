@@ -1,0 +1,18 @@
+{
+  "numero": 21,
+  "especial": {
+    "edicion": "Edición especial · noviembre 2026",
+    "sello": "El Seminario de Árbitro FIDE completo"
+  },
+  "titulo_presentacion": "Editorial",
+  "temas": [
+    { "titulo": "Leyes del Ajedrez: las reglas del juego", "desc": "Leyes 2023 · arts. 1 a 5 y 7" },
+    { "titulo": "Reloj, anotación, tablas, conducta y modalidades", "desc": "Leyes 2023 · arts. 6, 8 a 12 y apéndices" },
+    { "titulo": "Regulaciones generales y juego limpio", "desc": "Regulaciones Generales · Fair Play" },
+    { "titulo": "Sistemas de juego y desempates", "desc": "Suizo holandés 2026 · Desempates 2026" },
+    { "titulo": "Rating, títulos y el inglés del árbitro", "desc": "B.01 · B.02 · B.06" },
+    { "titulo": "Cuaderno de práctica y examen simulado", "desc": "Casos, 40 preguntas y sus soluciones" }
+  ],
+  "presentacion": "<div class=\"cols\"><p>Este número es distinto a todos los anteriores: no es una revista vieja puesta al día ni una guía de una herramienta. Es el <b>Seminario de Árbitro FIDE</b> entero, en papel, para que lo estudies a tu ritmo antes, durante y después del curso.</p><p>Sigue el orden de las tres jornadas. El <b>viernes</b>, las Leyes del Ajedrez: primero las reglas del juego (cómo se mueven las piezas, la pieza tocada, cuándo termina una partida, las jugadas ilegales) y después todo lo que pasa alrededor del tablero (el reloj, la planilla, las tablas, la conducta y las modalidades rápida y blitz). El <b>sábado</b>, los reglamentos: las Regulaciones Generales para Competiciones, el juego limpio, los sistemas de juego y los desempates. El <b>domingo</b>, el rating FIDE, los títulos de jugadores y de árbitros y el inglés que se usa en la sala de juego.</p><p>Cada artículo termina con un recuadro de <b>práctica</b>, y las soluciones van al final de cada bloque: intenta resolverla antes de mirar. La última parte es un <b>cuaderno de entrenamiento</b> con casos de la sala de juego y un <b>examen simulado</b> de 40 preguntas, con su corrección, parecido al que vas a presentar al final del seminario. Recuerda que se aprueba con el 80 %.</p><p>Todo está revisado contra la normativa FIDE vigente en noviembre de 2026, y cada regla lleva su artículo para que la busques en el reglamento. Las fichas y las preguntas de este número también están en la Aula de Arbitraje.</p><p>Estudia con las Leyes en la mano. El árbitro no se las aprende de memoria: sabe dónde están y las aplica con criterio.</p><p style=\"text-align:left\"><b>IA Oscar Angulo Cubero</b><br>Árbitro Internacional · Ajedrez Integral</p></div>",
+  "cambios": []
+}

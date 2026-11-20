@@ -12724,6 +12724,19 @@ PDF, que se baja **solo después de completar todo lo de ese número**.
   inventados antes de la captura**: van en la lista `NOMBRES` del script, y un
   nombre nuevo en un doble hay que sumarlo ahí. La pestaña Transmisión no tiene
   doble en el navegador: la revista la cuenta sin captura.
+- **El N.º 21 es el Seminario de Árbitro FIDE completo** (pedido del dueño,
+  20/11/2026: «crear todo el curso como revista 21, con todos los textos,
+  prácticas, etc.»). Sigue las tres jornadas del seminario: Leyes del Ajedrez
+  (reglas del juego; reloj, anotación, tablas, conducta y apéndices),
+  Regulaciones Generales y juego limpio, sistemas de juego y desempates,
+  rating, títulos y el inglés del árbitro, y cierra con un cuaderno de casos y
+  un examen simulado de 40 preguntas con su corrección. Cada artículo trae su
+  recuadro «Practica» y las soluciones van al final de cada bloque. La fuente
+  es el material corregido del curso (las presentaciones y los reglamentos de
+  la carpeta «Corregidos 2026» de Drive y el examen con respuestas), revisado
+  contra la normativa FIDE vigente; las cifras de desempates y rating las
+  comprueban los scripts de `no21/calculos/`. Lo que no se pudo comprobar está
+  en `no21/notas.md`.
 
 ### Las ayudas de cálculo de los ejercicios
 
