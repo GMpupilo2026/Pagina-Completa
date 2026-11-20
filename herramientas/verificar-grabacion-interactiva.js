@@ -443,7 +443,10 @@ async function pruebaPreguntas(browser) {
   const lista = [grabacion("p1", -29, "Sesión I", "Encuadre del curso y reglas básicas", g1.duracion)];
   const q1 = g1.preguntas[0], q2 = g1.preguntas[1], qFen = g1.preguntas.find((q) => q.fen);
   // La 2 ya la contestó (bien) otra vez: no lo vuelve a detener.
-  const ya = [{ horario_id: "p1", fecha: lista[0].fecha, persona_id: YO, n: 2, elegida: correctas[2], acerto: true }];
+  // Cada fila es de una parte de la grabación (la base la pone en 1 si la
+  // sesión quedó en un solo video); la de otra parte no cuenta para esta.
+  const ya = [{ horario_id: "p1", fecha: lista[0].fecha, parte: 1, persona_id: YO, n: 2, elegida: correctas[2], acerto: true },
+    { horario_id: "p1", fecha: lista[0].fecha, parte: 2, persona_id: YO, n: 1, elegida: correctas[1], acerto: true }];
   const { page, errores, cerrar } = await abrir(browser, lista, { extra: { correctas, tablas: {
     profiles: [{ id: YO, full_name: "Asesora de prueba", role: "alumno", is_admin: false, grupo: "MEP" }], grabacion_respuestas: ya } } });
   await abrirCine(page, "Sesión I");

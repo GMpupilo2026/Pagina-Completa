@@ -71,6 +71,13 @@
   --u-fuerte: #1d64b0;
   --u-claro: #9fd0f3;
 }
+/* «Ver la partida en vivo» (js/torneo-en-vivo.js): blanco sobre #1D64B0
+ * 6,00 y sobre #1F3A7A 10,80 al pasar; el foco, #1F3A7A (9,89 sobre #EEF6FD). */
+.pz-boton { display: inline-block; background: #1d64b0; color: #fff; font-weight: 700; padding: 0.75rem 1.5rem; border-radius: 0.5rem; }
+.pz-boton:hover { background: #1f3a7a; }
+.pz-boton:focus { outline: none; }
+.pz-boton:focus-visible { outline: 3px solid #1f3a7a; outline-offset: 2px; }
+.dark .pz-boton:focus-visible { outline-color: #9fd0f3; }
 
 /* El Torneo Intereducativo Tacho Chess 2 (tacho-chess-2.html): el azul y el
  * rojo de su afiche, medidos de la imagen (la mediana de sus píxeles azules y
@@ -95,6 +102,18 @@
 }
 /* El rojo lleva letra blanca (la tinta azul sobre el rojo no alcanza). */
 .cac-u.tacho .cac-pildora, .u-sala.u-sala-tacho a.u-sala-principal { color: #fff; }
+/* El proyector, con el azul hondo del afiche y no el morado del
+ * Centroamericano: blanco sobre #042A69 13,63 y sobre la fila par #0A3A85
+ * 10,73; los títulos #E6E7F8 11,13 y 8,76; el amarillo de los podios #FFD66B
+ * 9,79; la letra de los botones y del QR, #042A69 sobre blanco 13,63. */
+.cac-u.tacho .cac-proyector { background: #042a69; }
+.cac-u.tacho .cac-proyector-tabla tbody tr:nth-child(even), .cac-u.tacho .cac-proyector-progreso { background: #0a3a85; }
+.cac-u.tacho .cac-proyector-boton, .cac-u.tacho .cac-proyector-qr { color: #042a69; }
+/* En oscuro, los botones de la tarjeta del jugador, con el rojo claro y no el
+ * lila del Centroamericano: #FF8A94 sobre brand-950 8,13 y sobre brand-900
+ * 7,41; abierto, #042A69 sobre #FF8A94 6,05. */
+.dark .cac-u.tacho .cac-jugador-boton { border-color: #ff8a94; color: #ff8a94; }
+.dark .cac-u.tacho .cac-jugador-boton[aria-expanded="true"] { background: #ff8a94; color: #042a69; }
 /* Tacho, la mascota, recortado del afiche: más alto que un logo, y flota
  * como el pizote del Centroamericano (quieto con «menos movimiento»). */
 .tacho .u-logo { max-height: 22rem; filter: drop-shadow(0 14px 18px rgb(0 0 0 / 0.35)); animation: tacho-flota 4s ease-in-out infinite; }
@@ -318,5 +337,42 @@
 .dark .cac-u .cac-buscador-campo { border-color: var(--u-claro); }
 .dark .cac-u .cac-jugador { border-left-color: var(--u-claro); }
 .cac-u .cac-proyector-barra { background: var(--cac-morado); }
+
+/* «Inscritos» de la Eliminatoria JDN de PZ (js/jdn-pz-inscritos.js): una
+ * tarjeta por jugador con su foto (o sus iniciales) y «Aprobado».
+ * Contraste: #166534 sobre #DCFCE7 6,49; en oscuro, #86EFAC sobre brand-900
+ * 10,43; #1F3A7A sobre #E6F3FC 9,56; #9FD0F3 sobre brand-900 8,92. */
+.jdn-inscritos { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+.jdn-inscrito { width: 100%; height: 100%; display: flex; align-items: center; gap: 0.85rem; text-align: left; padding: 0.7rem; border-radius: 1rem; background: #fff; border: 2px solid var(--u-luz, #dfe0f7); }
+.jdn-inscrito:hover { border-color: var(--u-fuerte, #40478f); }
+.jdn-inscrito:focus-visible { outline: 3px solid var(--u-fuerte, #40478f); outline-offset: 2px; }
+.dark .jdn-inscrito { background: rgb(var(--c-brand-900, 16 42 67)); border-color: rgb(255 255 255 / 0.15); }
+.jdn-inscrito-foto { flex-shrink: 0; width: 4.5rem; height: 4.5rem; border-radius: 9999px; overflow: hidden; border: 3px solid var(--u-celeste, #4aa3e3); background: var(--u-suave, #e6f3fc); display: flex; align-items: center; justify-content: center; }
+.jdn-inscrito-foto img { width: 100%; height: 100%; object-fit: cover; }
+.jdn-inscrito-sin-foto { color: var(--u-1, #1f3a7a); font-weight: 800; font-size: 1.35rem; }
+.dark .jdn-inscrito-sin-foto { background: rgb(255 255 255 / 0.08); color: var(--u-claro, #9fd0f3); }
+.jdn-inscrito-datos { display: grid; gap: 0.15rem; min-width: 0; }
+.jdn-inscrito-nombre { font-weight: 800; line-height: 1.25; }
+.jdn-inscrito-sub { font-size: 0.875rem; }
+.jdn-inscrito-listo { justify-self: start; margin-top: 0.2rem; font-size: 0.75rem; font-weight: 800; padding: 0.1rem 0.55rem; border-radius: 999px; background: #dcfce7; color: #166534; }
+.dark .jdn-inscrito-listo { background: rgb(134 239 172 / 0.12); color: #86efac; }
+
+/* La profe Karina en la computadora (lo pidió el dueño el 18/11/2026: «que
+ * en compu se vea más grande»): el botón, el panel, el dibujo y la letra,
+ * más grandes desde 1024 px. En el celular queda como en el Centroamericano. */
+@media (min-width: 1024px) {
+  .pz .cac-profe-boton { right: 1.5rem; bottom: 1.5rem; }
+  .pz .cac-profe-cara { width: 6rem; height: 6rem; }
+  .pz .cac-profe-cara img { width: 5.25rem; transform: translateY(0.7rem); }
+  .pz .cac-profe-globo { font-size: 1.15rem; padding: 0.65rem 1rem; }
+  .pz .cac-profe-panel { right: 1.5rem; bottom: 8.5rem; width: min(32rem, calc(100vw - 3rem)); max-height: calc(100vh - 10rem); padding: 1.4rem; }
+  .pz .cac-profe-cabeza { grid-template-columns: 7.5rem minmax(0, 1fr); }
+  .pz .cac-profe-figura { width: 7.5rem; height: 12rem; }
+  .pz .cac-profe-titulo { font-size: 1.45rem; }
+  .pz .cac-profe-texto { font-size: 1.1rem; }
+  .pz .cac-profe-lista { gap: 0.6rem; margin-top: 1rem; }
+  .pz .cac-profe-pregunta { font-size: 1.125rem; min-height: 3.25rem; padding: 0.7rem 1rem; }
+  .pz .cac-profe-panel .cac-boton, .pz .cac-profe-panel .cac-jugador-boton { font-size: 1.05rem; }
+}
 
 /*! rev bfb5bbb0d2d82f9f */

@@ -166,7 +166,8 @@
   // Por tableros: los puntos del tablero 1; a igual, los del 2, y así (como
   // lo usan algunos reglamentos de equipos para el último desempate).
   const TB = { codigo: "TB", es: "Por tableros (los puntos del tablero 1, después los del 2…)", en: "Board by board (board 1 points, then board 2…)" };
-  const catalogo = (t) => (esDeEquipos(t) ? [PT, TB].concat(D.CATALOGO) : D.CATALOGO);
+  // En un Keizer, además, sus puntos y el valor de cada uno (no son de FIDE).
+  const catalogo = (t) => (esDeEquipos(t) ? [PT, TB].concat(D.CATALOGO) : t && t.sistema === "keizer" ? D.CATALOGO_KEIZER.concat(D.CATALOGO) : D.CATALOGO);
 
   // Los puntos de un equipo en cada tablero, en las rondas [0, hasta).
   function puntosPorTablero(t, idEquipo, hasta) {
@@ -214,7 +215,7 @@
     }
     const cmp = (a, b) => {
       if (b.puntos !== a.puntos) return b.puntos - a.puntos;
-      for (const c of lista) if (b.valores[c] !== a.valores[c]) return (b.valores[c] || 0) - (a.valores[c] || 0);
+      for (const c of lista) if (b.valores[c] !== a.valores[c]) return D.diferencia(c, a.valores[c] || 0, b.valores[c] || 0);
       return 0;
     };
     const orden = new Map(base.map((f, i) => [f.id, i]));

@@ -27,6 +27,14 @@
                                                           (para repartir en el CI)
      node herramientas/verificar-todo.js --paralelo=3     de a tres a la vez
      node herramientas/verificar-todo.js panel tareas     solo los que se llaman así
+     node herramientas/verificar-todo.js --cambios-desde=origin/main
+                                                          solo los que toca lo que cambió
+                                                          desde ese commit (lo usa el CI;
+                                                          ver lib/verificadores-afectados.js)
+     node herramientas/verificar-todo.js --tiempos=t.json deja cuánto tardó cada uno
+
+   Al terminar dice los diez más lentos: con eso se pone al día DURACION (que
+   reparte las tandas) y se sabe cuáles conviene aligerar.
 */
 "use strict";
 
@@ -71,6 +79,56 @@ const DESPUES = {
    simultáneas: 25 partidas a la vez pasaban de los 10 minutos) y solos pasan. */
 const SOLOS = new Set(["verificar-camara-tablero.js", "verificar-partidas-simultaneas.js"]);
 
+/* Cuánto tarda cada verificador LENTO en el CI (segundos, en las máquinas de
+   GitHub; sacado de la corrida del 18/11/2026). Con esto se reparten las
+   tandas parejas. Antes iban de a uno por turno (el 1.º a la tanda 1, el 2.º
+   a la 2…) y la 4 juntó por casualidad a cámara y simultáneas: 43 minutos
+   contra 19 de la 1, y se cortaba en el límite de 45 aunque todo pasara (el
+   CI quedaba en «cancelado», sin ningún verificador en rojo). Los que no
+   están acá tardan unos 10 s. No hace falta tenerla al día al segundo: solo
+   importa que los lentos estén. */
+const DURACION = {
+  "verificar-admin.js": 84,
+  "verificar-bromas.js": 61,
+  "verificar-camara-tablero.js": 448,
+  "verificar-carga-tablero.js": 51,
+  "verificar-centroamericano-fair-play.js": 72,
+  "verificar-centroamericano-mesas-pagina.js": 173,
+  "verificar-centroamericano.js": 55,
+  "verificar-clase-invitados.js": 40,
+  "verificar-cobros.js": 50,
+  "verificar-csp-navegador.js": 67,
+  "verificar-css.js": 177,
+  "verificar-cuadro-comandos.js": 53,
+  "verificar-encabezado-scroll.js": 46,
+  "verificar-entreno-accesible.js": 53,
+  "verificar-entreno-arreglos.js": 46,
+  "verificar-entreno-escribiendo.js": 46,
+  "verificar-entreno-repaso.js": 52,
+  "verificar-estudio.js": 197,
+  "verificar-examenes.js": 44,
+  "verificar-grabacion-interactiva.js": 42,
+  "verificar-informes.js": 46,
+  "verificar-juegos-accesible.js": 144,
+  "verificar-juegos-nuevos-en-vivo.js": 53,
+  "verificar-lector-planilla-pagina.js": 112,
+  "verificar-metropolitano.js": 120,
+  "verificar-panel-taller.js": 71,
+  "verificar-panel.js": 205,
+  "verificar-pareo-dgt-lector.js": 75,
+  "verificar-pareo-jde-dia.js": 42,
+  "verificar-partidas-modalidades.js": 139,
+  "verificar-partidas-simultaneas.js": 488,
+  "verificar-piezas-ciego.js": 75,
+  "verificar-preparacion-rivales.js": 103,
+  "verificar-tablero-cuadrado.js": 43,
+  "verificar-temas-plataforma.js": 41,
+  "verificar-tipos-pagina.js": 220,
+  "verificar-torneo-jugado.js": 116,
+  "verificar-torneo-modos.js": 68
+};
+const DURACION_COMUN = 10;
+
 // ------------------------------------------------------------ argumentos
 const args = process.argv.slice(2);
 const bandera = (n) => args.includes(n);
@@ -82,6 +140,8 @@ const sinNavegador = bandera("--sin-navegador");
 const soloNavegador = bandera("--solo-navegador");
 const paralelo = Math.max(1, parseInt(valor("--paralelo") || "1", 10));
 const parte = valor("--parte");
+const cambiosDesde = valor("--cambios-desde");
+const archivoTiempos = valor("--tiempos");
 const nombres = args.filter((a) => !a.startsWith("--"));
 
 // ------------------------------------------------------------ la lista
@@ -109,12 +169,35 @@ if (nombres.length) {
   const faltan = nombres.filter((n) => !lista.some((v) => v.nombre === n || v.archivo === n));
   if (faltan.length) { console.error("No existe: " + faltan.join(", ")); process.exit(2); }
 }
+if (cambiosDesde) {
+  // Antes de repartir en tandas: las cuatro máquinas eligen lo mismo (mismo
+  // commit, misma carpeta) y reparten lo elegido.
+  const { afectados, cambiosDesde: leerCambios } = require("./lib/verificadores-afectados");
+  const cambios = leerCambios(cambiosDesde);
+  const r = afectados(cambios, lista.map((v) => v.archivo));
+  if (r.todos) console.log("Corren todos: " + r.motivo + ".\n");
+  else {
+    const antes = lista.length;
+    lista = lista.filter((v) => r.elegidos.has(v.archivo));
+    console.log("El cambio toca " + cambios.length + " archivo(s): corren " + lista.length + " de " + antes + " verificadores (los demás no leen nada de lo que cambió).\n");
+  }
+}
 if (sinNavegador) lista = lista.filter((v) => !v.navegador || v.aceptaSinNavegador);
 if (soloNavegador) lista = lista.filter((v) => v.navegador);
 if (parte) {
   const [i, n] = parte.split("/").map((x) => parseInt(x, 10));
   if (!(i >= 1 && n >= 1 && i <= n)) { console.error("--parte va como 2/4"); process.exit(2); }
-  lista = lista.filter((_, k) => k % n === i - 1);
+  // El más lento primero, cada uno a la tanda que va más liviana. Lo mismo en
+  // las cuatro máquinas: la lista y el orden salen de la carpeta, igual en todas.
+  const tandas = Array.from({ length: n }, () => ({ total: 0, items: [] }));
+  const peso = (v) => DURACION[v.archivo] || DURACION_COMUN;
+  [...lista].sort((a, b) => peso(b) - peso(a) || a.archivo.localeCompare(b.archivo)).forEach((v) => {
+    const t = tandas.reduce((m, x) => (x.total < m.total ? x : m));
+    t.total += peso(v);
+    t.items.push(v);
+  });
+  const mia = new Set(tandas[i - 1].items);
+  lista = lista.filter((v) => mia.has(v));
 }
 
 // ------------------------------------------------------------ correr
@@ -208,6 +291,14 @@ async function asegurarSitio() {
     await obrero();
   }
   if (servidor) servidor.kill();
+
+  const lentos = [...resultados].sort((a, b) => b.ms - a.ms).slice(0, 10);
+  if (resultados.length > 10) console.log("\nLos diez más lentos:\n" + lentos.map((r) => "  " + (r.ms / 1000).toFixed(0).padStart(4) + " s  " + r.v.archivo).join("\n"));
+  if (archivoTiempos) {
+    const t = {};
+    for (const r of resultados) t[r.v.archivo] = Math.round(r.ms / 1000);
+    fs.writeFileSync(archivoTiempos, JSON.stringify(t, null, 2) + "\n");
+  }
 
   const malos = resultados.filter((r) => r.codigo !== 0);
   for (const r of malos) {

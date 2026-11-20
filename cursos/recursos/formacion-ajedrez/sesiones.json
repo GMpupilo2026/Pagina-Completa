@@ -117,6 +117,10 @@
     {
      "archivo": "05-resolucion-de-casos-en-grupos-ejercicios.pdf",
      "texto": "📄 Descargar ejercicios (PDF)"
+    },
+    {
+     "archivo": "simulador-logistica-ajedrez-jde.xlsx",
+     "texto": "🧮 Simulador de logística del torneo (Excel)"
     }
    ],
    "presentacion": "formacion-ajedrez/clase-05",

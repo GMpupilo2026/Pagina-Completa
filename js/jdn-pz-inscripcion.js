@@ -1,19 +1,21 @@
 /* La inscripción de la Eliminatoria Cantonal JDN de Pérez Zeledón 2026
- * (jdn-pz-2026.html, la ventana #inscribirme) y sus fichas de resultados.
+ * (jdn-pz-2026.html, la ventana #inscribirme).
  *
  * El torneo se dirige en Pareo Integral, sin chess-results: dos torneos, U12
  * y U20 (con la U16), publicados por la organización ADAPZ. Este módulo:
  *
  * 1. ENCUENTRA LOS DOS TORNEOS SOLO, sin tocar el código: la organización
- *    de Pareo Integral que se llama como la ADAPZ y tiene el sello
+ *    de Pareo Integral que se llama como la ADAPZ (o la de Ajedrez Integral,
+ *    y de ella solo los torneos que dicen «JDN» y «PZ», «CCDRPZ» o «Pérez
+ *    Zeledón») y tiene el sello
  *    «Organizador verificado» (lo pone solo administración: así nadie la
  *    suplanta creando otra con el mismo nombre), y de sus torneos, el más
  *    nuevo con «U12» en el nombre y el más nuevo con «U20» (o «U16»). Lo lee
  *    con la clave anónima: pareo_organizadores y pareo_publicados son de
  *    lectura pública (sus políticas dejan fuera lo oculto).
- * 2. LAS FICHAS «Resultados U12» y «Resultados U20» pasan de la lista de
- *    torneos de Pareo a la página de su torneo (torneos-pareo.html#t=<id>),
- *    que js/ventana-enlace.js abre encima.
+ * 2. LAS FICHAS «Resultados U12» y «Resultados U20» ya no son de este
+ *    módulo: abren su torneo en una ventana de la página, con el diseño del
+ *    Centroamericano (js/jdn-pz-resultados.js, desde el 18/11/2026).
  * 3. EL FORMULARIO: con la fecha de nacimiento elige la categoría (U12:
  *    2015 a 2020; U16: 2011 a 2014; U20: 2007 a 2010, como dicen las bases) y
  *    el torneo (U16 y U20 van juntos), y manda la inscripción con
@@ -37,6 +39,11 @@
   const $ = (id) => document.getElementById(id);
   // La organización: su nombre en Pareo, sin tildes ni mayúsculas.
   const ORGANIZACION = /\badapz\b|asociacion deportiva de ajedrez de perez zeledon/;
+  // La de Ajedrez Integral (también verificada): ahí se publicaron los dos
+  // torneos de la eliminatoria (el 12/11/2026). Como publica otros torneos
+  // (Tacho Chess…), de ella cuentan solo los que dicen JDN y Pérez Zeledón.
+  const PROPIA = /^ajedrez integral$/;
+  const ES_JDN_PZ = (n) => /\bjdn\b/.test(n) && /\b(ccdrpz|pz|perez zeledon)\b/.test(n);
   // Las categorías de las bases: [nombre, año desde, año hasta, torneo].
   const CATEGORIAS = [["U12", 2015, 2020, "U12"], ["U16", 2011, 2014, "U20"], ["U20", 2007, 2010, "U20"]];
   const TORNEOS = { U12: /\b(u|sub)[\s-]?12\b/, U20: /\b(u|sub)[\s-]?(20|16)\b/ };
@@ -64,38 +71,19 @@
     if (!sb) throw new Error("sin cliente");
     const { data: orgs, error: e1 } = await sb.from("pareo_organizadores").select("id, nombre").eq("verificado", true);
     if (e1) throw e1;
-    const ids = (orgs || []).filter((o) => ORGANIZACION.test(sinTildes(o.nombre))).map((o) => o.id);
+    const adapz = (orgs || []).filter((o) => ORGANIZACION.test(sinTildes(o.nombre))).map((o) => o.id);
+    const propia = (orgs || []).filter((o) => PROPIA.test(sinTildes(o.nombre).trim())).map((o) => o.id);
+    const ids = adapz.concat(propia);
     if (!ids.length) return;
-    const { data, error } = await sb.from("pareo_publicados").select("id, nombre, creado, inscripcion:datos->inscripcion")
+    const { data, error } = await sb.from("pareo_publicados").select("id, nombre, creado, organizador_id, inscripcion:datos->inscripcion")
       .in("organizador_id", ids).order("creado", { ascending: false }).range(0, 199);
     if (error) throw error;
     for (const t of data || []) {
       const n = sinTildes(t.nombre);
+      if (!adapz.includes(t.organizador_id) && !ES_JDN_PZ(n)) continue;
       for (const k of Object.keys(TORNEOS)) if (!torneos[k] && TORNEOS[k].test(n)) torneos[k] = t;
     }
-  }
-
-  // La ficha «Pronto» (sin enlace) pasa a ser el enlace a SU torneo, que
-  // js/ventana-enlace.js abre encima (escucha los clics de toda la página).
-  // Sin el torneo se queda «Pronto»: nunca lleva a la lista de Pareo, que
-  // trae los torneos de otros (lo pidió el dueño).
-  function pintarFichas() {
-    for (const k of Object.keys(TORNEOS)) {
-      const vieja = $("ficha-resultados-" + k.toLowerCase());
-      if (!vieja || !torneos[k] || vieja.tagName === "A") continue;
-      const a = document.createElement("a");
-      a.id = vieja.id;
-      a.href = "torneos-pareo.html#t=" + torneos[k].id;
-      a.dataset.ventana = "Resultados " + k;
-      a.dataset.color = vieja.dataset.color;
-      a.className = vieja.className.replace("bg-white/70 dark:bg-brand-900/70 border-2 border-dashed border-brand-300 dark:border-brand-700", "bg-white dark:bg-brand-900 shadow-md");
-      const partes = [...vieja.children];
-      const fin = document.createElement("span");
-      fin.className = "mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion";
-      fin.textContent = "Ver el torneo " + k + " →";
-      a.append(...partes.slice(0, -1), fin);
-      vieja.replaceWith(a);
-    }
+    return { ...torneos };
   }
 
   // Lo que dice arriba del formulario y si el botón se puede tocar.
@@ -249,7 +237,7 @@
     // Lo que se escribe a mano en el ID o el Elo queda; vaciarlo deja que la búsqueda lo vuelva a poner.
     ["insc-fide", "insc-elo"].forEach((id) => $(id).addEventListener("input", () => { if ($(id).value.trim()) $(id).dataset.manual = "si"; else delete $(id).dataset.manual; }));
     $("insc-form").addEventListener("submit", mandar);
-    buscarTorneos().then(() => { pintarFichas(); pintarEstado(); }, () => {
+    buscarTorneos().then(() => { pintarEstado(); }, () => {
       $("insc-estado-torneos").textContent = "No pudimos buscar los torneos en Pareo Integral ahora mismo. Revisa la conexión y vuelve a abrir esta ventana.";
     });
   }
@@ -258,7 +246,9 @@
   else iniciar();
 
   // Para las pruebas: la categoría por la fecha y si un torneo recibe inscripciones.
-  window.JdnPzInscripcion = { categoriaDe, abierta, coincide, ORGANIZACION, TORNEOS };
+  // buscarTorneos() lo usan también los gafetes (js/gafetes.js): los mismos
+  // dos torneos, con el mismo filtro del sello, sin una segunda copia.
+  window.JdnPzInscripcion = { categoriaDe, abierta, coincide, buscarTorneos, ORGANIZACION, TORNEOS };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

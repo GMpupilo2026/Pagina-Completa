@@ -1,0 +1,85 @@
+/* La sala de seminario de arbitraje (arbitro.html, js/arbitro-seminario.js).
+   Los colores salen del tema de la plataforma (--c-brand-*, --c-accent-*), como
+   en el Aula de Arbitraje, así que siguen al tema elegido y al modo oscuro. Los
+   de estado (bien, mal) son los mismos pares del Aula, que ya pasan WCAG AA, y
+   llevan siempre el dato escrito al lado (✓ correcta, ✗ tu respuesta). */
+#seminario-caja { margin-top: 2.5rem; }
+.sem-h2 { font-family: Merriweather, "Merriweather respaldo", serif; font-size: 1.6rem; font-weight: 700; color: rgb(var(--c-brand-800)); }
+.dark .sem-h2 { color: #fff; }
+.sem-h3 { font-family: Merriweather, "Merriweather respaldo", serif; font-size: 1.1rem; font-weight: 700; color: rgb(var(--c-brand-800)); }
+.dark .sem-h3 { color: #fff; }
+.sem-mt { margin-top: 1.25rem; }
+.sem-nota { font-size: .9rem; color: rgb(var(--c-brand-600)); }
+.dark .sem-nota { color: rgb(var(--c-brand-200)); }
+.sem-estado { font-size: .9rem; font-weight: 600; color: rgb(var(--c-brand-700)); }
+.dark .sem-estado { color: rgb(var(--c-brand-100)); }
+.sem-nota-grande { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sem-lista, .sem-gente { display: flex; flex-direction: column; gap: .75rem; margin-top: 1rem; }
+.sem-tarjeta { background: #fff; border-radius: 1rem; box-shadow: 0 1px 3px rgba(16, 42, 67, .12); padding: 1.25rem; display: flex; flex-direction: column; gap: .6rem; min-width: 0; margin-top: 1rem; }
+.dark .sem-tarjeta { background: rgb(var(--c-brand-900)); }
+.sem-fila { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; }
+.sem-controles { justify-content: flex-start; margin-top: 1rem; }
+.sem-cabecera { margin-top: 1rem; }
+
+.sem-btn { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; border-radius: .5rem; padding: .55rem 1rem; font-weight: 600; font-size: .9rem; cursor: pointer; border: 1px solid transparent; background: rgb(var(--c-accent-500)); color: rgb(var(--c-brand-900)); align-self: flex-start; }
+.sem-btn:hover:not(:disabled) { background: rgb(var(--c-accent-600)); }
+.sem-btn:disabled { opacity: .6; cursor: default; }
+.sem-btn-sec { background: rgb(var(--c-brand-100)); color: rgb(var(--c-brand-800)); border-color: rgb(var(--c-brand-200)); }
+.sem-btn-sec:hover:not(:disabled) { background: rgb(var(--c-brand-200)); }
+.dark .sem-btn-sec { background: rgb(var(--c-brand-800)); color: rgb(var(--c-brand-50)); border-color: rgb(var(--c-brand-700)); }
+.dark .sem-btn-sec:hover:not(:disabled) { background: rgb(var(--c-brand-700)); }
+.sem-btn-chico { padding: .35rem .7rem; font-size: .8rem; }
+.sem-btn:focus-visible, .sem-opcion:focus-visible, .sem-input:focus-visible, .sem-tarjeta summary:focus-visible { outline: 3px solid rgb(var(--c-accent-500)); outline-offset: 2px; }
+
+.sem-label { font-size: .85rem; font-weight: 600; color: rgb(var(--c-brand-700)); }
+.dark .sem-label { color: rgb(var(--c-brand-100)); }
+.sem-input { border: 1px solid rgb(var(--c-brand-300)); border-radius: .5rem; padding: .45rem .7rem; background: #fff; color: rgb(var(--c-brand-900)); max-width: 100%; }
+.dark .sem-input { background: rgb(var(--c-brand-950)); color: #fff; border-color: rgb(var(--c-brand-600)); }
+.sem-input-chico { width: 6rem; }
+
+/* La consola del instructor: lo que se proyecta a la izquierda, la gente a la derecha. */
+.sem-consola { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+@media (max-width: 900px) { .sem-consola { grid-template-columns: minmax(0, 1fr); } }
+.sem-persona { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .5rem 0; border-bottom: 1px solid rgb(var(--c-brand-100)); }
+.dark .sem-persona { border-color: rgb(var(--c-brand-800)); }
+.sem-persona-nombre { flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; }
+
+/* La diapositiva: el mismo cuadro en la consola y en la pantalla del árbitro. */
+.sem-vista { margin-top: 1rem; }
+.sem-diapositiva { background: rgb(var(--c-brand-800)); color: #fff; border-radius: 1rem; padding: 1.75rem; display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; min-height: 16rem; }
+.sem-diap-texto { flex: 1 1 18rem; min-width: 0; display: flex; flex-direction: column; gap: .7rem; }
+.sem-diap-tema { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: rgb(var(--c-accent-300, 252 211 77)); }
+.sem-diap-titulo { font-family: Merriweather, "Merriweather respaldo", serif; font-size: clamp(1.4rem, 3vw, 2.1rem); font-weight: 700; line-height: 1.2; }
+.sem-diap-p { font-size: 1.05rem; line-height: 1.5; }
+.sem-diapositiva .sem-diap-p { font-size: clamp(1.05rem, 1.8vw, 1.3rem); }
+.sem-diap-lista { list-style: disc; padding-left: 1.4rem; display: flex; flex-direction: column; gap: .35rem; font-size: clamp(1rem, 1.7vw, 1.2rem); }
+.sem-diap-art { font-size: .9rem; font-weight: 700; color: rgb(var(--c-accent-300, 252 211 77)); }
+.sem-diap-vacia { font-size: 1.1rem; }
+.sem-diagrama { flex: 0 1 18rem; min-width: 0; margin: 0; }
+.sem-tablero { width: 100%; max-width: 18rem; }
+.sem-pie { font-size: .85rem; margin-top: .4rem; }
+.sem-tarjeta .sem-diagrama { max-width: 16rem; }
+
+.sem-opciones { display: flex; flex-direction: column; gap: .5rem; }
+.sem-opcion { text-align: left; border: 1px solid rgb(var(--c-brand-200)); background: #fff; color: inherit; border-radius: .6rem; padding: .7rem .9rem; cursor: pointer; font-size: 1rem; }
+.dark .sem-opcion { background: rgb(var(--c-brand-900)); border-color: rgb(var(--c-brand-700)); }
+.sem-opcion:hover:not(:disabled) { border-color: rgb(var(--c-accent-500)); }
+.sem-opcion:disabled { cursor: default; }
+.sem-opcion[aria-pressed="true"] { border-width: 3px; border-color: rgb(var(--c-accent-500)); font-weight: 600; }
+.sem-opcion.sem-bien, .sem-conteo .sem-bien, .sem-quien .sem-bien, .sem-revision .sem-bien { border-color: #15803d; background: #dcfce7; color: #14532d; }
+.sem-opcion.sem-mal, .sem-quien .sem-mal, .sem-revision .sem-mal { border-color: #b91c1c; background: #fee2e2; color: #7f1d1d; }
+.sem-tiempo { font-variant-numeric: tabular-nums; font-weight: 700; background: rgb(var(--c-brand-100)); color: rgb(var(--c-brand-800)); border-radius: 999px; padding: .2rem .7rem; }
+.dark .sem-tiempo { background: rgb(var(--c-brand-800)); color: #fff; }
+.sem-conteo, .sem-quien, .sem-revision { display: flex; flex-direction: column; gap: .35rem; }
+.sem-conteo li, .sem-quien li, .sem-revision li { border: 1px solid transparent; border-radius: .5rem; padding: .35rem .6rem; }
+.sem-revision li p + p { margin-top: .2rem; }
+
+.sem-examen-preg { border: 0; padding: .6rem 0; border-bottom: 1px solid rgb(var(--c-brand-100)); }
+.dark .sem-examen-preg { border-color: rgb(var(--c-brand-800)); }
+.sem-examen-preg legend { font-weight: 600; margin-bottom: .4rem; }
+.sem-examen-op { display: block; padding: .3rem 0; cursor: pointer; }
+.sem-notas { width: 100%; border-collapse: collapse; font-size: .9rem; margin-top: .6rem; }
+.sem-notas th, .sem-notas td { text-align: left; padding: .35rem .4rem; border-bottom: 1px solid rgb(var(--c-brand-100)); }
+.dark .sem-notas th, .dark .sem-notas td { border-color: rgb(var(--c-brand-800)); }
+
+/*! rev bfb5bbb0d2d82f9f */

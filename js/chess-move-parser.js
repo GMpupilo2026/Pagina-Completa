@@ -84,6 +84,15 @@ window.ChessMoveParser = (function () {
       } catch (e) {}
       if (result) return result;
     }
+    /* Escrita con palabras («caballo a f3», «peón toma d5»): la entiende
+       js/comandos-tablero.js, que es la única copia. Acá se HACE la jugada,
+       que es el contrato de esta función. */
+    if (window.ComandosTablero && window.ComandosTablero.jugadaEscrita) {
+      const mv = window.ComandosTablero.jugadaEscrita(game, raw);
+      if (mv) {
+        try { return game.move({ from: mv.from, to: mv.to, promotion: mv.promotion || undefined }); } catch (e) {}
+      }
+    }
     return null;
   }
 

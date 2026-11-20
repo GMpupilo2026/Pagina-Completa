@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 895,
+  "total": 916,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -57,14 +57,14 @@
     "ruta": "material/fichas-de-estudio/fichas-de-estudio-cartas.pdf",
     "titulo": "Fichas de estudio — cartas para recortar",
     "tipo": "otro",
-    "kb": 2595,
+    "kb": 2567,
     "libro": "Fichas de estudio"
    },
    {
     "ruta": "material/fichas-de-estudio/fichas-de-estudio-libro.pdf",
     "titulo": "Fichas de estudio — libro",
     "tipo": "otro",
-    "kb": 22555,
+    "kb": 22845,
     "libro": "Fichas de estudio"
    },
    {
@@ -443,7 +443,7 @@
         "ruta": "cursos/recursos/fundamentos-del-ajedrez/04-jaque-jaque-mate-y-ahogado-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 4
+        "kb": 5
        }
       ]
      },
@@ -461,7 +461,7 @@
         "ruta": "cursos/recursos/fundamentos-del-ajedrez/05-valor-relativo-de-las-piezas-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 4
+        "kb": 5
        }
       ]
      },
@@ -613,7 +613,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/01-los-mates-de-siempre-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -631,7 +631,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/02-mas-dibujos-de-mate-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -649,7 +649,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/03-las-reglas-de-la-apertura-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -811,7 +811,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/12-el-ataque-doble-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -829,7 +829,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/13-como-se-gana-con-material-de-mas-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -847,7 +847,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/14-columnas-abiertas-y-casillas-fuertes-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -865,7 +865,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/15-la-combinacion-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -919,7 +919,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/18-las-variantes-forzadas-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -973,7 +973,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/21-combinaciones-con-peones-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -991,7 +991,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/22-el-alfil-equivocado-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1045,7 +1045,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/25-el-molino-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1063,7 +1063,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/26-los-peones-debiles-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1081,7 +1081,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/27-la-ultima-fila-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1099,7 +1099,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/28-aprovechar-las-debilidades-del-rey-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1117,7 +1117,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/29-la-septima-fila-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1135,7 +1135,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/30-las-fortalezas-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1153,7 +1153,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/31-la-cuna-de-peon-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1189,7 +1189,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/33-como-usar-una-trampa-la-pieza-atrapada-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1207,7 +1207,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/34-combinaciones-de-ahogado-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1243,7 +1243,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/36-mate-con-alfil-y-caballo-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1279,7 +1279,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/38-los-puestos-avanzados-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1297,7 +1297,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/39-combinaciones-en-las-diagonales-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1315,7 +1315,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/40-finales-elementales-de-torre-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1333,7 +1333,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/41-combinaciones-con-caballos-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -1351,7 +1351,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/42-desarrollar-las-piezas-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1369,7 +1369,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/43-el-jaque-perpetuo-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1387,7 +1387,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/44-mate-en-dos-los-candidatos-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1423,7 +1423,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/46-las-piezas-trabajan-juntas-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1441,7 +1441,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/47-el-caballo-que-se-entrega-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1477,7 +1477,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/49-combinaciones-con-alfiles-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -1549,7 +1549,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/53-convertir-la-ventaja-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -2267,7 +2267,7 @@
         "ruta": "cursos/recursos/calculo-y-visualizacion/04-calcular-capturas-en-cadena-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 3
+        "kb": 4
        }
       ]
      },
@@ -2357,7 +2357,7 @@
         "ruta": "cursos/recursos/calculo-y-visualizacion/09-calcular-bajo-presion-de-tiempo-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 3
+        "kb": 4
        }
       ]
      },
@@ -3281,7 +3281,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/02-horquillas-de-caballo-y-de-peon-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 7
+        "kb": 8
        }
       ]
      },
@@ -3569,7 +3569,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/18-el-sacrificio-posicional-a-largo-plazo-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 3
+        "kb": 4
        }
       ]
      },
@@ -4155,7 +4155,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/03-la-ruta-del-rey-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -4173,7 +4173,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/04-incursiones-y-refugio-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -5125,7 +5125,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/20-la-precipitacion-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -5197,7 +5197,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/24-ver-mas-lejos-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -5269,7 +5269,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/28-quitarle-jugadas-al-rival-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -5323,7 +5323,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/31-el-materialismo-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -5475,7 +5475,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/03-un-tiempo-tambien-es-una-ventaja-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -5583,7 +5583,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/09-el-rey-tambien-juega-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -5619,7 +5619,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/11-empujar-a-tiempo-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -5673,7 +5673,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/14-que-piezas-cambiar-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -5709,7 +5709,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/16-las-dos-debilidades-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -5727,7 +5727,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/17-el-zugzwang-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -5745,7 +5745,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/18-finales-de-torres-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -5799,7 +5799,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/21-finales-de-damas-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -5853,7 +5853,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/24-cuando-el-rival-aprieta-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -5871,7 +5871,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/25-pasar-el-turno-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -5961,7 +5961,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/30-salov-short-las-casillas-negras-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -5979,7 +5979,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/31-kamsky-lautier-la-mejor-estructura-de-peones-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -6051,7 +6051,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/35-kramnik-deep-fritz-tecnica-contra-la-maquina-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -6087,7 +6087,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/37-kasparov-x3d-fritz-espacio-y-una-casilla-debil-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -6123,7 +6123,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/39-rubinstein-grunfeld-paciencia-en-el-final-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -6159,7 +6159,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/41-novikov-garcia-recoger-la-cuerda-de-a-poco-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -6213,7 +6213,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/44-tu-cuaderno-de-ventajas-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      }
@@ -6223,7 +6223,7 @@
       "ruta": "cursos/recursos/ganar-con-poco/26-tu-cuaderno-de-ventajas-ejercicios.pdf",
       "titulo": "Tu cuaderno de ventajas",
       "tipo": "ejercicios",
-      "kb": 5
+      "kb": 6
      },
      {
       "ruta": "cursos/recursos/ganar-con-poco/26-tu-cuaderno-de-ventajas-material.pdf",
@@ -6630,7 +6630,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/22-ejercicios-13-a-17-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 4
+        "kb": 5
        }
       ]
      },
@@ -6728,7 +6728,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/04-las-piezas-mayores-entran-al-ataque-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -6746,7 +6746,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/05-la-ultima-fila-sin-aire-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -6764,7 +6764,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/06-los-mates-de-patron-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -6782,7 +6782,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/07-castigar-al-rey-que-no-enroco-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -6800,7 +6800,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/08-el-punto-debil-de-f7-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -6818,7 +6818,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/09-la-ventaja-de-desarrollo-se-usa-o-se-pierde-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -6836,7 +6836,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/10-sacar-al-rey-de-su-casa-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -6908,7 +6908,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/14-el-caballo-y-la-doble-amenaza-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 10
+        "kb": 11
        }
       ]
      },
@@ -6980,7 +6980,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/18-el-sacrificio-de-calidad-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -7016,7 +7016,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/20-los-ultimos-metros-hasta-coronar-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -7178,7 +7178,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/29-despejar-el-camino-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -7214,7 +7214,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/31-finales-de-torre-la-torre-activa-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -7304,7 +7304,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/36-tu-plan-de-estudio-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      }
@@ -7536,7 +7536,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/04-actualizar-el-repertorio-tras-un-torneo-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 3
+        "kb": 4
        }
       ]
      },
@@ -7850,7 +7850,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/03-apendices-normativa-y-emparejamiento-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
-        "kb": 33
+        "kb": 34
        },
        {
         "ruta": "cursos/recursos/formacion-ajedrez/03-apendices-normativa-y-emparejamiento-ejercicios.pdf",
@@ -7874,7 +7874,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/04-uso-y-control-del-reloj-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 6
        }
       ]
      },
@@ -7886,7 +7886,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/05-resolucion-de-casos-en-grupos-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
-        "kb": 11
+        "kb": 22
        },
        {
         "ruta": "cursos/recursos/formacion-ajedrez/05-resolucion-de-casos-en-grupos-ejercicios.pdf",
@@ -7972,7 +7972,7 @@
         "ruta": "cursos/recursos/arbitro-nacional/03-puesta-en-marcha-incrementos-y-las-obligaciones-que-cambian-con-el-control-de-tiempo-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -7984,7 +7984,7 @@
         "ruta": "cursos/recursos/arbitro-nacional/04-la-caida-de-la-bandera-que-comprobar-antes-de-decidir-un-reclamo-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -8116,7 +8116,7 @@
         "ruta": "cursos/recursos/arbitro-nacional/15-la-carrera-de-arbitro-de-arbitro-nacional-a-arbitro-internacional-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -8149,6 +8149,126 @@
    }
   ],
   "sueltos": [
+   {
+    "ruta": "descargas/aula-arbitraje/revista-01.pdf",
+    "titulo": "Revista 01",
+    "tipo": "otro",
+    "kb": 973
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-02.pdf",
+    "titulo": "Revista 02",
+    "tipo": "otro",
+    "kb": 1157
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-03.pdf",
+    "titulo": "Revista 03",
+    "tipo": "otro",
+    "kb": 1039
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-04.pdf",
+    "titulo": "Revista 04",
+    "tipo": "otro",
+    "kb": 952
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-05.pdf",
+    "titulo": "Revista 05",
+    "tipo": "otro",
+    "kb": 1049
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-06.pdf",
+    "titulo": "Revista 06",
+    "tipo": "otro",
+    "kb": 996
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-07.pdf",
+    "titulo": "Revista 07",
+    "tipo": "otro",
+    "kb": 1052
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-08.pdf",
+    "titulo": "Revista 08",
+    "tipo": "otro",
+    "kb": 971
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-09.pdf",
+    "titulo": "Revista 09",
+    "tipo": "otro",
+    "kb": 1220
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-10.pdf",
+    "titulo": "Revista 10",
+    "tipo": "otro",
+    "kb": 1003
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-11.pdf",
+    "titulo": "Revista 11",
+    "tipo": "otro",
+    "kb": 1205
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-12.pdf",
+    "titulo": "Revista 12",
+    "tipo": "otro",
+    "kb": 1095
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-13.pdf",
+    "titulo": "Revista 13",
+    "tipo": "otro",
+    "kb": 1064
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-14.pdf",
+    "titulo": "Revista 14",
+    "tipo": "otro",
+    "kb": 1017
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-15.pdf",
+    "titulo": "Revista 15",
+    "tipo": "otro",
+    "kb": 1007
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-16.pdf",
+    "titulo": "Revista 16",
+    "tipo": "otro",
+    "kb": 837
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-17.pdf",
+    "titulo": "Revista 17",
+    "tipo": "otro",
+    "kb": 785
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-18.pdf",
+    "titulo": "Revista 18",
+    "tipo": "otro",
+    "kb": 943
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-19.pdf",
+    "titulo": "Revista 19",
+    "tipo": "otro",
+    "kb": 3148
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-20.pdf",
+    "titulo": "Revista 20",
+    "tipo": "otro",
+    "kb": 5716
+   },
    {
     "ruta": "documentos/centroamericano-2026/bases-cac-2026.pdf",
     "titulo": "Bases del XXI Festival Centroamericano y del Caribe de la Juventud, Costa Rica 2026",
@@ -8183,13 +8303,19 @@
     "ruta": "documentos/tacho-chess-2/bases-tacho-chess-2.pdf",
     "titulo": "Bases del Torneo Intereducativo Tacho Chess 2 (Liceo Anastasio Alfaro, 2026), interpretadas del afiche",
     "tipo": "otro",
-    "kb": 64
+    "kb": 67
    },
    {
     "ruta": "instrucciones-adaptadas.pdf",
     "titulo": "Instrucciones adaptadas (para quien ve poco o no ve)",
     "tipo": "otro",
-    "kb": 25
+    "kb": 26
+   },
+   {
+    "ruta": "planilla-pareo-integral.pdf",
+    "titulo": "Planilla pareo integral",
+    "tipo": "otro",
+    "kb": 107
    }
   ]
  },
@@ -8798,8 +8924,22 @@
   ]
  },
  "excel": {
-  "total": 0,
-  "grupos": []
+  "total": 1,
+  "grupos": [
+   {
+    "carpeta": "cursos/recursos/formacion-ajedrez",
+    "titulo": "Formación Ajedrez",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/simulador-logistica-ajedrez-jde.xlsx",
+      "titulo": "Simulador de logística de un torneo JDE (Sesión 5)",
+      "tipo": "otro",
+      "kb": 169
+     }
+    ]
+   }
+  ]
  },
  "presentaciones": {
   "niveles": [
@@ -13695,7 +13835,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/05-resolucion-de-casos-en-grupos.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
-        "kb": 2113
+        "kb": 4495
        }
       ]
      },
@@ -13958,7 +14098,7 @@
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar-accesible.html",
     "titulo": "Cambiar o no cambiar",
     "tipo": "accesible",
-    "kb": 146,
+    "kb": 209,
     "libro": "Cambiar o no cambiar"
    },
    {
@@ -13972,147 +14112,147 @@
     "ruta": "material/fichas-de-estudio/fichas-de-estudio-accesible.html",
     "titulo": "Fichas de estudio",
     "tipo": "accesible",
-    "kb": 547,
+    "kb": 745,
     "libro": "Fichas de estudio"
    },
    {
     "ruta": "material/ganar-con-poco/ganar-con-poco-accesible.html",
     "titulo": "Ganar con poco",
     "tipo": "accesible",
-    "kb": 210,
+    "kb": 292,
     "libro": "Ganar con poco"
    },
    {
     "ruta": "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas-accesible.html",
     "titulo": "Ideas que ganan partidas",
     "tipo": "accesible",
-    "kb": 156,
+    "kb": 239,
     "libro": "Ideas que ganan partidas"
    },
    {
     "ruta": "material/libro-de-diagnostico/libro-de-diagnostico-accesible.html",
     "titulo": "Libro del diagnóstico de nivel",
     "tipo": "accesible",
-    "kb": 730,
+    "kb": 961,
     "libro": "Libro del diagnóstico de nivel"
    },
    {
     "ruta": "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez-accesible.html",
     "titulo": "Los cimientos del ajedrez",
     "tipo": "accesible",
-    "kb": 551,
+    "kb": 838,
     "libro": "Los cimientos del ajedrez"
    },
    {
     "ruta": "material/mide-tu-fuerza-10/mide-tu-fuerza-10-accesible.html",
     "titulo": "Mide tu fuerza · Volumen 10",
     "tipo": "accesible",
-    "kb": 348,
+    "kb": 617,
     "libro": "Mide tu fuerza 10"
    },
    {
     "ruta": "material/mide-tu-fuerza-2/mide-tu-fuerza-2-accesible.html",
     "titulo": "Mide tu fuerza · Volumen 2",
     "tipo": "accesible",
-    "kb": 349,
+    "kb": 620,
     "libro": "Mide tu fuerza 2"
    },
    {
     "ruta": "material/mide-tu-fuerza-3/mide-tu-fuerza-3-accesible.html",
     "titulo": "Mide tu fuerza · Volumen 3",
     "tipo": "accesible",
-    "kb": 348,
+    "kb": 617,
     "libro": "Mide tu fuerza 3"
    },
    {
     "ruta": "material/mide-tu-fuerza-4/mide-tu-fuerza-4-accesible.html",
     "titulo": "Mide tu fuerza · Volumen 4",
     "tipo": "accesible",
-    "kb": 348,
+    "kb": 619,
     "libro": "Mide tu fuerza 4"
    },
    {
     "ruta": "material/mide-tu-fuerza-5/mide-tu-fuerza-5-accesible.html",
     "titulo": "Mide tu fuerza · Volumen 5",
     "tipo": "accesible",
-    "kb": 348,
+    "kb": 618,
     "libro": "Mide tu fuerza 5"
    },
    {
     "ruta": "material/mide-tu-fuerza-6/mide-tu-fuerza-6-accesible.html",
     "titulo": "Mide tu fuerza · Volumen 6",
     "tipo": "accesible",
-    "kb": 347,
+    "kb": 613,
     "libro": "Mide tu fuerza 6"
    },
    {
     "ruta": "material/mide-tu-fuerza-7/mide-tu-fuerza-7-accesible.html",
     "titulo": "Mide tu fuerza · Volumen 7",
     "tipo": "accesible",
-    "kb": 348,
+    "kb": 618,
     "libro": "Mide tu fuerza 7"
    },
    {
     "ruta": "material/mide-tu-fuerza-8/mide-tu-fuerza-8-accesible.html",
     "titulo": "Mide tu fuerza · Volumen 8",
     "tipo": "accesible",
-    "kb": 345,
+    "kb": 608,
     "libro": "Mide tu fuerza 8"
    },
    {
     "ruta": "material/mide-tu-fuerza-9/mide-tu-fuerza-9-accesible.html",
     "titulo": "Mide tu fuerza · Volumen 9",
     "tipo": "accesible",
-    "kb": 347,
+    "kb": 615,
     "libro": "Mide tu fuerza 9"
    },
    {
     "ruta": "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html",
     "titulo": "Mide tu fuerza · Volumen 1",
     "tipo": "accesible",
-    "kb": 347,
+    "kb": 615,
     "libro": "Mide tu fuerza"
    },
    {
     "ruta": "material/peonita-rey/peonita-rey-accesible.html",
     "titulo": "Peonita y el rey escondido",
     "tipo": "accesible",
-    "kb": 41,
+    "kb": 50,
     "libro": "Peonita y el rey escondido"
    },
    {
     "ruta": "material/peonita-trucos/peonita-trucos-accesible.html",
     "titulo": "Peonita, Tizón y los trucos del bosque",
     "tipo": "accesible",
-    "kb": 38,
+    "kb": 49,
     "libro": "Peonita, Tizón y los trucos del bosque"
    },
    {
     "ruta": "material/peonita/peonita-accesible.html",
     "titulo": "Peonita y el reino de las 64 casillas",
     "tipo": "accesible",
-    "kb": 58,
+    "kb": 69,
     "libro": "Peonita y el reino de las 64 casillas"
    },
    {
     "ruta": "material/ponte-a-prueba/ponte-a-prueba-accesible.html",
     "titulo": "Ponte a prueba",
     "tipo": "accesible",
-    "kb": 417,
+    "kb": 533,
     "libro": "Ponte a prueba"
    },
    {
     "ruta": "material/ponte-a-prueba/ponte-a-prueba-versiones-accesible.html",
     "titulo": "Ponte a prueba, las versiones",
     "tipo": "accesible",
-    "kb": 184,
+    "kb": 298,
     "libro": "Ponte a prueba"
    },
    {
     "ruta": "material/rompe-el-estancamiento/rompe-el-estancamiento-accesible.html",
     "titulo": "Rompe el estancamiento",
     "tipo": "accesible",
-    "kb": 171,
+    "kb": 250,
     "libro": "Rompe el estancamiento"
    }
   ],
@@ -14130,7 +14270,7 @@
         "ruta": "cursos/recursos/fundamentos-del-ajedrez/01-el-tablero-y-la-notacion-algebraica-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -14142,7 +14282,7 @@
         "ruta": "cursos/recursos/fundamentos-del-ajedrez/02-movimiento-de-las-piezas-peon-caballo-alfil-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 10
+        "kb": 13
        }
       ]
      },
@@ -14154,7 +14294,7 @@
         "ruta": "cursos/recursos/fundamentos-del-ajedrez/03-movimiento-de-las-piezas-torre-dama-rey-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -14166,7 +14306,7 @@
         "ruta": "cursos/recursos/fundamentos-del-ajedrez/04-jaque-jaque-mate-y-ahogado-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 10
+        "kb": 11
        }
       ]
      },
@@ -14178,7 +14318,7 @@
         "ruta": "cursos/recursos/fundamentos-del-ajedrez/05-valor-relativo-de-las-piezas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -14190,7 +14330,7 @@
         "ruta": "cursos/recursos/fundamentos-del-ajedrez/06-enroque-corto-y-largo-cuando-y-por-que-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -14202,7 +14342,7 @@
         "ruta": "cursos/recursos/fundamentos-del-ajedrez/07-captura-al-paso-y-coronacion-de-peones-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14214,7 +14354,7 @@
         "ruta": "cursos/recursos/fundamentos-del-ajedrez/08-piezas-que-se-defienden-entre-si-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 9
+        "kb": 10
        }
       ]
      },
@@ -14226,7 +14366,7 @@
         "ruta": "cursos/recursos/fundamentos-del-ajedrez/09-los-tres-principios-de-la-apertura-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -14238,7 +14378,7 @@
         "ruta": "cursos/recursos/fundamentos-del-ajedrez/10-errores-comunes-de-apertura-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -14250,7 +14390,7 @@
         "ruta": "cursos/recursos/fundamentos-del-ajedrez/11-mate-con-dos-torres-y-con-dama-y-rey-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -14262,7 +14402,7 @@
         "ruta": "cursos/recursos/fundamentos-del-ajedrez/12-partida-final-aplica-lo-aprendido-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      }
@@ -14282,7 +14422,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/01-los-mates-de-siempre-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 17
        }
       ]
      },
@@ -14294,7 +14434,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/02-mas-dibujos-de-mate-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 18
        }
       ]
      },
@@ -14306,7 +14446,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/03-las-reglas-de-la-apertura-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 15
+        "kb": 18
        }
       ]
      },
@@ -14318,7 +14458,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/04-finales-de-peones-lo-basico-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 14
        }
       ]
      },
@@ -14330,7 +14470,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/05-el-jaque-doble-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 17
        }
       ]
      },
@@ -14342,7 +14482,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/06-cuanto-vale-cada-pieza-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 15
+        "kb": 18
        }
       ]
      },
@@ -14354,7 +14494,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/07-el-ataque-a-la-descubierta-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 17
        }
       ]
      },
@@ -14366,7 +14506,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/08-las-piezas-al-centro-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 18
        }
       ]
      },
@@ -14378,7 +14518,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/09-mate-en-dos-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 13
        }
       ]
      },
@@ -14390,7 +14530,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/10-la-oposicion-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -14402,7 +14542,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/11-la-clavada-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14414,7 +14554,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/12-el-ataque-doble-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14426,7 +14566,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/13-como-se-gana-con-material-de-mas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14438,7 +14578,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/14-columnas-abiertas-y-casillas-fuertes-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14450,7 +14590,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/15-la-combinacion-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14462,7 +14602,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/16-dama-contra-peon-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14474,7 +14614,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/17-el-ahogado-que-salva-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 14
        }
       ]
      },
@@ -14486,7 +14626,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/18-las-variantes-forzadas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14498,7 +14638,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/19-el-peon-que-corona-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14510,7 +14650,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/20-los-puntos-debiles-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14522,7 +14662,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/21-combinaciones-con-peones-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14534,7 +14674,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/22-el-alfil-equivocado-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14546,7 +14686,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/23-el-mate-de-la-coz-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14558,7 +14698,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/24-los-gambitos-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14570,7 +14710,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/25-el-molino-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 16
        }
       ]
      },
@@ -14582,7 +14722,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/26-los-peones-debiles-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14594,7 +14734,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/27-la-ultima-fila-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 17
        }
       ]
      },
@@ -14606,7 +14746,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/28-aprovechar-las-debilidades-del-rey-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 15
+        "kb": 18
        }
       ]
      },
@@ -14618,7 +14758,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/29-la-septima-fila-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14630,7 +14770,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/30-las-fortalezas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -14642,7 +14782,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/31-la-cuna-de-peon-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -14654,7 +14794,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/32-las-trampas-de-apertura-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -14666,7 +14806,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/33-como-usar-una-trampa-la-pieza-atrapada-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 17
        }
       ]
      },
@@ -14678,7 +14818,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/34-combinaciones-de-ahogado-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14690,7 +14830,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/35-la-columna-semiabierta-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14702,7 +14842,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/36-mate-con-alfil-y-caballo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 14
        }
       ]
      },
@@ -14714,7 +14854,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/37-combinaciones-en-las-columnas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14726,7 +14866,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/38-los-puestos-avanzados-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14738,7 +14878,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/39-combinaciones-en-las-diagonales-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14750,7 +14890,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/40-finales-elementales-de-torre-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 14
        }
       ]
      },
@@ -14762,7 +14902,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/41-combinaciones-con-caballos-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14774,7 +14914,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/42-desarrollar-las-piezas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -14786,7 +14926,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/43-el-jaque-perpetuo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14798,7 +14938,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/44-mate-en-dos-los-candidatos-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14810,7 +14950,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/45-combinaciones-con-piezas-mayores-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -14822,7 +14962,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/46-las-piezas-trabajan-juntas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14834,7 +14974,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/47-el-caballo-que-se-entrega-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14846,7 +14986,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/48-el-zugzwang-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14858,7 +14998,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/49-combinaciones-con-alfiles-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14870,7 +15010,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/50-las-diagonales-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14882,7 +15022,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/51-el-sacrificio-de-dama-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14894,7 +15034,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/52-cambiar-hacia-un-final-de-peones-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14906,7 +15046,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/53-convertir-la-ventaja-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14918,7 +15058,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/54-dama-y-caballo-al-ataque-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 18
        }
       ]
      },
@@ -14930,7 +15070,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/55-las-partidas-abiertas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14942,7 +15082,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/56-dama-y-torre-al-ataque-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 14
        }
       ]
      },
@@ -14954,7 +15094,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/57-variantes-forzadas-mas-largas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14966,7 +15106,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/58-dama-y-alfil-al-ataque-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14978,7 +15118,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/59-las-ventajas-que-no-se-ven-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -14990,7 +15130,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/60-alfil-contra-peones-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 14
        }
       ]
      },
@@ -15002,7 +15142,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/61-dama-y-peon-juntos-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -15014,7 +15154,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/62-al-ataque-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -15026,7 +15166,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/63-torre-y-alfil-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -15038,7 +15178,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/64-caballo-contra-peon-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -15050,7 +15190,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/65-torre-y-caballo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -15062,7 +15202,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/66-las-partidas-semiabiertas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -15074,7 +15214,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/67-combinaciones-de-coronacion-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -15086,7 +15226,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/68-mate-en-tres-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -15098,7 +15238,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/69-redes-de-mate-en-el-final-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -15110,7 +15250,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/70-el-peon-pasado-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -15122,7 +15262,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/71-columnas-interferencia-y-rayos-x-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -15134,7 +15274,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/72-dama-contra-torre-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      }
@@ -15154,7 +15294,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/01-apertura-espanola-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -15166,7 +15306,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/02-defensa-siciliana-variante-najdorf-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -15178,7 +15318,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/03-defensa-francesa-estructura-de-peones-y-plan-tipico-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -15190,7 +15330,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/04-defensa-caro-kann-solidez-para-negras-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -15202,7 +15342,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/05-gambito-de-dama-aceptado-vs-rehusado-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -15214,7 +15354,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/06-defensa-nimzoindia-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -15226,7 +15366,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/07-defensa-india-de-rey-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -15238,7 +15378,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/08-defensa-eslava-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -15250,7 +15390,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/09-apertura-italiana-y-variantes-modernas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -15262,7 +15402,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/10-apertura-inglesa-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -15274,7 +15414,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/11-sistema-reti-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 10
+        "kb": 11
        }
       ]
      },
@@ -15286,7 +15426,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/12-gambito-evans-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 10
+        "kb": 11
        }
       ]
      },
@@ -15298,7 +15438,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/13-como-elegir-un-repertorio-segun-tu-estilo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -15310,7 +15450,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/14-transposiciones-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -15322,7 +15462,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/15-preparacion-contra-rivales-especificos-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -15334,7 +15474,7 @@
         "ruta": "cursos/recursos/aperturas-y-defensas/16-partida-comentada-aperturas-en-la-practica-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 9
+        "kb": 10
        }
       ]
      }
@@ -15354,7 +15494,7 @@
         "ruta": "cursos/recursos/calculo-y-visualizacion/01-el-arbol-de-variantes-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 9
+        "kb": 10
        }
       ]
      },
@@ -15366,7 +15506,7 @@
         "ruta": "cursos/recursos/calculo-y-visualizacion/02-visualizacion-sin-mover-piezas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 8
+        "kb": 9
        }
       ]
      },
@@ -15378,7 +15518,7 @@
         "ruta": "cursos/recursos/calculo-y-visualizacion/03-jugadas-candidatas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 8
+        "kb": 9
        }
       ]
      },
@@ -15390,7 +15530,7 @@
         "ruta": "cursos/recursos/calculo-y-visualizacion/04-calcular-capturas-en-cadena-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 7
+        "kb": 8
        }
       ]
      },
@@ -15402,7 +15542,7 @@
         "ruta": "cursos/recursos/calculo-y-visualizacion/05-jaques-y-amenazas-forzadas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 9
+        "kb": 10
        }
       ]
      },
@@ -15414,7 +15554,7 @@
         "ruta": "cursos/recursos/calculo-y-visualizacion/06-detectar-las-jugadas-intermedias-zwischenzug-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -15426,7 +15566,7 @@
         "ruta": "cursos/recursos/calculo-y-visualizacion/07-verificacion-final-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 8
+        "kb": 9
        }
       ]
      },
@@ -15438,7 +15578,7 @@
         "ruta": "cursos/recursos/calculo-y-visualizacion/08-ajedrez-a-la-ciega-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 9
+        "kb": 10
        }
       ]
      },
@@ -15450,7 +15590,7 @@
         "ruta": "cursos/recursos/calculo-y-visualizacion/09-calcular-bajo-presion-de-tiempo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -15462,7 +15602,7 @@
         "ruta": "cursos/recursos/calculo-y-visualizacion/10-sesion-practica-cronometrada-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 9
+        "kb": 10
        }
       ]
      }
@@ -15482,7 +15622,7 @@
         "ruta": "cursos/recursos/finales-practicos/01-la-regla-del-cuadrado-y-el-peon-pasado-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -15494,7 +15634,7 @@
         "ruta": "cursos/recursos/finales-practicos/02-oposicion-de-reyes-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -15506,7 +15646,7 @@
         "ruta": "cursos/recursos/finales-practicos/03-finales-de-rey-y-peon-posiciones-criticas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -15518,7 +15658,7 @@
         "ruta": "cursos/recursos/finales-practicos/04-ruptura-de-peones-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -15530,7 +15670,7 @@
         "ruta": "cursos/recursos/finales-practicos/05-la-posicion-de-lucena-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -15542,7 +15682,7 @@
         "ruta": "cursos/recursos/finales-practicos/06-la-posicion-de-philidor-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -15554,7 +15694,7 @@
         "ruta": "cursos/recursos/finales-practicos/07-torres-activas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -15566,7 +15706,7 @@
         "ruta": "cursos/recursos/finales-practicos/08-finales-de-torres-con-varios-peones-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -15578,7 +15718,7 @@
         "ruta": "cursos/recursos/finales-practicos/09-finales-de-alfiles-del-mismo-color-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -15590,7 +15730,7 @@
         "ruta": "cursos/recursos/finales-practicos/10-finales-de-alfiles-de-distinto-color-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -15602,7 +15742,7 @@
         "ruta": "cursos/recursos/finales-practicos/11-finales-de-caballo-contra-alfil-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -15614,7 +15754,7 @@
         "ruta": "cursos/recursos/finales-practicos/12-finales-de-dama-contra-peon-coronando-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -15626,7 +15766,7 @@
         "ruta": "cursos/recursos/finales-practicos/13-conversion-de-ventaja-material-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 13
        }
       ]
      },
@@ -15638,7 +15778,7 @@
         "ruta": "cursos/recursos/finales-practicos/14-partida-final-comentada-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 10
+        "kb": 11
        }
       ]
      }
@@ -15658,7 +15798,7 @@
         "ruta": "cursos/recursos/partidas-modelo/01-a-sacar-las-piezas-a-chernin-j-van-der-wiel-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -15670,7 +15810,7 @@
         "ruta": "cursos/recursos/partidas-modelo/02-el-rey-en-el-centro-a-jalifman-e-sveshnikov-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -15682,7 +15822,7 @@
         "ruta": "cursos/recursos/partidas-modelo/03-dominio-eficaz-del-centro-k-aseiev-n-rashkovski-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 15
        }
       ]
      },
@@ -15694,7 +15834,7 @@
         "ruta": "cursos/recursos/partidas-modelo/04-un-centro-de-peones-sobreexpandido-j-van-der-wiel-r-vaganian-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 15
+        "kb": 19
        }
       ]
      },
@@ -15706,7 +15846,7 @@
         "ruta": "cursos/recursos/partidas-modelo/05-el-juego-moderno-de-gambito-t-markowski-a-onishchuk-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -15718,7 +15858,7 @@
         "ruta": "cursos/recursos/partidas-modelo/06-examen-del-bloque-1-apertura-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 9
+        "kb": 10
        }
       ]
      },
@@ -15730,7 +15870,7 @@
         "ruta": "cursos/recursos/partidas-modelo/06-ideas-basicas-en-el-ataque-g-kasparov-n-short-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 15
        }
       ]
      },
@@ -15742,7 +15882,7 @@
         "ruta": "cursos/recursos/partidas-modelo/07-incorporar-las-fuerzas-de-reserva-g-kasparov-a-karpov-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -15754,7 +15894,7 @@
         "ruta": "cursos/recursos/partidas-modelo/08-sacrificios-tipicos-a-shirov-d-reinderman-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 15
        }
       ]
      },
@@ -15766,7 +15906,7 @@
         "ruta": "cursos/recursos/partidas-modelo/09-el-ataque-con-oleada-de-sacrificios-j-nunn-i-nataf-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 17
        }
       ]
      },
@@ -15778,7 +15918,7 @@
         "ruta": "cursos/recursos/partidas-modelo/10-enroques-en-flancos-opuestos-j-nunn-c-ward-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 15
        }
       ]
      },
@@ -15790,7 +15930,7 @@
         "ruta": "cursos/recursos/partidas-modelo/11-la-gran-diagonal-j-timman-j-polgar-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -15802,7 +15942,7 @@
         "ruta": "cursos/recursos/partidas-modelo/12-que-no-cunda-el-panico-m-rotsagov-z-lanka-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -15814,7 +15954,7 @@
         "ruta": "cursos/recursos/partidas-modelo/13-el-sacrificio-defensivo-b-lalic-a-jalifman-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 15
        }
       ]
      },
@@ -15826,7 +15966,7 @@
         "ruta": "cursos/recursos/partidas-modelo/14-defensa-y-contraataque-bu-xiangzhi-ye-jiangchuan-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 15
        }
       ]
      },
@@ -15838,7 +15978,7 @@
         "ruta": "cursos/recursos/partidas-modelo/15-defensa-a-ultranza-v-kramnik-v-anand-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -15850,7 +15990,7 @@
         "ruta": "cursos/recursos/partidas-modelo/16-mala-estructura-de-peones-g-kasparov-i-sokolov-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -15862,7 +16002,7 @@
         "ruta": "cursos/recursos/partidas-modelo/17-ventaja-de-espacio-a-karpov-z-ribli-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -15874,7 +16014,7 @@
         "ruta": "cursos/recursos/partidas-modelo/18-puestos-avanzados-j-piket-i-smirin-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -15886,7 +16026,7 @@
         "ruta": "cursos/recursos/partidas-modelo/19-columnas-abiertas-n-short-j-timman-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -15898,7 +16038,7 @@
         "ruta": "cursos/recursos/partidas-modelo/20-complejo-de-casillas-debiles-g-kasparov-a-shirov-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -15910,7 +16050,7 @@
         "ruta": "cursos/recursos/partidas-modelo/21-ataque-al-flanco-de-dama-a-yermolinsky-l-christiansen-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 15
+        "kb": 19
        }
       ]
      },
@@ -15922,7 +16062,7 @@
         "ruta": "cursos/recursos/partidas-modelo/22-pareja-de-alfiles-m-gurevich-n-miezis-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 15
        }
       ]
      },
@@ -15934,7 +16074,7 @@
         "ruta": "cursos/recursos/partidas-modelo/23-el-alfil-malo-m-stean-g-sax-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 15
        }
       ]
      },
@@ -15946,7 +16086,7 @@
         "ruta": "cursos/recursos/partidas-modelo/24-la-cadena-de-peones-p-san-segundo-v-topalov-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 18
        }
       ]
      },
@@ -15958,7 +16098,7 @@
         "ruta": "cursos/recursos/partidas-modelo/25-explotacion-del-peon-dama-aislado-g-kamsky-a-karpov-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -15970,7 +16110,7 @@
         "ruta": "cursos/recursos/partidas-modelo/26-triunfo-del-peon-dama-aislado-g-kamsky-n-short-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -15982,7 +16122,7 @@
         "ruta": "cursos/recursos/partidas-modelo/27-sacrificios-posicionales-j-lautier-a-shirov-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 16
        }
       ]
      },
@@ -15994,7 +16134,7 @@
         "ruta": "cursos/recursos/partidas-modelo/29-examen-de-los-bloques-2-4-medio-juego-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -16006,7 +16146,7 @@
         "ruta": "cursos/recursos/partidas-modelo/28-el-rey-activo-v-smyslov-g-sax-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -16018,7 +16158,7 @@
         "ruta": "cursos/recursos/partidas-modelo/29-el-poder-de-los-peones-pasados-v-kramnik-p-svidler-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -16030,7 +16170,7 @@
         "ruta": "cursos/recursos/partidas-modelo/30-la-torre-en-septima-e-handoko-xu-jun-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 15
        }
       ]
      },
@@ -16042,7 +16182,7 @@
         "ruta": "cursos/recursos/partidas-modelo/33-examen-del-bloque-5-y-repaso-general-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 6
+        "kb": 7
        }
       ]
      }
@@ -16062,7 +16202,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/01-clavadas-absolutas-y-relativas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -16074,7 +16214,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/02-tenedores-de-caballo-y-de-peon-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -16086,7 +16226,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/03-ataques-a-la-descubierta-y-jaques-dobles-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -16098,7 +16238,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/04-rayos-x-y-desviaciones-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 10
+        "kb": 11
        }
       ]
      },
@@ -16110,7 +16250,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/05-sacrificios-de-despeje-y-de-destruccion-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 9
+        "kb": 10
        }
       ]
      },
@@ -16122,7 +16262,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/06-como-calcular-variantes-sin-mover-las-piezas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 8
+        "kb": 9
        }
       ]
      },
@@ -16134,7 +16274,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/07-combinaciones-de-dos-y-tres-jugadas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -16146,7 +16286,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/08-sacrificios-en-h7-h2-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -16158,7 +16298,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/09-combinaciones-con-promocion-de-peon-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -16170,7 +16310,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/10-calculo-bajo-presion-de-tiempo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 10
+        "kb": 12
        }
       ]
      },
@@ -16182,7 +16322,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/11-peones-debiles-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16194,7 +16334,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/12-casillas-debiles-y-piezas-dominantes-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 8
+        "kb": 9
        }
       ]
      },
@@ -16206,7 +16346,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/13-la-pareja-de-alfiles-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 8
+        "kb": 9
        }
       ]
      },
@@ -16218,7 +16358,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/14-columnas-y-diagonales-abiertas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 10
+        "kb": 11
        }
       ]
      },
@@ -16230,7 +16370,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/15-planificacion-de-medio-juego-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 10
+        "kb": 11
        }
       ]
      },
@@ -16242,7 +16382,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/16-ataque-al-rey-que-no-enroco-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -16254,7 +16394,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/17-ataque-al-enroque-contrario-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -16266,7 +16406,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/18-el-sacrificio-posicional-a-largo-plazo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -16278,7 +16418,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/19-defensa-activa-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 10
+        "kb": 11
        }
       ]
      },
@@ -16290,7 +16430,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/20-partida-magistral-comentada-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 6
+        "kb": 7
        }
       ]
      }
@@ -16310,7 +16450,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/01-examen-de-diagnostico-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 8
+        "kb": 11
        }
       ]
      },
@@ -16322,7 +16462,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/01-rey-y-peon-contra-rey-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -16334,7 +16474,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/02-el-peon-de-torre-y-los-rincones-del-alfil-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16346,7 +16486,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/03-torre-contra-caballo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 13
        }
       ]
      },
@@ -16358,7 +16498,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/04-dos-peones-contra-rey-y-peones-bloqueados-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16370,7 +16510,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/05-peones-pasados-y-las-maniobras-del-rey-con-doble-objetivo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16382,7 +16522,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/06-triangulacion-peon-de-alfil-y-la-lucha-contra-dos-peones-pas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16394,7 +16534,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/07-peon-pasado-defendido-alejado-doblado-y-rupturas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16406,7 +16546,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/08-caballo-contra-peon-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16418,7 +16558,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/09-dama-contra-peon-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16430,7 +16570,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/10-torre-contra-peon-i-contar-cortar-y-rodear-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16442,7 +16582,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/11-torre-contra-peon-ii-peones-de-caballo-y-torre-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16454,7 +16594,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/12-torre-contra-dos-peones-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -16466,7 +16606,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/13-alfil-y-peon-contra-alfil-del-mismo-color-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16478,7 +16618,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/14-alfil-contra-caballo-con-un-peon-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16490,7 +16630,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/15-alfiles-de-distinto-color-i-peones-ligados-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16502,7 +16642,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/16-alfiles-de-distinto-color-ii-peones-separados-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -16514,7 +16654,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/17-philidor-lucena-y-el-lado-largo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16526,7 +16666,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/18-kling-y-horwitz-y-el-peon-central-en-sexta-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16538,7 +16678,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/19-los-cortes-vertical-y-horizontal-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -16550,7 +16690,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/20-el-peon-de-torre-y-la-defensa-de-vancura-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -16562,7 +16702,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/21-torre-y-dos-peones-contra-torre-i-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 17
        }
       ]
      },
@@ -16574,7 +16714,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/22-torre-y-dos-peones-contra-torre-ii-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16586,7 +16726,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/23-el-mate-de-alfil-y-caballo-y-torre-y-alfil-contra-torre-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 15
+        "kb": 21
        }
       ]
      },
@@ -16598,7 +16738,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/24-torre-y-peon-contra-alfil-y-dama-contra-torre-y-peon-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 17
        }
       ]
      },
@@ -16610,7 +16750,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/26-examen-final-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -16622,7 +16762,7 @@
         "ruta": "cursos/recursos/el-mapa-de-los-finales/27-apendice-fortalezas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 9
+        "kb": 10
        }
       ]
      }
@@ -16642,7 +16782,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/01-primero-el-rey-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -16654,7 +16794,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/02-la-oposicion-y-las-casillas-criticas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 13
        }
       ]
      },
@@ -16666,7 +16806,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/03-la-ruta-del-rey-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -16678,7 +16818,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/04-incursiones-y-refugio-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -16690,7 +16830,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/05-el-peon-pasado-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -16702,7 +16842,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/06-mayorias-y-el-pasado-exterior-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -16714,7 +16854,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/07-rupturas-de-peones-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -16726,7 +16866,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/08-debilidades-que-no-se-mueven-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -16738,7 +16878,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/09-la-torre-activa-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -16750,7 +16890,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/10-la-torre-y-el-peon-pasado-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -16762,7 +16902,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/11-alfil-contra-caballo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -16774,7 +16914,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/12-alfiles-de-distinto-color-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 18
        }
       ]
      },
@@ -16786,7 +16926,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/13-el-cambio-que-decide-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 17
        }
       ]
      },
@@ -16798,7 +16938,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/14-zugzwang-triangulacion-y-espera-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -16810,7 +16950,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/15-profilaxis-quitarle-el-plan-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -16822,7 +16962,7 @@
         "ruta": "cursos/recursos/estrategia-en-el-final/16-convertir-las-dos-debilidades-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      }
@@ -16842,7 +16982,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/01-el-valor-relativo-de-las-piezas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 16
+        "kb": 17
        }
       ]
      },
@@ -16854,7 +16994,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/02-alfil-contra-caballo-cuando-manda-el-caballo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 16
+        "kb": 18
        }
       ]
      },
@@ -16866,7 +17006,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/03-alfil-contra-caballo-cuando-el-alfil-domina-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 15
+        "kb": 17
        }
       ]
      },
@@ -16878,7 +17018,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/04-alfiles-de-distinto-color-iniciativa-y-complejo-de-color-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 17
+        "kb": 20
        }
       ]
      },
@@ -16890,7 +17030,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/05-alfiles-de-distinto-color-convertir-una-ventaja-minima-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 17
+        "kb": 20
        }
       ]
      },
@@ -16902,7 +17042,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/06-la-pareja-de-alfiles-en-el-final-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 16
+        "kb": 18
        }
       ]
      },
@@ -16914,7 +17054,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/07-la-pareja-de-alfiles-en-el-medio-juego-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 15
        }
       ]
      },
@@ -16926,7 +17066,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/08-torre-contra-dos-piezas-menores-coordinacion-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 16
        }
       ]
      },
@@ -16938,7 +17078,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/09-torre-contra-dos-piezas-menores-el-rey-y-los-peones-pasados-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 15
+        "kb": 17
        }
       ]
      },
@@ -16950,7 +17090,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/10-sacrificios-de-peon-estabilidad-y-peones-pasados-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 15
+        "kb": 18
        }
       ]
      },
@@ -16962,7 +17102,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/11-sacrificios-de-peon-ventaja-de-desarrollo-y-estructura-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 15
        }
       ]
      },
@@ -16974,7 +17114,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/12-sacrificios-de-calidad-el-caballo-dominante-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 15
        }
       ]
      },
@@ -16986,7 +17126,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/13-sacrificios-de-calidad-iniciativa-y-ataque-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 14
        }
       ]
      },
@@ -16998,7 +17138,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/14-sacrificios-de-calidad-defensa-y-contrajuego-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 14
        }
       ]
      },
@@ -17010,7 +17150,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/15-sacrificios-de-pieza-por-peones-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 14
        }
       ]
      },
@@ -17022,7 +17162,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/16-dama-contra-piezas-el-modo-supervivencia-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 15
+        "kb": 18
        }
       ]
      },
@@ -17034,7 +17174,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/17-dama-contra-piezas-cuando-gana-cada-bando-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 15
+        "kb": 17
        }
       ]
      },
@@ -17046,7 +17186,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/18-desequilibrios-en-la-practica-i-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 15
+        "kb": 18
        }
       ]
      },
@@ -17058,7 +17198,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/19-desequilibrios-en-la-practica-ii-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 15
+        "kb": 18
        }
       ]
      },
@@ -17070,7 +17210,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/20-examen-final-treinta-ejercicios-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 10
+        "kb": 13
        }
       ]
      }
@@ -17090,7 +17230,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/01-plan-o-jugada-a-jugada-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17102,7 +17242,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/02-un-plan-concreto-no-una-intencion-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17114,7 +17254,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/03-sin-prisa-el-plan-va-por-etapas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17126,7 +17266,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/04-un-plan-no-tres-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17138,7 +17278,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/05-lo-basico-que-falta-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17150,7 +17290,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/06-las-reglas-tienen-excepciones-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17162,7 +17302,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/07-el-factor-que-manda-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17174,7 +17314,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/08-donde-esta-la-ventaja-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17186,7 +17326,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/09-lo-simple-contra-lo-complicado-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17198,7 +17338,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/10-dinamica-contra-estatica-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -17210,7 +17350,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/11-no-des-jugadas-por-hechas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17222,7 +17362,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/12-hazle-dificil-la-vida-al-rival-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17234,7 +17374,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/13-mira-hacia-donde-va-la-partida-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17246,7 +17386,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/14-el-cambio-mal-entendido-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17258,7 +17398,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/15-cada-cambio-se-mira-solo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17270,7 +17410,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/16-cuando-la-estructura-cambia-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17282,7 +17422,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/17-cuando-cambia-el-caracter-de-la-posicion-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17294,7 +17434,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/18-cuando-cambia-la-tendencia-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17306,7 +17446,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/19-los-errores-de-calculo-mas-comunes-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17318,7 +17458,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/20-la-precipitacion-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -17330,7 +17470,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/21-la-jugada-intermedia-que-no-viste-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17342,7 +17482,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/22-el-orden-de-las-jugadas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17354,7 +17494,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/23-defender-lo-dificil-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17366,7 +17506,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/24-ver-mas-lejos-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 8
+        "kb": 11
        }
       ]
      },
@@ -17378,7 +17518,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/25-que-quiere-tu-rival-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17390,7 +17530,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/26-amenazas-cuales-son-reales-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 14
        }
       ]
      },
@@ -17402,7 +17542,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/27-que-cambio-con-su-ultima-jugada-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17414,7 +17554,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/28-quitarle-jugadas-al-rival-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17426,7 +17566,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/29-el-miedo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17438,7 +17578,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/30-el-sentido-del-peligro-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17450,7 +17590,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/31-el-materialismo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17462,7 +17602,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/32-el-conformismo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17474,7 +17614,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/33-la-relajacion-con-ventaja-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17486,7 +17626,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/34-el-primer-error-no-es-el-ultimo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 13
        }
       ]
      },
@@ -17498,7 +17638,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/35-decidir-con-poco-tiempo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17510,7 +17650,7 @@
         "ruta": "cursos/recursos/rompe-el-estancamiento/36-tu-ficha-de-errores-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 10
+        "kb": 11
        }
       ]
      }
@@ -17530,7 +17670,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/01-las-ventajas-que-no-se-ven-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17542,7 +17682,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/02-la-pieza-que-no-tiene-casillas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17554,7 +17694,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/03-un-tiempo-tambien-es-una-ventaja-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17566,7 +17706,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/04-primero-no-dar-nada-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17578,7 +17718,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/05-la-peor-pieza-manda-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 8
+        "kb": 10
        }
       ]
      },
@@ -17590,7 +17730,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/06-alfil-bueno-alfil-malo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17602,7 +17742,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/07-el-caballo-y-sus-casillas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17614,7 +17754,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/08-la-torre-activa-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17626,7 +17766,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/09-el-rey-tambien-juega-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17638,7 +17778,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/10-el-peon-pasado-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17650,7 +17790,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/11-empujar-a-tiempo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17662,7 +17802,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/12-la-mayoria-de-peones-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17674,7 +17814,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/13-una-debilidad-se-ataca-no-se-gana-de-golpe-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17686,7 +17826,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/14-que-piezas-cambiar-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17698,7 +17838,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/15-pasar-a-un-final-que-se-gana-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 14
        }
       ]
      },
@@ -17710,7 +17850,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/16-las-dos-debilidades-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17722,7 +17862,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/17-el-zugzwang-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17734,7 +17874,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/18-finales-de-torres-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17746,7 +17886,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/19-finales-de-alfiles-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17758,7 +17898,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/20-finales-de-caballos-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17770,7 +17910,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/21-finales-de-damas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17782,7 +17922,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/22-no-apurarse-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17794,7 +17934,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/23-quitarle-el-contrajuego-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17806,7 +17946,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/24-cuando-el-rival-aprieta-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17818,7 +17958,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/25-pasar-el-turno-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17830,7 +17970,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/26-andersson-potkin-la-pieza-activa-manda-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17842,7 +17982,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/27-petrosian-botvinnik-el-peon-debil-de-e6-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -17854,7 +17994,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/28-matulovic-botvinnik-las-casillas-que-deja-un-peon-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17866,7 +18006,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/29-karpov-kramnik-torre-y-caballo-contra-torre-y-alfil-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 13
        }
       ]
      },
@@ -17878,7 +18018,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/30-salov-short-las-casillas-negras-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17890,7 +18030,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/31-kamsky-lautier-la-mejor-estructura-de-peones-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 13
        }
       ]
      },
@@ -17902,7 +18042,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/32-portisch-beliavsky-la-mayoria-del-flanco-de-dama-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17914,7 +18054,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/33-spassky-petrosian-los-peones-de-d5-y-e5-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17926,7 +18066,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/34-fischer-portisch-de-una-ventaja-ligera-a-una-decisiva-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 13
        }
       ]
      },
@@ -17938,7 +18078,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/35-kramnik-deep-fritz-tecnica-contra-la-maquina-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 13
        }
       ]
      },
@@ -17950,7 +18090,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/36-yusupov-rozentalis-el-alfil-y-el-rey-activo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 13
        }
       ]
      },
@@ -17962,7 +18102,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/37-kasparov-x3d-fritz-espacio-y-una-casilla-debil-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 14
        }
       ]
      },
@@ -17974,7 +18114,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/38-palavandishvili-keres-las-torres-por-la-sexta-fila-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 13
        }
       ]
      },
@@ -17986,7 +18126,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/39-rubinstein-grunfeld-paciencia-en-el-final-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -17998,7 +18138,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/40-capablanca-yates-los-caballos-de-capablanca-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 13
        }
       ]
      },
@@ -18010,7 +18150,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/41-novikov-garcia-recoger-la-cuerda-de-a-poco-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18022,7 +18162,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/42-nikolic-van-der-wiel-el-peon-debil-de-f4-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 13
        }
       ]
      },
@@ -18034,7 +18174,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/43-leyva-pineda-el-peon-pasado-de-c-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18046,7 +18186,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/44-tu-cuaderno-de-ventajas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      }
@@ -18073,7 +18213,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/01-que-cambia-cuando-cambias-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -18085,7 +18225,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/02-cambia-su-mejor-pieza-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -18097,7 +18237,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/03-que-le-quede-su-pieza-mala-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -18109,7 +18249,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/04-todo-menos-el-alfil-malo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -18121,7 +18261,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/05-cambia-las-activas-encierra-las-pasivas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -18133,7 +18273,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/06-la-tactica-al-servicio-del-cambio-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -18145,7 +18285,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/07-el-espacio-no-se-cambia-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 18
        }
       ]
      },
@@ -18157,7 +18297,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/08-la-pareja-de-alfiles-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -18169,7 +18309,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/09-cuando-el-caballo-vale-mas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -18181,7 +18321,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/10-el-alfil-malo-de-toda-la-vida-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -18193,7 +18333,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/11-el-alfil-malo-que-sirve-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -18205,7 +18345,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/12-alfiles-de-distinto-color-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 17
        }
       ]
      },
@@ -18217,7 +18357,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/13-cambiar-damas-o-no-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 17
        }
       ]
      },
@@ -18229,7 +18369,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/14-una-torre-si-las-dos-no-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 17
        }
       ]
      },
@@ -18241,7 +18381,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/15-el-cambio-paradojico-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 14
+        "kb": 18
        }
       ]
      },
@@ -18253,7 +18393,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/16-entregar-la-pareja-a-tiempo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -18265,7 +18405,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/17-tu-peor-pieza-por-su-mejor-pieza-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -18277,7 +18417,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/18-quitarle-los-defensores-a-una-casilla-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -18289,7 +18429,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/19-la-tecnica-moderna-no-hay-reglas-fijas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -18301,7 +18441,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/20-ejercicios-1-a-6-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 17
        }
       ]
      },
@@ -18313,7 +18453,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/21-ejercicios-7-a-12-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 16
        }
       ]
      },
@@ -18325,7 +18465,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/22-ejercicios-13-a-17-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 16
        }
       ]
      },
@@ -18337,7 +18477,7 @@
         "ruta": "cursos/recursos/cambiar-o-no-cambiar/23-ejercicios-18-a-22-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 15
+        "kb": 21
        }
       ]
      }
@@ -18357,7 +18497,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/01-cuando-se-puede-atacar-al-rey-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -18369,7 +18509,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/02-el-sacrificio-del-alfil-en-h7-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -18381,7 +18521,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/03-romper-el-techo-los-sacrificios-en-g7-y-h6-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -18393,7 +18533,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/04-las-piezas-mayores-entran-al-ataque-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -18405,7 +18545,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/05-la-ultima-fila-sin-aire-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -18417,7 +18557,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/06-los-mates-de-patron-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18429,7 +18569,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/07-castigar-al-rey-que-no-enroco-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -18441,7 +18581,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/08-el-punto-debil-de-f7-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -18453,7 +18593,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/09-la-ventaja-de-desarrollo-se-usa-o-se-pierde-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -18465,7 +18605,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/10-sacar-al-rey-de-su-casa-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18477,7 +18617,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/11-enroques-opuestos-la-carrera-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -18489,7 +18629,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/12-defenderse-a-tiempo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18501,7 +18641,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/13-la-torre-en-la-septima-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -18513,7 +18653,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/14-el-caballo-y-la-doble-amenaza-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -18525,7 +18665,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/15-el-alfil-y-las-diagonales-abiertas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18537,7 +18677,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/16-la-dama-la-jugada-tranquila-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -18549,7 +18689,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/17-la-pieza-sin-casillas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 10
+        "kb": 12
        }
       ]
      },
@@ -18561,7 +18701,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/18-el-sacrificio-de-calidad-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -18573,7 +18713,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/19-el-peon-pasado-hay-que-empujarlo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18585,7 +18725,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/20-los-ultimos-metros-hasta-coronar-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 14
        }
       ]
      },
@@ -18597,7 +18737,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/21-la-ruptura-de-peones-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18609,7 +18749,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/22-entregar-un-peon-para-abrir-el-juego-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -18621,7 +18761,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/23-finales-de-peones-contar-antes-de-mover-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18633,7 +18773,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/24-frenar-al-peon-pasado-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18645,7 +18785,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/25-la-desviacion-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18657,7 +18797,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/26-quitar-al-defensor-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 15
        }
       ]
      },
@@ -18669,7 +18809,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/27-la-interferencia-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18681,7 +18821,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/28-la-clavada-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 15
        }
       ]
      },
@@ -18693,7 +18833,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/29-despejar-el-camino-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18705,7 +18845,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/30-la-enfilada-y-los-rayos-x-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18717,7 +18857,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/31-finales-de-torre-la-torre-activa-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18729,7 +18869,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/32-finales-de-alfiles-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18741,7 +18881,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/33-alfil-contra-caballo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18753,7 +18893,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/34-finales-de-damas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18765,7 +18905,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/35-el-zugzwang-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18777,7 +18917,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/36-tu-plan-de-estudio-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      }
@@ -18794,73 +18934,73 @@
       "ruta": "cursos/recursos/una-clase-al-dia/tomo-01-accesible.html",
       "titulo": "Una clase al día, tomo 1",
       "tipo": "accesible",
-      "kb": 481
+      "kb": 628
      },
      {
       "ruta": "cursos/recursos/una-clase-al-dia/tomo-02-accesible.html",
       "titulo": "Una clase al día, tomo 2",
       "tipo": "accesible",
-      "kb": 563
+      "kb": 732
      },
      {
       "ruta": "cursos/recursos/una-clase-al-dia/tomo-03-accesible.html",
       "titulo": "Una clase al día, tomo 3",
       "tipo": "accesible",
-      "kb": 1933
+      "kb": 2514
      },
      {
       "ruta": "cursos/recursos/una-clase-al-dia/tomo-04-accesible.html",
       "titulo": "Una clase al día, tomo 4",
       "tipo": "accesible",
-      "kb": 367
+      "kb": 472
      },
      {
       "ruta": "cursos/recursos/una-clase-al-dia/tomo-05-accesible.html",
       "titulo": "Una clase al día, tomo 5",
       "tipo": "accesible",
-      "kb": 1787
+      "kb": 2296
      },
      {
       "ruta": "cursos/recursos/una-clase-al-dia/tomo-06-accesible.html",
       "titulo": "Una clase al día, tomo 6",
       "tipo": "accesible",
-      "kb": 1461
+      "kb": 1895
      },
      {
       "ruta": "cursos/recursos/una-clase-al-dia/tomo-07-accesible.html",
       "titulo": "Una clase al día, tomo 7",
       "tipo": "accesible",
-      "kb": 1275
+      "kb": 1683
      },
      {
       "ruta": "cursos/recursos/una-clase-al-dia/tomo-08-accesible.html",
       "titulo": "Una clase al día, tomo 8",
       "tipo": "accesible",
-      "kb": 994
+      "kb": 1293
      },
      {
       "ruta": "cursos/recursos/una-clase-al-dia/tomo-09-accesible.html",
       "titulo": "Una clase al día, tomo 9",
       "tipo": "accesible",
-      "kb": 2026
+      "kb": 2628
      },
      {
       "ruta": "cursos/recursos/una-clase-al-dia/tomo-10-accesible.html",
       "titulo": "Una clase al día, tomo 10",
       "tipo": "accesible",
-      "kb": 694
+      "kb": 899
      },
      {
       "ruta": "cursos/recursos/una-clase-al-dia/tomo-11-accesible.html",
       "titulo": "Una clase al día, tomo 11",
       "tipo": "accesible",
-      "kb": 231
+      "kb": 308
      },
      {
       "ruta": "cursos/recursos/una-clase-al-dia/tomo-12-accesible.html",
       "titulo": "Una clase al día, tomo 12",
       "tipo": "accesible",
-      "kb": 682
+      "kb": 825
      }
     ]
    },
@@ -18877,7 +19017,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/01-como-construir-un-repertorio-solido-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -18889,7 +19029,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/02-preparacion-contra-un-rival-especifico-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 13
+        "kb": 16
        }
       ]
      },
@@ -18901,7 +19041,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/03-uso-de-bases-de-datos-de-partidas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 9
+        "kb": 10
        }
       ]
      },
@@ -18913,7 +19053,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/04-actualizar-el-repertorio-tras-un-torneo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -18925,7 +19065,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/05-gestion-del-reloj-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -18937,7 +19077,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/06-cuando-pensar-mucho-y-cuando-jugar-rapido-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -18949,7 +19089,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/07-decisiones-bajo-presion-de-tiempo-zeitnot-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -18961,7 +19101,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/08-como-comportarte-tras-un-error-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 9
+        "kb": 10
        }
       ]
      },
@@ -18973,7 +19113,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/09-psicologia-de-la-competencia-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -18985,7 +19125,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/10-rutinas-antes-y-durante-la-partida-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 12
+        "kb": 14
        }
       ]
      },
@@ -18997,7 +19137,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/11-rivales-incomodos-o-intimidantes-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
@@ -19009,7 +19149,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/12-descanso-y-alimentacion-durante-un-torneo-largo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -19021,7 +19161,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/13-analisis-post-partida-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 8
+        "kb": 9
        }
       ]
      },
@@ -19033,7 +19173,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/14-uso-de-un-motor-de-analisis-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 9
+        "kb": 10
        }
       ]
      },
@@ -19045,7 +19185,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/15-bitacora-de-errores-recurrentes-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      },
@@ -19057,7 +19197,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/16-como-estudiar-tus-partidas-perdidas-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 8
+        "kb": 9
        }
       ]
      },
@@ -19069,7 +19209,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/17-simulacro-de-torneo-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 7
+        "kb": 8
        }
       ]
      },
@@ -19081,7 +19221,7 @@
         "ruta": "cursos/recursos/preparacion-para-torneos/18-plan-de-estudio-personalizado-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
-        "kb": 11
+        "kb": 12
        }
       ]
      }
@@ -19094,12 +19234,12 @@
     "ruta": "guia-del-profesor-accesible.html",
     "titulo": "Guía del profesor",
     "tipo": "accesible",
-    "kb": 107
+    "kb": 108
    }
   ]
  },
  "imagenes": {
-  "total": 1243,
+  "total": 1329,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -23018,7 +23158,7 @@
       "ruta": "img/banderas/bo.svg",
       "titulo": "Bo",
       "tipo": "otro",
-      "kb": 100
+      "kb": 101
      },
      {
       "ruta": "img/banderas/br.svg",
@@ -23168,13 +23308,13 @@
       "ruta": "img/banderas/dm.svg",
       "titulo": "Dm",
       "tipo": "otro",
-      "kb": 15
+      "kb": 16
      },
      {
       "ruta": "img/banderas/do.svg",
       "titulo": "Do",
       "tipo": "otro",
-      "kb": 39
+      "kb": 40
      },
      {
       "ruta": "img/banderas/dz.svg",
@@ -23210,7 +23350,7 @@
       "ruta": "img/banderas/es.svg",
       "titulo": "Es",
       "tipo": "otro",
-      "kb": 79
+      "kb": 80
      },
      {
       "ruta": "img/banderas/et.svg",
@@ -23804,7 +23944,7 @@
       "ruta": "img/banderas/rs.svg",
       "titulo": "Rs",
       "tipo": "otro",
-      "kb": 177
+      "kb": 178
      },
      {
       "ruta": "img/banderas/ru.svg",
@@ -23912,7 +24052,7 @@
       "ruta": "img/banderas/sv.svg",
       "titulo": "Sv",
       "tipo": "otro",
-      "kb": 75
+      "kb": 76
      },
      {
       "ruta": "img/banderas/sy.svg",
@@ -23960,7 +24100,7 @@
       "ruta": "img/banderas/tm.svg",
       "titulo": "Tm",
       "tipo": "otro",
-      "kb": 37
+      "kb": 38
      },
      {
       "ruta": "img/banderas/tn.svg",
@@ -25840,149 +25980,251 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/01.webp",
       "titulo": "01",
       "tipo": "otro",
-      "kb": 65
+      "kb": 66
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/02.webp",
       "titulo": "02",
       "tipo": "otro",
-      "kb": 60
+      "kb": 66
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/03.webp",
       "titulo": "03",
       "tipo": "otro",
-      "kb": 71
+      "kb": 76
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/04.webp",
       "titulo": "04",
       "tipo": "otro",
-      "kb": 67
+      "kb": 72
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/05.webp",
       "titulo": "05",
       "tipo": "otro",
-      "kb": 78
+      "kb": 87
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/06.webp",
       "titulo": "06",
       "tipo": "otro",
-      "kb": 40
+      "kb": 41
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/07.webp",
       "titulo": "07",
       "tipo": "otro",
-      "kb": 23
+      "kb": 76
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/08.webp",
       "titulo": "08",
       "tipo": "otro",
-      "kb": 68
+      "kb": 85
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/09.webp",
       "titulo": "09",
       "tipo": "otro",
-      "kb": 74
+      "kb": 96
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/10.webp",
       "titulo": "10",
       "tipo": "otro",
-      "kb": 60
+      "kb": 88
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/11.webp",
       "titulo": "11",
       "tipo": "otro",
-      "kb": 61
+      "kb": 77
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/12.webp",
       "titulo": "12",
       "tipo": "otro",
-      "kb": 59
+      "kb": 90
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/13.webp",
       "titulo": "13",
       "tipo": "otro",
-      "kb": 54
+      "kb": 71
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/14.webp",
       "titulo": "14",
       "tipo": "otro",
-      "kb": 47
+      "kb": 60
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/15.webp",
       "titulo": "15",
       "tipo": "otro",
-      "kb": 55
+      "kb": 77
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/16.webp",
       "titulo": "16",
       "tipo": "otro",
-      "kb": 23
+      "kb": 76
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/17.webp",
       "titulo": "17",
       "tipo": "otro",
-      "kb": 53
+      "kb": 82
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/18.webp",
       "titulo": "18",
       "tipo": "otro",
-      "kb": 40
+      "kb": 74
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/19.webp",
       "titulo": "19",
       "tipo": "otro",
-      "kb": 28
+      "kb": 77
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/20.webp",
       "titulo": "20",
       "tipo": "otro",
-      "kb": 28
+      "kb": 226
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/21.webp",
       "titulo": "21",
       "tipo": "otro",
-      "kb": 54
+      "kb": 112
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/22.webp",
       "titulo": "22",
       "tipo": "otro",
-      "kb": 69
+      "kb": 105
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/23.webp",
       "titulo": "23",
       "tipo": "otro",
-      "kb": 40
+      "kb": 146
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/24.webp",
       "titulo": "24",
       "tipo": "otro",
-      "kb": 74
+      "kb": 24
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/25.webp",
       "titulo": "25",
+      "tipo": "otro",
+      "kb": 75
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/26.webp",
+      "titulo": "26",
+      "tipo": "otro",
+      "kb": 85
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/27.webp",
+      "titulo": "27",
+      "tipo": "otro",
+      "kb": 64
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/28.webp",
+      "titulo": "28",
+      "tipo": "otro",
+      "kb": 64
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/29.webp",
+      "titulo": "29",
+      "tipo": "otro",
+      "kb": 59
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/30.webp",
+      "titulo": "30",
+      "tipo": "otro",
+      "kb": 61
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/31.webp",
+      "titulo": "31",
+      "tipo": "otro",
+      "kb": 48
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/32.webp",
+      "titulo": "32",
+      "tipo": "otro",
+      "kb": 59
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/33.webp",
+      "titulo": "33",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/34.webp",
+      "titulo": "34",
+      "tipo": "otro",
+      "kb": 53
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/35.webp",
+      "titulo": "35",
+      "tipo": "otro",
+      "kb": 45
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/36.webp",
+      "titulo": "36",
+      "tipo": "otro",
+      "kb": 31
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/37.webp",
+      "titulo": "37",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/38.webp",
+      "titulo": "38",
+      "tipo": "otro",
+      "kb": 59
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/39.webp",
+      "titulo": "39",
+      "tipo": "otro",
+      "kb": 78
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/40.webp",
+      "titulo": "40",
+      "tipo": "otro",
+      "kb": 42
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/41.webp",
+      "titulo": "41",
+      "tipo": "otro",
+      "kb": 83
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/42.webp",
+      "titulo": "42",
       "tipo": "otro",
       "kb": 42
      }
@@ -26277,6 +26519,133 @@
       "titulo": "Logo",
       "tipo": "otro",
       "kb": 15
+     }
+    ]
+   },
+   {
+    "carpeta": "img/aula-arbitraje",
+    "titulo": "Aula arbitraje",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/aula-arbitraje/portada-01.jpg",
+      "titulo": "Portada 01",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-02.jpg",
+      "titulo": "Portada 02",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-03.jpg",
+      "titulo": "Portada 03",
+      "tipo": "otro",
+      "kb": 27
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-04.jpg",
+      "titulo": "Portada 04",
+      "tipo": "otro",
+      "kb": 25
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-05.jpg",
+      "titulo": "Portada 05",
+      "tipo": "otro",
+      "kb": 28
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-06.jpg",
+      "titulo": "Portada 06",
+      "tipo": "otro",
+      "kb": 27
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-07.jpg",
+      "titulo": "Portada 07",
+      "tipo": "otro",
+      "kb": 28
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-08.jpg",
+      "titulo": "Portada 08",
+      "tipo": "otro",
+      "kb": 27
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-09.jpg",
+      "titulo": "Portada 09",
+      "tipo": "otro",
+      "kb": 27
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-10.jpg",
+      "titulo": "Portada 10",
+      "tipo": "otro",
+      "kb": 27
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-11.jpg",
+      "titulo": "Portada 11",
+      "tipo": "otro",
+      "kb": 26
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-12.jpg",
+      "titulo": "Portada 12",
+      "tipo": "otro",
+      "kb": 26
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-13.jpg",
+      "titulo": "Portada 13",
+      "tipo": "otro",
+      "kb": 26
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-14.jpg",
+      "titulo": "Portada 14",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-15.jpg",
+      "titulo": "Portada 15",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-16.jpg",
+      "titulo": "Portada 16",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-17.jpg",
+      "titulo": "Portada 17",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-18.jpg",
+      "titulo": "Portada 18",
+      "tipo": "otro",
+      "kb": 25
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-19.jpg",
+      "titulo": "Portada 19",
+      "tipo": "otro",
+      "kb": 26
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-20.jpg",
+      "titulo": "Portada 20",
+      "tipo": "otro",
+      "kb": 30
      }
     ]
    },
@@ -26674,10 +27043,305 @@
     "grupo": "Carpetas",
     "archivos": [
      {
+      "ruta": "img/herramientas/acta-jde.jpg",
+      "titulo": "Acta jde",
+      "tipo": "otro",
+      "kb": 119
+     },
+     {
+      "ruta": "img/herramientas/arbitros-cr.jpg",
+      "titulo": "Arbitros cr",
+      "tipo": "otro",
+      "kb": 97
+     },
+     {
+      "ruta": "img/herramientas/aula-arbitraje.jpg",
+      "titulo": "Aula arbitraje",
+      "tipo": "otro",
+      "kb": 99
+     },
+     {
+      "ruta": "img/herramientas/bases-torneo.jpg",
+      "titulo": "Bases torneo",
+      "tipo": "otro",
+      "kb": 110
+     },
+     {
+      "ruta": "img/herramientas/desempates.jpg",
+      "titulo": "Desempates",
+      "tipo": "otro",
+      "kb": 129
+     },
+     {
+      "ruta": "img/herramientas/mesa-arbitro.jpg",
+      "titulo": "Mesa arbitro",
+      "tipo": "otro",
+      "kb": 102
+     },
+     {
+      "ruta": "img/herramientas/normas-titulo.jpg",
+      "titulo": "Normas titulo",
+      "tipo": "otro",
+      "kb": 116
+     },
+     {
       "ruta": "img/herramientas/notara.jpg",
       "titulo": "Notara",
       "tipo": "otro",
       "kb": 155
+     },
+     {
+      "ruta": "img/herramientas/pareo-dgt.jpg",
+      "titulo": "Pareo dgt",
+      "tipo": "otro",
+      "kb": 113
+     },
+     {
+      "ruta": "img/herramientas/pareo-integral.jpg",
+      "titulo": "Pareo integral",
+      "tipo": "otro",
+      "kb": 103
+     },
+     {
+      "ruta": "img/herramientas/reclamos-tablas.jpg",
+      "titulo": "Reclamos tablas",
+      "tipo": "otro",
+      "kb": 107
+     },
+     {
+      "ruta": "img/herramientas/torneos-costa-rica.jpg",
+      "titulo": "Torneos costa rica",
+      "tipo": "otro",
+      "kb": 128
+     },
+     {
+      "ruta": "img/herramientas/variacion-elo.jpg",
+      "titulo": "Variacion elo",
+      "tipo": "otro",
+      "kb": 105
+     }
+    ]
+   },
+   {
+    "carpeta": "img/jdn-pz-2026/jugadores",
+    "titulo": "Jugadores",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/acuna-badilla-sussy-belen.jpg",
+      "titulo": "Acuna badilla sussy belen",
+      "tipo": "otro",
+      "kb": 16
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/aguilar-flores-bairon-matias.jpg",
+      "titulo": "Aguilar flores bairon matias",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/alpizar-hernandez-ethan-bary.jpg",
+      "titulo": "Alpizar hernandez ethan bary",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/arguedas-matamoros-isaac.jpg",
+      "titulo": "Arguedas matamoros isaac",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/arguedas-rodriguez-amelia.jpg",
+      "titulo": "Arguedas rodriguez amelia",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/badilla-mena-elizabeth.jpg",
+      "titulo": "Badilla mena elizabeth",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/barrantes-granados-aaron.jpg",
+      "titulo": "Barrantes granados aaron",
+      "tipo": "otro",
+      "kb": 16
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/beitia-retana-samuel-josue.jpg",
+      "titulo": "Beitia retana samuel josue",
+      "tipo": "otro",
+      "kb": 17
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/castro-monge-abel-francisco.jpg",
+      "titulo": "Castro monge abel francisco",
+      "tipo": "otro",
+      "kb": 13
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/ceciliano-azofeifa-amy-samantha.jpg",
+      "titulo": "Ceciliano azofeifa amy samantha",
+      "tipo": "otro",
+      "kb": 17
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/chinchilla-solis-javier-alonso.jpg",
+      "titulo": "Chinchilla solis javier alonso",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/chryssopulos-fajardo-alejandro.jpg",
+      "titulo": "Chryssopulos fajardo alejandro",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/cordero-sanchez-santiago.jpg",
+      "titulo": "Cordero sanchez santiago",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/cordova-elizondo-sofia.jpg",
+      "titulo": "Cordova elizondo sofia",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/flores-badilla-joselyn-ariana.jpg",
+      "titulo": "Flores badilla joselyn ariana",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/gonzalez-retana-fabian.jpg",
+      "titulo": "Gonzalez retana fabian",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/jimenez-azofeifa-lia.jpg",
+      "titulo": "Jimenez azofeifa lia",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/martinez-arce-samuel.jpg",
+      "titulo": "Martinez arce samuel",
+      "tipo": "otro",
+      "kb": 13
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/mora-bonilla-carlos-daniel.jpg",
+      "titulo": "Mora bonilla carlos daniel",
+      "tipo": "otro",
+      "kb": 13
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/piedra-villarevia-aaron.jpg",
+      "titulo": "Piedra villarevia aaron",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/quesada-aguero-samuel.jpg",
+      "titulo": "Quesada aguero samuel",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/rodriguez-quesada-keithy.jpg",
+      "titulo": "Rodriguez quesada keithy",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/salas-rojas-jose-pablo.jpg",
+      "titulo": "Salas rojas jose pablo",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/segura-cespedes-santiago.jpg",
+      "titulo": "Segura cespedes santiago",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/segura-monge-allan-jafeth.jpg",
+      "titulo": "Segura monge allan jafeth",
+      "tipo": "otro",
+      "kb": 13
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/segura-valverde-dylan.jpg",
+      "titulo": "Segura valverde dylan",
+      "tipo": "otro",
+      "kb": 16
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/segura-valverde-matthew.jpg",
+      "titulo": "Segura valverde matthew",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/sequeira-solis-shane-stevens.jpg",
+      "titulo": "Sequeira solis shane stevens",
+      "tipo": "otro",
+      "kb": 16
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/ulcigrai-ramirez-giordano.jpg",
+      "titulo": "Ulcigrai ramirez giordano",
+      "tipo": "otro",
+      "kb": 16
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/ulcigrai-ramirez-giulio.jpg",
+      "titulo": "Ulcigrai ramirez giulio",
+      "tipo": "otro",
+      "kb": 17
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/valverde-alvarado-leonardo.jpg",
+      "titulo": "Valverde alvarado leonardo",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/villalobos-solano-samuel.jpg",
+      "titulo": "Villalobos solano samuel",
+      "tipo": "otro",
+      "kb": 13
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/villegas-badilla-evanz.jpg",
+      "titulo": "Villegas badilla evanz",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/vindas-mendez-brianna-isabella.jpg",
+      "titulo": "Vindas mendez brianna isabella",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/zeledon-rojas-ismael.jpg",
+      "titulo": "Zeledon rojas ismael",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/zuniga-arias-yariela-sofia.jpg",
+      "titulo": "Zuniga arias yariela sofia",
+      "tipo": "otro",
+      "kb": 21
      }
     ]
    },
@@ -26752,7 +27416,13 @@
       "ruta": "img/tacho-chess-2/mascota.png",
       "titulo": "Tacho Chess 2: Tacho, la mascota del torneo, recortada del afiche",
       "tipo": "otro",
-      "kb": 73
+      "kb": 74
+     },
+     {
+      "ruta": "img/tacho-chess-2/sala.jpg",
+      "titulo": "Tacho Chess 2: la sala de juego, el Gimnasio del Centro del Liceo Anastasio Alfaro con las mesas listas",
+      "tipo": "otro",
+      "kb": 149
      }
     ]
    },

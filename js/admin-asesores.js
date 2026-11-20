@@ -15,6 +15,10 @@
  *     nota de la primera vez en el cuestionario de cada sesión y en su tarea
  *     inicial, y cuánto vio de cada grabación. La arma la base,
  *     asesores_tablero() y asesores_grabaciones(): acá solo se pinta;
+ *   - las horas del taller de cada uno (asesores_horas(), ver «Las horas del
+ *     taller» en docs/decisiones/paneles.md) y las prácticas de la sesión
+ *     presencial que subieron, para aprobarlas o devolverlas con una nota
+ *     (taller_practica_revisar): aprobada, esa sesión les cuenta entera;
  *   - «Mandarlo como tarea a los asesores»: abre Tareas con ese cuestionario
  *     en el renglón y marcadas las cuentas temporales abiertas del taller
  *     (tareas.html?temporales=<detalle>), para que lo practiquen en su casa
@@ -42,7 +46,8 @@
   let estados = [];          // filas de preparacion_sesiones
   let cuestionarios = [];    // { id, titulo, preguntas }
   let talleres = [];         // [detalle, cuántas cuentas temporales abiertas]
-  let grupos = [];           // [detalle, filas de asesores_tablero(), de asesores_grabaciones() y de asesores_preguntas_video()]
+  let grupos = [];           // [detalle, filas de asesores_tablero(), de asesores_grabaciones(), de asesores_preguntas_video() y de asesores_horas()]
+  let practicas = [];        // filas de taller_practicas (administración las lee todas)
   let pedido = null;
 
   function el(tag, clase, texto) {
@@ -75,17 +80,29 @@
     talleres = [...cuenta.entries()];
     grupos = await Promise.all(talleres.map(async ([detalle]) => {
       // Lo de las grabaciones va aparte: si falla, la tabla sale sin esas columnas.
-      const [t, g, q] = await Promise.all([
+      const [t, g, q, h] = await Promise.all([
         sb.rpc("asesores_tablero", { p_detalle: detalle }),
         sb.rpc("asesores_grabaciones", { p_detalle: detalle }).then((r) => r, (e) => ({ error: e })),
         // Las preguntas dentro del video: si falla, las columnas salen sin ellas.
         sb.rpc("asesores_preguntas_video", { p_detalle: detalle }).then((r) => r, (e) => ({ error: e })),
+        // Las horas del taller: si falla, la tabla sale sin esa columna.
+        sb.rpc("asesores_horas", { p_detalle: detalle }).then((r) => r, (e) => ({ error: e })),
       ]);
       if (t.error) console.error(t.error);
       if (g.error) console.error(g.error);
       if (q.error) console.error(q.error);
-      return [detalle, t.error ? null : (t.data || []), g.error ? null : (g.data || []), q.error ? [] : (q.data || [])];
+      if (h.error) console.error(h.error);
+      return [detalle, t.error ? null : (t.data || []), g.error ? null : (g.data || []), q.error ? [] : (q.data || []), h.error ? null : (h.data || [])];
     }));
+    await cargarPracticas();
+  }
+
+  async function cargarPracticas() {
+    const { data, error } = await sb.from("taller_practicas")
+      .select("id, horario_id, persona_id, archivos, comentario, estado, nota_revision, enviada_en, revisada_en")
+      .order("enviada_en", { ascending: true }).range(0, 999);
+    if (error) console.error(error);
+    practicas = error ? null : (data || []);
   }
 
   function abrir() {
@@ -258,21 +275,29 @@
   }
 
   /* Las grabaciones del taller, en orden, de las filas de asesores_grabaciones()
-     (una por persona y grabación): cada una con su título y su duración, y
-     cuánto vio cada persona. */
+     (una por persona y grabación): cada una con su título y lo que hay que
+     ver (util_seg: la duración sin los tramos sin clase, recesos y
+     silencios), y cuánto vio cada persona, contado igual (visto_seg). */
   function grabacionesDe(filas, preguntas) {
+    // Una sesión puede estar en varias partes, cada una su video y su columna:
+    // la llave es la clase, el día y la parte (1 si no la trae).
+    const llave = (f) => f.horario_id + "|" + f.fecha + "|" + (Number(f.parte) || 1);
     const porVideo = new Map();
     (filas || []).forEach((f) => {
-      const clave = f.horario_id + "|" + f.fecha;
-      if (!porVideo.has(clave)) porVideo.set(clave, { clave, titulo: f.titulo || "Clase", inicio: f.inicio, duracion: Number(f.duracion_seg) || 0, vio: new Map(), preguntas: new Map() });
+      const clave = llave(f);
+      if (!porVideo.has(clave)) porVideo.set(clave, { clave, sesion: f.horario_id + "|" + f.fecha, parte: Number(f.parte) || 1, titulo: f.titulo || "Clase", inicio: f.inicio, duracion: Number(f.util_seg) || Number(f.duracion_seg) || 0, vio: new Map(), preguntas: new Map() });
       porVideo.get(clave).vio.set(f.persona_id, Number(f.visto_seg) || 0);
     });
     // Las preguntas dentro del video (asesores_preguntas_video): cuántas tiene, contestó y acertó.
     (preguntas || []).forEach((f) => {
-      const v = porVideo.get(f.horario_id + "|" + f.fecha);
+      const v = porVideo.get(llave(f));
       if (v) v.preguntas.set(f.persona_id, { total: Number(f.total) || 0, respondidas: Number(f.respondidas) || 0, aciertos: Number(f.aciertos) || 0 });
     });
-    return [...porVideo.values()].sort((a, b) => new Date(a.inicio) - new Date(b.inicio));
+    const videos = [...porVideo.values()].sort((a, b) => (new Date(a.inicio) - new Date(b.inicio)) || (a.parte - b.parte));
+    const partes = new Map();
+    videos.forEach((v) => partes.set(v.sesion, (partes.get(v.sesion) || 0) + 1));
+    videos.forEach((v) => { v.partes = partes.get(v.sesion); });
+    return videos;
   }
 
   // «50 %» y debajo «1 h 36 min»: lo que vio, sin contar lo repetido.
@@ -306,7 +331,22 @@
     td.appendChild(linea);
   }
 
-  function tablaDelGrupo(filas, sesiones, tareas, videos) {
+  /* Las horas de cada persona, sumadas de las filas de asesores_horas() (una
+     por persona y sesión, ya contadas por la base). */
+  function horasDe(filasHoras) {
+    const por = new Map();
+    (filasHoras || []).forEach((f) => {
+      const x = por.get(f.persona_id) || { llevas: 0, meta: 0 };
+      const dura = Number(f.duracion_min) || 0;
+      x.meta += dura;
+      x.llevas += Math.min(Number(f.min_contados) || 0, dura);
+      por.set(f.persona_id, x);
+    });
+    return por;
+  }
+  const tiempo = (min) => (min > 0 ? HoraCR.duracion(Math.round(min) * 60) : "0 min");
+
+  function tablaDelGrupo(filas, sesiones, tareas, videos, horas) {
     const envoltura = el("div", "overflow-x-auto");
     const t = el("table", "min-w-full text-sm");
     const cap = el("caption", "sr-only", "Cada asesor: la última vez que entró, sus clases, la nota de la primera vez en el cuestionario de cada sesión"
@@ -315,6 +355,11 @@
     const th = (texto, clase) => { const c = el("th", "px-2 py-2 font-semibold text-left " + (clase || ""), texto); c.scope = "col"; return c; };
     const cab = el("tr", "border-b border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-200");
     cab.append(th("Asesor"), th("Última vez que entró"), th("Clases", "text-right"));
+    if (horas) {
+      const c = th("Horas", "whitespace-nowrap");
+      c.setAttribute("aria-label", "Horas del taller: las que lleva de las que pide");
+      cab.appendChild(c);
+    }
     sesiones.forEach((s) => {
       const c = th("S" + s.n, "text-center");
       c.setAttribute("aria-label", "Cuestionario de la sesión " + s.n);
@@ -327,8 +372,9 @@
     });
     videos.forEach((v, i) => {
       const n = /(?:^|\s)([IVXLC]+|\d+)\s*$/.exec(v.titulo);
-      const c = th("▶ " + (n ? n[1] : i + 1), "text-center whitespace-nowrap");
-      c.setAttribute("aria-label", "Grabación de la " + v.titulo + ": cuánto la vio" + (v.preguntas.size ? " y cuántas preguntas acertó" : ""));
+      const enPartes = v.partes > 1;
+      const c = th("▶ " + (n ? n[1] : i + 1) + (enPartes ? "·" + v.parte : ""), "text-center whitespace-nowrap");
+      c.setAttribute("aria-label", "Grabación de la " + v.titulo + (enPartes ? ", parte " + v.parte : "") + ": cuánto la vio" + (v.preguntas.size ? " y cuántas preguntas acertó" : ""));
       cab.appendChild(c);
     });
     t.appendChild(el("thead")).appendChild(cab);
@@ -341,6 +387,13 @@
       tr.appendChild(el("td", "px-2 py-2 whitespace-nowrap " + (f.ultima_vez ? "" : "font-semibold text-red-700 dark:text-red-300"),
         f.ultima_vez ? HoraCR.fecha(f.ultima_vez, { day: "numeric", month: "short" }) + ", " + HoraCR.hora(f.ultima_vez) : "Nunca entró"));
       tr.appendChild(el("td", "px-2 py-2 text-right tabular-nums", String(f.clases || 0)));
+      if (horas) {
+        const x = horas.get(f.persona_id) || { llevas: 0, meta: 0 };
+        const pct = x.meta ? Math.min(100, Math.floor((100 * x.llevas) / x.meta)) : 0;
+        const td = el("td", "px-2 py-2 whitespace-nowrap tabular-nums font-semibold text-brand-800 dark:text-white", tiempo(x.llevas));
+        td.appendChild(el("span", "block text-xs font-normal text-brand-500 dark:text-brand-300", "de " + tiempo(x.meta) + " · " + pct + " %"));
+        tr.appendChild(td);
+      }
       sesiones.forEach((s) => {
         const td = el("td", "px-2 py-2 text-center tabular-nums");
         celdaNota(td, s.q && (f.cuestionarios || {})[s.q.id]);
@@ -375,7 +428,7 @@
     const sesiones = datos.sesiones.map((s) => ({ n: s.n, q: cuestionarioDe(s.n) }));
     // Las tareas de nivel inicial: una columna solo para las sesiones que la tienen.
     const tareas = datos.sesiones.map((s) => ({ n: s.n, q: tareaInicialDe(s.n) })).filter((s) => s.q);
-    grupos.forEach(([detalle, filas, vistas, preguntas]) => {
+    grupos.forEach(([detalle, filas, vistas, preguntas, filasHoras]) => {
       if (grupos.length > 1) cont.appendChild(el("h4", "font-semibold text-brand-800 dark:text-white mt-4 mb-1", detalle));
       if (!filas) {
         cont.appendChild(el("p", "text-sm font-semibold text-red-700 dark:text-red-300",
@@ -400,15 +453,127 @@
       if (videos.length) {
         const conPreguntas = videos.some((v) => v.preguntas.size);
         cont.appendChild(el("p", "text-sm text-brand-700 dark:text-brand-200 mb-3",
-          "En las grabaciones (▶), cuánto vio cada uno aquí en la plataforma, sin contar lo que repitió ni lo que adelantó"
+          "En las grabaciones (▶), cuánto vio cada uno aquí en la plataforma, sin contar lo que repitió, lo que adelantó ni los recesos y silencios (no se le exigen a nadie)"
           + (conPreguntas ? ", y debajo cuántas de las preguntas del video acertó la primera vez (✓ 8/10)" : "") + ". "
           + videos.map((v, i) => {
             const n = [...v.vio.values()].filter((x) => x > 0).length;
-            return v.titulo + ": " + n + " de " + filas.length + (i ? "" : (n === 1 ? " empezó a verla" : " empezaron a verla"));
+            return v.titulo + (v.partes > 1 ? ", parte " + v.parte : "") + ": " + n + " de " + filas.length + (i ? "" : (n === 1 ? " empezó a verla" : " empezaron a verla"));
           }).join("; ") + "."));
       }
-      cont.appendChild(tablaDelGrupo(filas, sesiones, tareas, videos));
+      const horas = filasHoras && filasHoras.length ? horasDe(filasHoras) : null;
+      if (horas) {
+        const meta = Math.max(0, ...[...horas.values()].map((x) => x.meta));
+        const cumplen = [...horas.values()].filter((x) => x.meta && x.llevas >= x.meta).length;
+        cont.appendChild(el("p", "text-sm text-brand-700 dark:text-brand-200 mb-3",
+          "Horas: lo que lleva cada uno de las " + tiempo(meta) + " del taller (la clase en vivo más lo que repuso viendo la grabación, "
+          + "cada sesión hasta lo que dura; la presencial cuenta con la práctica aprobada). " + cumplen + " de " + filas.length
+          + (cumplen === 1 ? " ya las cumplió." : " ya las cumplieron.") + " Cada asesor ve su barra en su panel."));
+      }
+      cont.appendChild(tablaDelGrupo(filas, sesiones, tareas, videos, horas));
+      cont.appendChild(bloquePracticas(filas, filasHoras));
     });
+  }
+
+  /* ---------------------------------------------------------- las prácticas
+     Las de la sesión presencial que subieron los asesores de este grupo:
+     primero las que esperan revisión. Se abren con la sesión de quien mira
+     (el bucket deja bajarlas a administración) y se aprueban o se devuelven
+     con una nota que el asesor lee en su panel. Quién y cuándo, lo anota la
+     base. */
+  const ESTADO_PRACTICA = { enviada: "Por revisar", aprobada: "✓ Aprobada", devuelta: "Devuelta" };
+  function bloquePracticas(filas, filasHoras) {
+    const caja = el("div", "mt-6");
+    caja.appendChild(el("h4", "font-semibold text-brand-800 dark:text-white mb-1", "Prácticas de la sesión presencial"));
+    if (practicas === null) {
+      caja.appendChild(el("p", "text-sm font-semibold text-red-700 dark:text-red-300", "No se pudieron leer las prácticas."));
+      return caja;
+    }
+    const nombre = new Map(filas.map((f) => [f.persona_id, f.nombre || ""]));
+    const sesion = new Map((filasHoras || []).map((f) => [f.horario_id, f.titulo || "Sesión"]));
+    const mias = practicas.filter((p) => nombre.has(p.persona_id))
+      .sort((a, b) => (a.estado === "enviada" ? 0 : 1) - (b.estado === "enviada" ? 0 : 1) || new Date(a.enviada_en) - new Date(b.enviada_en));
+    const porRevisar = mias.filter((p) => p.estado === "enviada").length;
+    caja.appendChild(el("p", "text-sm text-brand-700 dark:text-brand-200 mb-3", mias.length
+      ? mias.length + (mias.length === 1 ? " práctica enviada" : " prácticas enviadas") + "; " + porRevisar + " por revisar."
+      : "Todavía nadie ha subido la práctica. La suben desde «Tus horas del taller», en su panel."));
+    const ul = el("ul", "space-y-3");
+    mias.forEach((p) => ul.appendChild(fichaPractica(p, nombre.get(p.persona_id), sesion.get(p.horario_id))));
+    caja.appendChild(ul);
+    return caja;
+  }
+
+  async function bajarArchivo(ruta, boton) {
+    boton.disabled = true;
+    try {
+      const { data, error } = await sb.storage.from("taller-practicas").download(ruta);
+      if (error || !data) throw error || new Error("vacío");
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = String(ruta).split("/").pop();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (e) {
+      console.error(e);
+      boton.textContent = "No se pudo bajar";
+    } finally {
+      boton.disabled = false;
+    }
+  }
+
+  function fichaPractica(p, quien, sesion) {
+    const li = el("li", "rounded-xl border border-brand-200 dark:border-brand-700 p-3");
+    const cab = el("div", "flex flex-wrap items-baseline justify-between gap-2");
+    cab.append(el("p", "font-semibold text-brand-800 dark:text-white", quien),            // textContent: lo escribió una persona
+      el("p", "text-xs font-semibold " + (p.estado === "aprobada" ? "text-emerald-800 dark:text-emerald-300" : "text-brand-700 dark:text-brand-200"),
+        ESTADO_PRACTICA[p.estado] + " · " + sesion + " · enviada el " + HoraCR.fecha(p.enviada_en, { day: "numeric", month: "short" }) + ", " + HoraCR.hora(p.enviada_en)));
+    li.appendChild(cab);
+    if (p.comentario) li.appendChild(el("p", "mt-1 text-sm text-brand-700 dark:text-brand-200", "«" + p.comentario + "»"));
+    const archivos = el("div", "mt-2 flex flex-wrap gap-2");
+    (p.archivos || []).forEach((ruta) => {
+      const b = el("button", ENLACE, "⬇ " + String(ruta).split("/").pop());
+      b.type = "button";
+      b.addEventListener("click", () => bajarArchivo(ruta, b));
+      archivos.appendChild(b);
+    });
+    li.appendChild(archivos);
+    if (p.nota_revision) li.appendChild(el("p", "mt-2 text-sm text-brand-700 dark:text-brand-200", "Nota: " + p.nota_revision));
+    if (p.estado !== "aprobada") {
+      const id = "practica-nota-" + p.id;
+      const etq = el("label", ETIQUETA + " mt-3", "Nota para el asesor (se ve si la devuelves)");
+      etq.htmlFor = id;
+      const nota = el("textarea", CAMPO);
+      nota.id = id;
+      nota.rows = 2;
+      nota.maxLength = 2000;
+      const botones = el("div", "mt-2 flex flex-wrap gap-2");
+      const aprobar = el("button", BOTON, "Aprobar: le cuenta la sesión entera");
+      aprobar.type = "button";
+      const devolver = el("button", ENLACE, "Devolverla para que la corrija");
+      devolver.type = "button";
+      const estado = el("p", "text-sm text-brand-700 dark:text-brand-200");
+      estado.setAttribute("role", "status");
+      const revisar = async (si) => {
+        if (!si && !nota.value.trim()) { estado.textContent = "Escribe en la nota qué tiene que corregir."; nota.focus(); return; }
+        aprobar.disabled = devolver.disabled = true;
+        const { error } = await sb.rpc("taller_practica_revisar", { p_id: p.id, p_aprobar: si, p_nota: nota.value.trim() });
+        if (error) {
+          estado.textContent = "No se pudo guardar: " + (error.message || "intenta de nuevo.");
+          aprobar.disabled = devolver.disabled = false;
+          return;
+        }
+        // Aprobada cambia sus horas: se vuelve a leer todo el grupo.
+        pedido = null;
+        await abrir();
+      };
+      aprobar.addEventListener("click", () => revisar(true));
+      devolver.addEventListener("click", () => revisar(false));
+      botones.append(aprobar, devolver);
+      li.append(etq, nota, botones, estado);
+    }
+    return li;
   }
 
   function pintar() {

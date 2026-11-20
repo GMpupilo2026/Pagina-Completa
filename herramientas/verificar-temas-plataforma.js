@@ -310,7 +310,8 @@ async function pruebaConfiguracion(navegador) {
   await page.waitForSelector("#tema-plataforma-grid button", { timeout: 15000 });
 
   const cuantos = await page.locator("#tema-plataforma-grid button").count();
-  igual("se ofrecen todos los temas", cuantos, Object.keys(TEMAS).length);
+  // Un tema oculto (el de la prueba del panel jornada) no se ofrece.
+  igual("se ofrecen todos los temas, menos los ocultos", cuantos, Object.values(TEMAS).filter((t) => !t.oculto).length);
   const marcados = await page.locator('#tema-plataforma-grid button[aria-checked="true"]').count();
   igual("y arranca marcado uno solo (el Clásico)", marcados, 1);
 

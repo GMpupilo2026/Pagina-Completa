@@ -322,11 +322,24 @@ Rica:
 - Comprobado impersonando roles en SQL: el uso 31 de un alumno se frena con
   el mensaje, quien administra pasa de 30, el techo total frena a todos y
   `anon` no tiene `execute`.
+- **Para un torneo grande, desde `20261119061009`** (lo pidió el dueño el
+  18/11, para la Eliminatoria Cantonal JDN del CCDRPZ, con las fotos leídas
+  por varios árbitros con «📷 Planilla» de Pareo): el techo total sube a
+  **2000** al día (unos 3 dólares de Google Vision), y quien tiene la
+  licencia de Pareo Integral o de la Mesa del árbitro llega a **250** por
+  día; las demás cuentas siguen en 30. Lo decide `tengo_herramienta()`, que
+  ya sabe de licencias dadas por un organizador, vencidas y anuladas: si al
+  organizador se le apaga la suya, sus árbitros vuelven a 30. Comprobado
+  impersonando roles (19/11, en una transacción que se deshizo): una cuenta
+  común con 30 usos se frena en la 31; una con licencia de Pareo pasa de 30 y
+  se frena en la 251.
 
-La lectura (el orden de las filas, la notación y la jugada legal más
-parecida) vive en `js/planilla-ocr.js`, una sola copia para el Lector de
-planilla y para «Anota tu partida» de «Tus propios errores» (ver «Mis
-partidas de torneo» en entrenamiento.md): las dos gastan del mismo tope.
+La subida de la foto vive en `js/planilla-ocr.js` (`leerFoto`), una sola
+copia para el Lector de planilla, «Anota tu partida» de «Tus propios errores»
+(ver «Mis partidas de torneo» en entrenamiento.md), el Centroamericano y
+Pareo Integral: todos gastan del mismo tope. El Lector de planilla y «Anota tu
+partida» arman la partida con `js/planilla-reconstruir.js` (ver «El Lector de
+planilla lee por columnas» en juegos-y-torneos.md).
 
 Para cambiar los topes, una migración nueva que vuelva a crear la función con
 otros números. `node herramientas/verificar-lector-planilla.js` (sin red ni

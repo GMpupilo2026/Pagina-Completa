@@ -35,6 +35,19 @@ dominio sin `www`, así que servir las dos direcciones sería contenido duplicad
   coincide con www.ajedrez-integral.com" aunque la zona estaba en la misma
   cuenta, así que queda escrito el de dos pasos, que no depende de esa
   búsqueda.
+- **El 301 del worker no alcanza a las páginas.** Desde que el worker corre
+  solo en las rutas de `run_worker_first` (`wrangler.jsonc`), las páginas las
+  sirve Cloudflare directo, también por `www`: la página abría, y lo que sí
+  pasa por el worker (`cursos/recursos/`, `cursos/protegido/`, `material/`)
+  contestaba con el 301 al dominio sin `www`, que la CSP (`connect-src 'self'`)
+  corta sin más aviso que la consola. El 16/11 la presentación de la Sesión 5
+  quedó en «No se pudo abrir la presentación» para un profe que había entrado
+  por `www`. Ahora la primera línea de `js/errores.js` (el primer script,
+  síncrono, de todas las páginas) manda a la misma dirección sin `www` antes
+  de que la página haga nada; lo revisa `verificar-www.js`. Lo limpio sería una
+  regla de redirección de Cloudflare (Reglas → Redirecciones, `www` → dominio
+  sin `www`, 301, conservando la ruta y los parámetros), que actúa antes de
+  servir nada; con ella, lo de `js/errores.js` queda de respaldo.
 - **Al tocar `worker.js`, correr `node herramientas/verificar-worker.js`.** No
   necesita ni Cloudflare ni internet: el worker es una función que recibe una
   petición y devuelve una respuesta, así que se la llama y se mira qué contesta,
@@ -332,6 +345,11 @@ es el modo de juguete de Tailwind: baja unos 400 KB de JavaScript y **compila el
 CSS dentro del navegador, en cada carga y de cada visitante** — de ahí el
 parpadeo sin estilos al entrar. Compilado, el sitio entero son 50 KB de CSS que
 el navegador cachea.
+
+- **`npm run css` también corre en Windows** (18/11/2026): en Windows
+  `css-construir.js` usa `node_modules/.bin/tailwindcss.cmd` con shell (el
+  `tailwindcss` de al lado es un guion de sh que `execFileSync` no puede
+  ejecutar y salía `ENOENT`).
 
 - **La paleta ya no se compila dentro de cada clase: son variables CSS.**
   Estuvo copiada en el `<head>` de las 73 páginas, después vivió en
@@ -2428,6 +2446,14 @@ de noviembre), así que se quedan en las de GitHub.
   solos pasan. Van en `SOLOS` de `verificar-todo.js`, que con `--paralelo` los
   deja para el final, de a uno. `verificar-pareo-pagina.js` leía la dirección
   del QR antes de que terminara de armarse; ahora la espera.
+- **Las cuatro tandas de GitHub se reparten por lo que tarda cada verificador**
+  (`DURACION` de `verificar-todo.js`, desde el 18/11/2026): el más lento
+  primero, cada uno a la tanda más liviana. Antes iban de a uno por turno y a
+  la 4 le tocaron cámara y simultáneas juntas: 43 minutos contra 19 de la 1, y
+  se cortaba en el límite de 45 con todo en verde (el PR quedaba «cancelado»,
+  sin ningún verificador en rojo, y cada reintento eran otros 45 minutos
+  pagados). Repartidas, quedan en unos 28 minutos cada una. Un verificador
+  nuevo que tarde más de un minuto va a esa tabla; los demás cuentan 10 s.
 - **La máquina propia está en hora de Costa Rica; las de GitHub, en UTC.** La
   primera corrida ahí destapó un error real que en UTC no se veía: el día de
   cierre de los formularios se leía en UTC y al volver a abrirlo decía el día
@@ -2442,6 +2468,123 @@ de noviembre), así que se quedan en las de GitHub.
   `CLAUDE.md`. Un `.md` dentro de otra carpeta (un curso) sí cuenta como sitio.
 - Si la máquina está apagada, el PR queda «Queued» sin fallar; no se mergea
   hasta que pase. Para salir del apuro, borrar `RUNNER`.
+
+## Los verificadores que fallaban por tiempo, sin relación con el PR
+
+El 17-18/11/2026 cuatro verificadores con navegador fallaron en el CI sin que
+el PR tocara nada suyo, y hubo que repetir tandas (que se pagan). Ninguno se
+arregló subiendo una espera: cada uno dependía de que la máquina fuera
+rápida, y se buscó **cuál era la condición de verdad** y se esperó esa.
+
+- **`verificar-camara-tablero.js`, «Calibrar» apagado 30 s** (mesa por QR).
+  Dos causas. Una de la página: en el modo mesa abre la cámara sola, y si
+  mientras tanto se elegía una foto, la cámara llegaba después, le ganaba a la
+  foto y borraba las esquinas. Ahora cada pedido de cámara lleva su número
+  (`pedidoCamara`): elegir una foto o soltar la cámara lo deja sin vigencia y
+  el flujo que llega tarde se suelta. Lo comprueba una cámara de mentira que
+  abre cuando la prueba dice (`CAMARA_LENTA`), no cuando la máquina puede. La
+  otra, de la prueba: el aviso de cómo le fue a la cámara cambia de alto el
+  recuadro de arriba y corre el lienzo; si llegaba entre medir y tocar, los
+  toques caían fuera. `tocar()` ahora espera el lienzo quieto, anota dónde
+  estaba en el instante de cada `pointerdown` (en la captura de `window`,
+  antes que la página lo atienda) y, si no coincide con lo medido, borra y
+  vuelve a tocar; si no se movió y una esquina no llegó, falla (eso es de la
+  página). La página deja `lienzo.dataset.esquinas` para eso.
+- **`verificar-camara-tablero.js`, «0:30» que salía «0:29».** Quien mira
+  muestra lo que quedaba al mandarse menos lo que pasó desde que llegó,
+  redondeado hacia arriba: con más de un segundo de verdad entre el arranque
+  y la lectura, cambiaba. Mientras se mira, los relojes de las dos páginas
+  quedan **quietos** (solo avanzan lo que la prueba adelanta) y después se
+  sueltan.
+- **`verificar-partidas-simultaneas.js`, «ningún reloj que llegó a tiempo
+  hubo que recortarlo → 2».** «Lenta» era solo la escritura que la base de
+  mentira atrasaba a propósito; en la máquina de 2 núcleos con 50 pestañas, la
+  computadora misma atrasaba el pedido de la pestaña a Node más de un segundo,
+  la base lo cobraba y salía como si la página hubiera dado tiempo de más. La
+  página anota cuándo armó la escritura (`pedido.creado`) y la raya es la de
+  siempre: más de 0,8 s desde ahí hasta la base es lenta, la cause quien la
+  cause.
+- **`verificar-preparacion-rivales.js`, «evaluación» escrita.** Contesta lo
+  que dice la línea del motor en ese momento; si la evaluación de la salida
+  todavía no llegaba, contestaba «Stockfish está evaluando…» y la prueba
+  esperaba otra cosa que nunca venía. Se pregunta con la posición ya
+  evaluada, y la respuesta tiene que ser igual a esa línea.
+- **`verificar-centroamericano-mesas-pagina.js`, «avisar a los árbitros».**
+  El doble le ponía a cada fila de un mismo `insert` su propio `new Date()`;
+  si el ciclo cruzaba un milisegundo, el aviso «a todos» quedaba con dos horas,
+  la página lo agrupaba como dos envíos y la tabla nunca llegaba a 2 filas.
+  Postgres da la misma hora (`now()`, la de la transacción) a toda la
+  sentencia: el doble ahora también. **Un doble que pone la hora fila por fila
+  no se parece a la base.**
+
+Lo que queda para la próxima: **una espera con `.catch(() => {})` que sigue
+de largo esconde la causa** (en `tocar()` la cámara no llegaba en 10 s y se
+tocaba igual); y **un dato que la página calcula «ahora» no se lee contra un
+reloj que corre**: o se congela, o se compara con lo que la misma página
+muestra. Antes de dar por bueno cada arreglo se rompió a propósito lo que
+comprueba (la página sin `pedidoCamara`, los relojes sin congelar con una
+espera de 1,5 s, el doble con horas distintas) y saltó.
+
+## En un PR corren los verificadores que toca el cambio
+
+Hasta el 19/11/2026 cada PR corría los casi 480 verificadores, aunque
+cambiara una sola página: unos 113 minutos de navegador repartidos en cuatro
+tandas. Desde entonces el CI pasa `--cambios-desde=<base del PR>` a
+`verificar-todo.js`, y `herramientas/lib/verificadores-afectados.js` elige
+**los que leen algo de lo que cambió**. Simulado sobre los 60 PR anteriores:
+113 → 76 minutos de promedio (la mitad, en menos de 50), y 11 de 60 seguían
+corriendo todo.
+
+Cómo decide, y por qué así:
+
+- **Lo que nombra cada verificador, y en cadena lo que eso carga.** Del
+  verificador, todo lo que nombra (páginas, módulos, migraciones, datos,
+  `path.join(RAIZ, "js", "x.js")`, los `require` de otros verificadores y de
+  `lib/`); de una página, sus `<script src>` y `<link href>`; de un JS, los
+  `.js`/`.json`/`.css` que nombra. **De una página no se siguen los enlaces a
+  otras**: desde el inicio se llega a todo el sitio y todos dependerían de
+  todo. La ruta no tiene que ir entre comillas (`${BASE}/torneos-pareo.html`
+  viene después de una llave); lo que no es un archivo del repositorio se
+  descarta al resolver.
+- **Los comentarios no cuentan.** «Ver js/x.js» o «una sola copia:
+  js/y.js» no es cargarlo; contados, un cambio en una sola página elegía 459
+  de 478. Se borran antes de leer (las cadenas quedan).
+- **Ante la duda, todos.** Un archivo cambiado que ningún verificador nombra
+  (un generador de `herramientas/`, un `.json` que se lee con la ruta armada,
+  `supabase/esquema/`) no se sabe a quién afecta: corren todos. También si
+  cambia lo que usan todos: el corredor, este módulo, los dos que el corredor
+  carga en todos (`navegador-local.js`, `candado-de-prueba.js`),
+  `package*.json` y el flujo del CI.
+- **Los que recorren carpetas corren siempre** (`readdirSync`, `glob`,
+  `ls-files`…; unos 114): revisan todo el sitio sin nombrarlo (el voseo, la
+  CSP, el sello, la hora de Costa Rica).
+- **Una carpeta de primer nivel no «cubre».** `path.join(RAIZ, "js", nombre)`
+  hace que el verificador corra con cualquier cambio en `js/`, pero no cuenta
+  como que alguien nombre ESE archivo: si contara, un `.js` nuevo que nadie
+  carga quedaría cubierto y no correrían todos. Una carpeta más honda
+  (`supabase/migraciones`) sí cubre.
+- **La documentación y lo que no es código** (fotos, PDF, descargas) que nadie
+  nombra no hacen correr a nadie.
+- **Un verificador que cambió corre**, aunque sea de los que barren.
+
+Lo que esta lectura no puede ver (una ruta armada con variables, un `fetch`
+calculado) lo atrapa **la corrida completa de los domingos** (`schedule` en
+`verificar.yml`, 3 a. m. de Costa Rica), y a mano con `workflow_dispatch`.
+Si un domingo salta algo que el PR no corrió, lo que falta es que el
+verificador nombre el archivo (o que el archivo nombre lo que carga), no
+volver a correr todo en cada PR.
+
+`verificar-verificadores-afectados.js` lo comprueba con el repositorio real:
+lo global y el archivo sin dueño hacen correr todos, la cadena
+verificador → página → módulo elige a quien no nombra el módulo, los que abren
+`torneos-pareo.html` corren al cambiar su JS, los que barren corren siempre,
+un comentario no es dependencia y un cambio de una página elige menos de la
+mitad. Se rompió a propósito cada regla (sin la del archivo sin dueño, sin
+quitar comentarios, sin los que barren) y saltó.
+
+Además, el corredor dice al terminar **los diez más lentos**, y
+`--tiempos=t.json` deja cuánto tardó cada uno: con eso se pone al día
+`DURACION`, que reparte las tandas parejas.
 
 ## Las Edge Functions se despliegan solas desde GitHub
 

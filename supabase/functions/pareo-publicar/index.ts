@@ -10,7 +10,7 @@
 //   { accion: "borrar", id, clave }           → { ok }
 //   { accion: "inscribir", id, inscripcion, consentimiento } → { ok }  (inscripcion: nombre, institucion, categoria, elo, fideId, sexo?, nacimiento?, responsable, contacto, nota)
 //   { accion: "inscripciones", id, clave }    → { ok, inscripciones }
-//   { accion: "marcar", id, clave, ids, estado } → { ok }
+//   { accion: "marcar", id, clave, ids, estado, comentario?, correo? } → { ok, avisados, sinCorreo, contacto?, nota? }
 //   { accion: "organizador", nombre, logo?, correo?, consentimiento?, id?, clave? } → { ok, id, clave?, correoPendiente? }
 //   { accion: "organizador_estado", id, clave } → { ok, verificado, correo, correoConfirmado, selloPendiente }
 //   { accion: "confirmar_correo", id, token } → { ok }
@@ -87,8 +87,8 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { cabeceraCorreo } from "./marca-correo.ts";
 import {
-  type Correo, correoAvisoFin, correoAvisoRonda, correoConfirmar, correoInscripcion, correoRecuperar, correoReporteAdmin, correoReporteOrganizador,
-  correoSeguirConfirmar, correoSelloAdmin,
+  type Correo, correoAvisoFin, correoAvisoRonda, correoConfirmar, correoDecision, correoInscripcion, correoRecuperar, correoReporteAdmin, correoReporteOrganizador,
+  correoSeguirConfirmar, correoSelloAdmin, esCorreo,
 } from "./correos.ts";
 import { esTorneoAviso, queAvisar, textoFin, textoRonda, type TorneoAviso } from "./avisos.ts";
 import { type LlavesVapid, mandar as mandarPush } from "./webpush.ts";
@@ -126,7 +126,7 @@ const CORREO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const cabecera = (titulo: string) => cabeceraCorreo(null, titulo);
 // Nunca lanza ni frena lo que se estaba haciendo: un aviso que no sale no
 // deshace una inscripción ni un reporte.
-async function mandar(para: string[], c: Correo): Promise<boolean> {
+async function mandar(para: string[], c: Correo, responderA?: string | null): Promise<boolean> {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   const destino = [...new Set(para.map((x) => x.trim()).filter((x) => CORREO.test(x)))];
   if (!apiKey || !destino.length) return false;
@@ -134,7 +134,8 @@ async function mandar(para: string[], c: Correo): Promise<boolean> {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: DE, to: destino, subject: c.asunto, html: c.html }),
+      body: JSON.stringify(Object.assign({ from: DE, to: destino, subject: c.asunto, html: c.html },
+        responderA && CORREO.test(responderA) ? { reply_to: responderA } : {})),
     });
     return res.ok;
   } catch {
@@ -268,6 +269,14 @@ function mesa(v: unknown) {
     m.ko = true;
     m.slot = Math.round(numero(v.slot, 0, 999));
     if (v.pasa != null && (v.pasa === v.b || v.pasa === v.n)) { m.pasa = v.pasa; m.desempate = texto(v.desempate, 30); }
+    // La doble eliminación: la llave (ganadores, perdedores o final), su fase
+    // y quién llegó a la final desde perdedores (uno de los dos de la mesa).
+    if (v.llave === "G" || v.llave === "P" || v.llave === "F") {
+      m.llave = v.llave;
+      m.fase = Math.round(numero(v.fase, 1, 99));
+      if (v.deP != null && (v.deP === v.b || v.deP === v.n)) m.deP = v.deP;
+    }
+    if (v.tercer === true) m.tercer = true;
   }
   const pgn = pgnLimpio(v.pgn);
   if (pgn) m.pgn = pgn;
@@ -297,7 +306,8 @@ function limpiar(v: unknown) {
     validoElo: ["fide", "nacional", "no"].includes(v.validoElo as string) ? v.validoElo as string : "",
     ritmoTipo: ["clasico", "rapido", "blitz"].includes(v.ritmoTipo as string) ? v.ritmoTipo as string : "",
     // Los sistemas que sabe pintar la página pública; cualquier otra cosa, suizo.
-    sistema: ["todos", "scheveningen", "eliminacion"].includes(v.sistema as string) ? v.sistema as string : "suizo", dobleVuelta: v.dobleVuelta === true,
+    sistema: ["todos", "scheveningen", "eliminacion", "keizer"].includes(v.sistema as string) ? v.sistema as string : "suizo", dobleVuelta: v.dobleVuelta === true,
+    dobleEliminacion: v.sistema === "eliminacion" && v.dobleEliminacion === true, tercerPuesto: v.sistema === "eliminacion" && v.dobleEliminacion !== true && v.tercerPuesto === true,
     rondasTotales: Math.round(numero(v.rondasTotales, 0, 99)),
     tipo: v.tipo === "equipos" ? "equipos" : undefined, tableros: v.tipo === "equipos" ? Math.round(numero(v.tableros, 1, 12)) : undefined,
     puntos: { victoria: numero(puntos.victoria, 0, 10), tablas: numero(puntos.tablas, 0, 10), derrota: numero(puntos.derrota, 0, 10), bye: numero(puntos.bye, 0, 10) },
@@ -315,6 +325,9 @@ function limpiar(v: unknown) {
     // Los códigos de los enlaces en vivo (ya van en sus QR): con ellos, un
     // enlace en vivo que ya nadie transmite lleva al torneo publicado.
     vivo: codigo(v.vivo), codigoEvento: codigo(v.codigoEvento),
+    // El código de las cámaras de Notara (también va en el QR de cada mesa):
+    // la página del torneo lleva con él a «Partidas en vivo».
+    camaras: codigo(v.camaras),
     // El resumen de cada jugador (puesto, puntos, rendimiento), de jugadores que existen.
     resumen: lista(v.resumen, 1000, filaResumen),
   };
@@ -727,12 +740,12 @@ Deno.serve(async (req) => {
     const pid = texto(body.id, 40);
     const clave = texto(body.clave, 100);
     if (!/^[0-9a-f-]{36}$/.test(pid) || !clave) return json({ ok: false, error: "Falta la clave de este torneo." }, 400);
-    const { data: fila } = await admin.from("pareo_publicados").select("clave_hash").eq("id", pid).maybeSingle();
+    const { data: fila } = await admin.from("pareo_publicados").select("clave_hash, nombre, organizador_id").eq("id", pid).maybeSingle();
     if (!fila) return json({ ok: false, error: "Ese torneo ya no está publicado.", noExiste: true }, 404);
     if (fila.clave_hash !== await sha256(clave)) return json({ ok: false, error: "La clave no es la de este torneo." }, 403);
     if (accion === "inscripciones") {
       const { data, error } = await admin.from("pareo_preinscripciones")
-        .select("id, nombre, institucion, categoria, elo, fide_id, sexo, nacimiento, responsable, contacto, nota, estado, creado")
+        .select("id, nombre, institucion, categoria, elo, fide_id, sexo, nacimiento, responsable, contacto, nota, estado, comentario, avisado, creado")
         .eq("publicado_id", pid).order("creado").range(0, 999);
       if (error) return json({ ok: false, error: "No se pudieron leer las inscripciones." }, 502);
       return json({ ok: true, inscripciones: data || [] });
@@ -741,9 +754,63 @@ Deno.serve(async (req) => {
     if (!["aceptada", "rechazada", "pendiente"].includes(estado)) return json({ ok: false, error: "Estado inválido." }, 400);
     const cuales = Array.isArray(body.ids) ? body.ids.filter((x) => typeof x === "string" && /^[0-9a-f-]{36}$/.test(x)).slice(0, 400) : [];
     if (!cuales.length) return json({ ok: true });
-    const { error } = await admin.from("pareo_preinscripciones").update({ estado }).eq("publicado_id", pid).in("id", cuales);
+    // El comentario de quien organiza (el motivo, si la rechaza) queda con la
+    // inscripción y va en el aviso. Volver a «pendiente» lo borra.
+    const comentario = estado === "pendiente" ? "" : texto(body.comentario, 300);
+    // El correo que agrega quien organiza cuando la familia dejó un teléfono
+    // (o uno que no servía): de una inscripción a la vez. Pasa a ser el
+    // contacto, y el teléfono queda en la nota para no perderlo.
+    const correoNuevo = texto(body.correo, 120);
+    const cambios: Record<string, unknown> = { estado, comentario, avisado: null };
+    if (correoNuevo) {
+      if (!esCorreo(correoNuevo)) return json({ ok: false, error: "Ese correo no es válido." }, 400);
+      if (cuales.length !== 1 || estado === "pendiente") return json({ ok: false, error: "El correo se agrega de una inscripción a la vez." }, 400);
+      const { data: antes } = await admin.from("pareo_preinscripciones").select("contacto, nota").eq("publicado_id", pid).eq("id", cuales[0]).maybeSingle();
+      if (!antes) return json({ ok: false, error: "Esa inscripción ya no está." }, 404);
+      cambios.contacto = correoNuevo;
+      if (antes.contacto && !esCorreo(antes.contacto) && !String(antes.nota || "").includes(antes.contacto)) {
+        cambios.nota = [antes.nota, "Teléfono: " + antes.contacto].filter(Boolean).join(" · ").slice(0, 300);
+      }
+    }
+    const { data: marcadas, error } = await admin.from("pareo_preinscripciones")
+      .update(cambios).eq("publicado_id", pid).in("id", cuales)
+      .select("id, nombre, responsable, contacto, nota, institucion, categoria, sexo, nacimiento, elo, fide_id");
     if (error) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
-    return json({ ok: true });
+    // El aviso a quien inscribió, si dejó un correo como contacto (con un
+    // teléfono no se puede: Pareo le dice al árbitro que le avise él). Las
+    // respuestas le llegan a la organización si tiene su correo confirmado.
+    // Un correo que no sale no deshace la marca: queda sin `avisado`.
+    const avisados: string[] = [], sinCorreo: string[] = [];
+    if (estado !== "pendiente") {
+      const { data: org } = fila.organizador_id
+        ? await admin.from("pareo_organizadores").select("nombre").eq("id", fila.organizador_id).maybeSingle()
+        : { data: null };
+      const responderA = await correoDe(fila.organizador_id);
+      // Los datos del torneo para la bienvenida: la fecha, el lugar y el
+      // ritmo de la ficha Torneo, y la hora, el contacto y las bases del
+      // anuncio (lo que ya es público). Solo las rutas que hacen falta de
+      // `datos`, no el torneo entero.
+      const { data: ev } = await admin.from("pareo_publicados")
+        .select("lugar, fecha, rondas_total, ritmo:datos->>ritmo, fechaFin:datos->>fechaFin, anuncio:datos->anuncio")
+        .eq("id", pid).maybeSingle();
+      const anuncio = (ev?.anuncio && typeof ev.anuncio === "object" ? ev.anuncio : {}) as Record<string, unknown>;
+      const evento = {
+        fecha: ev?.fecha ?? null, fechaFin: (ev?.fechaFin as string) || null, lugar: ev?.lugar || "", ritmo: (ev?.ritmo as string) || "",
+        rondas: ev?.rondas_total || 0, hora: String(anuncio.hora || ""), contacto: String(anuncio.contacto || ""), bases: String(anuncio.texto || ""),
+        url: `${SITE_URL}/torneos-pareo.html#t=${pid}`,
+      };
+      for (const x of marcadas ?? []) {
+        if (!esCorreo(x.contacto)) { sinCorreo.push(x.id); continue; }
+        const salio = await mandar([x.contacto], correoDecision(cabecera(estado === "aceptada" ? "¡Bienvenida al torneo!" : "Inscripción rechazada"),
+          fila.nombre || "el torneo", org?.nombre || "", x, estado as "aceptada" | "rechazada", comentario, !!responderA, evento), responderA);
+        if (salio) avisados.push(x.id);
+      }
+      if (avisados.length) await admin.from("pareo_preinscripciones").update({ avisado: new Date().toISOString() }).in("id", avisados);
+    }
+    // Con un correo agregado, el contacto y la nota como quedaron, para que
+    // el panel los pinte sin volver a pedir la lista.
+    const una = correoNuevo ? (marcadas ?? [])[0] : null;
+    return json(una ? { ok: true, avisados, sinCorreo, contacto: una.contacto, nota: una.nota } : { ok: true, avisados, sinCorreo });
   }
 
   // ---------- Los árbitros adjuntos ----------

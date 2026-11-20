@@ -144,6 +144,7 @@
                     <li>Para emparejar una ronda hacen falta todos los resultados de la anterior.</li>
                     <li><strong>Corregir un resultado</strong> de una ronda vieja se puede, pero las rondas siguientes no se vuelven a emparejar.</li>
                     <li><strong>Deshacer el emparejamiento</strong> solo se puede en la última ronda. Al volver a emparejarla con los mismos datos sale la misma ronda.</li>
+                    <li><strong>Modificar la ronda sin deshacerla</strong> (debajo de las mesas de la ronda en juego, en un suizo individual): cambia a dos jugadores de lugar —también a uno que no juega por uno que sí, que es como entra quien llegó tarde—, invierte los colores de una mesa, saca a un jugador de la ronda, arma una mesa con quienes no juegan (o le da a uno el bye del pareo) y agrega un jugador nuevo ahí mismo. Las mesas con resultado no se tocan, avisa si la pareja nueva ya jugó entre sí, y cada cambio queda en las incidencias de la ronda y se puede deshacer con «Deshacer el último cambio». El comprobador de FIDE va a marcar esa ronda como distinta a la del Sistema Holandés: es lo esperado.</li>
                     <li>«Imprimir» saca solo la ronda, con los resultados escritos.</li>
                 </ul>
 
@@ -161,9 +162,20 @@
                     <li>Los colores quedan parejos: cada jugador tiene tantas blancas como negras (con un número impar, una de diferencia) y nunca lleva el mismo color tres rondas seguidas.</li>
                     <li>La <strong>Clasificación</strong> trae arriba el encuentro entre los dos equipos, ronda por ronda, y debajo la clasificación individual.</li>
                 </ul>
+                <p><strong>Keizer.</strong> El sistema de los torneos de club de toda la temporada: juega quien vino, y nadie queda fuera por faltar.</p>
+                <ul>
+                    <li>Cada jugador <strong>vale</strong> según su puesto: el primero vale tantos puntos como jugadores hay, el segundo uno menos, y el último vale 1. Antes de la ronda 1 el orden es el de la lista (Elo, título y nombre).</li>
+                    <li>Ganarle a alguien suma su valor; unas tablas, la mitad; perder, nada. Cada uno suma además, una sola vez, su propio valor.</li>
+                    <li>Quien queda libre por ser impares suma la mitad de su propio valor, igual que quien avisó que no venía. Quien falta suma el 35 % (hasta cinco faltas: de la sexta en adelante, nada) y quien juega por el club en otro lado, el 70 %. Quien se retiró no suma por faltar.</li>
+                    <li>Después de cada ronda se vuelve a ordenar a todos, cada uno pasa a valer lo de su puesto nuevo y <strong>todas las rondas se cuentan otra vez</strong> con esos valores: una victoria vieja contra alguien que subió vale más que cuando se jugó.</li>
+                    <li>Se empareja de arriba abajo: el 1 con el 2, el 3 con el 4… sin repetir un rival de las últimas tres rondas si hay otra forma. El libre va al último de los que menos veces quedaron libres.</li>
+                    <li>En la ficha <strong>Rondas</strong>, antes de emparejar, marca quién no viene esa noche. La <strong>Clasificación</strong> se ordena por los puntos Keizer (columna KZ) y muestra lo que vale cada uno (KV) al lado de los puntos de siempre.</li>
+                </ul>
                 <p><strong>Eliminación directa.</strong> Una copa: quien gana pasa a la ronda siguiente y quien pierde queda fuera.</p>
                 <ul>
                     <li>Las semillas son el orden de la lista (Elo, título y nombre), en el cuadro de siempre: la 1 y la 2 solo se cruzan en la final. Si no son 4, 8, 16… los primeros pasan la ronda 1 sin jugar.</li>
+                    <li>Con <strong>«Partido por el tercer puesto»</strong>, los dos que pierden la semifinal juegan en la misma ronda que la final, y el 3.º y el 4.º dejan de compartir puesto.</li>
+                    <li>Con <strong>«Doble eliminación»</strong> nadie queda fuera por perder una vez: quien pierde en la llave de ganadores baja a la de perdedores, y quien pierde ahí queda fuera. La final la juegan el campeón de cada llave; si la gana el que viene de perdedores, los dos llevan una derrota y se juega la revancha, que decide. Cada mesa dice de qué llave es, y el puesto sale de la ronda en que cada uno quedó fuera.</li>
                     <li>Una partida en tablas se desempata en la mesa: al lado del resultado se elige quién pasó y cómo (Armagedón, blitz, rápidas o sorteo). La partida queda en tablas para el TRF y el Elo, y sin elegir quién pasó no se empareja la ronda siguiente.</li>
                     <li>La <strong>Clasificación</strong> trae el cuadro con el campeón y quién pasó en cada mesa, y el puesto sale de hasta dónde llegó cada uno: los que cayeron en semifinales comparten el 3.º, los de cuartos el 5.º.</li>
                 </ul>
@@ -181,7 +193,10 @@
                     <dt>WIN</dt><dd>Rondas ganadas, jugadas o no (incluye el bye del pareo).</dd>
                     <dt>WON</dt><dd>Partidas ganadas en el tablero.</dd>
                     <dt>BPG, BWG</dt><dd>Partidas jugadas con negras, y ganadas con negras.</dd>
-                    <dt>GE</dt><dd>Partidas que eligió jugar: las rondas menos las no jugadas voluntarias.</dd>
+                    <dt>REP</dt><dd>Rondas que eligió jugar: las rondas menos los byes de medio punto, los de cero y las incomparecencias perdidas. Hasta 2025 se llamaba GE; un torneo guardado con GE se cambia solo a REP.</dd>
+                    <dt>TPN, TPN-R</dt><dd>El número de emparejamiento: gana el más bajo (TPN) o, al revés, el más alto (TPN-R, la opción /R de FIDE).</dd>
+                    <dt>RTNG, RTNG-R</dt><dd>El Elo del jugador: gana el más alto (RTNG) o, al revés, el más bajo (RTNG-R). Sin Elo cuenta 0.</dd>
+                    <dt>KZ, KV</dt><dd>Solo en el Sistema Keizer: los puntos Keizer (KZ), que son los que ordenan la lista, y lo que vale cada jugador para quien le gane (KV). No son desempates de FIDE.</dd>
                     <dt>PS, PS-C1</dt><dd>Progresivo: la suma del puntaje acumulado ronda a ronda; con o sin la primera.</dd>
                     <dt>KS</dt><dd>Koya: los puntos contra quienes hicieron al menos la mitad.</dd>
                     <dt>STD</dt><dd>Puntos estándar: 1 por ganar, ½ por empatar, cualquiera sea el sistema de puntos.</dd>
@@ -314,6 +329,7 @@ node pareo.js standings torneo.trf --tiebreaks BH-C1,BH,SB --lang es</code></pre
                     <li>A round can be paired only when every result of the previous one is in.</li>
                     <li><strong>Correcting a result</strong> in an earlier round is possible, but later rounds are not re-paired.</li>
                     <li><strong>Undo the pairing</strong> is only possible for the last round. Pairing it again with the same data gives the same round.</li>
+                    <li><strong>Change the round without undoing it</strong> (below the boards of the current round, in an individual Swiss): swap two players —including one who is not playing for one who is, which is how a latecomer comes in—, swap the colours of a board, take a player out of the round, make a new board with players who are not playing (or give one of them the pairing-allocated bye) and add a new player right there. Boards with a result are not touched, it warns if the new pair already played each other, and each change goes into the round's incidents and can be reverted with “Undo the last change”. The FIDE checker will flag that round as different from the Dutch System one: that is expected.</li>
                     <li>“Print” prints only the round, with the results written out.</li>
                 </ul>
 
@@ -331,9 +347,20 @@ node pareo.js standings torneo.trf --tiebreaks BH-C1,BH,SB --lang es</code></pre
                     <li>Colours stay balanced: every player has as many whites as blacks (one apart with an odd number) and never has the same colour three rounds in a row.</li>
                     <li>The <strong>Standings</strong> show the match between the two teams at the top, round by round, and the individual standings below.</li>
                 </ul>
+                <p><strong>Keizer.</strong> The system for season-long club tournaments: whoever shows up plays, and nobody drops out for missing a round.</p>
+                <ul>
+                    <li>Each player is <strong>worth</strong> points according to their place: the leader is worth as many points as there are players, the second one fewer, and the last one is worth 1. Before round 1 the order is the list order (rating, title and name).</li>
+                    <li>Beating someone earns their value; a draw, half of it; a loss, nothing. Each player also adds their own value, once.</li>
+                    <li>The player left without an opponent earns half of their own value, as does one who gave notice. An absent player earns 35% (up to five absences: nothing from the sixth on) and one playing for the club elsewhere, 70%. A withdrawn player earns nothing for missing rounds.</li>
+                    <li>After every round everyone is ranked again, each player takes the value of the new place and <strong>all rounds are scored again</strong> with those values: an old win against someone who climbed is worth more than when it was played.</li>
+                    <li>Pairings go from the top down: 1 against 2, 3 against 4… without repeating an opponent from the last three rounds if there is another way. The bye goes to the lowest-placed of those who have had the fewest byes.</li>
+                    <li>On the <strong>Rounds</strong> tab, before pairing, mark who is not coming that evening. The <strong>Standings</strong> are ordered by Keizer points (column KZ) and show what each player is worth (KV) next to the usual points.</li>
+                </ul>
                 <p><strong>Knockout.</strong> A cup: the winner goes through to the next round and the loser is out.</p>
                 <ul>
                     <li>Seeds follow the list order (rating, title and name) in the usual bracket: seeds 1 and 2 can only meet in the final. If there are not 4, 8, 16… players, the top seeds get a bye in round 1.</li>
+                    <li>With <strong>“Third-place match”</strong>, the two semi-final losers play in the same round as the final, and 3rd and 4th place are no longer shared.</li>
+                    <li>With <strong>“Double elimination”</strong> nobody is out after a single loss: a loss in the winners bracket drops you to the losers bracket, and a loss there puts you out. The final is played by the champion of each bracket; if the one from the losers bracket wins it, both have one loss and a deciding rematch is played. Each board says which bracket it belongs to, and places come from the round in which each player went out.</li>
                     <li>A drawn game is decided at the board: next to the result, choose who went through and how (Armageddon, blitz, rapid or drawing of lots). The game stays a draw for the TRF and the rating, and the next round cannot be paired until it is chosen.</li>
                     <li>The <strong>Standings</strong> show the bracket with the champion and who went through at each board, and places come from how far each player got: semi-final losers share 3rd, quarter-final losers share 5th.</li>
                 </ul>
@@ -351,7 +378,10 @@ node pareo.js standings torneo.trf --tiebreaks BH-C1,BH,SB --lang es</code></pre
                     <dt>WIN</dt><dd>Rounds won, played or not (the pairing-allocated bye included).</dd>
                     <dt>WON</dt><dd>Games won over the board.</dd>
                     <dt>BPG, BWG</dt><dd>Games played with black, and won with black.</dd>
-                    <dt>GE</dt><dd>Games elected to play: the rounds minus the voluntary unplayed ones.</dd>
+                    <dt>REP</dt><dd>Rounds one elected to play: the rounds minus half-point byes, zero-point byes and forfeit losses. Until 2025 it was called GE; a tournament saved with GE is changed to REP automatically.</dd>
+                    <dt>TPN, TPN-R</dt><dd>The tournament pairing number: the lowest wins (TPN) or, reversed, the highest (TPN-R, FIDE's /R option).</dd>
+                    <dt>RTNG, RTNG-R</dt><dd>The player's rating: the highest wins (RTNG) or, reversed, the lowest (RTNG-R). An unrated player counts as 0.</dd>
+                    <dt>KZ, KV</dt><dd>Keizer system only: Keizer points (KZ), which order the standings, and what each player is worth to whoever beats them (KV). They are not FIDE tie-breaks.</dd>
                     <dt>PS, PS-C1</dt><dd>Progressive scores: the sum of the running score round by round; with or without the first.</dd>
                     <dt>KS</dt><dd>Koya: points scored against players who scored at least half.</dd>
                     <dt>STD</dt><dd>Standard points: 1 for a win, ½ for a draw, whatever the point system.</dd>

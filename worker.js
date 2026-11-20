@@ -83,13 +83,29 @@ const PROTEGIDO = /^\/(cursos\/(protegido|recursos)|material)\//;
 // Esta lista va también, igual, en run_worker_first (wrangler.jsonc) y en NUNCA
 // de sw.js (que no se guarde en el teléfono el aviso ni el código):
 // verificar-worker.js comprueba que no se separen.
+//
+// Un archivo puede ir con una LISTA de herramientas: basta con cualquiera de
+// sus licencias. Así va el cálculo de normas, que usan normas-titulo.html y el
+// Aula de Arbitraje (sus casos y su calculadora de normas).
 const CODIGO_CON_LICENCIA = {
   "/js/bases-torneo.js": "bases-torneo",
   "/js/bases-torneo-pagina.js": "bases-torneo",
   "/js/inscripcion-jde.js": "inscripcion-jde",
   "/js/inscripcion-jde-reglas.js": "inscripcion-jde",
-  "/js/normas-titulo.js": "normas-titulo",
+  "/js/normas-titulo.js": ["normas-titulo", "aula-arbitraje"],
 };
+
+// ---- Los archivos que se bajan con la licencia de una herramienta ----
+//
+// Los PDF de la revista «Arbitraje de Ajedrez» del Aula de Arbitraje: la
+// página habilita el botón cuando la persona completa todo lo de ese número,
+// pero el archivo en sí lo entrega el worker solo a quien tiene la licencia
+// del Aula (la misma pregunta del candado, tengo_herramienta()). Sin la
+// licencia contesta 403 y el navegador no guarda nada. Esta carpeta va
+// también en run_worker_first (wrangler.jsonc) y en NUNCA de sw.js.
+const ARCHIVOS_CON_LICENCIA = [
+  { prefijo: "/descargas/aula-arbitraje/", herramienta: "aula-arbitraje" },
+];
 
 // Los cursos escondidos a alumnos y profesores (ver «Los cursos escondidos» en
 // docs/decisiones/cursos-y-material.md). Es la misma lista de
@@ -183,6 +199,8 @@ export default {
     // ---- El código de las herramientas con licencia ----
     const herramienta = Object.prototype.hasOwnProperty.call(CODIGO_CON_LICENCIA, url.pathname) ? CODIGO_CON_LICENCIA[url.pathname] : "";
     if (herramienta) return codigoConLicencia(request, env, url.pathname, herramienta);
+    const descarga = ARCHIVOS_CON_LICENCIA.find((a) => url.pathname.startsWith(a.prefijo));
+    if (descarga) return archivoConLicencia(request, env, descarga.herramienta);
 
     if (!PROTEGIDO.test(url.pathname)) return env.ASSETS.fetch(request);
 
@@ -200,8 +218,34 @@ export default {
   },
 };
 
+// Con una lista de herramientas, pasa con cualquiera de sus licencias.
+async function conAlgunaLicencia(request, herramientas) {
+  let veredicto = "sin_sesion";
+  for (const herramienta of [].concat(herramientas)) {
+    veredicto = await preguntar(tokenDe(request), Date.now(), { herramienta });
+    if (veredicto !== "sin_acceso") break; // pasa, o no hay sesión: no tiene sentido seguir preguntando
+  }
+  return veredicto;
+}
+
+async function archivoConLicencia(request, env, herramienta) {
+  const veredicto = await conAlgunaLicencia(request, herramienta);
+  if (veredicto === "pasa") {
+    const res = await env.ASSETS.fetch(request);
+    const copia = new Response(res.body, res);
+    copia.headers.set("Cache-Control", "private, no-cache");
+    copia.headers.append("Vary", "Cookie");
+    return copia;
+  }
+  const texto = veredicto === "sin_acceso" ? "Hace falta la licencia de la herramienta para bajar este archivo." : "Hace falta iniciar sesión para bajar este archivo.";
+  return new Response(texto, {
+    status: 403,
+    headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", Vary: "Cookie", "X-Content-Type-Options": "nosniff", "X-Archivo-Con-Licencia": veredicto },
+  });
+}
+
 async function codigoConLicencia(request, env, ruta, herramienta) {
-  const veredicto = await preguntar(tokenDe(request), Date.now(), { herramienta });
+  const veredicto = await conAlgunaLicencia(request, herramienta);
   if (veredicto === "pasa") {
     const res = await env.ASSETS.fetch(request);
     const copia = new Response(res.body, res);

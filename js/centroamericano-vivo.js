@@ -50,6 +50,8 @@
     return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s) && s.length <= 40 && s !== "centroamericano-2026" ? s : "";
   })();
   const SALA = CONFIG.sala || PRUEBA || "centroamericano-2026";
+  // Los datos de Pareo Integral en lugar de chess-results (js/torneo-pareo-datos.js).
+  const DE_PAREO = CONFIG.fuente === "pareo" && !!window.TorneoPareoDatos;
   const PREFIJO = CONFIG.guardado || (PRUEBA ? "cac_prueba" : "cac");
   const CLAVE_GUARDADO = PREFIJO + "_jugadores_v1";
   const CLAVE_SEGUIDOS = PREFIJO + "_seguidos_v1";
@@ -304,12 +306,30 @@
     fr: window.CentroamericanoFR ? window.CentroamericanoFR.vivo({ categoria: (g, l) => categoria(g, l), MAX_SEGUIDOS, fmtPuntos: (n) => fmtPuntos(n) }) : null,
   };
 
+  // Con los datos de otra fuente (`fuenteNombre`: «Pareo Integral»), los
+  // textos dicen esa en lugar de «chess-results», también los que se arman.
+  if (CONFIG.fuenteNombre) ["es", "en"].forEach((k) => cambiarFuente(TEXTOS[k], CONFIG.fuenteNombre));
+  // Los textos propios de otra página (`textos`, en español): el nombre del
+  // torneo, la sede, «nivel» en lugar de «categoría»… Sin esto se colaba el
+  // Centroamericano en el calendario de un jugador o en «¡Hoy juega!».
+  if (CONFIG.textos) Object.keys(CONFIG.textos).forEach((k) => { if (k in TEXTOS.es) TEXTOS.es[k] = CONFIG.textos[k]; });
+
   // El idioma de la página: «es», «en» o «fr» (lo pone js/centroamericano.js).
   const IDIOMAS = ["es", "en", "fr"];
   const idioma = () => (IDIOMAS.indexOf(document.documentElement.lang) !== -1 ? document.documentElement.lang : "es");
   const t = () => TEXTOS[idioma()] || TEXTOS.es;
 
   // «U18F» → «Sub-18 Femenino» / «U18 Girls»; «U08» → «Sub-8 Absoluto» / «U8 Open».
+  // Cambia «chess-results» por otra fuente en los textos de un idioma: los
+  // fijos y lo que devuelven los que se arman (una función).
+  function cambiarFuente(textos, nombre) {
+    const cambiar = (s) => s.replace(/chess-results/g, nombre);
+    Object.keys(textos || {}).forEach((k) => {
+      const v = textos[k];
+      if (typeof v === "string") textos[k] = cambiar(v);
+      else if (typeof v === "function") textos[k] = function () { const r = v.apply(this, arguments); return typeof r === "string" ? cambiar(r) : r; };
+    });
+  }
   function categoria(g, lang) {
     // «—» es el grupo de un torneo sin categorías (el de CENFOTEC): todos juntos.
     if (g === "—") return lang === "en" ? "Overall" : lang === "fr" ? "Général" : "General";
@@ -336,7 +356,13 @@
     const fr = lang === "fr" && window.CentroamericanoFR && window.CentroamericanoFR.paises[f];
     return (fr || PAISES[f][lang === "en" ? 1 : 0]) + " (" + f + ")";
   };
-  const ordenGrupo = (g) => { const m = String(g).match(/^U0?(\d+)(F?)$/i); return m ? Number(m[1]) * 2 + (m[2] ? 1 : 0) : 999; };
+  // Con `ordenGrupos` (los niveles de Tacho Chess 2, de primer grado a
+  // undécimo año), ese orden; si no, el de las categorías «U08» a «U18F».
+  const ordenGrupo = (g) => {
+    const i = Array.isArray(CONFIG.ordenGrupos) ? CONFIG.ordenGrupos.indexOf(g) : -1;
+    if (i >= 0) return i;
+    const m = String(g).match(/^U0?(\d+)(F?)$/i); return m ? Number(m[1]) * 2 + (m[2] ? 1 : 0) : 999;
+  };
 
   // Sin tildes, sin mayúsculas y sin comas: «Muñoz, José» → «munoz jose».
   const plano = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
@@ -434,18 +460,25 @@
   // Cada pedido lleva su número: si se cambia de modalidad mientras uno va en
   // camino, lo que trae ya no se pinta ni se guarda como de la otra.
   let pedidos = 0;
-  function pedir() {
+  // forzar: vuelve a leer aunque la última lectura sea reciente (la ventana de
+  // pareos, cuando sabe que el torneo cambió).
+  function pedir(forzar) {
     if (pidiendo) return pidiendo;
-    if (datos && !deGuardado && Date.now() - ultimoPedido < REFRESCO_MS) return Promise.resolve(datos);
+    if (forzar !== true && datos && !deGuardado && Date.now() - ultimoPedido < REFRESCO_MS) return Promise.resolve(datos);
     ultimoPedido = Date.now();
     const n = ++pedidos, pidio = modalidad;
     const p = (async () => {
       await null;
       try {
-        if (!window.sb || !window.sb.functions) throw new Error("sin cliente");
+        if (!window.sb || (!DE_PAREO && !window.sb.functions)) throw new Error("sin cliente");
         const body = { clave: SALA, modalidad: pidio };
         if (PRUEBA) body.prueba = true;
-        const { data, error } = await window.sb.functions.invoke("sala-jugadores", { body });
+        // Un torneo dirigido en Pareo Integral (`fuente: "pareo"`): los mismos
+        // datos, leídos de Pareo por js/torneo-pareo-datos.js en lugar de
+        // chess-results. Ver «Los resultados de Pareo, como en el Centroamericano».
+        const { data, error } = DE_PAREO
+          ? await window.TorneoPareoDatos.leer().then((x) => ({ data: x, error: null }), (e) => ({ data: null, error: e }))
+          : await window.sb.functions.invoke("sala-jugadores", { body });
         if (error || !data || !Array.isArray(data.torneos)) throw error || new Error("respuesta rara");
         if (n !== pedidos) return datos;
         // Las modalidades que tiene la sala; si no tiene la pedida, la función
@@ -862,8 +895,11 @@
     li.appendChild(el("p", "cac-jugador-ronda", linea));
     // Dónde queda su mesa en la sala (js/centroamericano-plano.js), solo en
     // el clásico: el plano es el de sus torneos.
-    if (x.partida && x.partida.rival && modalidad === "clasico" && window.CentroamericanoPlano) {
-      const enSala = window.CentroamericanoPlano.enTarjeta(x.torneo.texto, x.partida.mesa);
+    // Con la foto de la sala y sus mesas marcadas (js/torneo-sala-foto.js,
+    // Tacho Chess 2), la mesa iluminada sobre la foto.
+    const plano = window.TorneoSalaFoto || window.CentroamericanoPlano;
+    if (x.partida && x.partida.rival && modalidad === "clasico" && plano) {
+      const enSala = plano.enTarjeta(x.torneo.texto, x.partida.mesa, x.torneo);
       if (enSala) li.appendChild(enSala);
     }
     const res = x.partida && x.partida.resultado && x.partida.resultado !== "bye" && /\d|½/.test(x.partida.resultado) ? x.partida.resultado : "";
@@ -1024,7 +1060,7 @@
     const eventos = eventosDelCalendario(x);
     if (!eventos.length) { anunciar(tx.calendarioSin); return; }
     const { texto, eventos: n } = window.CalendarioIcs.armarHoras({ nombre: tx.calNombre(nombreCorto(x.j)), eventos });
-    window.CalendarioIcs.bajar(texto, "centroamericano-2026-rondas-" + slugDe(x.j.nombre) + ".ics");
+    window.CalendarioIcs.bajar(texto, ((CONFIG.imagen && CONFIG.imagen.archivo) || "centroamericano-2026") + "-rondas-" + slugDe(x.j.nombre) + ".ics");
     anunciar(tx.calendarioListo(n));
   }
 
@@ -1234,7 +1270,7 @@
     const c = porColor(deCada.flatMap((d) => d.rondas));
     if (c.blancas.n || c.negras.n) caja.appendChild(el("p", "cac-colores-pais text-sm", tx.coloresPais(c)));
     const texto = [tx.whatsappTitulo(nombrePais, ronda), tx.resumen(ronda, g, e, p, b, a) + " " + tx.resumenPuntos(pts, posibles), ""]
-      .concat(lineas, ["", "https://ajedrez-integral.com/centroamericano-2026.html" + (idioma() !== "es" ? "?lang=" + idioma() : "")]).join("\n");
+      .concat(lineas, ["", "https://" + (CONFIG.url || "ajedrez-integral.com/centroamericano-2026.html") + (idioma() !== "es" ? "?lang=" + idioma() : "")]).join("\n");
     const boton = el("button", "cac-boton mt-3", tx.copiarWhatsapp);
     boton.type = "button";
     const aviso = el("p", "mt-2 text-sm font-semibold");
@@ -1689,7 +1725,7 @@
   // país, el proyector y la imagen para compartir): una sola copia de los datos.
   window.CentroamericanoVivo = {
     datos: () => datos, deGuardado: () => deGuardado, pedir, jugadores, rondasDe, rendimiento, queHizo, rivalTexto,
-    textos: t, idioma, copaDeNaciones, categoria: (g) => t().categoria(g), ordenGrupo, pais: (f) => pais(f, idioma()), fmtPuntos, puntosNum,
+    textos: t, idioma, copaDeNaciones, categoria: (g) => t().categoria(g), ordenGrupo, cambiarFuente, pais: (f) => pais(f, idioma()), fmtPuntos, puntosNum,
     cuandoSeLeyo: () => cuandoSeLeyo(t()), plano, el, ZONA, progresoRonda, anunciar, puntosDeMesa, eloDe, porColor, textoElo,
     puestosDe, puntosTras, puestoTexto: (p) => puestoTexto(p, idioma()), delegacionGuardada, eventosDelCalendario, nombreCorto, enlaceDe, slugDe,
     modalidad: () => modalidad, conModalidad,

@@ -1,0 +1,159 @@
+/* El panel jornada (js/panel-jornada.js): el panel del alumno repartido en
+   cinco pestañas. Todo va bajo body.jornada, que solo pone ese módulo, así
+   que a quien no está en la prueba esta hoja no le cambia nada.
+   Los colores salen de las variables del tema (--c-brand-*, --c-accent-*),
+   así que siguen al tema de plataforma elegido y al modo oscuro. Contraste
+   medido con el tema Clásico (WCAG AA pide 4,5:1): brand-700 sobre blanco
+   11,5:1; brand-900 sobre accent-500 al 22 % sobre blanco 13,8:1; blanco
+   sobre accent-500 al 25 % sobre brand-900 11,1:1; brand-200 sobre
+   brand-900 10,2:1; con el ratón encima, 8,8:1 y 8,9:1. La pestaña abierta
+   no se dice solo con el color: lleva aria-current y su fondo. */
+
+body.jornada .jornada-fuera { display: none !important; }
+
+.jornada-nav ul { list-style: none; margin: 0; padding: 0; }
+.jornada-nav button {
+    display: flex; align-items: center; gap: .6rem; width: 100%;
+    border: 0; background: transparent; cursor: pointer;
+    font: inherit; font-weight: 600; color: rgb(var(--c-brand-700));
+    border-radius: .75rem;
+}
+.jornada-nav button svg { width: 1.35rem; height: 1.35rem; flex: none; }
+.jornada-nav button[aria-current] { background: rgb(var(--c-accent-500) / .22); color: rgb(var(--c-brand-900)); }
+.jornada-nav button:hover:not([aria-current]) { background: rgb(var(--c-brand-100)); }
+.jornada-nav button:focus-visible { outline: 2px solid rgb(var(--c-accent-500)); outline-offset: 2px; }
+.dark .jornada-nav button { color: rgb(var(--c-brand-200)); }
+.dark .jornada-nav button[aria-current] { background: rgb(var(--c-accent-500) / .25); color: #fff; }
+.dark .jornada-nav button:hover:not([aria-current]) { background: rgb(var(--c-brand-800)); }
+
+/* Mientras se busca se ve todo: las pestañas no dicen nada y se apagan. */
+body.jornada-buscando .jornada-nav button[aria-current] { background: transparent; }
+
+/* ---- Celular y tableta: la barra fija abajo ---- */
+@media (max-width: 1023px) {
+    body.jornada #app { padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px)); }
+    .jornada-nav {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
+        background: #fff; border-top: 1px solid rgb(var(--c-brand-100));
+        box-shadow: 0 -6px 18px rgb(16 42 67 / .08);
+        padding: .35rem max(.5rem, env(safe-area-inset-right, 0px)) calc(.45rem + env(safe-area-inset-bottom, 0px)) max(.5rem, env(safe-area-inset-left, 0px));
+    }
+    .dark .jornada-nav { background: rgb(var(--c-brand-900)); border-top-color: rgb(var(--c-brand-800)); }
+    .jornada-nav ul { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .25rem; max-width: 36rem; margin: 0 auto; }
+    .jornada-nav button { flex-direction: column; gap: .15rem; padding: .4rem 0; font-size: .72rem; }
+    /* La burbuja de «en línea» y lo que flota abajo a la derecha sube por encima de la barra. */
+    body.jornada .fixed.bottom-4 { bottom: calc(5rem + env(safe-area-inset-bottom, 0px)) !important; }
+}
+
+/* ---- Computadora: el menú a la izquierda ---- */
+@media (min-width: 1024px) {
+    body.jornada .jornada-marco {
+        display: grid; grid-template-columns: 13.5rem minmax(0, 1fr); gap: 2rem;
+        max-width: 84rem; margin: 0 auto; padding: 0 2rem;
+    }
+    body.jornada .jornada-marco > .max-w-6xl { max-width: none; margin: 0; padding: 0; min-width: 0; }
+    .jornada-nav {
+        position: sticky; top: 6.5rem; align-self: start;
+        background: #fff; border-radius: 1rem; padding: .6rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / .1), 0 2px 4px -2px rgb(0 0 0 / .1);
+    }
+    .dark .jornada-nav { background: rgb(var(--c-brand-900)); }
+    .jornada-nav ul { display: grid; gap: .2rem; }
+    .jornada-nav button { padding: .6rem .75rem; font-size: .95rem; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .jornada-nav button { transition: background-color .15s ease; }
+}
+
+
+/* ---- Lo de adentro de una pestaña (js/panel-jornada.js, SUBSECCIONES) ----
+   En la computadora, debajo de su pestaña en el menú; en el celular, una fila
+   de botones arriba de la pestaña, que se desliza de lado si no cabe. Mismos
+   colores y contraste que las pestañas. */
+.jornada-sub a, .jornada-sub button, .jornada-fila a, .jornada-fila button {
+    font: inherit; font-weight: 600; color: rgb(var(--c-brand-700));
+    text-decoration: none; cursor: pointer; border: 0; background: transparent;
+}
+.jornada-sub [aria-current], .jornada-fila [aria-current] { background: rgb(var(--c-accent-500) / .22); color: rgb(var(--c-brand-900)); }
+.jornada-sub a:focus-visible, .jornada-sub button:focus-visible,
+.jornada-fila a:focus-visible, .jornada-fila button:focus-visible { outline: 2px solid rgb(var(--c-accent-500)); outline-offset: 2px; }
+.dark .jornada-sub a, .dark .jornada-sub button, .dark .jornada-fila a, .dark .jornada-fila button { color: rgb(var(--c-brand-200)); }
+.dark .jornada-sub [aria-current], .dark .jornada-fila [aria-current] { background: rgb(var(--c-accent-500) / .25); color: #fff; }
+.jornada-sub a::after, .jornada-fila a::after { content: " ↗"; }
+
+@media (max-width: 1023px) {
+    .jornada-nav .jornada-sub { display: none; }
+    body.jornada .jornada-fila {
+        display: flex; gap: .5rem; overflow-x: auto; margin: 0 0 1.25rem; padding-bottom: .25rem;
+        scrollbar-width: thin;
+    }
+    .jornada-fila a, .jornada-fila button {
+        flex: none; white-space: nowrap; padding: .45rem .9rem; border-radius: 999px; font-size: .85rem;
+        background: #fff; box-shadow: inset 0 0 0 1px rgb(var(--c-brand-200));
+    }
+    .dark .jornada-fila a, .dark .jornada-fila button { background: rgb(var(--c-brand-900)); box-shadow: inset 0 0 0 1px rgb(var(--c-brand-700)); }
+    .jornada-fila [aria-current] { box-shadow: none; }
+}
+
+@media (min-width: 1024px) {
+    body.jornada .jornada-fila { display: none; }
+    .jornada-nav .jornada-sub { display: grid; gap: .1rem; margin: .15rem 0 .35rem 2.6rem; }
+    .jornada-sub a, .jornada-sub button {
+        display: block; width: 100%; text-align: left; padding: .35rem .6rem; border-radius: .6rem; font-size: .85rem;
+    }
+    .jornada-sub a:hover, .jornada-sub button:hover:not([aria-current]) { background: rgb(var(--c-brand-100)); }
+    .dark .jornada-sub a:hover, .dark .jornada-sub button:hover:not([aria-current]) { background: rgb(var(--c-brand-800)); }
+}
+
+
+/* ---- El Inicio nuevo (js/panel-jornada.js, armarInicio) ----
+   La clase en una tarjeta de brand-600 con texto blanco (8,6:1 en el
+   Clásico y 8,7:1 en «jornada»; el chip, 6,0:1), las salas en
+   tarjetas blancas con borde fino y lo que viene al lado. El dato de cada
+   sala va escrito: el ícono es adorno. Detalle en brand-500 sobre blanco
+   (6,1:1); en oscuro, brand-300 sobre brand-900 (7,8:1). */
+.jornada-inicio { display: grid; gap: 1.25rem; margin-bottom: 2rem; }
+.jornada-inicio-principal { min-width: 0; display: grid; gap: 1rem; }
+.jornada-titulo-sec { font-weight: 700; font-size: 1rem; color: rgb(var(--c-brand-800)); margin: .25rem 0 0; }
+.dark .jornada-titulo-sec { color: #fff; }
+.jornada-clase { background: rgb(var(--c-brand-600)); color: #fff; border-radius: 1.25rem; padding: 1.1rem 1.25rem; display: grid; gap: .35rem; justify-items: start; }
+.jornada-clase[hidden] { display: none; }
+.jornada-clase-chip { font-size: .78rem; font-weight: 600; background: rgb(255 255 255 / .18); padding: .2rem .7rem; border-radius: 999px; }
+.jornada-clase-titulo { font-size: 1.35rem; font-weight: 700; margin: .25rem 0 0; color: #fff; }
+.jornada-clase-linea { margin: 0 0 .5rem; font-size: .9rem; color: #fff; }
+.jornada-clase-boton { background: #fff; color: rgb(var(--c-brand-800)); font-weight: 600; padding: .55rem 1.1rem; border-radius: 999px; text-decoration: none; }
+.jornada-clase-boton:focus-visible { outline: 3px solid rgb(var(--c-accent-400)); outline-offset: 2px; }
+.jornada-salas { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.jornada-sala {
+    display: flex; flex-direction: column; gap: .1rem; width: 100%; height: 100%; text-align: left;
+    background: #fff; border: 0; border-radius: 1rem; padding: .9rem; cursor: pointer; text-decoration: none; font: inherit;
+    box-shadow: 0 0 0 1px rgb(var(--c-brand-100));
+}
+.jornada-sala:hover { box-shadow: 0 0 0 1px rgb(var(--c-brand-300)); }
+.jornada-sala:focus-visible { outline: 2px solid rgb(var(--c-accent-500)); outline-offset: 2px; }
+.dark .jornada-sala { background: rgb(var(--c-brand-900)); box-shadow: 0 0 0 1px rgb(var(--c-brand-800)); }
+.jornada-sala-icono { font-size: 1.35rem; margin-bottom: .35rem; }
+.jornada-sala-nombre { font-size: .82rem; color: rgb(var(--c-brand-500)); }
+.jornada-sala-grande { font-size: 1.3rem; font-weight: 700; color: rgb(var(--c-brand-800)); font-variant-numeric: tabular-nums; }
+.jornada-sala-det { font-size: .78rem; color: rgb(var(--c-brand-500)); }
+.dark .jornada-sala-nombre, .dark .jornada-sala-det { color: rgb(var(--c-brand-300)); }
+.dark .jornada-sala-grande { color: #fff; }
+.jornada-inicio-lado { background: #fff; border-radius: 1rem; padding: 1rem; box-shadow: 0 0 0 1px rgb(var(--c-brand-100)); align-self: start; }
+.dark .jornada-inicio-lado { background: rgb(var(--c-brand-900)); box-shadow: 0 0 0 1px rgb(var(--c-brand-800)); }
+.jornada-viene { list-style: none; margin: .6rem 0 0; padding: 0; display: grid; gap: .75rem; }
+.jornada-viene-item { border-left: 3px solid rgb(var(--c-brand-200)); padding-left: .65rem; display: grid; font-size: .88rem; color: rgb(var(--c-brand-800)); }
+.jornada-viene-item.es-clase { border-left-color: rgb(var(--c-brand-600)); }
+.dark .jornada-viene-item { color: #fff; }
+.jornada-viene-cuando, .jornada-viene-det, .jornada-viene-vacio { font-size: .78rem; color: rgb(var(--c-brand-500)); }
+.dark .jornada-viene-cuando, .dark .jornada-viene-det, .dark .jornada-viene-vacio { color: rgb(var(--c-brand-300)); }
+@media (min-width: 640px) { .jornada-salas { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1200px) { .jornada-inicio { grid-template-columns: minmax(0, 1fr) 18rem; align-items: start; } }
+
+/* Con el tema «jornada», el menú lateral también lleva borde fino y no sombra. */
+@media (min-width: 1024px) {
+    :root[data-tema=jornada] .jornada-nav { box-shadow: 0 0 0 1px rgb(var(--c-brand-100)); }
+    :root[data-tema=jornada].dark .jornada-nav { box-shadow: 0 0 0 1px rgb(var(--c-brand-800)); }
+}
+
+/*! rev bfb5bbb0d2d82f9f */

@@ -2499,6 +2499,41 @@ las funciones `set_*`, **pero solo entre las que quien llama puede dar**:
   `mis_herramientas()` (`HerramientasArbitraje.abre()`). Va sin la burbuja de
   conectados, sin el aviso de partida y sin el aviso del profe.
 
+### Las fichas a la vista
+
+El dueño lo pidió el 16/11/2026 con la cuenta de Brandon: «permitir que vea
+las fichas pero sin poder entrar hasta tener la licencia» de Pareo Integral,
+Pareo para DGT, Notara, Normas de título, Reclamos de tablas, Bases del torneo
+y Mesa del árbitro.
+
+- **No es un permiso.** Ver la ficha no abre nada: abrir lo siguen decidiendo
+  `tengo_herramienta()`, el candado de cada página, las Edge Functions y el
+  worker, que no miran esta lista. La ficha es lo mismo que la vitrina pública
+  le enseña a cualquiera. Por eso el organizador puede poner a la vista
+  **cualquier** herramienta, también una que él no tiene: justo la que el
+  árbitro tendría que conseguir.
+- **Dónde vive:** `arbitros_cuentas.a_la_vista` (migración
+  `20261116171834`), una lista por árbitro, que hereda la política de lectura
+  (el propio árbitro, su organizador, administración), la falta de política de
+  escritura y la bitácora de esa tabla. La escribe
+  `arbitro_fichas_a_la_vista_fijar()`: solo su organizador o administración
+  (con `coalesce`), deja la lista exactamente como llega y la vuelve a leer.
+- **`arbitro.html`** pinta debajo de sus herramientas «Para cuando tengas la
+  licencia»: las fichas a la vista que todavía no abre (si ya la abre, sale
+  arriba y no se repite), con el borde punteado, «Sin licencia todavía» escrito
+  y «Cómo conseguir la licencia», que lleva a la ficha de su tema en la
+  vitrina. Una tarjeta cerrada no lleva `href`, se alcanza con Tab y lleva
+  `aria-disabled`.
+- **`mis-arbitros.html`**: en cada árbitro, el desplegable «Fichas a la vista,
+  sin abrir» con todas las herramientas de la vitrina y su propio botón de
+  guardar.
+- Comprobado impersonando roles en SQL (16/11, dentro de una transacción que
+  se deshizo): administración las fija; el árbitro lee su lista, no abre la
+  herramienta, no puede fijarse la lista ni escribir la tabla directo; otro
+  profesor no la fija ni ve la fila; sin sesión, rechaza.
+  `verificar-arbitros-cuentas.js` prueba las promesas de la migración y las dos
+  pantallas.
+
 **Lo que falta** (el punto 1 de lo conversado con el dueño): que lo de la Mesa
 del árbitro del Centroamericano (`centroamericano_*`) tenga dueño por evento.
 Hoy cualquiera con la licencia `mesa-arbitro` ve todo lo del Centroamericano,
@@ -2515,3 +2550,86 @@ Lo prueba `verificar-arbitros-cuentas.js`:
 
 Rompiendo a propósito que lo lleve a su panel o que se ofrezcan todas las
 herramientas, salta.
+
+## La sala de seminario de arbitraje
+
+El dueño lo pidió el 16/11/2026, para «ajedrez-integral.com/arbitro»: además
+de estudiar y entrenar (eso ya es el Aula de Arbitraje, una herramienta con
+licencia que el organizador le marca a cada árbitro en «Mis árbitros»), «un
+espacio para sesión de seminario y poder correr todo ese contenido, que esté
+cerrada solo para cuando el instructor la abra y decida quién entra». Se le
+preguntaron cuatro cosas y eligió:
+
+- **Estudiar y entrenar:** como una herramienta más (el Aula de Arbitraje, que
+  ya existía), no algo que vea toda cuenta de árbitro.
+- **Instructor:** administración **y** cada organizador (quien puede dar
+  herramientas: `arbitros_puedo_dar()` no vacío). El organizador solo deja
+  entrar a **sus** árbitros (`arbitros_cuentas.organizador_id`); la sala de
+  administración la puede pedir cualquier cuenta de árbitro.
+- **Entrada:** **solo sala de espera**. Con la sala abierta, el árbitro pide
+  entrar y el instructor lo deja entrar o lo rechaza, uno por uno («Dejar
+  entrar a todos los que esperan» es un atajo para lo mismo). Sin sala
+  abierta no hay nada que pedir. Quien fue rechazado o sacado puede volver a
+  pedir: vuelve a la sala de espera y el instructor decide otra vez.
+- **Contenido:** las diapositivas del seminario AF (tres días, cinco temas por
+  día, `js/arbitro-seminario/contenido.js`), preguntas con tiempo (quién
+  contestó qué) y el examen de práctica de 25 preguntas con su nota sobre 100
+  (se aprueba con 80).
+
+**Todo pasa en `arbitro.html`**, en la sección «Sala de seminario»
+(`js/arbitro-seminario.js`, `css/arbitro-seminario.css`): el árbitro la ve
+siempre; la cuenta que no es de árbitro, solo si puede instruir. No es una
+página nueva de la Academia porque la cuenta de árbitro no entra a la
+Academia (`acceso_vigente()` le dice que no) y su panel es este.
+
+**Quién ve qué lo decide la base** (migración `…_seminario_arbitraje.sql`):
+
+- Cuatro tablas (`seminario_salas`, `seminario_participantes`,
+  `seminario_respuestas`, `seminario_examenes`) **sin política de
+  escritura**: las escriben las funciones `seminario_*`, que validan.
+  `seminario_participantes` es la que da el permiso (quién está admitido):
+  lleva el trigger de la bitácora y está en `VIGILADAS`.
+- Un árbitro lee la sala **solo admitido** (`interno.seminario_admitido_en()`,
+  el conjunto una vez); en la sala de espera no la ve. Ve solo **sus**
+  respuestas y su nota; el instructor, las de su sala. Los nombres los da
+  `seminario_participantes_de()` / `seminario_respuestas_de()` /
+  `seminario_examenes_de()`, solo al instructor o a administración.
+- **La opción buena no viaja con la pregunta.** `seminario_preguntar()` no la
+  recibe y deja `correcta` nula; la pone `seminario_revelar()`, que además
+  cierra la pregunta: desde ahí `seminario_responder()` rechaza. La página
+  del instructor baraja las opciones al lanzar y recuerda, en
+  `sessionStorage` (`seminario_pregunta_<sala>`), cuál quedó como buena. Si
+  la pregunta se lanzó desde otra pestaña, lo dice y pide volver a lanzarla.
+- **El examen se corrige en la página** (el banco del curso ya está en el
+  navegador) y `seminario_entregar_examen()` guarda aciertos, total y la nota
+  **una sola vez por sala** (índice primario y `do nothing`). Es una nota de
+  práctica para el instructor, no un acta: quien sabe usar la consola podría
+  mandar otro número. Si algún día cuenta para algo, las respuestas y la
+  corrección van a la base.
+- Una sala por instructor (índice único parcial); `seminario_abrir()`
+  devuelve la que ya tiene abierta. Una sala sin movimiento del instructor por
+  3 horas se cierra sola (`interno.cerrar_seminarios_inactivos()`, pg_cron
+  cada 15 min), como la clase en vivo.
+- Realtime: `seminario_salas` (lo que se proyecta), `seminario_participantes`
+  (la sala de espera y la admisión) y `seminario_respuestas` (el conteo),
+  cada una con `verificacion_en_dos_pasos` restrictiva y escuchadas siempre
+  con filtro (`id=eq.`, `sala_id=eq.`, `arbitro_id=eq.`). Las salas que se
+  abren se buscan cada 20 s mientras la página está a la vista: no hay una
+  columna por la que filtrar «salas nuevas para mí».
+- Comprobado en la base impersonando roles (16/11, dentro de una transacción
+  que se deshizo): el organizador abre y reabre la misma; un árbitro de otro
+  organizador no ve la sala ni puede pedir, admitir ni ver participantes; el
+  árbitro en espera no lee la sala ni contesta; admitido ve la diapositiva sin
+  la buena, contesta y cambia, no puede mandar una opción que no existe ni
+  contestar después de revelar; entrega el examen una vez (80,00 con 20/25);
+  sacado deja de ver la sala y puede volver a pedir; la sala de
+  administración la pide un árbitro de administración; cerrada no se lista; y
+  la inactiva se cierra sola.
+
+Lo prueba `verificar-seminario-arbitraje.js`: las promesas de la migración,
+que cada posición del contenido sea legal (chess.js) y cada pregunta tenga su
+buena, y `arbitro.html` con un Supabase de mentira como árbitro (sin sala,
+pedir entrar, la diapositiva con su tablero, contestar, el examen con su nota
+exacta) y como instructor (abrir, dejar entrar con el nombre literal,
+proyectar, lanzar sin la buena y revelar la buena ya barajada). Rompiendo a
+propósito lo que recuerda como buena al barajar, salta.

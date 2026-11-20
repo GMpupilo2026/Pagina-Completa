@@ -1,0 +1,309 @@
+{
+  "coleccion": {
+    "id": "revista-4",
+    "titulo": "Revista Arbitraje de Ajedrez · N.º 4",
+    "nota": "Actualizada a la normativa FIDE vigente (noviembre de 2026)"
+  },
+  "fichas": [
+    {
+      "id": "buchholz-cortes-vur",
+      "coleccion": "revista-4",
+      "titulo": "Buchholz con rondas no jugadas: cálculo completo y cortes",
+      "articulos": "C.07 (2026) · arts. 4.1, 8.1, 14.1, 16.3, 16.4, 16.5",
+      "resumen": "Cómo calcular el Buchholz de todo un torneo con incomparecencias y qué se corta en el Buchholz Cut-1 cuando hay una VUR.",
+      "claves": [
+        "En las incomparecencias, las puntuaciones de los rivales cuentan tal cual (art. 16.3.1).",
+        "Incomparecencia propia: rival ficticio = el menor entre tu puntuación final y la del rival programado (16.4.1).",
+        "Cut-1 elimina el valor menos significativo (art. 14.1).",
+        "Con una VUR, se corta la aportación de esa ronda si no es menor que el valor menos significativo (16.5.1).",
+        "VUR = bye solicitado o pérdida por incomparecencia; una victoria por incomparecencia no es VUR.",
+        "El mismo torneo puede dar otra clasificación con BH o con BH-C1: el orden y los modificadores van en las bases (art. 4.1)."
+      ],
+      "contenido": "<h3>El método</h3><ol><li>Calcula la puntuación final de todos.</li><li>Ajusta las rondas no jugadas para el desempate de los rivales (art. 16.3): incomparecencias y byes con descanso, con el resultado asignado; byes pedidos al final, como tablas.</li><li>Para cada jugador, suma las puntuaciones ajustadas de sus rivales.</li><li>En cada ronda no jugada propia, suma el rival ficticio: tu puntuación final, con su tope (16.4).</li><li>Si las bases piden un corte, aplica el art. 16.5 a las VUR.</li></ol><div class=\"aula-norma\"><b>Art. 16.4.1</b> En las incomparecencias (categorías 2 y 4), el rival ficticio no puede pasar de la puntuación ajustada del rival programado.</div><div class=\"aula-norma\"><b>Art. 16.5.1</b> Si un modificador manda cortar el valor menos significativo de un jugador con VUR, se corta la menor aportación de esas rondas, siempre que no sea menor que el valor menos significativo.</div><h3>Ejemplo de la revista</h3><div class=\"aula-tabla\"><table><tr><th>Jugador</th><th>Pts</th><th>BH</th><th>Se corta</th><th>BH-C1</th></tr><tr><td>Carvajal</td><td>4½</td><td>24½</td><td>3½ (VUR de la ronda 1)</td><td>21</td></tr><tr><td>Ibarra</td><td>4½</td><td>24</td><td>2 (el menor)</td><td>22</td></tr></table></div><p>Con BH gana Carvajal el segundo lugar; con BH-C1, Ibarra.</p><p class=\"aula-nota\">Fe de erratas de la edición original: en 2012 la regla (sección 15.3) contaba como tablas las incomparecencias de los rivales, y el cálculo publicado no lo hizo.</p>"
+    },
+    {
+      "id": "eliminacion-directa",
+      "coleccion": "revista-4",
+      "titulo": "Sistema Wimbledon (eliminación directa)",
+      "articulos": "C.04.2 (2026) · art. 2.2 · C.07 (2026) · art. 3.1",
+      "resumen": "Cómo se arma un cuadro de eliminación directa: orden inicial, grupos en zigzag, matches en «U», byes y desempates en el tablero.",
+      "claves": [
+        "El cuadro usa potencias de 2; si faltan jugadores, los primeros pasan directamente (bye).",
+        "Orden inicial: rating, título (GM, IM, WGM, FM, WIM, CM, WFM, WCM, sin título) y orden alfabético.",
+        "Grupos en zigzag: con 2 grupos, el 1 recibe 1, 4, 5, 8, 9, 12, 13, 16.",
+        "Matches en «U»: primero contra último; luego los ganadores del match 1 y 4, y del 2 y 3.",
+        "Resultado: el cuadro clásico, en el que el 1 y el 2 solo se cruzan en la final.",
+        "Art. 3.1 del C.07: las bases fijan formato, números, colores, ritmos y horarios del play-off; el Armagedón no está regulado en las Leyes."
+      ],
+      "contenido": "<h3>Paso a paso</h3><ol><li>Ordena por rating, título y orden alfabético (C.04.2, art. 2.2).</li><li>Elige el cuadro: la potencia de 2 igual o superior al número de jugadores. Los puestos vacíos son los últimos números; sus rivales pasan directamente.</li><li>Reparte en grupos en zigzag (2 grupos hasta 16, 4 hasta 32, 8 hasta 64).</li><li>En cada grupo, matches en «U»: 1.º contra último, 2.º contra penúltimo…</li><li>Enlaza los matches en «U»: M1 contra M4, M2 contra M3.</li><li>Los campeones de grupo se cruzan en «U» (con 4 grupos: G1-G4 y G2-G3).</li></ol><div class=\"aula-tabla\"><table><tr><th>Jugadores</th><th>Cuadro</th><th>Pasan directamente</th><th>Matches en la 1.ª ronda</th></tr><tr><td>13</td><td>16</td><td>3 (n.º 1, 2 y 3)</td><td>5</td></tr><tr><td>20</td><td>32</td><td>12</td><td>4</td></tr><tr><td>23</td><td>32</td><td>9</td><td>7</td></tr></table></div><div class=\"aula-norma\"><b>C.07 (2026), art. 3.1</b> Si hay play-off, las bases deben fijar: puestos en juego, relación con los desempates, formato, números, colores, ritmos y horario.</div><div class=\"aula-norma aula-norma-aviso\"><b>Fe de erratas.</b> La edición original ponía WIM antes que FM. Lo correcto es FM y después WIM.</div>"
+    },
+    {
+      "id": "estres-y-arbitro",
+      "coleccion": "revista-4",
+      "titulo": "El árbitro ante un jugador estresado",
+      "articulos": "Leyes 2023 · arts. 11.2.3.2, 11.3.1, 12.2.3, 12.2.4, 12.2.6",
+      "resumen": "Recomendaciones de Paula Man Reich para calmar a un ajedrecista y los límites que ponen las Leyes durante la partida.",
+      "claves": [
+        "Sentir nervios no es malo; lo que perturba es el descontrol emocional.",
+        "Respirar profundo dos o tres veces, hablar lento y calmado y tomar un momento de descanso.",
+        "Durante la partida el árbitro no puede decir nada que se parezca a un consejo (art. 11.3.1).",
+        "El rival no debe ser molestado (art. 12.2.4).",
+        "El jugador con el turno solo sale del área de juego con permiso del árbitro (art. 11.2.3.2), y su reloj sigue corriendo.",
+        "Ante una urgencia de salud, medidas especiales (art. 12.2.6)."
+      ],
+      "contenido": "<h3>Recomendaciones (Paula Man Reich)</h3><ul><li>Respirar profundo dos o tres veces y tomar un momento de descanso.</li><li>Hablarle lento y calmado; un comentario ajeno al ajedrez puede alejar el estrés.</li><li>Ya tranquilo: concentrarse en cada jugada, recordar una buena actuación, tener una frase o una canción que le devuelva la calma.</li></ul><h3>Los límites de las Leyes</h3><div class=\"aula-norma\"><b>Art. 11.3.1</b> Durante el juego están prohibidos las notas, las fuentes de información y los consejos.</div><div class=\"aula-norma\"><b>Art. 12.2</b> El árbitro mantiene un buen ambiente (12.2.3), evita que los jugadores sean molestados (12.2.4) y toma medidas especiales para jugadores con discapacidad o que necesiten atención médica (12.2.6).</div><div class=\"aula-norma\"><b>Art. 11.2.3.2</b> El jugador que tiene el turno solo puede salir del área de juego con permiso del árbitro.</div><p class=\"aula-nota\">Lo ideal es usar estas técnicas antes de la ronda o fuera de la mesa, sin interrumpir a los demás.</p>"
+    }
+  ],
+  "preguntas": [
+    {
+      "ficha": "buchholz-cortes-vur",
+      "texto": "Un jugador termina con 5 y ganó por incomparecencia contra un rival que terminó con 2½. ¿Cuánto aporta esa ronda a su Buchholz?",
+      "opciones": [
+        "5",
+        "2½",
+        "3",
+        "3¾"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 16.4.1: rival ficticio con la puntuación del jugador (5), sin pasar de la puntuación ajustada del rival programado (2½): mín(5; 2½) = 2½. El 3 era el resultado del jugador virtual de 2012."
+    },
+    {
+      "ficha": "buchholz-cortes-vur",
+      "texto": "Un rival tuyo ganó una partida por incomparecencia. Al calcular tu Buchholz, ¿con cuántos puntos cuenta ese rival?",
+      "opciones": [
+        "Con su puntuación real, incluido ese punto",
+        "Con medio punto menos (la incomparecencia cuenta como tablas)",
+        "Con un punto menos",
+        "No se cuenta ese rival"
+      ],
+      "correcta": 0,
+      "explicacion": "Art. 16.3.1: las victorias por incomparecencia (categoría 2) se evalúan con el resultado asignado. Contarlas como tablas era la regla de 2012 (sección 15.3)."
+    },
+    {
+      "ficha": "buchholz-cortes-vur",
+      "texto": "¿Cuál de estas rondas es una VUR?",
+      "opciones": [
+        "Una victoria por incomparecencia",
+        "El descanso asignado por el emparejamiento",
+        "Una partida aplazada",
+        "Una pérdida por incomparecencia"
+      ],
+      "correcta": 3,
+      "explicacion": "Art. 16.1: VUR es un bye solicitado o una pérdida por incomparecencia."
+    },
+    {
+      "ficha": "buchholz-cortes-vur",
+      "texto": "BH-C1. Las aportaciones de un jugador son 2, 5, 3, 3, 4½, 3½ y una pérdida por incomparecencia que aporta 3½. ¿Qué valor se corta?",
+      "opciones": [
+        "El 2, porque es el menor",
+        "El 5, el mayor",
+        "El 3½ de la incomparecencia",
+        "Ninguno"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 16.5.1: con una VUR se corta su aportación (3½), porque no es menor que el valor menos significativo (2)."
+    },
+    {
+      "ficha": "buchholz-cortes-vur",
+      "texto": "BH-C1. Un jugador perdió por incomparecencia y esa ronda aporta 1½; su menor aportación de partidas jugadas es 2. ¿Qué se corta?",
+      "opciones": [
+        "El 2",
+        "El 1½ de la incomparecencia",
+        "Los dos",
+        "Nada"
+      ],
+      "correcta": 1,
+      "explicacion": "El 1½ es el valor menos significativo y además viene de una VUR: se corta ese. El art. 16.5.1 solo cambia el corte cuando la VUR aporta igual o más que el valor menos significativo."
+    },
+    {
+      "ficha": "buchholz-cortes-vur",
+      "texto": "En el ejercicio, Carvajal tiene BH 24½ e Ibarra 24; con BH-C1, 21 y 22. ¿Por qué cambia el orden?",
+      "opciones": [
+        "Porque a Carvajal se le corta la ronda que perdió por incomparecencia (3½) y a Ibarra solo su menor valor (2)",
+        "Porque Ibarra tiene más victorias",
+        "Porque el BH-C1 no cuenta las incomparecencias de los rivales",
+        "Porque se usa el rating"
+      ],
+      "correcta": 0,
+      "explicacion": "Art. 16.5.1: la VUR de Carvajal aporta 3½, que no es menor que su valor menos significativo (2), así que se corta el 3½."
+    },
+    {
+      "ficha": "buchholz-cortes-vur",
+      "texto": "¿Quién fija la lista ordenada de desempates de un torneo?",
+      "opciones": [
+        "El árbitro principal, después de la última ronda",
+        "El programa de emparejamientos",
+        "Los jugadores, por votación",
+        "El organizador principal, de antemano"
+      ],
+      "correcta": 3,
+      "explicacion": "Art. 4.1 del C.07: la elige el organizador principal (Chief Organiser) y debe conocerse antes del torneo; el árbitro principal puede completarla si está incompleta."
+    },
+    {
+      "ficha": "eliminacion-directa",
+      "texto": "Torneo de eliminación directa con 20 jugadores. ¿Cuántos matches se juegan en la primera ronda?",
+      "opciones": [
+        "10",
+        "8",
+        "4",
+        "12"
+      ],
+      "correcta": 2,
+      "explicacion": "Cuadro de 32: 12 jugadores pasan directamente y 8 juegan 4 matches para que queden 16."
+    },
+    {
+      "ficha": "eliminacion-directa",
+      "texto": "Con 13 jugadores en un cuadro de 16, ¿quiénes pasan directamente a cuartos?",
+      "opciones": [
+        "Los números 14, 15 y 16",
+        "Los números 1, 2 y 3",
+        "Tres jugadores sorteados",
+        "Los tres de menor rating"
+      ],
+      "correcta": 1,
+      "explicacion": "Los puestos 14, 15 y 16 quedan vacíos y sus rivales (1, 2 y 3) pasan directamente."
+    },
+    {
+      "ficha": "eliminacion-directa",
+      "texto": "Dos jugadores con el mismo rating: una WIM y un FM. ¿Quién va primero en la siembra?",
+      "opciones": [
+        "El FM",
+        "La WIM",
+        "El de apellido anterior en el alfabeto",
+        "Se sortea"
+      ],
+      "correcta": 0,
+      "explicacion": "C.04.2 (2026), art. 2.2.2: GM, IM, WGM, FM, WIM, CM, WFM, WCM. (La edición original ponía WIM antes que FM)."
+    },
+    {
+      "ficha": "eliminacion-directa",
+      "texto": "Cuadro de 16 armado con el método de la revista. ¿Contra quién juega el n.º 1 en la primera ronda?",
+      "opciones": [
+        "El 2",
+        "El 9",
+        "El 8",
+        "El 16"
+      ],
+      "correcta": 3,
+      "explicacion": "En «U» dentro del grupo 1 (1, 4, 5, 8, 9, 12, 13, 16): el primero contra el último, el 16."
+    },
+    {
+      "ficha": "eliminacion-directa",
+      "texto": "Con ese mismo cuadro de 16, ¿en qué ronda pueden encontrarse el 1 y el 2?",
+      "opciones": [
+        "En cuartos",
+        "En semifinales",
+        "En la final",
+        "En octavos"
+      ],
+      "correcta": 2,
+      "explicacion": "El 1 y el 2 están en grupos distintos y solo se cruzan los campeones de grupo: en la final."
+    },
+    {
+      "ficha": "eliminacion-directa",
+      "texto": "Las bases dicen que los empates en los matches se resuelven con «Armagedón», sin más detalle. ¿Qué falta?",
+      "opciones": [
+        "Nada: las Leyes del Ajedrez lo regulan",
+        "El ritmo de cada jugador, quién gana con tablas y cómo se eligen los colores",
+        "Solo el ritmo",
+        "La aprobación de la FIDE"
+      ],
+      "correcta": 1,
+      "explicacion": "El Armagedón no está regulado en las Leyes 2023 ni en el C.07; el art. 3.1 del C.07 pide que las bases fijen colores, ritmos y formato del play-off."
+    },
+    {
+      "ficha": "eliminacion-directa",
+      "texto": "¿Cuántos grupos se forman con 32 jugadores?",
+      "opciones": [
+        "4",
+        "2",
+        "8",
+        "16"
+      ],
+      "correcta": 0,
+      "explicacion": "Hasta 16 jugadores, 2 grupos; hasta 32, 4; hasta 64, 8."
+    },
+    {
+      "ficha": "estres-y-arbitro",
+      "texto": "Durante la partida, un jugador nervioso te pregunta si su posición es buena. ¿Qué haces?",
+      "opciones": [
+        "Le das tu opinión para tranquilizarlo",
+        "Detienes el reloj y analizan juntos",
+        "Le sugieres ofrecer tablas",
+        "No opinas sobre la partida: eso sería un consejo"
+      ],
+      "correcta": 3,
+      "explicacion": "Art. 11.3.1: los consejos están prohibidos durante la partida. Puedes ayudarlo a calmarse, pero nunca hablar de su posición."
+    },
+    {
+      "ficha": "estres-y-arbitro",
+      "texto": "Un jugador que tiene el turno quiere salir a tomar aire fuera del área de juego. ¿Puede hacerlo?",
+      "opciones": [
+        "Sí, cuando quiera",
+        "No, nunca",
+        "Solo con permiso del árbitro, y su reloj sigue corriendo",
+        "Solo si detiene el reloj"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 11.2.3.2: el jugador con el turno solo puede salir del área de juego con permiso del árbitro. El reloj no se detiene."
+    },
+    {
+      "ficha": "estres-y-arbitro",
+      "texto": "Al calmar a un jugador junto a su mesa, ¿qué debes cuidar sobre todo?",
+      "opciones": [
+        "Que el público escuche",
+        "Que el rival no sea molestado",
+        "Que el jugador firme la planilla",
+        "Que el reloj se detenga"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 12.2.4: el árbitro debe procurar que los jugadores no sean molestados. Mejor hablar lejos de la mesa."
+    },
+    {
+      "ficha": "estres-y-arbitro",
+      "texto": "Un jugador parece sufrir una crisis de salud durante la partida. ¿Qué artículo te respalda para tomar medidas especiales?",
+      "opciones": [
+        "Art. 12.2.6",
+        "Art. 6.9",
+        "Art. 9.6",
+        "Art. 11.4"
+      ],
+      "correcta": 0,
+      "explicacion": "Art. 12.2.6: el árbitro toma medidas especiales en interés de los jugadores con discapacidad y de quienes necesitan atención médica."
+    },
+    {
+      "ficha": "estres-y-arbitro",
+      "texto": "Según Paula Man Reich, ¿qué es lo que realmente perturba al ajedrecista?",
+      "opciones": [
+        "Sentir nervios",
+        "Jugar con negras",
+        "El ruido de la sala",
+        "El descontrol emocional al no poder detener esos pensamientos"
+      ],
+      "correcta": 3,
+      "explicacion": "Sentir nervios no es malo si se controlan; lo que perturba es el descontrol emocional."
+    }
+  ],
+  "casos": [
+    {
+      "id": "ko-armagedon-sin-bases",
+      "ficha": "eliminacion-directa",
+      "titulo": "Armagedón sin reglas",
+      "nivel": "Intermedio",
+      "ritmo": null,
+      "escena": "Torneo de eliminación directa. Un match termina empatado después de las partidas rápidas y las bases solo dicen «si persiste el empate, Armagedón». Los dos jugadores quieren las negras y discuten el ritmo.",
+      "decision": {
+        "texto": "¿Qué haces?",
+        "opciones": [
+          "Aplicas lo que dicen las Leyes del Ajedrez sobre el Armagedón",
+          "Declaras ganador al de mayor rating",
+          "Las Leyes no lo regulan: con el organizador, fijas y anuncias a ambos el ritmo, quién gana con tablas y cómo se eligen los colores (por ejemplo, por sorteo), antes de empezar",
+          "Declaras el match empatado"
+        ],
+        "correcta": 2,
+        "explicacion": "El Armagedón no está en las Leyes 2023 ni en el C.07. El art. 3.1 del C.07 pide que las bases fijen colores y ritmos del play-off; si faltan, decides con el organizador y lo anuncias antes de jugar (art. 12.2.2: actuar en el mejor interés de la competición). Para el próximo torneo, que vaya en las bases."
+      }
+    }
+  ],
+  "repeticiones": []
+}

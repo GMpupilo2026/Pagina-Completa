@@ -107,7 +107,7 @@ def es_futuro(b):
     return r.endswith(("ar", "er", "ir")) and len(r) > 3
 
 BLANCA = set("""publié préparé autorisé comptés publicité trouvé délégué invités payé propreté sécurité volés doré marché naturalisés thé solís canadá panamá haití corobicí sarchí sulá bogotá 
-miré más además después jamás quizás atrás detrás través compás interés inglés francés país
+miré pagué más además después jamás quizás atrás detrás través compás interés inglés francés país
 así aquí allí ahí allá acá está están estás esté estés japonés portugués marqués revés dirá
 demás porqué comité comités subcomité josé café caché también según razón bebé qué holandés escocés parís danés
 aperturasmás
@@ -130,7 +130,12 @@ mantendrá obtendrá supondrá intervendrá transpondrá traspondrá podrás
 hincapié azerí canadá calviá buxadé
 recibiré
 estrés poincaré
+acerqué arbitré comuniqué diseñé escondí escuché llamé pedí pregunté respondí
+encontraré estaré evaluaré frustraré harás haré oirás seguiré seré superaré tendré trataré tomás
 """.split())
+# La última tanda viene de las revistas de arbitraje (herramientas/revistas-arbitraje/):
+# las anécdotas de los autores originales van en primera persona —«me acerqué»,
+# «le pedí», «seré», «trataré»— y en pretérito o futuro esas palabras no son voseo.
 
 # Las presentaciones (.pptx) y los documentos (.docx) de cursos/recursos/ son
 # lo que el alumno se descarga, y no se revisaban: son un zip, y el detector

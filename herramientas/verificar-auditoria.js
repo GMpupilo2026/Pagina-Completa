@@ -29,11 +29,20 @@ const hay = (linea) => inventario.includes(linea);
 const VIGILADAS = [
   "profile_teachers", "equipos", "equipo_alumnos", "equipo_entrenadores",
   "coordinador_profesores", "coordinador_funciones_quitadas", "supervisor_cuentas",
+  "permisos_grabar_voz",
   "academias", "academia_miembros", "academia_ia", "arbitraje_consulta_config", "preparacion_rivales_profesores",
+  // A quién se le encendió el entrenador de IA (cada explicación cuesta dinero).
+  "entrenador_ia_personas",
+  // El enlace secreto de la página de la familia: quien lo tiene ve a un alumno.
+  "familia_enlaces",
   // A qué profesor se le asigna un grupo de un proyecto (y con eso, sus planes).
   "proyecto_grupos",
   "acceso_config", "paquetes_acceso", "paquete_alumnos", "pruebas_gratis", "cuentas_temporales",
   "planes_cobro", "suscripciones", "cobros", "pagos", "recibos",
+  // Cobros, versión 2 (mensualidades.html): quién paga en qué cuenta decide
+  // si entra, apagarla le corta el acceso, los ajustes encienden el apagado
+  // automático y confirmar un pago reportado lo activa.
+  "cuentas_cobro", "cuenta_cobro_alumnos", "cobros_ajustes", "pagos_reportados",
   // No reparte permisos: es un dato de salud, y quién lo marcó queda anotado.
   "vision_personas",
   // Un reconocimiento de la academia: quién dio (o anuló) cada certificado.
@@ -43,12 +52,17 @@ const VIGILADAS = [
   // Puntos Ajedrez: se canjean por acceso (curso_adelanto, material_tienda),
   // así que ganarlos y gastarlos queda anotado igual que un permiso.
   "puntos_ajustes", "premios_canjeados",
+  // Los premios de cada academia: canjearlos gasta puntos y cancelarlos los devuelve.
+  "premios_academia_canjes",
   // Las licencias de las herramientas de arbitraje: quién recibió cuál, y
   // quién la anuló o le cambió el vencimiento.
   "licencias_herramientas",
   // Las cuentas de árbitro: de qué organizador es cada una (y con eso, qué
   // herramientas le puede dar o quitar).
   "arbitros_cuentas",
+  // Quién entra a cada sala de seminario de arbitraje (la sala de espera y
+  // los admitidos): admitir a alguien le da permiso de ver la sala.
+  "seminario_participantes",
   // De quién es cada evento de la Mesa del árbitro y quién trabaja en él.
   "centroamericano_eventos", "centroamericano_evento_equipo",
   // El sello «Organizador verificado» de Pareo Integral: lo da (o lo quita)
@@ -56,6 +70,8 @@ const VIGILADAS = [
   "pareo_organizadores",
   // Pedir el sello: aprobar una solicitud le da el sello a la organización.
   "pareo_solicitudes_sello",
+  // La práctica de la sesión presencial del taller: aprobarla le da horas.
+  "taller_practicas",
   // Los enlaces de árbitro adjunto de Pareo Integral: quién puede anotar en
   // qué mesas de un torneo (sin el código, que equivale a una contraseña).
   "pareo_adjuntos",

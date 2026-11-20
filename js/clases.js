@@ -121,6 +121,7 @@
             { title: "Entrenamiento básico", plegable: true, escalon: "basico", tiles: [
                 { emoji: "🎯", label: "Coordenadas", desc: "Reconoce las casillas a toda velocidad", href: "entreno/coordenadas.html", soloAlumno: true },
                 { emoji: "📷", label: "Memoria", desc: "Mira una posición unos segundos y reconstrúyela", href: "entreno/memoria.html", soloAlumno: true },
+                { emoji: "👂", label: "De oído", desc: "Ve el tablero en tu cabeza, sin mirarlo", href: "entreno/oido.html", soloAlumno: true },
                 { emoji: "♚", label: "Mates", desc: "Mate en 1, 2 o 3 jugadas", href: "entreno/mates.html", soloAlumno: true },
                 { emoji: "🏆", label: "Practicar", desc: "Series de mates y tácticas, con racha y estrellas", href: "entreno/practicas.html", soloAlumno: true },
                 { emoji: "🧩", label: "4×4", desc: "Ejercicios tácticos por nivel", href: "entreno/4x4.html", soloAlumno: true },
@@ -428,7 +429,7 @@
             { title: "Clase en vivo", id: "grupo-clase-en-vivo", destacado: true, hrefs: ["sesion.html"] },
             { title: "Tus alumnos", id: "grupo-tus-alumnos", hrefs: ["alumno-nuevo.html", "tareas.html", "examenes.html", "informes.html", "justificaciones.html", "libreta-torneos.html", "subgrupos.html"] },
             { title: "Tus clases", hrefs: ["proyecto.html", "calendario.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "audios-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
-            { title: "Coordinación", hrefs: ["coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"] },
+            { title: "Coordinación", hrefs: ["coordinacion.html", "solicitudes.html", "formularios.html", "mensualidades.html", "cobros.html"] },
             { title: "Aprender", hrefs: ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html", "articulos.html"] },
             { title: "Jugar y competir", hrefs: ["juegos.html", "competir.html", "tablero.html"] },
             { title: "Herramientas", hrefs: ["pareo.html", "herramientas-arbitraje.html"] },
@@ -490,14 +491,15 @@
             { title: "Clase en vivo", destacado: true, hrefs: ["sesion.html"] },
             { title: "Lo que te pone tu profesor", id: "tareas", hrefs: ["tareas.html", "examenes.html", "entreno/diagnostico.html"] },
             { title: "Aprender y estudiar", id: "aprender", hrefs: ["entreno/aprender.html", "entreno/estudio.html", "cursos/academia/index.html", "repasar-clases.html", "audios-clases.html", "articulos.html"] },
-            { title: "Entrenar", id: "entrenar", hrefs: ["entreno/mates.html", "entreno/practicas.html", "entreno/desafios.html", "entreno/4x4.html", "entreno/temas.html", "entreno/aperturas.html", "entreno/mis-estudios.html", "entreno/sin-internet.html", "entreno/visualizacion.html", "entreno/precision-posicional.html", "entreno/finales.html", "entreno/tipos.html"] },
+            { title: "Entrenar", id: "entrenar", hrefs: ["entreno/coordenadas.html", "entreno/mates.html", "entreno/practicas.html", "entreno/desafios.html", "entreno/4x4.html", "entreno/temas.html", "entreno/aperturas.html", "entreno/mis-estudios.html", "entreno/sin-internet.html", "entreno/visualizacion.html", "entreno/precision-posicional.html", "entreno/finales.html", "entreno/tipos.html"] },
             { title: "Jugar", id: "jugar", hrefs: ["te-reto.html", "tablero.html", "juegos.html", "competir.html", "reto-ejercicios.html"] },
             { title: "Tu cuenta", id: "cuenta", hrefs: ["ciegos.html", "configuracion.html", "informes.html", "logros.html", "cuaderno.html", "justificaciones.html", "encuesta-profesor.html"] },
         ];
-        /* El Sonar, la Batalla naval, Memoria y Coordenadas ya no van: la Academia
-           pidió esconderlas a las cuentas ciegas (están en NO_ADAPTADAS de
+        /* El Sonar, la Batalla naval y Memoria ya no van: la Academia pidió
+           esconderlas a las cuentas ciegas (están en NO_ADAPTADAS de
            js/vision-cuenta.js; ver «Lo que no se puede hacer sin ver, no se
-           ofrece» en docs/decisiones/accesibilidad.md). */
+           ofrece» en docs/decisiones/accesibilidad.md). Coordenadas volvió:
+           para quien no ve, el juego ES decir de qué color es la casilla. */
         const TILES_SOLO_ADAPTADO = [
             /* ¡Te reto! está adaptado (la jugada se escribe, el reloj se pide con
                «tiempo») y en el panel de siempre se llega desde Juegos; acá va
@@ -511,6 +513,7 @@
             "juegos.html": "Ajedrez estándar y Niebla de guerra contra otro alumno, escribiendo la jugada: las demás modalidades todavía no están adaptadas",
             "competir.html": "Retos a quien esté en línea y los torneos; la partida se juega escribiendo la jugada",
             "tablero.html": "Juega contra Oscar, nuestro motor, escribiendo la jugada y oyendo la suya",
+            "entreno/coordenadas.html": "Se dice una casilla y escribes si es blanca o negra, contra el reloj",
             "entreno/estudio.html": "Las fichas de aperturas, defensas, táctica, mates, conceptos y finales, con la posición dicha y la línea que se recorre escribiendo",
         };
         function armarPanelAdaptado() {
@@ -632,14 +635,14 @@
         }
         function clavesUrgenteDocente() {
             const tiene = tieneTarjeta;
-            return ["justificaciones", "examenesCongelados", "informePropio", "solicitudes", "examenesEntregados", "partidasTorneo", "estiloSeguimiento", "morosos"].filter((c) =>
+            return ["justificaciones", "examenesCongelados", "informePropio", "solicitudes", "examenesEntregados", "partidasTorneo", "estiloSeguimiento", "pagosPorConfirmar", "morosos"].filter((c) =>
                 c === "informePropio" ? tiene("informe-mensual.html")
                 : c === "estiloSeguimiento" ? tiene("informes.html")
                 : c === "justificaciones" ? tiene("justificaciones.html")
                 : c === "examenesCongelados" || c === "examenesEntregados" ? tiene("examenes.html")
                 : c === "partidasTorneo" ? tiene("libreta-torneos.html")
                 : c === "solicitudes" ? tiene("solicitudes.html")
-                : tiene("cobros.html"));
+                : tiene("mensualidades.html"));
         }
 
         function renderTileCard(t, destacado, compacto, grande) {
@@ -1102,10 +1105,10 @@
             // Las grabaciones van aparte: si esa consulta falla, el calendario sale igual.
             // Las sesiones del curso dicen qué presentación va con cada grabación;
             // el worker las da solo a quien tiene acceso (si no, sin presentaciones).
-            const [proximas, grabadas, vistas, curso] = await Promise.all([
+            // mis_grabaciones() ya trae lo que lleva visto (sin los tramos sin clase).
+            const [proximas, grabadas, curso] = await Promise.all([
                 sb.rpc("mis_clases_proximas", { p_dias: 90 }).then((r) => r, () => ({})),
                 sb.rpc("mis_grabaciones").then((r) => r, () => ({})),
-                sb.from("grabaciones_vistas").select("horario_id, fecha, visto_seg").eq("persona_id", profile.id).range(0, 199).then((r) => r, () => ({})),
                 fetch("cursos/recursos/formacion-ajedrez/sesiones.json", { credentials: "same-origin" })
                     .then((r) => (r.ok ? r.json() : null)).catch(() => null),
             ]);
@@ -1115,12 +1118,12 @@
                 alBajar: (boton, estado) => bajarCalendario(boton, estado, 90),
                 entrada: entradaTaller(),
                 grabaciones,
-                vistas: !vistas.error && Array.isArray(vistas.data) ? vistas.data : [],
-                alVer: anotarLoVisto,
+                alVer: anotarYRecontar,
                 presentaciones: curso && Array.isArray(curso.sesiones) ? curso.sesiones : [],
                 responder: responderPreguntaVideo,
                 respuestas: misRespuestasVideo,
             });
+            pintarHorasTaller(grabaciones);
             if (!panelAdaptado && quedan) {
                 const s = sesiones.find((x) => new Date(x.fin) > new Date());
                 const T = CalendarioTaller;
@@ -1137,13 +1140,13 @@
            las suyas, y al profe que también es alumno, las de sus clases). Ver
            «Las preguntas dentro del video» en docs/decisiones/paneles.md. */
         async function responderPreguntaVideo(g, n, opcion) {
-            const { data, error } = await sb.rpc("grabacion_pregunta_responder", { p_horario: g.horario_id, p_fecha: g.fecha, p_n: n, p_opcion: opcion });
+            const { data, error } = await sb.rpc("grabacion_pregunta_responder", { p_horario: g.horario_id, p_fecha: g.fecha, p_n: n, p_opcion: opcion, p_parte: g.parte || 1 });
             if (error) throw error;
             return data;
         }
         async function misRespuestasVideo(g) {
             const { data, error } = await sb.from("grabacion_respuestas").select("n, elegida, acerto")
-                .eq("horario_id", g.horario_id).eq("fecha", g.fecha).eq("persona_id", profile.id).range(0, 99);
+                .eq("horario_id", g.horario_id).eq("fecha", g.fecha).eq("parte", g.parte || 1).eq("persona_id", profile.id).range(0, 99);
             if (error) throw error;
             return data || [];
         }
@@ -1152,8 +1155,48 @@
            devuelve el total. Lo que rechaza (22023, 42501) no se vuelve a
            mandar; si no hubo red, se manda con lo que venga después. Ver
            «Cuánto vio cada uno» en docs/decisiones/paneles.md. */
+        /* «Tus horas del taller»: lo que lleva de las horas del taller, contado
+           por la base (taller_horas: clase en vivo + grabación, cada sesión
+           hasta lo que dura; la presencial, con la práctica aprobada), y la
+           práctica que sube de esa sesión. Si la base no contesta, la tarjeta
+           no sale. Ver «Las horas del taller» en docs/decisiones/paneles.md. */
+        let grabacionesTaller = [];
+        async function pintarHorasTaller(grabaciones) {
+            if (grabaciones) grabacionesTaller = grabaciones;
+            const caja = document.getElementById("horas-taller");
+            const [h, p] = await Promise.all([
+                sb.rpc("taller_horas", { p_persona: profile.id }).then((r) => r, () => ({ error: true })),
+                sb.from("taller_practicas").select("horario_id, estado, nota_revision, enviada_en")
+                    .eq("persona_id", profile.id).range(0, 49).then((r) => r, () => ({ error: true })),
+            ]);
+            if (h.error || !Array.isArray(h.data)) { caja.hidden = true; return; }
+            HorasTaller.pintar(caja, h.data, {
+                practicas: !p.error && Array.isArray(p.data) ? p.data : [],
+                grabaciones: grabacionesTaller,
+                enviarPractica: enviarPracticaTaller,
+                alCambiar: () => pintarHorasTaller(),
+            });
+        }
+        async function enviarPracticaTaller(horarioId, selector, comentario, avisar) {
+            const rutas = await selector.subirTodo(sb.storage.from("taller-practicas"), profile.id, avisar);
+            avisar("Guardando…");
+            const { error } = await sb.rpc("taller_practica_enviar", { p_horario: horarioId, p_archivos: rutas, p_comentario: comentario });
+            if (error) throw new Error(error.message || "la base no la recibió");
+        }
+        // Lo que ve de una grabación repone horas: al anotarlo, se vuelve a
+        // contar (a lo sumo una vez cada 20 s, que se anota cada 30).
+        let recontarEn = 0;
+        async function anotarYRecontar(g, tramos) {
+            const total = await anotarLoVisto(g, tramos);
+            if (Date.now() > recontarEn) {
+                recontarEn = Date.now() + 20000;
+                pintarHorasTaller().catch(() => {});
+            }
+            return total;
+        }
+
         async function anotarLoVisto(g, tramos) {
-            const { data, error } = await sb.rpc("grabacion_vista_anotar", { p_horario: g.horario_id, p_fecha: g.fecha, p_tramos: tramos });
+            const { data, error } = await sb.rpc("grabacion_vista_anotar", { p_horario: g.horario_id, p_fecha: g.fecha, p_tramos: tramos, p_parte: g.parte || 1 });
             if (error) throw Object.assign(new Error(error.message || "No se pudo anotar"), { descartar: error.code === "22023" || error.code === "42501" });
             return data;
         }
@@ -1243,7 +1286,7 @@
             /* Quien puede buscar gente lo ve escrito en el campo. «Cobros»
                solo a quien tiene la tarjeta: a un profesor que no coordina
                se le sugería buscar algo que no puede ver. */
-            if (buscaPersonas()) campoBusqueda.placeholder = tieneTarjeta("cobros.html")
+            if (buscaPersonas()) campoBusqueda.placeholder = tieneTarjeta("mensualidades.html")
                 ? "Cobros, tareas, el nombre de un alumno…"
                 : "Tareas, informes, el nombre de un alumno…";
             const grid = document.getElementById("tile-grid");
@@ -1483,6 +1526,8 @@
             "admin.html": "cuentas usuarios roles crear cuenta urgente pendientes supervisores coordinadores equipos sin profesor",
             "supervision.html": "profesores informe mensual actividad",
             "academias.html": "academia supervisor",
+            "prospectos.html": "prospectos interesados clientes familias llamar seguimiento",
+            "premios-academia.html": "premios recompensas canjes entregar academia puntos",
             "tablero-academias.html": "cifras numeros del mes",
             "planes.html": "planificar preparar clase posiciones",
             "cuestionarios.html": "kahoot preguntas opciones quiz concurso juego de preguntas trivia",
@@ -1499,7 +1544,7 @@
             "satisfaccion.html": "encuesta satisfaccion opinion calificar profesores alumnos contentos se van",
             "encuesta-profesor.html": "encuesta opinion calificar profesor",
             "encuestas-curso.html": "encuesta anonima curso ciegos accesible desercion expectativas",
-            "cobros.html": "pagos pago mensualidad mensualidades dinero morosos morosidad recibos",
+            "mensualidades.html": "pagos pago mensualidad mensualidades dinero morosos morosidad recibos",
             "reportes.html": "word pdf actividades periodo",
             "accesos.html": "cupos paquetes acceso",
         };
@@ -1631,7 +1676,7 @@
             if (!escrito) { estadoBusqueda.textContent = ""; return; }
             anuncioBusqueda = setTimeout(() => {
                 if (!accesosEncontrados && !personasEncontradas) {
-                    estadoBusqueda.textContent = `Nada con «${escrito}». Prueba con otra palabra: ${tieneTarjeta("cobros.html") ? "cobros" : "informes"}, tareas, contraseña…`;
+                    estadoBusqueda.textContent = `Nada con «${escrito}». Prueba con otra palabra: ${tieneTarjeta("mensualidades.html") ? "cobros" : "informes"}, tareas, contraseña…`;
                     return;
                 }
                 const partes = [];
@@ -1805,7 +1850,7 @@
                 /* La clase ya no se abre sola cuando llega un alumno: la abre
                    el profe (ver «La sesión en vivo se abre cuando el profesor
                    la abre»). Este texto decía lo contrario. */
-                ? "Hasta que la abras, tus alumnos no pueden entrar. Ábrela aquí con «Iniciar clase», o dentro de la Sesión en vivo con «Abrir la clase» o al mandar una posición."
+                ? "Hasta que la abras, tus alumnos no pueden entrar. Con «Iniciar clase» eliges quién entra y la abres: solo los de la lista pueden entrar."
                 : "";
 
             /* La tarjeta entera solo aparece cuando tiene algo que decir: hay
@@ -3949,16 +3994,14 @@
         document.getElementById("sessions-more").addEventListener("click", () => cargarSesiones({ mas: true }));
 
 
-        document.getElementById("start-session-btn").addEventListener("click", async () => {
-            const btn = document.getElementById("start-session-btn");
-            const title = document.getElementById("new-session-title").value.trim();
-            btn.disabled = true;
-            const { error } = await sb.from("class_sessions").insert({ title: title || null, created_by: profile.id });
-            btn.disabled = false;
-            if (error) { Avisos.avisar("No se pudo iniciar la clase: " + error.message, { tipo: "error" }); return; }
-            document.getElementById("new-session-title").value = "";
-            await refreshSessionStatus();
-            await cargarSesiones();
+        /* Una clase en vivo se abre CON SU LISTA (solo entran los asignados,
+           ver «A la clase entran solo los asignados»), y el selector de quién
+           entra vive en la Sesión en vivo: el botón lleva allá con el selector
+           ya abierto y el título que se haya escrito. La base ya no deja abrir
+           una en vivo con un INSERT suelto. */
+        document.getElementById("start-session-btn").addEventListener("click", () => {
+            const title = document.getElementById("new-session-title").value.trim().slice(0, 200);
+            location.href = "sesion.html?abrir=1" + (title ? "&titulo=" + encodeURIComponent(title) : "");
         });
 
         document.getElementById("close-session-btn").addEventListener("click", async () => {
@@ -4372,7 +4415,7 @@
                     { emoji: "🧭", label: "Coordinación", desc: "Tus profesores y sus alumnos: quién es quién, cómo entra y cómo se ordena", href: "coordinacion.html" },
                     { emoji: "📝", label: "Solicitudes de la Academia", desc: "Quien pidió unirse desde unirse.html: aprobar crea la cuenta, rechazar invita a un plan pago", href: "solicitudes.html" },
                     { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas", href: "formularios.html" },
-                    { emoji: "💳", label: "Cobros de la Academia", desc: "Mensualidades, pagos y morosidad. Los recordatorios salen solos", href: "cobros.html" }
+                    { emoji: "💳", label: "Cobros", desc: "Mensualidades: quién está al día, registrar pagos y activar o apagar cuentas", href: "mensualidades.html" }
                 );
                 /* Lo que el supervisor de su academia le apagó no se ofrece: la
                    base lo rechazaría igual, pero el fallo lo descubriría quien
@@ -4540,7 +4583,13 @@
                 contarUsosDelPanel();
                 if (!profile.is_admin && !profile._persona) cargarLadoAlumno().catch((e) => console.error(e));
             } else {
-                document.getElementById("progreso-alumno").hidden = false;
+                /* En el panel adaptado (cuenta marcada como ciega) no va
+                   «Hoy te toca» ni «Tus números»: la meta del día, la racha,
+                   los repasos y los totales son un montón de texto que el
+                   lector de pantalla lee antes de llegar a lo que se usa, y
+                   quien no ve no los necesita. Ni se piden. Ver «El panel
+                   adaptado no lleva "Hoy te toca"» en accesibilidad.md. */
+                document.getElementById("progreso-alumno").hidden = panelAdaptado;
                 document.getElementById("registro-clases").hidden = true;
                 /* La racha se pide UNA vez y la promesa se reparte: la usan
                    el número de "Tu progreso" y el primer paso, que necesita
@@ -4565,10 +4614,9 @@
                 partes.push(
                     cargarPendientes(rachaP, tallerP),
                     cargarSeguirCurso(),
-                    loadEntrenoProgress(),
-                    loadTacticsRecord(),
                     pintarSaludoAlumno(rachaP, tallerP),
                 );
+                if (!panelAdaptado) partes.push(loadEntrenoProgress(), loadTacticsRecord());
                 /* «Hoy te toca» (diez scripts, ~200 KB) y «lo último que
                    hiciste» arrancan a la vez pero el panel NO los espera: se
                    pintan en su lugar cuando llegan. Metidos en la tanda de
@@ -4579,7 +4627,7 @@
                    campana de la cuenta de quien mira (mi_proxima_clase, lo que
                    la RLS le da), así que no se pintan; «Lo que más usas» y los
                    avisos de Competir se piden con su id. */
-                if (!profile._persona) cargarHoyTeToca(rachaP).catch((e) => console.error(e));
+                if (!panelAdaptado && !profile._persona) cargarHoyTeToca(rachaP).catch((e) => console.error(e));
                 if (!profile._persona) cargarProximaClase();
                 if (!panelAdaptado && !profile._persona) pintarFavoritas();
                 if (!panelAdaptado) cargarLoQueMasUsas().catch((e) => console.error(e));

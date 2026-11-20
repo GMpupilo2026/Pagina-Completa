@@ -1,0 +1,33 @@
+{
+  "numero": 11,
+  "fecha_original": "abril de 2013",
+  "temas": [
+    {"titulo": "Presentación", "desc": "Editorial y qué cambió en esta edición"},
+    {"titulo": "Calentamiento mental antes de arbitrar", "desc": "Psicología del deporte · Paula Man Reich"},
+    {"titulo": "Árbitros cibernéticos", "desc": "Caída de bandera y posibilidad de mate · Leyes 2023, art. 6.9"},
+    {"titulo": "Curso de sistema suizo (3.ª parte)", "desc": "Grupos y flotadores · C.04.3 Sistema Holandés (2026)"},
+    {"titulo": "El sistema round robin", "desc": "Tablas Berger y fórmulas · C.05 y Anexo 1"}
+  ],
+  "presentacion": "<div class=\"cols\"><p>Bienvenidos a la edición 11 de la revista, especializada en arbitraje y organización de torneos de ajedrez.</p><p>Agradezco a nuestros suscriptores y lectores, que nos han apoyado durante estos once meses en un proyecto sobre un tema del que es prácticamente imposible encontrar material. Nos hemos encontrado con un sinfín de complicaciones: sencillamente, a los árbitros no les gusta escribir, y por eso casi no hay en la red artículos que ayuden a la superación, o simplemente al conocimiento, de muchas cuestiones de arbitraje.</p><p>Creo firmemente que esto debe ir cambiando, y que los temas de arbitraje deben estar a disposición del público en general; para eso es importante conseguir columnistas dispuestos a ofrecer su conocimiento. Sus aportaciones, sugerencias y comentarios son de gran ayuda para nuestro equipo, y todos los árbitros interesados en escribir son bienvenidos. Debemos crear una cultura de capacitación y de apoyo a los árbitros noveles, y de enriquecimiento para los experimentados.</p><p>Durante estos meses hemos trabajado temas básicos para fortalecer el conocimiento, y poco a poco iremos subiendo el nivel de los artículos y cursos. En este número continuamos con el curso de sistema suizo, explicamos a fondo el sistema de competencia round robin, la psicóloga Paula Man nos presenta un calentamiento mental para antes de arbitrar un torneo, y analizamos el caso de los «árbitros cibernéticos».</p><p>¡Nos vemos en la próxima edición, para festejar nuestro primer año!</p><p style=\"text-align:left\"><b>Santiago García Ramos</b><br>Árbitro Internacional</p></div><p class=\"small\">Nota de la edición revisada: el editorial original anunciaba que se esperaban las nuevas Leyes del Ajedrez para el 1 de julio de 2013. Finalmente, esas Leyes se aplicaron a las competencias iniciadas desde el 1 de julio de 2014; después vinieron las versiones de 2017 y 2018, y hoy rigen las aplicadas desde el 1 de enero de 2023.</p>",
+  "cambios": [
+    ["Leyes citadas en «Árbitros cibernéticos»", "Arts. 6.1, 6.2.a, 6.3 y 6.9 de las Leyes anteriores a 2014, con remisión a los arts. 5.1.a, 5.1.b, 5.2.a, 5.2.b y 5.2.c.", "Leyes 2023: <b>6.1</b> (reloj y bandera), <b>6.3.1</b> (tiempo asignado), <b>6.4</b> (comprobación tras la caída) y <b>6.9</b>, que remite a los arts. <b>5.1.1, 5.1.2, 5.2.1, 5.2.2 y 5.2.3</b>. Se añade el <b>art. A.5.3</b> (rápidas y relámpago)."],
+    ["Conclusión del caso del Internet Chess Club", "Decía que el servidor se equivocó «ya que el resultado final era empate», aunque el análisis mostraba un mate posible.", "<b>Fe de erratas:</b> como existe una serie legal que termina en mate (1…Rb5 2.Rd5 Ra4 3.Rxc4 Aa3 4.Cb6#, comprobada), el resultado correcto es <b>victoria de las blancas</b>. Se corrigen también los pies de diagrama (Rb5, no Rb6; el rey que captura y el caballo que da mate son blancos)."],
+    ["Plataformas en línea", "Solo se suponía que el error «ya fue solucionado».", "Se añade el Reglamento FIDE de Ajedrez en Línea: <b>art. 4.3</b> (mismo criterio que el art. 6.9) y <b>art. 15.4</b> (el árbitro puede corregir unas tablas automáticas mal declaradas)."],
+    ["Resultados de la ronda 1 (suizo)", "Mesa 7: «0–½»; grupos de 5, 5 y 6 jugadores.", "<b>Fe de erratas:</b> «0–½» no es un resultado de una partida jugada y la distribución 5-5-6 es imposible con resultados normales. Se usa ½–½: grupos de 5, 6 y 5."],
+    ["Grupos heterogéneos", "«Un grupo heterogéneo con al menos la mitad de jugadores de grupos superiores se trata como homogéneo».", "Esa regla ya no existe. Se explica el Sistema Holandés vigente (<b>C.04.3, 2026</b>): residentes, MDP, emparejamiento MDP, resto y limbo (arts. 1.3, 1.4, 3.1–3.3). Se añade el emparejamiento real del grupo de 1 punto según los colores (1–14, 11–12)."],
+    ["Definición de flotaciones", "El recuadro las definía al revés y decía que «la manzana sube».", "<b>Fe de erratas:</b> descendente para el de <b>mayor</b> puntuación, ascendente para el de menor (C.04.3, art. 1.4.2). Se añade que el PAB y la victoria sin jugar también dan flotación descendente (art. 1.4.3)."],
+    ["Emparejamiento con tarjetas", "Método manual como forma de trabajo.", "Se conserva como método de aprendizaje y se aclara que hoy se empareja y se comprueba con programas aceptados por la FIDE (C.02.04; Reglas Generales para Torneos Suizos, art. 1.4)."],
+    ["Eliminación directa con 20 jugadores", "6 rondas («Ronda 6 = 1 jugador»; «Ronda 4 = 3 jugadores, 2 matches»).", "<b>Fe de erratas:</b> son <b>5 rondas de matches</b> (20 → 10 → 5 → 3 → 2 → 1)."],
+    ["Partidas de un round robin con 19 jugadores", "9 × 18 = 162.", "<b>Fe de erratas:</b> con número impar se juegan n rondas: 9 × 19 = <b>171</b> = n(n − 1) ÷ 2."],
+    ["Round robin: normativa", "Sin referencias reglamentarias; «solo los Grand Prix» usan el sistema.", "Se añaden <b>C.05</b> (arts. 5.1–5.3: Berger y Varma; 6.1–6.3: sorteo; 6.6: retiros) y la recomendación del Anexo 1 para la doble vuelta. Se actualiza dónde se usa hoy (Candidatos, torneos cerrados)."],
+    ["Tablas round robin", "Tablas de 3 a 20 jugadores, con errores de composición (la de 13/14 era ilegible).", "Tablas de 3 a 12 regeneradas con el método del artículo y <b>comprobadas contra el Anexo 1 de C.05</b>; para más jugadores se remite al Handbook. Se añade la tabla de 7 con columna de descanso."],
+    ["Desempates en round robin", "No se mencionaban; la tarjeta traía Buchholz.", "<b>C.07 (2026)</b>: encuentro directo, victorias, Sonneborn-Berger y Koya; el Buchholz está prohibido en round robin (nota del art. 8)."],
+    ["Editorial", "Esperaba las Leyes 2013 para el 1-jul-2013.", "Nota: se aplicaron desde el 1-jul-2014; hoy rigen las de 2023."]
+  ],
+  "directorio": [
+    ["Director (edición original)", "Santiago García Ramos · Árbitro Internacional"],
+    ["Revisión (edición original)", "Ignacio Córdoba Navarro · Periodista"],
+    ["Diseño (edición original)", "Ángel Antonio Espino · Diseñador gráfico"],
+    ["Colaboradores (edición original)", "Paula Man Reich · Psicóloga del deporte; Carlos Calleros · Árbitro Internacional (Brasil)"]
+  ]
+}

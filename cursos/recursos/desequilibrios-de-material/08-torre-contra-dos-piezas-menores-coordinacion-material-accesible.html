@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Los puntos engañan: coordinación contra dama</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Objetivo: Evaluar la torre (y peón) contra dos piezas menores según la coordinación de las piezas y las columnas abiertas.</p>
 <p>Idea guía: Dos piezas menores coordinadas valen más que una torre; la torre necesita columnas abiertas y peones débiles que atacar.</p>
@@ -62,7 +86,7 @@
 <p>El primer factor a evaluar es si las piezas menores pueden apoyarse mutuamente sobre casillas clave (por ejemplo, un caballo cubierto por un alfil sobre una casilla fuerte) o si, por el contrario, están desconectadas y son vulnerables cada una por separado. El segundo factor es la existencia de columnas abiertas o semiabiertas: sin ellas, la torre carece de rutas de invasión y queda reducida casi a un espectador, mientras que un par de piezas menores bien coordinadas puede ir fijando debilidades sin prisa.</p>
 <p>El plan típico de las piezas menores consiste en fijar primero la estructura de peones rival, después crear debilidades concretas alrededor de esos peones fijos, y finalmente presionar esas debilidades con maniobras simples y repetidas hasta que el rival no dé más abasto defendiéndolas todas. El plan de la torre, en cambio, depende de la velocidad: buscar columnas abiertas cuanto antes, invadir la séptima fila o el campo rival, y aprovechar que la torre se mueve más rápido de un extremo a otro del tablero que dos piezas menores coordinándose.</p>
 <p>El error más frecuente del bando con la torre es dejar pasar el momento en que todavía hay columnas disponibles, permitiendo que el rival cierre el juego y neutralice su única ventaja real (la velocidad). El error más frecuente del bando con las piezas menores es apresurar el ataque antes de haber fijado bien las debilidades rivales, lo que le da a la torre tiempo de sobra para organizar contrajuego en las columnas que sí están disponibles.</p>
-<p>Yilmaz–Mamedov ilustra el plan ganador de las piezas menores en su forma más clara: primero fijar la estructura, después crear debilidades y por último construir presión constante contra esos objetivos fijos, sin necesidad de grandes complicaciones tácticas. Henriquez Villagra–Gokerkan es la versión más técnica y ajustada del mismo tema: un final larguísimo que se decide por el margen más estrecho posible, apenas después de que el caballo blanco consigue liberarse con a3-a4. Leitao–Cubas, en su variante analizada, muestra el caso inverso: torre y dos peones derrotando a las dos piezas menores gracias a la velocidad de las torres para invadir por la columna abierta, un recordatorio de que las torres son, en general, más rápidas que las piezas menores cuando sí tienen columnas para trabajar.</p>
+<p>Yilmaz–Mamedov ilustra el plan ganador de las piezas menores en su forma más clara: primero fijar la estructura, después crear debilidades y por último construir presión constante contra esos objetivos fijos, sin necesidad de grandes complicaciones tácticas. Henriquez Villagra–Gokerkan es la versión más técnica y ajustada del mismo tema: un final larguísimo que se decide por el margen más estrecho posible, apenas después de que el caballo blanco consigue liberarse con anna 3-anna 4. Leitao–Cubas, en su variante analizada, muestra el caso inverso: torre y dos peones derrotando a las dos piezas menores gracias a la velocidad de las torres para invadir por la columna abierta, un recordatorio de que las torres son, en general, más rápidas que las piezas menores cuando sí tienen columnas para trabajar.</p>
 <p>Reglas para recordar</p>
 
 
@@ -75,38 +99,57 @@
   <dt>La estructura de peones</dt>
   <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
-  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: eva 4-david 5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
   <dt>Casillas débiles y puestos avanzados</dt>
   <dd>Una casilla es débil cuando ningún peón rival la puede volver a controlar. Si además está en campo rival y la puedes defender con un peón, es un puesto avanzado: el mejor lugar para un caballo.</dd>
   <dd><strong>El error de siempre:</strong> Mover peones sin preguntar qué casilla se abandona para siempre. Cada peón que avanza deja detrás casillas que no vuelven a estar cubiertas.</dd>
-  <dd><strong>Para verlo:</strong> Un caballo en d5 defendido por un peón en e4, con el rival sin peones en c ni e, es una pieza que no se puede echar. Suele valer más que una torre.</dd>
+  <dd><strong>Para verlo:</strong> Un caballo en david 5 defendido por un peón en eva 4, con el rival sin peones en c ni e, es una pieza que no se puede echar. Suele valer más que una torre.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Los puntos engañan: coordinación contra dama</h3>
+  <h3 id="posicion-1">Posición 1: Los puntos engañan: coordinación contra dama</h3>
   
-  <p>Piezas blancas: rey en g1; dama en b1; alfil en f1; peones en f2, g4, h3.</p>
-  <p>Piezas negras: rey en g7; alfiles en e6, f6; caballo en f4; peones en c3, d4, f7, g5, h7.</p>
+  <h4>Piezas blancas: 6</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en bella 1.</li>
+    <li>Alfil en felix 1.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 4.</li>
+    <li>Peón en hector 3.</li>
+  </ul>
+  <h4>Piezas negras: 9</h4>
+  <ul>
+    <li>Rey en gustav 7.</li>
+    <li>Alfil en eva 6.</li>
+    <li>Alfil en felix 6.</li>
+    <li>Caballo en felix 4.</li>
+    <li>Peón en cesar 3.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 5.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
   
   
-  <p>Dama y alfil contra dos alfiles, caballo y dos peones de más. Todas las piezas negras están defendidas y los peones c3 y d4 avanzan apoyados; la dama no tiene nada que atacar.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/5pkp/4bb2/6p1/3p1nP1/2p4P/5P2/1Q3BK1 w - - 0 1</p>
+  <p>Dama y alfil contra dos alfiles, caballo y dos peones de más. Todas las piezas negras están defendidas y los peones cesar 3 y david 4 avanzan apoyados; la dama no tiene nada que atacar.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/5pkp/4bb2/6p1/3p1nP1/2p4P/5P2/1Q3BK1 w - - 0 1</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Busca cinco partidas donde el ganador doblara torres en una columna y anota qué hizo después de doblarlas.</li>
   <li>Arma un final de dos torres contra dos torres con una columna abierta y juégalo: verás por qué la casilla de entrada decide.</li>
   <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
-  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Arma en el tablero un peón aislado en david 4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
   <li>En tres partidas tuyas, marca en la jugada 15 todas las casillas débiles de los dos bandos.</li>
   <li>Arma una posición con un caballo en un puesto avanzado y juégala desde el lado que lo sufre: busca cómo cambiarlo.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -159,7 +202,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Desequilibrios de material» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

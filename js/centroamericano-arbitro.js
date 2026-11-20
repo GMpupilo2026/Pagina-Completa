@@ -1672,26 +1672,29 @@
         } finally { boton.disabled = false; }
     }
 
-    // La píldora «XXI Campeonato» y el pizote son del Centroamericano (su enlace es de chess-results). En un torneo de
-    // Pareo Integral la píldora no va, y si el torneo tiene mascota propia (Tacho Chess: Tacho), esa reemplaza al pizote.
-    const PIZOTE = { src: "img/centroamericano-2026/mascota-tablero.png", w: 266, h: 231, alta: false };
+    // La píldora «XXI Campeonato» es del Centroamericano (su enlace es de chess-results): en un torneo de Pareo Integral no va.
+    // El botón de la derecha lleva el logo de Ajedrez Integral, salvo que el torneo tenga mascota propia (Tacho Chess: Tacho).
+    const LOGO = { src: "img/logo-marca.png", w: 155, h: 96, alta: false, logo: true };
     const MASCOTAS = [{ re: /tacho\s*chess/i, src: "img/tacho-chess-2/mascota.png", w: 450, h: 755, alta: true }];
     function pintarMarca() {
         const pareo = esPareo();
         $("pildora-evento").hidden = pareo;
-        const m = (pareo && MASCOTAS.find((x) => x.re.test(estado.torneo || ""))) || PIZOTE;
+        const m = (pareo && MASCOTAS.find((x) => x.re.test(estado.torneo || ""))) || LOGO;
         const img = $("mascota-evento");
         if (img.getAttribute("src") === m.src) return;
         img.src = m.src;
         img.width = m.w;
         img.height = m.h;
         img.classList.toggle("cam-mascota-alta", m.alta);
+        img.classList.toggle("cam-mascota-logo", !!m.logo);
     }
 
     function pintarCabecera() {
         pintarMarca();
         const r = rapido();
-        $("titulo-torneo").textContent = (estado.categoria ? estado.categoria + " " + estado.rama : estado.torneo) + (r && estado.categoria ? (r === "blitz" ? " · Blitz" : " · Rápido") : "");
+        // El nombre del torneo va en el medio de la franja; debajo de «Mis mesas», la categoría (si el torneo tiene).
+        $("torneo-centro").textContent = estado.torneo || "";
+        $("titulo-torneo").textContent = estado.categoria ? estado.categoria + " " + estado.rama + (r ? (r === "blitz" ? " · Blitz" : " · Rápido") : "") : "";
         // Modo rápido: sin control de tiempos (no se anotan en el Rápido ni en el Blitz) y la regla con sus minutos.
         document.body.dataset.ritmo = r || "clasico";
         $("regla-minutos").textContent = textoMinutos();
@@ -1740,7 +1743,7 @@
         $("nombre-caja").hidden = nombrado;
     }
 
-    // «Todas las mesas» (el pizote): la organización lo habilita o deshabilita por enlace. Deshabilitado, el botón queda apagado y sin la pista
+    // «Todas las mesas» (el logo de la derecha): la organización lo habilita o deshabilita por enlace. Deshabilitado, el botón queda apagado y sin la pista
     // (la función también lo rechaza: esto solo lo esconde).
     function pintarTodasMesas(si) {
         const b = $("ver-todas-mesas");
@@ -1797,7 +1800,7 @@
 
     async function consultarAvisos() {
         if (!avisosVivo) return;
-        try { aplicarAvisos(await invocar("avisos", null, { intentos: 1 })); }
+        try { const d = await invocar("avisos", null, { intentos: 1 }); aplicarAvisos(d); revisarAjeno(d); }
         catch (e) { if (e.http === 404 || e.http === 410) avisosVivo = false; /* sin red: se vuelve a intentar */ }
     }
 
@@ -1964,6 +1967,38 @@
             leyendo = false;
             boton.disabled = false;
         }
+    }
+
+    // Con Pareo Integral, el resultado que pone el árbitro principal en su Pareo llega a la tablet en segundos, no en los
+    // 45 s de REFRESCO_MS: cada PAREO_MS se pregunta solo la hora de la última publicación del torneo (`actualizado` de
+    // pareo_publicados, lectura pública de unos bytes) y, si cambió, se vuelve a leer entero. El Pareo del principal
+    // publica a los pocos segundos de cada cambio si el torneo está en un evento de la Mesa (ESPERA_PUBLICAR_MESA en
+    // js/pareo/pagina.js). Ver «El resultado del principal llega solo a las tablets».
+    const PAREO_MS = 8000;
+    const uuidDePareo = (tnr) => { const h = /^p([0-9a-f]{32})$/.exec(String(tnr || "")); return h ? h[1].replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, "$1-$2-$3-$4-$5") : null; };
+    let pareoVisto = null, pareoPreguntando = false;
+    async function revisarPareo() {
+        if (!esPareo() || pareoPreguntando || leyendo || !window.sb || !window.sb.from) return;
+        const id = uuidDePareo(estado.tnr);
+        if (!id) return;
+        pareoPreguntando = true;
+        try {
+            const { data, error } = await window.sb.from("pareo_publicados").select("actualizado").eq("id", id).maybeSingle();
+            if (error || !data || !data.actualizado) return;
+            const visto = id + "|" + data.actualizado;
+            if (pareoVisto === null) { pareoVisto = visto; return; }
+            // Con algo a medio anotar no se lee (pisaría lo elegido): queda para la próxima vuelta.
+            if (pareoVisto !== visto && sinNadaPendiente()) { pareoVisto = visto; leer(true); }
+        } catch (e) { /* sin red: la próxima vuelta */ } finally { pareoPreguntando = false; }
+    }
+
+    // Lo que otro árbitro guardó en otra tablet en una de estas mesas (chess-results): «avisos» trae `ajeno`, la última línea
+    // de resultado de otro enlace; si cambió, se vuelven a leer las mesas. Con algo a medio anotar, en la vuelta siguiente.
+    let ajenoVisto;
+    function revisarAjeno(d) {
+        if (!d || !("ajeno" in d) || !estado) return;
+        if (ajenoVisto === undefined) { ajenoVisto = d.ajeno; return; }
+        if (d.ajeno !== ajenoVisto && sinNadaPendiente() && !leyendo) { ajenoVisto = d.ajeno; leer(true); }
     }
 
     // Lo que sale de la cola cuando vuelve la señal.
@@ -2377,6 +2412,9 @@
         $("ir-mesa").addEventListener("keydown", (e) => { if (e.key === "Enter") irAMesa(); });
         $("solo-faltan").addEventListener("change", pintar);
         setInterval(() => { if (!document.hidden && estado && sinNadaPendiente()) leer(true); }, REFRESCO_MS);
+        // Pareo Integral: la pregunta liviana (en el modo liviano, una vuelta sí y otra no).
+        let vueltaPareo = 0;
+        setInterval(() => { if (document.hidden || !esPareo()) return; if (liviano() && (vueltaPareo++ % 2)) return; revisarPareo(); }, PAREO_MS);
         setInterval(() => { if (!document.hidden) consultarAvisos(); }, AVISOS_MS);
         // Fair Play: cada 20 s; en el modo liviano, cada 40 s (una vuelta sí y otra no).
         let vueltaFp = 0;

@@ -52,6 +52,8 @@ const NUNCA = [
   // worker.js): a quien no la tiene el worker le manda un aviso en su lugar, y
   // ni el aviso ni el código se guardan en el teléfono.
   /^\/js\/(bases-torneo|bases-torneo-pagina|inscripcion-jde|inscripcion-jde-reglas|normas-titulo)\.js$/,
+  // Los archivos que se bajan con la licencia (ARCHIVOS_CON_LICENCIA en worker.js).
+  /^\/descargas\//,
   /^\/api\//,
   /^\/\.well-known\//,
   // El libro de aperturas (2,9 MB) y la procedencia de cada jugada (4,2 MB).

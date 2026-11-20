@@ -64,8 +64,15 @@
           <div class="cam-ventana">
             <div class="cam-titulo-ventana">
                 <img src="img/app/icon-192.png" width="22" height="22" alt="" aria-hidden="true">
-                <span class="cam-titulo-texto">Mesa del árbitro — Centroamericano 2026</span>
+                <span id="titulo-ventana" class="cam-titulo-texto">Mesa del árbitro — Centroamericano 2026</span>
                 <span id="eg-reloj" class="cam-titulo-reloj" aria-hidden="true"></span>
+            </div>
+
+            <!-- El evento sobre el que se trabaja: cada pestaña muestra solo sus torneos (ver «Cada evento de la Mesa, por separado»). Se esconde con un solo evento. -->
+            <div id="evento-barra" class="cam-evento-barra cam-no-qr" hidden>
+                <label for="evento-elegido" class="font-bold">Evento</label>
+                <select id="evento-elegido" class="cam-select" aria-describedby="evento-nota"></select>
+                <span id="evento-nota" class="cam-herramientas-nota">Todo lo de esta ventana es solo de este evento: sus torneos, sus árbitros, sus avisos y sus tableros.</span>
             </div>
 
             <div class="cam-menu cam-no-qr" role="tablist" aria-label="Secciones del programa">
@@ -93,7 +100,7 @@
                     <ul id="ir-lista" class="cam-inicio-lista"></ul>
                 </div>
                 <div class="cam-herramientas" role="toolbar" aria-label="Ronda en curso">
-                    <button type="button" id="resumen-actualizar" class="cam-btn cam-btn-chico"><span aria-hidden="true">🔄</span> Actualizar desde chess-results</button>
+                    <button type="button" id="resumen-actualizar" class="cam-btn cam-btn-chico"><span aria-hidden="true">🔄</span> Actualizar desde <span data-fuente-nombre>chess-results</span></button>
                     <button type="button" id="resumen-pdf" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">📄</span> Reporte de la ronda (PDF)</button>
                     <button type="button" id="resumen-hojas" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">🖨️</span> Hojas en papel (plan B)</button>
                     <span id="resumen-total" class="cam-herramientas-nota" role="status"></span>
@@ -107,7 +114,7 @@
                     </table>
                 </div>
                 <p id="resumen-vacio" class="cam-nota-vacia">Todavía no hay enlaces activos. Créalos en «Árbitros y mesas».</p>
-                <p class="cam-herramientas-nota mt-2">El avance se pone al día solo cuando cada árbitro abre o guarda en su tablet; «Actualizar desde chess-results» lo lee de todos los torneos de una vez.</p>
+                <p class="cam-herramientas-nota mt-2">El avance se pone al día solo cuando cada árbitro abre o guarda en su tablet; «Actualizar desde <span data-fuente-nombre>chess-results</span>» lo lee de todos los torneos de una vez.</p>
 
                 <h2 id="t-faltan" class="cam-subtitulo mt-6">Jugadores que no han llegado<span id="faltan-nota" class="cam-subtitulo-nota"></span></h2>
                 <p class="cam-herramientas-nota">Cada árbitro marca en su tablet, mesa por mesa, si el jugador llegó. Aquí salen los que marcó «No ha llegado»; si el jugador llega, el árbitro lo cambia y desaparece de la lista.</p>
@@ -292,9 +299,10 @@
             <section id="panel-claves" role="tabpanel" aria-labelledby="pest-claves" class="cam-no-qr" hidden>
                 <!-- Los torneos de Pareo Integral de este navegador: «Vincular» los lleva al evento (js/mesa-pareo-vincular.js). Ver «La Mesa del árbitro con torneos de Pareo Integral». -->
                 <div id="pareo-vincular" class="cam-clave-grupo" role="region" aria-labelledby="t-pareo-vincular"></div>
-                <h2 id="t-claves" class="cam-subtitulo mt-6">Torneos de chess-results: una sola clave para todo el torneo</h2>
-                <div class="cam-clave-grupo mt-3" id="clave-grupo">
-                    <p>Los torneos del Centroamericano están <strong>ligados en un grupo</strong> de chess-results: no hace falta una clave por torneo. Pon aquí el <strong>código del grupo</strong> y su <strong>clave (SID)</strong>, la de «Internet / Customize lists on chess-results.com» en Swiss-Manager. Se prueba contra chess-results antes de guardarla y queda <strong>cifrada</strong>: nadie la vuelve a ver, ni tú ni los árbitros.</p>
+                <p id="cr-mostrar-caja" class="text-sm mt-4" hidden><button type="button" id="cr-mostrar" class="cam-btn cam-btn-claro cam-btn-chico" aria-expanded="false" aria-controls="t-claves clave-grupo pegar">Este evento también tiene torneos en chess-results</button></p>
+                <h2 id="t-claves" data-solo-chess-results class="cam-subtitulo mt-6">Torneos de chess-results: una sola clave para todo el torneo</h2>
+                <div class="cam-clave-grupo mt-3" id="clave-grupo" data-solo-chess-results>
+                    <p>Los torneos de un evento de chess-results suelen estar <strong>ligados en un grupo</strong> de chess-results: no hace falta una clave por torneo. Pon aquí el <strong>código del grupo</strong> y su <strong>clave (SID)</strong>, la de «Internet / Customize lists on chess-results.com» en Swiss-Manager. Se prueba contra chess-results antes de guardarla y queda <strong>cifrada</strong>: nadie la vuelve a ver, ni tú ni los árbitros.</p>
                     <div class="grid sm:grid-cols-2 gap-3 mt-3">
                         <div><label for="g-codigo" class="block text-sm font-bold">Código del grupo</label><input id="g-codigo" type="text" inputmode="numeric" maxlength="7" class="cam-campo" autocomplete="off" spellcheck="false"></div>
                         <div><label for="g-sid" class="block text-sm font-bold">Clave (SID)</label><input id="g-sid" type="password" maxlength="32" class="cam-campo" autocomplete="off" spellcheck="false"></div>
@@ -308,7 +316,7 @@
                 <div id="torneos" class="cam-estado-torneos mt-3"></div>
                 <div id="eventos" class="cam-eventos mt-4"></div>
 
-                <details class="cam-detalle mt-4" id="pegar">
+                <details class="cam-detalle mt-4" id="pegar" data-solo-chess-results>
                     <summary>Otras claves: un torneo que no esté en el grupo</summary>
                     <p class="text-sm mt-2">Solo si algún torneo no está ligado y tiene su propia clave. Una línea por clave: el <strong>código de la base de datos</strong> del torneo y la clave, separados por un espacio. Por ejemplo: <code>1529719 AAAA1111BBBB2222CCCC3333DDDD4444</code>.</p>
                     <label for="claves-bloque" class="block text-sm font-bold mt-3">Códigos y claves</label>

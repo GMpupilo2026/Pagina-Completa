@@ -1645,6 +1645,62 @@ comparan textos y números—, pero la primera que comparara un objeto habría
 pasado siempre. (El `cmp` de los dobles de otros verificadores compara valores
 de columnas, no objetos, y está bien.)
 
+### La página de la familia
+
+Salió de comparar la Academia con otras plataformas (18/11/2026): un portal
+para la casa era lo que más tenían y nosotros no. El dueño vio primero una
+vista de ejemplo y pidió construirla. Es lo mismo que el informe por correo,
+pero vivo y con una cosa para hacer: avisar una ausencia.
+
+- **Un enlace secreto por encargado, sin cuenta**: `familia.html#t=<64 hex>`,
+  como el de corregir la inscripción del Metropolitano. El secreto va detrás
+  del `#`, que no viaja al servidor. La tabla `familia_enlaces` (encargado,
+  token, `visto_at`) no tiene políticas y nadie la lee desde afuera; lleva el
+  trigger de auditoría, porque reparte acceso.
+- **Está apagada hasta que alguien la enciende.** En Informes, debajo de cada
+  encargado, «Página de la familia de …»: encender y copiar el enlace,
+  cambiarlo (el anterior deja de servir) o apagarla. Lo puede hacer un
+  profesor del alumno o quien administra (`familia_enlace()`,
+  `familia_enlace_apagar()`, `familia_enlaces_de()`). No se enciende sola para
+  las 137 familias: quien tenga el enlace ve datos de un menor, y eso lo
+  decide quien conoce a la familia.
+- **Todo llega de una vez de `familia_pagina(token)`**, para `anon`: el
+  informe de la semana (el mismo `informe_de_alumno()` del correo, desde el
+  lunes de Costa Rica), las clases de los próximos 28 días, la asistencia de
+  35 días, las tareas, los cobros y recibos y las ausencias avisadas. La
+  página no filtra nada.
+- **Las faltas que muestra son solo las seguras**: la clase a la que fue, o
+  una clase CON lista en la que estaba y no fue. Una clase sin lista de otro
+  grupo del mismo profe no es una falta suya, y decírselo a una familia sería
+  mentirle. Por eso el título dice «a las que fue de N», no «asistencia
+  perfecta».
+- **Los pedidos van sin sesión** (`fetch` con la clave pública, no
+  `window.sb`). Un profe que prueba el enlace en su navegador mandaría su
+  identidad: la base le exigiría los dos pasos antes de mirar el token, y
+  `mensajes_casa_de()` lo rechazaría por no ser profesor de ese alumno. Por
+  si alguien llama la función con sesión igual, `familia_pagina()` vacía la
+  identidad del pedido (`request.jwt.claims`) antes de armar el informe: ahí
+  adentro quien manda es el token, como en la tanda de los correos.
+- **Avisar una ausencia** (`familia_avisar_ausencia()`): deja una
+  justificación `pendiente` con «Avisada por su familia (nombre)», de un solo
+  día, de hoy a 28 días. Pasa por el freno de los envíos sin cuenta (tipo
+  `familia_ausencia`: seis al día por encargado) y pide la casilla de la
+  política de privacidad, cuya versión guarda. Le llega al celular al profe, a
+  quien coordina y a quien supervisa, y se acepta donde siempre
+  (`justificaciones.html`).
+- **Los pagos se ven, pero no se cobra nada**: lo pendiente, cuándo vence y
+  los recibos, con cómo se paga de verdad (SINPE, transferencia o efectivo).
+  Con los cobros en pausa (ver «Cobros en pausa desde el 4/11/2026») la
+  sección entera se esconde si el alumno no tiene cobros ni recibos.
+- **El correo todavía no lleva el enlace**: se manda a mano (copiar y pegar).
+  Ponerlo al pie del informe es sumar un dato a la tanda de
+  `informes-encargados`; quedó para después.
+
+Al tocar esto, `node herramientas/verificar-todo.js familia` (con
+`FOTOS=<carpeta>` deja capturas en computadora y en celular oscuro, para
+mirar la pantalla). Rompiendo a propósito la casilla de privacidad del aviso o
+pintando el nombre con `innerHTML`, salta.
+
 ### Lo que juega en Lichess y Chess.com
 
 El profe veía lo que el alumno preparaba («Mi repertorio») pero no lo que

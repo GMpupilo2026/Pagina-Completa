@@ -224,7 +224,7 @@
   const inscribe = (x) => !!(x.inscripcion && x.inscripcion.abierta && (!x.inscripcion.hasta || x.inscripcion.hasta >= hoy()));
   const RITMO = { clasico: "Clásico", rapido: "Rápido", blitz: "Relámpago" };
   const ritmoDe = (x) => RITMO[x.ritmo_tipo || (window.RitmoControl ? RitmoControl.deducir(x.ritmo || "", x.nombre) : "")] || "";
-  const SISTEMA = { suizo: "Suizo", todos: "Todos contra todos", scheveningen: "Scheveningen", eliminacion: "Eliminación directa" };
+  const SISTEMA = { suizo: "Suizo", todos: "Todos contra todos", scheveningen: "Scheveningen", eliminacion: "Eliminación directa", keizer: "Keizer" };
   const MODALIDAD = { equipos: "Por equipos", individual: "Individual" };
   const ELO = { fide: "FIDE", nacional: "Nacional", no: "No" };
   const lugarDe = (x) => [x.lugar, x.fed].filter(Boolean).join(", ");
@@ -589,6 +589,12 @@
       el("p", { class: C.nota + " w-full", texto: "Tu calendario lo vuelve a leer solo: los torneos nuevos aparecen sin hacer nada. En Google Calendar: «Otros calendarios», «Desde URL», y pega la dirección copiada." }));
   }
   const terminado = (t) => t.rondasTotales > 0 && rondasCompletas(t) >= t.rondasTotales;
+  // Abierta encima de la página de un torneo (?en-ventana=1, la pone
+  // js/tacho-chess-resultados.js): sin lo que saca de esa página o no es
+  // para las familias —agregar al calendario, reportar, ponerlo en otra
+  // página— ni «Todos los torneos», que lleva a los torneos de otros. Lo
+  // pidió el dueño el 13/11/2026. Ver «Pareo abierto dentro de la página de un torneo».
+  const EN_VENTANA = new URLSearchParams(location.search).get("en-ventana") === "1";
   function acciones(fila, t) {
     const boton = C.pestana + " bg-white dark:bg-brand-900 inline-flex items-center gap-2";
     const estado = el("span", { id: "tp-compartir-estado", class: "sr-only", role: "status" });
@@ -602,6 +608,7 @@
         el("span", { "aria-hidden": "true", texto: "💬" }), "Compartir por WhatsApp", el("span", { class: "sr-only", texto: " (se abre en otra pestaña)" })),
       copiar,
     ];
+    if (EN_VENTANA) return el("div", {}, el("div", { class: "flex flex-wrap gap-2 mt-3" }, hijos, estado));
     if ((t.fechaInicio || fila.fecha) && !terminado(t)) {
       const cal = el("button", { type: "button", id: "tp-calendario", class: boton }, el("span", { "aria-hidden": "true", texto: "📅" }), "Agregar a mi calendario");
       cal.addEventListener("click", () => agregarAlCalendario(fila, t));
@@ -677,9 +684,9 @@
 
   function cabecera(fila, t) {
     const partes = [t.evento && t.evento.nombre, t.ciudad, [fechaTexto(t.fechaInicio), fechaTexto(t.fechaFin)].filter(Boolean).join(" al ")].filter(Boolean);
-    const datos = [t.sistema === "todos" ? "Todos contra todos" : t.sistema === "scheveningen" ? "Scheveningen" : t.sistema === "eliminacion" ? "Eliminación directa" : "Suizo de " + (t.rondasTotales || "?") + " rondas", t.ritmo, ELO_LARGO[t.validoElo] || "", t.arbitro ? "Árbitro: " + t.arbitro : ""].filter(Boolean);
+    const datos = [t.sistema === "todos" ? "Todos contra todos" : t.sistema === "scheveningen" ? "Scheveningen" : t.sistema === "eliminacion" ? (t.dobleEliminacion ? "Doble eliminación" : "Eliminación directa") : t.sistema === "keizer" ? "Keizer de " + (t.rondasTotales || 0) + " rondas" : "Suizo de " + (t.rondasTotales || "?") + " rondas", t.ritmo, ELO_LARGO[t.validoElo] || "", t.arbitro ? "Árbitro: " + t.arbitro : ""].filter(Boolean);
     return el("div", { class: "mb-6" },
-      el("a", { href: "#", class: C.enlace + " text-sm", texto: "← Todos los torneos" }),
+      EN_VENTANA ? null : el("a", { href: "#", class: C.enlace + " text-sm", texto: "← Todos los torneos" }),
       el("h1", { id: "tp-titulo", class: "font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-3", tabindex: "-1", texto: fila.nombre }),
       partes.length ? el("p", { class: "text-brand-600 dark:text-brand-300 mt-1", texto: partes.join(" · ") }) : null,
       el("p", { class: C.nota + " mt-1", texto: datos.join(" · ") }),
@@ -863,6 +870,44 @@
         el("span", { texto: " · " + (resumenJugador(t, j.id) || "Inscrito") })))));
   }
 
+  // La mesa de la sala (V.mesaFisica, la de la plantilla y los rótulos) donde
+  // juega en la ronda r, o null (libre, no juega, o el torneo es por equipos).
+  function mesaDe(t, r, jid) {
+    const R = t.rondas[r];
+    const i = R && !E.esDeEquipos(t) ? R.mesas.findIndex((m) => m.b === jid || m.n === jid) : -1;
+    return i >= 0 ? V.mesaFisica(t, i) : null;
+  }
+  // «Ahora»: lo que busca quien llega por el QR de su gafete, arriba y en
+  // grande: la ronda más nueva con su mesa, su color y su rival (o lo que
+  // hizo), y su puesto con sus puntos. La página se vuelve a leer sola cada
+  // minuto, así que la mesa de la ronda siguiente aparece sin tocar nada.
+  // Ver «El QR del gafete abre la ficha del jugador» en
+  // docs/decisiones/juegos-y-torneos.md.
+  function cajaAhora(t, jid, suFila, total, k) {
+    const r = t.rondas.length - 1;
+    const pts = (x) => puntosTexto(x) + (x === 1 ? " punto" : " puntos");
+    const hijos = [];
+    if (r < 0) {
+      hijos.push(el("p", { class: "text-xl font-bold", texto: "Todavía no hay pareo" }),
+        el("p", { class: "mt-1", texto: "La mesa de la ronda 1 sale aquí en cuanto el árbitro la publique: esta página se vuelve a leer sola cada minuto." }));
+    } else {
+      const s = T.situacion(t, r, jid);
+      const mesa = mesaDe(t, r, jid);
+      const rival = s.rival ? t.jugadores.find((x) => x.id === s.rival) : null;
+      hijos.push(el("p", { class: "text-sm font-semibold uppercase tracking-wide", texto: "Ronda " + (r + 1) + (s.tipo === "pendiente" ? " · se está jugando" : "") }));
+      if (s.tipo === "bye") hijos.push(el("p", { class: "text-3xl font-bold", texto: "Libre" }), el("p", { texto: "Le toca descansar: suma " + pts(s.puntos) + "." }));
+      else if (s.tipo === "ausente" || !mesa) hijos.push(el("p", { class: "text-2xl font-bold", texto: "No juega esta ronda" }));
+      else {
+        hijos.push(el("p", { class: "font-bold leading-none mt-1" }, el("span", { class: "text-xl", texto: "Mesa " }), el("span", { id: "tp-ahora-mesa", class: "text-5xl", texto: String(mesa) })),
+          el("p", { class: "mt-2", texto: "Con " + (s.color === "w" ? "blancas" : "negras") + " contra " + (rival ? rival.nombre + (Number(rival.elo) > 0 ? " (" + rival.elo + ")" : "") : "—") }));
+        if (s.tipo !== "pendiente") hijos.push(el("p", { class: "font-semibold", texto: "Resultado: " + pts(s.puntos) + (s.tipo === "incomparecencia" ? " (sin jugar)" : "") }));
+      }
+    }
+    hijos.push(el("p", { id: "tp-ahora-puesto", class: "mt-3 font-semibold" },
+      suFila ? "Puesto " + suFila.puesto + " de " + total + " · " + pts(suFila.puntos) + " tras la ronda " + k : "Sin puesto todavía: sale al terminar la ronda 1."));
+    return el("section", { id: "tp-ahora", class: "mt-3 rounded-2xl border-l-4 border-accent-500 bg-brand-50 dark:bg-brand-800 text-brand-800 dark:text-white p-4", "aria-label": "Ahora" }, hijos);
+  }
+
   function vistaJugadores(t, jid, fila) {
     const caja = el("section", { class: C.tarjeta, "aria-labelledby": "tp-jug-titulo" });
     const orden = T.ordenInicial(t);
@@ -873,10 +918,11 @@
       el("label", { for: "tp-jugador", class: "flex flex-col text-sm max-w-md" }, el("span", { class: "font-semibold", texto: "Jugador" }), sel));
     const j = t.jugadores.find((x) => x.id === jid);
     if (!j) return caja;
-    const { filas } = clasificacion(t);
+    const { k, filas } = clasificacion(t);
     const suFila = filas.find((f) => f.id === jid);
     caja.append(el("div", { id: "tp-ficha", class: "mt-4" },
       el("p", { class: "text-lg font-bold", texto: j.nombre + (j.titulo ? " (" + j.titulo + ")" : "") }),
+      E.esDeEquipos(t) ? null : cajaAhora(t, jid, suFila, filas.length, k),
       el("p", { class: C.nota, texto: [j.institucion, Number(j.elo) > 0 ? "Elo " + j.elo : "Sin Elo", j.categoria ? "Categoría " + j.categoria : ""].filter(Boolean).join(" · ") }),
       suFila ? el("p", { class: "mt-1 font-semibold", texto: "Puesto " + suFila.puesto + " · " + puntosTexto(suFila.puntos) + " puntos" }) : null,
       E.esDeEquipos(t) ? null : botonSeguir(j.nombre),
@@ -889,15 +935,17 @@
       const color = s.color === "w" ? "Blancas" : s.color === "b" ? "Negras" : "—";
       const res = s.tipo === "pendiente" ? "jugando" : s.tipo === "bye" ? "Libre (" + puntosTexto(s.puntos) + ")"
         : s.tipo === "ausente" ? "No jugó (" + puntosTexto(s.puntos) + ")" : puntosTexto(s.puntos) + (s.tipo === "incomparecencia" ? " (sin jugar)" : "");
+      const mesa = mesaDe(t, r, jid);
       tbody.append(el("tr", { "data-ronda": String(r + 1) },
         el("td", { class: "num", texto: r + 1 }),
+        el("td", { class: "num", texto: mesa ? String(mesa) : "—" }),
         el("td", {}, rival ? el("a", { href: "#" + new URLSearchParams({ t: leerRuta().t, v: "jugadores", j: rival.id }).toString(), class: C.enlace, texto: rival.nombre }) : "—"),
         el("td", { class: "num", texto: rival && Number(rival.elo) > 0 ? rival.elo : "" }),
         el("td", { texto: color }),
         el("td", { class: "num", texto: res })));
     });
     caja.append(el("div", { class: "overflow-x-auto mt-3" }, el("table", { id: "tp-tabla-jugador", class: "pi-tabla" },
-      el("thead", {}, el("tr", {}, el("th", { class: "num", scope: "col", texto: "Ronda" }), el("th", { scope: "col", texto: "Rival" }),
+      el("thead", {}, el("tr", {}, el("th", { class: "num", scope: "col", texto: "Ronda" }), el("th", { class: "num", scope: "col", texto: "Mesa" }), el("th", { scope: "col", texto: "Rival" }),
         el("th", { class: "num", scope: "col", texto: "Elo" }), el("th", { scope: "col", texto: "Color" }), el("th", { class: "num", scope: "col", texto: "Puntos" }))),
       tbody)));
     const otros = el("div", { id: "tp-otros", class: "mt-6" });
@@ -982,7 +1030,7 @@
   function tarjetaAnuncio(t) {
     const an = t.anuncio || {};
     const filas = [["Fecha", [fechaTexto(t.fechaInicio), fechaTexto(t.fechaFin)].filter(Boolean).join(" al ")], ["Hora", an.hora || ""], ["Lugar", t.ciudad],
-      ["Ritmo", t.ritmo], ["Sistema", t.sistema === "todos" ? "Todos contra todos" : t.sistema === "scheveningen" ? "Scheveningen" : t.sistema === "eliminacion" ? "Eliminación directa" : "Suizo de " + (t.rondasTotales || "?") + " rondas"], ["Contacto", an.contacto || ""],
+      ["Ritmo", t.ritmo], ["Sistema", t.sistema === "todos" ? "Todos contra todos" : t.sistema === "scheveningen" ? "Scheveningen" : t.sistema === "eliminacion" ? (t.dobleEliminacion ? "Doble eliminación" : "Eliminación directa") : t.sistema === "keizer" ? "Keizer de " + (t.rondasTotales || 0) + " rondas" : "Suizo de " + (t.rondasTotales || "?") + " rondas"], ["Contacto", an.contacto || ""],
       ["Inscritos", t.jugadores.length ? String(t.jugadores.length) : ""]].filter(([, v]) => v);
     return el("section", { id: "tp-anuncio", class: C.tarjeta + " mb-6", "aria-labelledby": "tp-anuncio-titulo" },
       el("h2", { id: "tp-anuncio-titulo", class: "font-serif text-xl font-bold mb-3", texto: "Próximamente" }),
@@ -1147,7 +1195,8 @@
     const t = fila.datos;
     document.title = fila.nombre + " — Torneos en Pareo Integral | Ajedrez Integral";
     let jid = ruta.j;
-    if (!jid && ruta.n) { const j = t.jugadores.find((x) => x.nombre === ruta.n); if (j) jid = j.id; }
+    // Por el nombre si no hay id, o si el id ya no está (un enlace viejo).
+    if ((!jid || !t.jugadores.some((x) => x.id === jid)) && ruta.n) { const j = t.jugadores.find((x) => x.nombre === ruta.n); if (j) jid = j.id; }
     const vista = ruta.v || (jid ? "jugadores" : "clasificacion");
     // Lo que se está mirando no se pierde al volver a pintar (el buscador, el foco).
     const buscado = silencioso && $("tp-buscar-mesa") ? $("tp-buscar-mesa").value : "";

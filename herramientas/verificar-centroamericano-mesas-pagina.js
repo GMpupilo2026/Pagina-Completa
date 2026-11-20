@@ -2140,6 +2140,8 @@ const CONTRASTE = `(sel) => {
         [[{ p_evento: "Nacional Juvenil 2027", p_torneos: [{ tnr: "1600001", nombre: "Nacional Juvenil Sub-14", categoria: "Sub-14", rama: "Absoluto", ritmo: "clasico", menores: true }, { tnr: "1600002", nombre: "Rápido Abierto Femenino", categoria: "Abierto", rama: "Femenino", ritmo: "blitz", menores: false }] }],
          "✓ Guardada: esta clave abre 2 torneos ligados (Nacional Juvenil Sub-14, Rápido Abierto Femenino). Ronda 1 con 21 mesas en el primero.", 2, true]);
     igual("cada evento con su «Archivar» y sus torneos en la lista", [await q.$$eval("#eventos > p[data-evento]", (l) => l.map((x) => x.dataset.evento)), await q.evaluate(() => !!document.querySelector('.cam-estado-torneo[data-tnr="1600001"]'))], [["Sin evento", "Nacional Juvenil 2027"], true]);
+    // Al agregarlos, la ventana pasó al evento nuevo (ver «Cada evento de la Mesa, por separado»); al archivarlo, vuelve sola al Centroamericano.
+    igual("la ventana pasa al evento donde quedaron los torneos, y arriba se puede volver al otro", await q.evaluate(() => [document.getElementById("evento-elegido").value, document.getElementById("evento-barra").checkVisibility()]), ["Nacional Juvenil 2027", true]);
     await q.click('#eventos p[data-evento="Nacional Juvenil 2027"] [data-accion="archivar-evento"]');
     await q.waitForSelector("dialog[open] [data-avisos-aceptar]");
     igual("archivar pregunta antes, con el botón que dice lo que hace", await q.textContent("dialog[open] [data-avisos-aceptar]"), "Archivar el evento");

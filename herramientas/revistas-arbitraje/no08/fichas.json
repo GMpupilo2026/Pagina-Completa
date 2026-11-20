@@ -1,0 +1,509 @@
+{
+  "coleccion": {
+    "id": "revista-8",
+    "titulo": "Revista Arbitraje de Ajedrez · N.º 8",
+    "nota": "Actualizada a la normativa FIDE vigente (noviembre de 2026)"
+  },
+  "fichas": [
+    {
+      "id": "miedo-arbitro",
+      "coleccion": "revista-8",
+      "titulo": "El miedo en el arbitraje",
+      "articulos": "Leyes 2023 · arts. 8.1.1, 8.4, 11.4, 12.7, 12.9 · Apéndice C.1",
+      "resumen": "Reconocer el miedo, enfrentarlo y saber qué te autorizan las Leyes a hacer en la sala.",
+      "claves": [
+        "El miedo es un mecanismo de protección: su finalidad es que abandones.",
+        "Primero se detecta, se reconoce y se acepta; la única forma de superarlo es enfrentarlo.",
+        "Quien terminó su partida es espectador (art. 11.4), y el árbitro puede expulsar a quien interfiera (art. 12.7).",
+        "La planilla se lleva en notación algebraica, clara y legible (art. 8.1.1; Apéndice C.1), nunca descriptiva.",
+        "Con menos de cinco minutos y sin incremento de 30 s o más, el jugador no está obligado a anotar (art. 8.4).",
+        "El miedo a desconocer las reglas se vence estudiando; el de hablar en público, preparando y ensayando."
+      ],
+      "contenido": "<h3>Lo que te autorizan las Leyes</h3><div class=\"aula-norma\"><b>Art. 11.4</b> Los jugadores que terminaron su partida se consideran espectadores.</div><div class=\"aula-norma\"><b>Art. 12.7</b> Quien observe una irregularidad solo puede informar al árbitro. Los espectadores no pueden intervenir en una partida, y el árbitro puede expulsar a los infractores de la sala de juego.</div><div class=\"aula-norma\"><b>Art. 8.1.1</b> Cada jugador anota sus jugadas y las del rival de la forma más clara y legible posible, en notación algebraica (Apéndice C), en papel o en una planilla electrónica certificada por la FIDE.</div><div class=\"aula-norma aula-norma-aviso\"><b>Corrección a la edición original.</b> Una planilla ilegible no se arregla pidiendo anotar «en forma descriptiva»: la FIDE solo reconoce la notación algebraica (Apéndice C.1). Se exige cumplir el art. 8.1.1 y, si el jugador persiste, se aplican las sanciones del art. 12.9 de forma gradual.</div><h3>Cómo superar el miedo</h3><ol><li><b>Detectarlo, reconocerlo y aceptarlo</b>: ritmo cardiaco acelerado, sudor, temblor.</li><li><b>Identificar cuál es</b>: desconocer una regla, la reacción de los jugadores, hablar en público, equivocarse, el ridículo, desconocer las funciones.</li><li><b>Enfrentarlo</b>: estudiar, preparar las reuniones técnicas, ensayar frente al espejo, actuar siempre de forma correcta, amable y firme.</li></ol><p class=\"aula-nota\">Artículo de Santiago García Ramos (edición original), revisado.</p>"
+    },
+    {
+      "id": "suizo-principios",
+      "coleccion": "revista-8",
+      "titulo": "El Sistema Suizo: principio y reglas básicas",
+      "articulos": "C.04.1 (desde 1-feb-2026) · arts. 1-9",
+      "resumen": "Cómo funciona el suizo, cómo se reparten las puntuaciones y qué reglas mínimas debe cumplir todo sistema suizo FIDE.",
+      "claves": [
+        "Se empareja a jugadores con la misma puntuación o la más cercana.",
+        "Dos participantes no juegan entre sí más de una vez (art. 2).",
+        "Con número impar, el descanso asignado: sin rival, sin color y con los puntos de una victoria salvo otra regla en las bases (art. 3).",
+        "No recibe el descanso quien ya lo tuvo o ya sumó sin jugar los puntos de una victoria (art. 4).",
+        "Diferencia de colores entre −2 y +2 y nunca el mismo color tres veces seguidas, salvo excepciones de cada sistema (arts. 6 y 7).",
+        "Sin tablas, tras n rondas el porcentaje con k puntos es C(n,k)/2ⁿ: tras la ronda 3, 12,5 / 37,5 / 37,5 / 12,5 %."
+      ],
+      "contenido": "<h3>Las reglas básicas (C.04.1)</h3><div class=\"aula-norma\"><b>Arts. 1 a 4</b> El número de rondas se declara antes. Nadie juega dos veces contra el mismo rival. Con número impar, uno queda sin emparejar y recibe el descanso asignado (sin rival, sin color, puntos de una victoria salvo otra regla, iguales para todos los descansos). No lo recibe quien ya lo tuvo o ya sumó sin jugar los puntos de una victoria.</div><div class=\"aula-norma\"><b>Arts. 5 a 9</b> En general, se empareja a jugadores con la misma puntuación. La diferencia de colores queda entre −2 y +2 y nadie recibe el mismo color tres veces seguidas (cada sistema puede tener excepciones). Se da el color con el que se jugó menos o, si están parejos, el contrario al último. Las reglas deben ser tan transparentes que quien empareja pueda explicarlas.</div><h3>Cómo se reparten las puntuaciones</h3><p>Sin tablas ni retiros: <span class=\"aula-formula\">porcentaje con k puntos tras n rondas = C(n,k) / 2ⁿ</span></p><div class=\"aula-tabla\"><table><tr><th>Ronda</th><th>3 pts</th><th>2 pts</th><th>1 pt</th><th>0 pts</th></tr><tr><td>2</td><td></td><td>25 %</td><td>50 %</td><td>25 %</td></tr><tr><td>3</td><td>12,5 %</td><td>37,5 %</td><td>37,5 %</td><td>12,5 %</td></tr></table></div><h3>La tarjeta de emparejamiento</h3><p>TPN, nombre, título, rating, ID FIDE, federación; por ronda: color, flotación (↓ o ↑), rival, resultado y puntos acumulados.</p><p class=\"aula-nota\">Un descanso o una victoria sin jugar se anotan como bajada (C.04.3, art. 1.4.3).</p>"
+    },
+    {
+      "id": "holandes-2026",
+      "coleccion": "revista-8",
+      "titulo": "Sistema Holandés 2026: flotaciones y colores",
+      "articulos": "C.04.3 (desde 1-feb-2026) · arts. 1.2, 1.4, 1.7, 1.8, 2 (C1-C21), 5.2",
+      "resumen": "Los criterios del Holandés vigente y un ejemplo resuelto: por qué en la ronda 2 se juega 6-10 y no 6-9.",
+      "claves": [
+        "Para emparejar, el orden es puntuación y luego TPN (art. 1.2).",
+        "Recibe una bajada quien queda sin pareja en su grupo, quien recibe el descanso y quien suma sin jugar más que una derrota (art. 1.4).",
+        "Criterios absolutos: C1 (no repetir rival), C2 (descanso), C3 (misma preferencia absoluta de color, salvo topscorers).",
+        "Topscorer: más del 50 % del máximo posible al emparejar la última ronda (art. 1.8).",
+        "C14: minimizar los residentes que bajan y ya bajaron en la ronda anterior.",
+        "Quien no ha jugado ninguna partida no tiene preferencia de color: se respeta la del rival (art. 1.7.4)."
+      ],
+      "contenido": "<h3>Definiciones clave</h3><div class=\"aula-norma\"><b>Art. 1.4</b> Bajado es quien queda sin pareja en un grupo y pasa al siguiente. Tras una partida entre jugadores con distinta puntuación, el mejor clasificado recibe una bajada y el otro una subida. También recibe una bajada quien recibe el descanso asignado o quien, sin jugar, suma más que los puntos de una derrota.</div><div class=\"aula-norma\"><b>Art. 1.7</b> Preferencia absoluta: diferencia de color mayor que +1 o menor que −1, o el mismo color en las dos últimas partidas. Fuerte: diferencia ±1. Leve: diferencia 0 (alternar). Sin partidas: sin preferencia.</div><h3>Criterios</h3><div class=\"aula-norma\"><b>Absolutos</b> C1 no repetir rival; C2 el descanso no lo recibe quien ya lo tuvo o sumó sin jugar una victoria; C3 dos no topscorers con la misma preferencia absoluta no se emparejan; C4 siempre debe poder emparejarse al resto.</div><div class=\"aula-norma\"><b>De calidad</b> C5 descanso al de menor puntuación; C6-C8 bajados (cuántos, con qué puntuación, sin bloquear el grupo siguiente); C9 descanso al de menos partidas no jugadas; C10-C11 colores de topscorers; C12-C13 preferencias de color; C14-C21 repetición de flotaciones.</div><div class=\"aula-norma\"><b>Art. 5.2 (colores)</b> 1) ambas preferencias; 2) la más fuerte; 3) alternar respecto de la última vez en que uno tuvo blancas y el otro negras; 4) la del mejor clasificado; 5) según el TPN del mejor clasificado sea impar o par.</div><h3>Ejemplo resuelto (revista N.º 8)</h3><p>Ronda 1: 1-6 0-1, 7-2 ½, 3-8 ½, 9-4 1-0, 5-10 (10 gana por incomparecencia). En el grupo de 1 punto (6, 9, 10) el 10 ya bajó en la ronda 1 (art. 1.4.3), así que C14 prefiere <span class=\"aula-formula\">6-10</span> y que baje el 9.</p><p>Ronda 2 completa: <span class=\"aula-formula\">6-10, 2-9, 8-7, 4-3, 5-1</span></p><p class=\"aula-nota\">Era el emparejamiento de Swiss Master; la edición original lo daba por erróneo.</p>"
+    },
+    {
+      "id": "gestion-suizo-c042",
+      "coleccion": "revista-8",
+      "titulo": "Reglas generales de gestión del suizo",
+      "articulos": "C.04.2 (desde 1-feb-2026) · arts. 1.3, 1.4, 2.4, 3.1, 3.5, 4.1, 4.3, 4.4",
+      "resumen": "Incorporaciones tardías, partidas aplazadas, resultados mal anotados, cambios de emparejamiento y programas.",
+      "claves": [
+        "Se excluye a quien no confirmó su presencia antes del sorteo, salvo que el árbitro principal decida otra cosa (art. 4.1).",
+        "El participante tardío no recibe puntos por las rondas no jugadas, salvo otra regla en las bases (art. 2.4).",
+        "Las partidas aplazadas cuentan como tablas solo para emparejar (art. 3.1).",
+        "Dos jugadores que no jugaron su partida pueden volver a emparejarse (art. 3.5).",
+        "Un emparejamiento publicado solo se cambia en los casos del art. 4.4 y en interés del torneo.",
+        "El árbitro principal informa a la FIDE qué sistema suizo oficial y qué aceleración usó (art. 1.3)."
+      ],
+      "contenido": "<h3>Qué dice la norma</h3><div class=\"aula-norma\"><b>Art. 4.1</b> Quien no confirmó su presencia antes del sorteo queda excluido, salvo que el árbitro principal decida otra cosa.</div><div class=\"aula-norma\"><b>Art. 2.4</b> El participante tardío solo se toma en cuenta desde rondas posteriores a la primera; no recibe puntos por las rondas no jugadas, salvo que las bases digan otra cosa; recibe su TPN y se empareja al llegar.</div><div class=\"aula-norma\"><b>Arts. 3.1 y 3.5</b> Partidas aplazadas: tablas solo a efectos de emparejamiento. Dos jugadores que no jugaron su partida pueden volver a emparejarse.</div><div class=\"aula-norma\"><b>Arts. 4.3 y 4.4</b> Un resultado mal anotado, avisado dentro del plazo, se usa para la clasificación y la ronda siguiente; avisado después, solo para el envío a rating. Un emparejamiento publicado solo se cambia en los casos listados (por ejemplo, si dos jugadores ya se habían enfrentado) y si el árbitro principal lo considera en interés del torneo.</div><div class=\"aula-norma\"><b>Arts. 1.3 y 1.4</b> El árbitro principal declara el sistema suizo y la aceleración usados. Los sistemas sin un programa aprobado por la FIDE con verificador gratuito quedan desaconsejados.</div><h3>Lo que cambió desde 2013</h3><div class=\"aula-tabla\"><table><tr><th>2013</th><th>2026</th></tr><tr><td>Ausente sin aviso = retirado</td><td>Ya no figura; lo deciden las bases</td></tr><tr><td>Buchholz con jugador virtual</td><td>C.07, art. 16</td></tr><tr><td>Descanso de 1 punto</td><td>Puntos de una victoria salvo otra regla (C.04.1, art. 3)</td></tr></table></div><p class=\"aula-nota\">Sistemas aprobados: Holandés, Dubov, Burstein y Lim, más Doble Suizo, suizo por equipos y acelerados.</p>"
+    },
+    {
+      "id": "premios-hort",
+      "coleccion": "revista-8",
+      "titulo": "Reparto de premios: sistema Hort",
+      "articulos": "Bases del torneo (el C.07 no regula premios)",
+      "resumen": "Medio premio por el puesto y medio premio repartido a partes iguales entre los empatados.",
+      "claves": [
+        "Cada empatado recibe el 50 % del premio de su puesto tras los desempates.",
+        "El otro 50 % de los premios de esos puestos va a una bolsa común.",
+        "La bolsa se divide a partes iguales entre los empatados.",
+        "Equivale a: ½ × premio del puesto + ½ × promedio de los premios empatados.",
+        "Lo repartido suma siempre lo mismo que la bolsa de premios de esos puestos.",
+        "El C.07 ordena a los empatados pero no regula el dinero: el sistema debe figurar en las bases."
+      ],
+      "contenido": "<h3>El método</h3><ol><li>Se aplican los desempates y se asigna a cada empatado su puesto.</li><li>Cada uno recibe el 50 % del premio de su puesto.</li><li>El 50 % restante de todos esos premios se suma en una bolsa.</li><li>La bolsa se divide a partes iguales entre los empatados.</li></ol><p><span class=\"aula-formula\">premio = ½ × premio del puesto + ½ × promedio de los premios empatados</span></p><h3>Ejemplo</h3><div class=\"aula-tabla\"><table><tr><th>Puesto</th><th>Premio</th><th>50 %</th><th>+ bolsa ÷ 5</th><th>Total</th></tr><tr><td>1.º</td><td>10 000</td><td>5 000</td><td>2 700</td><td>7 700</td></tr><tr><td>2.º</td><td>7 000</td><td>3 500</td><td>2 700</td><td>6 200</td></tr><tr><td>3.º</td><td>5 000</td><td>2 500</td><td>2 700</td><td>5 200</td></tr><tr><td>4.º</td><td>3 000</td><td>1 500</td><td>2 700</td><td>4 200</td></tr><tr><td>5.º</td><td>2 000</td><td>1 000</td><td>2 700</td><td>3 700</td></tr></table></div><div class=\"aula-norma aula-norma-aviso\"><b>En las bases.</b> El reglamento de desempates (C.07) no regula el reparto de premios en efectivo: el sistema Hort, los premios indivisibles o el reparto total deben anunciarse antes del torneo.</div>"
+    }
+  ],
+  "preguntas": [
+    {
+      "ficha": "miedo-arbitro",
+      "texto": "¿Cuál es el primer paso para superar un miedo?",
+      "opciones": [
+        "Ignorarlo",
+        "Detectarlo, reconocerlo y aceptarlo",
+        "Evitar la situación",
+        "Pedir a otro árbitro que la resuelva"
+      ],
+      "correcta": 1,
+      "explicacion": "El artículo propone primero detectar, reconocer y aceptar el miedo, y luego enfrentarlo."
+    },
+    {
+      "ficha": "miedo-arbitro",
+      "texto": "Un espectador le señala a un jugador que su rival tiene la bandera caída. ¿Qué puede hacer el árbitro?",
+      "opciones": [
+        "Dar tablas",
+        "Expulsarlo de la sala de juego",
+        "Nada, los espectadores pueden hablar",
+        "Declarar perdida la partida del jugador avisado"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 12.7: los espectadores no pueden intervenir en una partida y el árbitro puede expulsar a los infractores."
+    },
+    {
+      "ficha": "miedo-arbitro",
+      "texto": "Un jugador persiste en anotar de forma ilegible después de una advertencia. ¿Qué base tiene el árbitro para sancionarlo?",
+      "opciones": [
+        "Ninguna",
+        "El art. 9.2",
+        "El art. 12.9, con sanciones graduales",
+        "Solo puede pedir al organizador que lo expulse"
+      ],
+      "correcta": 2,
+      "explicacion": "El art. 12.9 lista las sanciones disponibles (advertencia, tiempo, etc.); se aplican de forma gradual ante el incumplimiento del art. 8.1.1."
+    },
+    {
+      "ficha": "miedo-arbitro",
+      "texto": "Un jugador con 3 minutos y un incremento de 10 segundos deja de anotar. ¿Infringe las Leyes?",
+      "opciones": [
+        "Solo si el rival protesta",
+        "Sí, y pierde la partida",
+        "Sí, siempre hay que anotar",
+        "No: con menos de cinco minutos y sin incremento de 30 s o más no está obligado"
+      ],
+      "correcta": 3,
+      "explicacion": "Art. 8.4: con menos de cinco minutos y sin un incremento de al menos 30 segundos, el jugador queda eximido de anotar durante el resto del periodo."
+    },
+    {
+      "ficha": "miedo-arbitro",
+      "texto": "Un jugador terminó su partida y se queda junto a otra mesa comentando en voz baja con un amigo. ¿Qué es según las Leyes?",
+      "opciones": [
+        "Un espectador",
+        "Un capitán",
+        "Un auxiliar",
+        "Un jugador con derecho a quedarse"
+      ],
+      "correcta": 0,
+      "explicacion": "Art. 11.4: quien terminó su partida se considera espectador; y el art. 12.7 prohíbe a los espectadores intervenir."
+    },
+    {
+      "ficha": "miedo-arbitro",
+      "texto": "Un jugador hace garabatos en lugar de anotar. Tiene 40 minutos en el reloj. ¿Qué le pides?",
+      "opciones": [
+        "Nada, es su problema",
+        "Que deje de anotar",
+        "Que anote de forma clara y legible en notación algebraica",
+        "Que anote en notación descriptiva"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 8.1.1 y Apéndice C.1: notación algebraica, lo más clara y legible posible. La notación descriptiva no se acepta en torneos FIDE."
+    },
+    {
+      "ficha": "miedo-arbitro",
+      "texto": "Según el artículo, ¿cuál es la finalidad del miedo?",
+      "opciones": [
+        "Que abandones",
+        "Que te concentres",
+        "Que pidas ayuda",
+        "Dañarte"
+      ],
+      "correcta": 0,
+      "explicacion": "Citando el seminario de autocontrol de Domènec Benaiges: el miedo busca que abandones, para protegerte."
+    },
+    {
+      "ficha": "suizo-principios",
+      "texto": "Con 64 jugadores y sin tablas, ¿cuántos siguen imbatidos tras la ronda 2?",
+      "opciones": [
+        "16",
+        "24",
+        "32",
+        "8"
+      ],
+      "correcta": 0,
+      "explicacion": "Tras la ronda 1 quedan 32 ganadores; al enfrentarse entre sí, 16 siguen con 2 de 2."
+    },
+    {
+      "ficha": "suizo-principios",
+      "texto": "¿Puede un jugador recibir el mismo color tres veces seguidas?",
+      "opciones": [
+        "Solo en rondas impares",
+        "Sí, siempre que lo pida",
+        "No, salvo las excepciones que prevea cada sistema",
+        "Sí, en la primera mitad del torneo"
+      ],
+      "correcta": 2,
+      "explicacion": "C.04.1, art. 7, con excepciones de cada sistema (en el Holandés, para los topscorers)."
+    },
+    {
+      "ficha": "suizo-principios",
+      "texto": "En un suizo sin tablas, ¿qué porcentaje de jugadores tiene 2 puntos después de la ronda 3?",
+      "opciones": [
+        "25 %",
+        "12,5 %",
+        "50 %",
+        "37,5 %"
+      ],
+      "correcta": 3,
+      "explicacion": "C(3,2)/2³ = 3/8 = 37,5 %. La edición original decía 25 % por error."
+    },
+    {
+      "ficha": "suizo-principios",
+      "texto": "¿Qué exige el C.04.1 sobre la transparencia de las reglas de emparejamiento?",
+      "opciones": [
+        "Nada",
+        "Que se publiquen después del torneo",
+        "Que solo las entienda el programa",
+        "Que quien empareja pueda explicarlas"
+      ],
+      "correcta": 3,
+      "explicacion": "C.04.1, art. 9."
+    },
+    {
+      "ficha": "suizo-principios",
+      "texto": "¿Cuántos puntos recibe el descanso asignado por el emparejamiento según el C.04.1?",
+      "opciones": [
+        "Lo que decida el árbitro en cada ronda",
+        "Los puntos de una victoria, salvo que las bases digan otra cosa",
+        "Medio punto",
+        "Cero"
+      ],
+      "correcta": 1,
+      "explicacion": "C.04.1, art. 3: sin rival, sin color y con los puntos de una victoria salvo otra regla; todos los descansos dan lo mismo."
+    },
+    {
+      "ficha": "suizo-principios",
+      "texto": "¿Qué se anota en la columna de flotación de la tarjeta cuando un jugador recibe el descanso?",
+      "opciones": [
+        "Una bajada (↓)",
+        "Nada",
+        "Una subida (↑)",
+        "Una X"
+      ],
+      "correcta": 0,
+      "explicacion": "C.04.3, art. 1.4.3: el descanso asignado (y la victoria sin jugar) cuenta como bajada."
+    },
+    {
+      "ficha": "holandes-2026",
+      "texto": "Para emparejar, ¿en qué orden se clasifica a los jugadores (art. 1.2)?",
+      "opciones": [
+        "Alfabético",
+        "Buchholz",
+        "Puntuación y luego TPN",
+        "Rating y título"
+      ],
+      "correcta": 2,
+      "explicacion": "Art. 1.2: puntuación y TPN en orden ascendente. El TPN sale del orden inicial (C.04.2, art. 2)."
+    },
+    {
+      "ficha": "holandes-2026",
+      "texto": "Grupo de 1 punto: 6, 9 y 10. El 10 bajó en la ronda anterior; 6 y 9 no flotaron. Todas las opciones cumplen colores. ¿Qué se empareja?",
+      "opciones": [
+        "9-10 y baja el 6",
+        "6-9 y baja el 10",
+        "6-10 y baja el 9",
+        "Se sortea"
+      ],
+      "correcta": 2,
+      "explicacion": "C14: minimizar los residentes que bajan y ya bajaron en la ronda anterior. Con 6-10 baja el 9, que no había flotado."
+    },
+    {
+      "ficha": "holandes-2026",
+      "texto": "¿Qué es un topscorer en el Holandés 2026?",
+      "opciones": [
+        "El líder del torneo",
+        "Quien tiene el rating más alto",
+        "Quien ganó las dos primeras rondas",
+        "Quien tiene más del 50 % del máximo posible al emparejar la última ronda"
+      ],
+      "correcta": 3,
+      "explicacion": "Art. 1.8."
+    },
+    {
+      "ficha": "holandes-2026",
+      "texto": "Dos jugadores tienen la misma preferencia fuerte por blancas y sus historiales de color son idénticos, así que ni la preferencia más fuerte ni la alternancia deciden. El mejor clasificado tiene TPN 3. ¿Qué regla se aplica antes que la del TPN?",
+      "opciones": [
+        "Dar negras a ambos",
+        "Sortear",
+        "Dar blancas al de menor rating",
+        "Dar su preferencia al mejor clasificado"
+      ],
+      "correcta": 3,
+      "explicacion": "Art. 5.2: tras ambas preferencias, la más fuerte y la alternancia, se concede la preferencia del mejor clasificado (5.2.4); el TPN impar o par (5.2.5) es el último recurso."
+    },
+    {
+      "ficha": "holandes-2026",
+      "texto": "Un jugador ganó por incomparecencia en la ronda 1. Para el Holandés, ¿qué flotación tiene en esa ronda?",
+      "opciones": [
+        "Ninguna",
+        "Una bajada",
+        "Depende del color",
+        "Una subida"
+      ],
+      "correcta": 1,
+      "explicacion": "Art. 1.4.3: quien sin jugar suma más que los puntos de una derrota recibe una bajada."
+    },
+    {
+      "ficha": "holandes-2026",
+      "texto": "¿Cuál es un criterio absoluto del Holandés 2026?",
+      "opciones": [
+        "Minimizar los bajados",
+        "No emparejar a dos no topscorers con la misma preferencia absoluta de color",
+        "Evitar subidas repetidas",
+        "Dar a cada uno su color preferido"
+      ],
+      "correcta": 1,
+      "explicacion": "C3 es absoluto. Los otros son criterios de calidad (C6, C12, C15)."
+    },
+    {
+      "ficha": "holandes-2026",
+      "texto": "Un jugador jugó con negras en la ronda 1 y su rival de la ronda 2 no ha jugado ninguna partida. ¿Qué color recibe?",
+      "opciones": [
+        "Blancas: el rival no tiene preferencia y se respeta la suya",
+        "Se sortea",
+        "El del TPN más bajo",
+        "Negras"
+      ],
+      "correcta": 0,
+      "explicacion": "Art. 1.7.4: quien no jugó ninguna partida no tiene preferencia de color; se concede la del rival (5.2.1)."
+    },
+    {
+      "ficha": "gestion-suizo-c042",
+      "texto": "Dos jugadores emparejados en la ronda 2 no jugaron (incomparecencia). ¿Pueden volver a emparejarse en la ronda 6?",
+      "opciones": [
+        "Solo con permiso del organizador",
+        "No, nunca",
+        "Solo en la última ronda",
+        "Sí"
+      ],
+      "correcta": 3,
+      "explicacion": "C.04.2, art. 3.5: dos jugadores que no jugaron su partida pueden emparejarse en una ronda futura."
+    },
+    {
+      "ficha": "gestion-suizo-c042",
+      "texto": "Una partida aplazada aún no terminó cuando hay que emparejar la ronda siguiente. ¿Cómo se cuenta para emparejar?",
+      "opciones": [
+        "No se cuenta",
+        "Como victoria del que va mejor",
+        "Como tablas, solo a efectos de emparejamiento",
+        "Se espera a que termine"
+      ],
+      "correcta": 2,
+      "explicacion": "C.04.2, art. 3.1."
+    },
+    {
+      "ficha": "gestion-suizo-c042",
+      "texto": "Se detecta después de publicar los emparejamientos que dos jugadores emparejados ya se habían enfrentado. ¿Se puede cambiar?",
+      "opciones": [
+        "Sí, es uno de los casos del art. 4.4, si el árbitro principal lo considera en interés del torneo",
+        "Solo si los dos jugadores firman",
+        "No, lo publicado no se toca",
+        "Solo si no ha empezado ninguna partida del torneo"
+      ],
+      "correcta": 0,
+      "explicacion": "C.04.2, art. 4.4."
+    },
+    {
+      "ficha": "gestion-suizo-c042",
+      "texto": "Un resultado mal anotado se descubre una vez terminado el plazo, después del torneo. ¿Para qué se usa la corrección?",
+      "opciones": [
+        "No se usa",
+        "Para cambiar la clasificación final y los premios",
+        "Solo para el envío a rating",
+        "Para rehacer todos los emparejamientos"
+      ],
+      "correcta": 2,
+      "explicacion": "C.04.2, art. 4.3: avisado a tiempo afecta a la clasificación y la ronda siguiente; después, solo al envío a rating."
+    },
+    {
+      "ficha": "gestion-suizo-c042",
+      "texto": "Un jugador inscrito llega después del sorteo de la ronda 1 sin haber confirmado. ¿Qué pasa?",
+      "opciones": [
+        "Queda excluido, salvo que el árbitro principal decida otra cosa",
+        "Recibe medio punto",
+        "Juega igual",
+        "Se le empareja contra el descanso"
+      ],
+      "correcta": 0,
+      "explicacion": "C.04.2, art. 4.1."
+    },
+    {
+      "ficha": "gestion-suizo-c042",
+      "texto": "Al enviar el informe a la FIDE, ¿qué debe declarar el árbitro principal sobre el emparejamiento?",
+      "opciones": [
+        "Los nombres de los auxiliares",
+        "El sistema suizo oficial y el método de aceleración usados",
+        "El programa usado y su versión",
+        "Nada"
+      ],
+      "correcta": 1,
+      "explicacion": "C.04.2, art. 1.3."
+    },
+    {
+      "ficha": "gestion-suizo-c042",
+      "texto": "Un participante tardío se incorpora en la ronda 3. Si las bases no dicen nada, ¿cuántos puntos recibe por las rondas 1 y 2?",
+      "opciones": [
+        "Los que decida el árbitro",
+        "Ninguno",
+        "Medio punto por ronda",
+        "Un punto por ronda"
+      ],
+      "correcta": 1,
+      "explicacion": "C.04.2, art. 2.4: no recibe puntos por las rondas no jugadas, salvo que las bases digan otra cosa."
+    },
+    {
+      "ficha": "premios-hort",
+      "texto": "¿Qué objetivo combina el sistema Hort?",
+      "opciones": [
+        "Evitar los desempates",
+        "Dar todo al primero",
+        "Repartir todo a partes iguales",
+        "Premiar el puesto final y, a la vez, repartir parte del dinero"
+      ],
+      "correcta": 3,
+      "explicacion": "Premia la posición tras los desempates sin que un solo jugador se lleve casi todo, ni que los premios caigan demasiado."
+    },
+    {
+      "ficha": "premios-hort",
+      "texto": "¿Qué parte del premio de su puesto recibe directamente cada empatado?",
+      "opciones": [
+        "Nada",
+        "El 50 %",
+        "El 100 %",
+        "El 25 %"
+      ],
+      "correcta": 1,
+      "explicacion": "El sistema da el 50 % por el puesto y reparte el otro 50 % a partes iguales."
+    },
+    {
+      "ficha": "premios-hort",
+      "texto": "En ese mismo ejemplo (6 000, 3 000 y 1 500 entre tres empatados), ¿cuánto recibe el 3.º?",
+      "opciones": [
+        "2 500",
+        "1 500",
+        "750",
+        "3 500"
+      ],
+      "correcta": 0,
+      "explicacion": "750 + 1 750 = 2 500. Los tres suman 4 750 + 3 250 + 2 500 = 10 500, igual que la bolsa."
+    },
+    {
+      "ficha": "premios-hort",
+      "texto": "Tres jugadores empatan en el 1.er lugar. Premios: 6 000, 3 000 y 1 500. Con el sistema Hort, ¿cuánto recibe el que queda 1.º tras el desempate?",
+      "opciones": [
+        "6 000",
+        "3 500",
+        "5 250",
+        "4 750"
+      ],
+      "correcta": 3,
+      "explicacion": "50 % de 6 000 = 3 000. Bolsa: (3 000 + 1 500 + 750) = 5 250, ÷ 3 = 1 750. Total 3 000 + 1 750 = 4 750."
+    },
+    {
+      "ficha": "premios-hort",
+      "texto": "¿Dónde se regula el uso del sistema Hort en un torneo FIDE?",
+      "opciones": [
+        "En las Leyes del Ajedrez",
+        "En el C.04.3",
+        "En las bases del torneo",
+        "En el C.07, art. 16"
+      ],
+      "correcta": 2,
+      "explicacion": "El C.07 ordena a los empatados pero no regula el dinero; la forma de repartir premios la fijan las bases."
+    },
+    {
+      "ficha": "premios-hort",
+      "texto": "Cinco empatados, premios 10 000 / 7 000 / 5 000 / 3 000 / 2 000. ¿Cuánto vale la parte de la bolsa común para cada uno?",
+      "opciones": [
+        "2 700",
+        "5 400",
+        "13 500",
+        "1 350"
+      ],
+      "correcta": 0,
+      "explicacion": "La mitad de 27 000 es 13 500; ÷ 5 = 2 700."
+    }
+  ],
+  "casos": [
+    {
+      "id": "ronda2-incomparecencia",
+      "ficha": "holandes-2026",
+      "titulo": "¿6-9 o 6-10?",
+      "nivel": "Avanzado",
+      "ritmo": null,
+      "escena": "Suizo de 10 jugadores, Sistema Holandés. Ronda 1: 1-6 0-1, 7-2 tablas, 3-8 tablas, 9-4 1-0 y 5-10 con victoria del 10 por incomparecencia. En el grupo de 1 punto están 6, 9 y 10. Un padre protesta porque el programa emparejó 6-10 y no el «natural» 6-9.",
+      "decision": {
+        "texto": "¿Qué emparejamiento es el correcto en ese grupo?",
+        "opciones": [
+          "6-9; el 10 baja",
+          "6-10; el 9 baja",
+          "9-10; el 6 baja",
+          "Cualquiera: todas las opciones cumplen los colores"
+        ],
+        "correcta": 1,
+        "explicacion": "Art. 1.4.3: la victoria sin jugar del 10 en la ronda 1 cuenta como bajada. C14 minimiza los residentes que bajan dos rondas seguidas, así que baja el 9 y se juega 6-10 (6 con blancas)."
+      }
+    }
+  ],
+  "repeticiones": []
+}

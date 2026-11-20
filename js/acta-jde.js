@@ -47,11 +47,12 @@
      Primero el código entre paréntesis («Direct Encounter (DE)»); si no
      trae, por el nombre y sus parámetros («Buchholz … (Gamepoints, Cut1)»).
      null si no se reconoce: entonces no se adivina. */
-  const CON_CODIGO = /\((DE|WIN|WON|BPG|BWG|GE|KS|ARO|TPR|PTP|PS|STD|FB|AOB|APRO|APPO|AFB)\)/;
+  const CON_CODIGO = /\((DE|WIN|WON|BPG|BWG|GE|REP|KS|ARO|TPR|PTP|PS|STD|FB|AOB|APRO|APPO|AFB|TPN|RTNG)\)/;
   function codigoDesempate(nombre) {
     const s = String(nombre || "");
     const m = CON_CODIGO.exec(s);
-    if (m) return m[1];
+    // GE es el nombre de antes de 2026 de REP (rondas que eligió jugar).
+    if (m) return m[1] === "GE" ? "REP" : m[1];
     const corte = /Cut\s*2/i.test(s) ? 2 : /Cut\s*1?\b/i.test(s) ? 1 : 0;
     const mediano = /Median\s*2/i.test(s) ? 2 : /Median/i.test(s) ? 1 : 0;
     if (/Buchholz/i.test(s)) return mediano ? "BH-M" + mediano : corte ? "BH-C" + corte : "BH";

@@ -1,0 +1,30 @@
+{
+  "numero": 14,
+  "fecha_original": "julio de 2013",
+  "titulo_presentacion": "Editorial",
+  "temas": [
+    {"titulo": "Ser árbitro, ¿te está provocando fatiga mental?", "desc": "Paula Man Reich · psicología del deporte"},
+    {"titulo": "Antidopaje en el ajedrez", "desc": "Lista Prohibida y Programa de Seguimiento de la AMA 2026"},
+    {"titulo": "Curso de sistema suizo (5.ª parte): diferencia y preferencia de color", "desc": "C.04.1 y C.04.3 (2026) · arts. 1.6, 1.7 y 5"},
+    {"titulo": "¿Son tablas?", "desc": "Leyes 2023 · arts. 5.2.2, 6.9, 9.2, 9.3, 9.6 · Directrices III"}
+  ],
+  "presentacion": "<div class=\"cols\"><p>Con muchas expectativas, jugadores, árbitros y entrenadores esperaban los cambios de las nuevas Leyes del Ajedrez, que debían entrar en vigor el 1 de julio de 2013. Pero pocos días antes la FIDE anunció que no habría cambios hasta octubre de 2013 y que las nuevas Leyes se aplicarían desde el 1 de julio de 2014. Seguimos, entonces, un año más con las Leyes de 2009.</p><p>La FIDE también publicó un comunicado sobre las sustancias prohibidas para los ajedrecistas, muy importante para que los organizadores lo tengan presente.</p><p>En este número seguimos profundizando en el sistema suizo, con un artículo extenso sobre la <b>diferencia de color</b> y la <b>preferencia de color</b>.</p><p><b>¿Son tablas?</b> trata de errores comunes al determinar posiciones de tablas: no se lo pueden perder.</p><p>Y ser árbitro, ¿te está provocando fatiga mental? Nuestra colaboradora, la psicóloga deportiva Paula Man, nos presenta un test para que puedas saber si esto te está afectando.</p><p>Gracias por seguirnos.</p><p style=\"text-align:left\"><b>Santiago García Ramos</b><br>Árbitro Internacional</p></div>",
+  "cambios": [
+    ["Leyes del Ajedrez", "Seguían vigentes las Leyes de 2009; las nuevas se aplicarían el 1-jul-2014.", "Todo el número se revisa con las <b>Leyes vigentes desde el 1-ene-2023</b> (la versión de 2014 fue reemplazada en 2018 y en 2023)."],
+    ["Antidopaje", "Comunicado de 2013: Programa de Seguimiento y lista de 2013, con umbrales mezclados (cafeína, codeína, efedrina) y un dato de «400 miligramos» sin explicar.", "Se reescribe con la <b>Lista Prohibida 2026</b> de la AMA (en vigor desde el 1-ene-2026): anfetaminas y modafinilo (S6.A), metilfenidato (S6.B), efedrina y metilefedrina &gt; 10 µg/mL, seudoefedrina &gt; 150 µg/mL, catina &gt; 5 µg/mL; tramadol prohibido en competición (S7). La <b>cafeína</b> y la <b>codeína</b> no están prohibidas: siguen en el <b>Programa de Seguimiento 2026</b>. Se añade la autorización de uso terapéutico (AUT)."],
+    ["Suizo: definiciones de color", "Definiciones del sistema holandés de la época.", "Arts. <b>1.6</b> (diferencia de color) y <b>1.7</b> (preferencia absoluta, fuerte, leve y sin preferencia) del C.04.3 aplicado desde el 1-feb-2026; reglas de asignación del <b>art. 5.2</b> y límites del C.04.1 (arts. 6-8)."],
+    ["Suizo: errores en los ejemplos", "«NBN-BN = −1 = preferencia fuerte a negras»; «NNB-NB = 2(B)−1(N)»; «NB- = preferencia leve a blancas»; «la preferencia será a negras cuando la diferencia sea menor a +1».", "<b>Fe de erratas:</b> NBN-BN da preferencia fuerte a <b>blancas</b>; NNB-NB son 2(B)−3(N) = −1; NB- da preferencia leve a <b>negras</b> (alterna con la última partida jugada); la preferencia absoluta a negras es con diferencia <b>mayor que +1</b>. Todos los ejemplos se recalcularon por programa; se sustituyó uno ilegible (se usa BBNBNB)."],
+    ["Suizo: reglas especiales", "Reglas especiales de ronda impar, ronda par y primeras rondas.", "Ya no están en el sistema holandés vigente. Hoy: quien no jugó ninguna partida no tiene preferencia (art. 1.7.4) y los criterios [C3], [C10]-[C13] ordenan los conflictos de color."],
+    ["¿Son tablas?: artículos", "Arts. 6.9, 5.1.a, 5.2.a-c y 10.2 de las Leyes de 2009.", "Arts. <b>5.2.2</b> (posición muerta), <b>6.9</b>, <b>9.2</b>, <b>9.3</b> y <b>9.6</b> (tablas automáticas por quíntuple repetición y 75 jugadas) de las Leyes 2023. El antiguo 10.2 es hoy la <b>Directriz III.5</b>, que solo rige sin incremento y si se anunció antes del torneo (III.2)."],
+    ["¿Son tablas?: líneas de juego", "Las continuaciones terminaban al coronar; la de las negras tenía la numeración mal (1…Rg6 3.Td3).", "Se completan <b>hasta el mate</b> y se comprobaron todas con un programa. La línea de las negras se renumera y sigue con 5.c4 … 8…Dc1#."],
+    ["¿Son tablas?: rey y caballo contra rey y caballo", "La solución empezaba con 1.Rd3, imposible con el rey blanco en b1.", "<b>Fe de erratas:</b> 1.Rc2 Cg5 2.Rd3… (el resto de la línea se conserva y termina en 14.Cg6#, comprobado)."],
+    ["¿Son tablas?: posiciones muertas", "Afirmaba que eran posiciones muertas.", "Se comprobó por programa, recorriendo todas las posiciones alcanzables, que en las dos posiciones de cadenas de peones no hay captura, movimiento de peón ni mate posible."],
+    ["Fatiga mental", "Test redactado de usted, con erratas.", "Se conserva el test de Paula Man Reich, corregido y redactado de tú."]
+  ],
+  "directorio": [
+    ["Director (edición original)", "Santiago García Ramos · Árbitro Internacional"],
+    ["Revisión (edición original)", "Ignacio Córdoba Navarro · Periodista"],
+    ["Diseño (edición original)", "Ángel Antonio Espino · Diseñador gráfico"],
+    ["Colaboradores (edición original)", "Paula Man Reich · Psicóloga del deporte; Carlos Calleros · Árbitro Internacional (Brasil)"]
+  ]
+}

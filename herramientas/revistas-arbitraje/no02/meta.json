@@ -1,0 +1,31 @@
+{
+  "numero": 2,
+  "fecha_original": "junio de 2012",
+  "temas": [
+    {"titulo": "Presentación", "desc": "Editorial y qué cambió en esta edición"},
+    {"titulo": "Decisiones arbitrales bajo presión", "desc": "Psicología del deporte · Paula Man Reich"},
+    {"titulo": "Promoción o coronación", "desc": "Arts. 3.7.3.3-3.7.3.5, 4.4.4, 4.6, 4.7.3, 6.11.2, 7.5.2, A.5.4 · Leyes 2023"},
+    {"titulo": "Juego de arbitraje: resolución de problemas", "desc": "Las siete cartas y dos casos resueltos con las Leyes 2023"},
+    {"titulo": "Desempate progresivo (acumulativo)", "desc": "C.07 (2026) · arts. 4.1, 4.2, 7.5 y 14"}
+  ],
+  "presentacion": "<div class=\"cols\"><p>Agradezco a todos nuestros lectores que nos sigan y estén pendientes de cada nueva entrega. Hemos recibido muchos correos con sugerencias, casos para analizar y ofrecimientos para escribir artículos, entre ellos de destacados árbitros internacionales de América y Europa. Creo que vamos por buen camino para consolidar este medio de información y desarrollo; seguiremos trabajando para darles material de estudio interesante y útil.</p><p>Damos la bienvenida a la psicóloga deportiva argentina <b>Paula Man Reich</b>, que nos escribirá artículos sobre los aspectos psicológicos que nos atañen como árbitros. En este número abre su sección con «Decisiones arbitrales».</p><p>Veremos además un <b>juego para la resolución de problemas</b> de arbitraje, una herramienta práctica para simplificar y ordenar la información que recabamos en toda discusión junto al tablero; explicaremos a grandes rasgos el <b>desempate acumulativo o progresivo</b>, y estudiaremos un tema que siempre ha sido polémico: <b>la promoción</b>.</p><p>En los próximos números esperen nuevos colaboradores y nuevas secciones. Vamos por más, gracias a ustedes.</p><p style=\"text-align:left\"><b>Santiago García Ramos</b><br>Árbitro Internacional</p></div>",
+  "cambios": [
+    ["Promoción: dónde está la norma", "Citaba los arts. 3.7.e, 4.4.d, 4.6.c, 6.12.b y 7.4.a de las Leyes anteriores a 2014.", "Hoy son los arts. <b>3.7.3.3-3.7.3.5</b> (qué es la promoción), <b>4.4.4</b> (la pieza queda elegida al tocar la casilla), <b>4.6</b> (formas de hacerla), <b>4.7.3</b> (cuándo está hecha), <b>6.11.2</b> (detener el reloj para pedir la pieza) y <b>7.5</b> (jugada ilegal) de las Leyes 2023."],
+    ["Sacar el peón de séptima y poner la pieza en octava", "Era una jugada ilegal: «el peón DEBE llegar a la última fila».", "<b>Corregido:</b> desde las Leyes de julio de 2014 es una forma válida de promocionar. El art. <b>4.6.1</b> dice que el peón no tiene que colocarse en la casilla de llegada, y el <b>4.6.2</b> que quitar el peón y poner la pieza puede hacerse en cualquier orden."],
+    ["Peón sin cambiar en la última fila", "Reconstruir la partida; sin planillas, tablas.", "Art. <b>7.5.2</b>: si el jugador pulsó el reloj sin cambiar el peón, es jugada ilegal, el peón se cambia por una <b>dama</b> y el rival recibe 2 minutos (art. 7.5.5; 1 minuto en rápidas y relámpago, A.3). En rápidas y relámpago sin supervisión adecuada rige el <b>A.5.4</b> (si después de la jugada siguiente sigue la posición ilegal, tablas)."],
+    ["Torre invertida", "Es una torre; se le pide colocarla bien. Opinión del autor.", "Se confirma con el <b>Manual del Árbitro FIDE 2026</b> (comentario al art. 4.6): es una torre aunque se diga «dama», moverla en diagonal es jugada ilegal y el árbitro corrige la pieza causando la mínima molestia."],
+    ["Promocionar con las dos manos", "No se mencionaba.", "Se añade el art. <b>7.5.4</b>: mover con las dos manos y pulsar el reloj se sanciona como jugada ilegal; si en la misma jugada hay dos irregularidades, cuentan como una (Manual del Árbitro 2026)."],
+    ["Teléfono celular (caso 2)", "Art. 12.3.b (2009): pierde si el aparato suena; si el rival no puede ganar, tablas (0-½ o ½-0).", "Art. <b>11.3.2.2</b>: pierde quien tenga el aparato encima, suene o no, y <b>el rival gana siempre</b> (1-0 o 0-1), aunque no tenga material para dar mate. Las bases pueden prever una sanción menor o permitir el aparato apagado en un bolso (11.3.2.1). Reducir el tiempo solo vale si las bases lo prevén."],
+    ["Oferta y acuerdo de tablas (caso 1)", "Arts. 9.1.b.1 y 5.2.c.", "Arts. <b>9.1.2.1</b> y <b>5.2.3</b> (ahora exige que ambos jugadores hayan hecho al menos una jugada); las bases pueden limitar los acuerdos (9.1.1). Se añade que rey y caballo <b>sí</b> pueden dar mate con una serie de jugadas legales (diagrama comprobado), y el ajuste correcto del reloj (art. 6.10.2)."],
+    ["Las siete cartas", "Sin referencias a las Leyes en cada carta.", "Cada carta remite a los artículos vigentes (8.1, 8.4, 8.5.3, 6.10.1, 6.11.1, 12.5, 12.7, 11.3.2…). Se aclara que las Leyes no prevén «anular» una partida por la intervención de un espectador."],
+    ["Desempate progresivo", "Reglamento de la época; «hasta las últimas consecuencias» como un solo criterio; un nombre equivocado en el ejemplo (Ramón Martínez por Miguel Juárez).", "Reglamento C.07 <b>vigente desde el 1-mar-2026</b>: PS (art. 7.5) y modificadores Cut-1 y Cut-2 (art. 14). Cada corte es un desempate distinto que debe estar publicado antes del torneo (arts. 4.1 y 4.2). Cifras recalculadas, jugadores ficticios y un ejemplo nuevo que necesita Cut-2."],
+    ["Soluciones de las posiciones idénticas", "Se publicaban en este número (ejercicios del N.º 1).", "Se quitaron: la edición actualizada del N.º 1 ya trae las soluciones razonadas con el art. 9.2.3."],
+    ["Datos de contacto y calendario", "Correos personales de los autores y «Nos vemos en julio».", "Se eliminaron por estar caducados."]
+  ],
+  "directorio": [
+    ["Director (edición original)", "Santiago García Ramos · Árbitro Internacional"],
+    ["Revisión (edición original)", "Ignacio Córdoba Navarro · Periodista"],
+    ["Colaboradora (edición original)", "Paula Man Reich · Psicóloga del deporte"],
+    ["Diseño (edición original)", "Ángel Antonio Espino · Diseñador gráfico"]
+  ]
+}

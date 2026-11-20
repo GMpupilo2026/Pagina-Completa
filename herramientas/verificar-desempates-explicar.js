@@ -63,13 +63,13 @@ function torneoAlAzar(semilla) {
 
 const CODIGOS = D.CATALOGO.map((c) => c.codigo);
 console.log("=== El catálogo ===");
-if (CODIGOS.length === 26) bien("26 desempates, cada uno con calcular() y explicar()");
-else mal("se esperaban 26 desempates y hay " + CODIGOS.length);
+if (CODIGOS.length === 30) bien("30 desempates, cada uno con calcular() y explicar()");
+else mal("se esperaban 30 desempates y hay " + CODIGOS.length);
 
 console.log("=== explicar() cuenta lo mismo que calcular(), en 80 torneos al azar ===");
 let comparados = 0;
 const N = 80;
-const CODIGOS_COMPLETOS = ["DE", "KS", "STD", "WIN", "WON", "BPG", "BWG", "GE"]; // recorren TODAS las rondas del jugador
+const CODIGOS_COMPLETOS = ["DE", "KS", "STD", "WIN", "WON", "BPG", "BWG", "REP"]; // recorren TODAS las rondas del jugador
 let filasDeMenos = 0;
 for (let s = 1; s <= N; s++) {
   const t = torneoAlAzar(s * 97 + 13);
@@ -90,7 +90,7 @@ for (let s = 1; s <= N; s++) {
       if (CODIGOS_COMPLETOS.includes(codigo)) {
         // Solo las rondas con un rival de carne y hueso y resultado ya puesto
         // (el bye no es «un encuentro» para DE, y por eso no le hace falta
-        // fila propia ahí; WIN/GE sí lo cuentan, pero eso ya lo comprobó la
+        // fila propia ahí; WIN/REP sí lo cuentan, pero eso ya lo comprobó la
         // igualdad de totales de arriba).
         const conRival = t.rondas.filter((R) => R.mesas.some((m) => (m.b === j.id || m.n === j.id) && m.n !== null && m.r)).length;
         if ((d.filas || []).length < conRival) filasDeMenos++;
@@ -98,7 +98,7 @@ for (let s = 1; s <= N; s++) {
     }
   }
 }
-if (filasDeMenos === 0) bien(`${comparados} comparaciones (${N} torneos × 26 desempates × sus jugadores): el total de explicar() es igual al de calcular(), sin ninguna ronda de menos`);
+if (filasDeMenos === 0) bien(`${comparados} comparaciones (${N} torneos × ${CODIGOS.length} desempates × sus jugadores): el total de explicar() es igual al de calcular(), sin ninguna ronda de menos`);
 else mal(`${filasDeMenos} casos con menos filas en el desglose que rondas ya resueltas`);
 
 console.log("=== Lo que se le pide a cada tipo de desglose ===");

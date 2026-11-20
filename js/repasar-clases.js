@@ -99,7 +99,401 @@ function datosDe(p){
   return { datos: { inicio: h.FEN || null, jugadas: g.history(), variantes: [], comentarios: {} }, sinDatos: true };
 }
 
+/* ---------------- La grabación de la clase ----------------
+   Si la llamada de la clase se grabó, sus partes (una cada 5 minutos) en
+   orden, cada una con su reproductor. La RLS de clase_grabaciones decide quién
+   las ve; las direcciones firmadas valen una hora. */
+let grabacionPedida = 0;
+async function cargarGrabacion(claseId){
+  const caja = document.getElementById('visor-grabacion');
+  const lista = document.getElementById('visor-grabacion-partes');
+  const pedido = ++grabacionPedida;
+  fenSeguida = null;
+  caja.hidden = true;
+  lista.textContent = '';
+  pintarResumen([]);
+  pintarMarcas([]);
+  if (!claseId) return;
+  // Sin grabación (o si falla) el visor sigue igual: la grabación es un extra.
+  let data, firmas;
+  try {
+    const r = await sb.from('clase_grabaciones').select('id, ruta, parte, segundos, marcas, texto, profesor_id, creado_en')
+      .eq('class_session_id', claseId).order('parte', { ascending: true }).range(0, 199);
+    if (pedido !== grabacionPedida || r.error || !r.data || !r.data.length) return;
+    data = r.data;
+    const f = await sb.storage.from('clase-grabaciones').createSignedUrls(data.map((g) => g.ruta), 3600);
+    firmas = f.data;
+  } catch (e) { console.warn('La grabación de la clase no se pudo cargar:', e); return; }
+  if (pedido !== grabacionPedida) return;
+  const url = new Map((firmas || []).filter((f) => f.signedUrl).map((f) => [f.path, f.signedUrl]));
+  data.forEach((g, i) => {
+    if (!url.has(g.ruta)) return;
+    const li = document.createElement('li');
+    const id = 'grabacion-parte-' + i;
+    const etiqueta = document.createElement('label');
+    etiqueta.htmlFor = id;
+    etiqueta.className = 'block text-xs font-semibold text-brand-600 dark:text-brand-300';
+    const min = Math.max(1, Math.round((g.segundos || 0) / 60));
+    etiqueta.textContent = (data.length > 1 ? `Parte ${i + 1} de ${data.length}` : 'La clase entera') + ` · ${min} ${min === 1 ? 'minuto' : 'minutos'}`;
+    const audio = document.createElement('audio');
+    audio.id = id;
+    audio.controls = true;
+    audio.preload = 'none';
+    audio.className = 'w-full mt-1';
+    audio.src = url.get(g.ruta);
+    // El tablero sigue a la grabación, si la parte trae las posiciones.
+    const marcas = Array.isArray(g.marcas) ? g.marcas.filter((m) => m && typeof m.fen === 'string') : [];
+    if (marcas.length) {
+      const seguir = () => seguirGrabacion(marcas, audio.currentTime);
+      audio.addEventListener('timeupdate', seguir);
+      audio.addEventListener('seeked', seguir);
+      audio.addEventListener('play', seguir);
+    }
+    const temas = temasDeLaParte(g.marcas, audio, i);
+    // Al terminar una parte sigue la siguiente.
+    audio.addEventListener('ended', () => {
+      const sig = document.getElementById('grabacion-parte-' + (i + 1));
+      if (sig) sig.play().catch(() => {});
+    });
+    li.append(etiqueta, audio);
+    if (temas) li.appendChild(temas);
+    li.appendChild(cajaDeTexto(g, url.get(g.ruta), i));
+    lista.appendChild(li);
+  });
+  caja.hidden = !lista.children.length;
+  pintarResumen(data.filter((g) => url.has(g.ruta)));
+  cargarMarcas(claseId, data.filter((g) => url.has(g.ruta)), pedido).catch(() => {});
+  const conMarcas = data.some((g) => Array.isArray(g.marcas) && g.marcas.length);
+  document.getElementById('visor-grabacion-sigue').hidden = !conMarcas;
+  document.getElementById('visor-grabacion-decir-caja').hidden = !conMarcas;
+}
+
+/* ---------------- El resumen de la clase ----------------
+   Arriba de las partes, para saber de qué fue la clase sin escucharla
+   entera: cuánto duró, los temas en orden (cada uno lleva a su parte y su
+   minuto) y, si las partes ya se pasaron a texto, las frases principales.
+   Las frases las elige ESTA página, sin mandar el texto a ningún lado: las
+   que más repiten las palabras que más se dijeron en la clase (sin contar
+   «el», «que», «de»…), en el orden en que se dijeron. No inventa nada: cada
+   frase es tal cual la sacó el paso a texto. */
+const PALABRAS_VACIAS = new Set(('a al algo algún alguna ante antes así aun aunque bien cada como con contra cual cuando de del desde donde dos e el ella ellas ellos en entonces entre era eres es esa ese eso esta este esto estoy está están fue ha hace hacer hay la las le les lo los más me mi mis muy nada ni no nos o otra otro para pero poco por porque pues que qué se sea si sí sin sobre solo son su sus también te tengo tiene todo todos tu tú un una uno unos usted va vamos voy y ya yo eh este ah ok okay bueno entonces o sea ahí acá aquí allá').split(' '));
+function frasesPrincipales(texto, cuantas){
+  const frases = String(texto || '').replace(/\s+/g, ' ').split(/(?<=[.!?…])\s+/)
+    .map((f) => f.trim()).filter((f) => { const n = f.split(' ').length; return n >= 6 && n <= 40; });
+  if (!frases.length) return [];
+  const palabras = (f) => (f.toLowerCase().match(/[a-záéíóúüñ]+/g) || []).filter((p) => p.length > 2 && !PALABRAS_VACIAS.has(p));
+  const veces = new Map();
+  for (const f of frases) for (const p of new Set(palabras(f))) veces.set(p, (veces.get(p) || 0) + 1);
+  const puntaje = (f) => { const ps = palabras(f); return ps.length ? ps.reduce((s, p) => s + (veces.get(p) || 0), 0) / Math.sqrt(ps.length) : 0; };
+  const vistas = new Set();
+  return frases.map((f, k) => ({ f, k, s: puntaje(f) }))
+    .sort((a, b) => b.s - a.s || a.k - b.k)
+    .filter((x) => { const clave = x.f.toLowerCase(); if (vistas.has(clave)) return false; vistas.add(clave); return true; })
+    .slice(0, cuantas)
+    .sort((a, b) => a.k - b.k)
+    .map((x) => x.f);
+}
+function pintarResumen(partes){
+  const caja = document.getElementById('visor-resumen');
+  if (!caja) return;
+  const dur = document.getElementById('visor-resumen-duracion');
+  const ol = document.getElementById('visor-resumen-temas');
+  const frasesCaja = document.getElementById('visor-resumen-frases');
+  const frasesLista = document.getElementById('visor-resumen-frases-lista');
+  ol.textContent = '';
+  frasesLista.textContent = '';
+  caja.hidden = !partes.length;
+  if (!partes.length) return;
+  const total = partes.reduce((s, g) => s + (g.segundos || 0), 0);
+  const min = Math.max(1, Math.round(total / 60));
+  dur.textContent = 'La clase grabada dura ' + min + (min === 1 ? ' minuto' : ' minutos') + (partes.length > 1 ? ', en ' + partes.length + ' partes.' : '.');
+  // Los temas, sin los «De vuelta a» (no son temas nuevos) ni los repetidos seguidos.
+  let anterior = null;
+  partes.forEach((g, i) => {
+    const marcas = Array.isArray(g.marcas) ? g.marcas : [];
+    for (const m of marcas) {
+      if (!m || typeof m.tema !== 'string' || !m.tema.trim() || !isFinite(m.s) || /^De vuelta a: /.test(m.tema) || m.tema === anterior) continue;
+      anterior = m.tema;
+      const li = document.createElement('li');
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'text-left text-sm text-brand-800 dark:text-brand-100 underline-offset-2 hover:underline rounded px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
+      b.textContent = m.tema + ' (' + (partes.length > 1 ? 'parte ' + (i + 1) + ', ' : '') + minutoYSegundo(m.s) + ')';   // título: textContent
+      b.addEventListener('click', () => {
+        const audio = document.getElementById('grabacion-parte-' + i);
+        if (!audio) return;
+        audio.currentTime = Math.max(0, m.s);
+        audio.play().catch(() => {});
+      });
+      li.appendChild(b);
+      ol.appendChild(li);
+    }
+  });
+  document.getElementById('visor-resumen-temas-caja').hidden = !ol.children.length;
+  const frases = frasesPrincipales(partes.map((g) => g.texto || '').join(' '), 5);
+  for (const f of frases) {
+    const li = document.createElement('li');
+    li.textContent = f;   // lo sacó un modelo de una voz: textContent
+    frasesLista.appendChild(li);
+  }
+  frasesCaja.hidden = !frases.length;
+}
+
+/* ---------------- Mis marcas de la clase ----------------
+   Los momentos que marcó quien mira (Alt+K en la llamada; clase_marcas, la
+   RLS le da solo las suyas). Cada parte de la grabación se guardó al
+   terminarla (creado_en), así que empezó `segundos` antes: con eso se sabe en
+   qué parte y en qué minuto cae cada marca. Se lleva 5 segundos antes, para
+   oír la frase entera. Una marca de cuando no se estaba grabando no lleva a
+   ningún lado y lo dice. */
+function dondeCae(partes, t){
+  for (let i = 0; i < partes.length; i++) {
+    const fin = new Date(partes[i].creado_en).getTime();
+    const inicio = fin - (partes[i].segundos || 0) * 1000;
+    if (t >= inicio - 2000 && t <= fin + 10000) return { i, s: Math.max(0, Math.min((t - inicio) / 1000 - 5, (partes[i].segundos || 0))) };
+  }
+  return null;
+}
+function horaDeCR(fecha){
+  return new Date(fecha).toLocaleTimeString('es-CR', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Costa_Rica' });
+}
+async function cargarMarcas(claseId, partes, pedido){
+  const { data, error } = await sb.from('clase_marcas').select('id, marcada_en').eq('class_session_id', claseId).order('marcada_en', { ascending: true }).range(0, 199);
+  if (pedido !== grabacionPedida) return;
+  pintarMarcas(error ? [] : (data || []), partes);
+}
+function pintarMarcas(marcas, partes){
+  const caja = document.getElementById('visor-resumen-marcas');
+  const ul = document.getElementById('visor-resumen-marcas-lista');
+  if (!caja || !ul) return;
+  ul.textContent = '';
+  caja.hidden = !marcas.length;
+  marcas.forEach((m, k) => {
+    const li = document.createElement('li');
+    li.className = 'flex flex-wrap items-center gap-2';
+    const donde = dondeCae(partes || [], new Date(m.marcada_en).getTime());
+    const ir = document.createElement('button');
+    ir.type = 'button';
+    ir.className = 'text-left text-sm text-brand-800 dark:text-brand-100 underline-offset-2 hover:underline rounded px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
+    ir.textContent = 'Marca ' + (k + 1) + ', a las ' + horaDeCR(m.marcada_en)
+      + (donde ? ' (' + ((partes || []).length > 1 ? 'parte ' + (donde.i + 1) + ', ' : '') + minutoYSegundo(donde.s) + ')' : ' (no se estaba grabando)');
+    ir.disabled = !donde;
+    if (donde) ir.addEventListener('click', () => {
+      const audio = document.getElementById('grabacion-parte-' + donde.i);
+      if (!audio) return;
+      audio.currentTime = donde.s;
+      audio.play().catch(() => {});
+    });
+    const borrar = document.createElement('button');
+    borrar.type = 'button';
+    borrar.className = 'bctrl text-xs';
+    borrar.textContent = 'Borrar';
+    borrar.setAttribute('aria-label', 'Borrar la marca ' + (k + 1));
+    borrar.addEventListener('click', async () => {
+      const { error } = await sb.from('clase_marcas').delete().eq('id', m.id);
+      if (error) { anunciar('No se pudo borrar la marca.'); return; }
+      pintarMarcas(marcas.filter((x) => x.id !== m.id), partes);
+      anunciar('Borraste la marca.');
+    });
+    li.append(ir, borrar);
+    ul.appendChild(li);
+  });
+  // Las marcas también hacen visible el resumen (aunque no haya temas).
+  if (marcas.length) document.getElementById('visor-resumen').hidden = false;
+}
+
+/* Cuánto habló cada alumno en la llamada de la clase (lo midió la página del
+   profe: llamada_participacion). Al alumno, solo lo suyo (la RLS no le da lo
+   de los demás); al profe y a administración, todos, del que más habló al que
+   menos, y quiénes estuvieron en la clase y no hablaron. Sin llamada no se ve. */
+let habladoPedido = 0;
+function textoDeSegundos(s){
+  const m = Math.floor((s || 0) / 60);
+  return m < 1 ? 'menos de un minuto' : m + (m === 1 ? ' minuto' : ' minutos');
+}
+async function cargarHablado(claseId){
+  const caja = document.getElementById('visor-hablado');
+  const lista = document.getElementById('visor-hablado-lista');
+  const callados = document.getElementById('visor-hablado-callados');
+  const pedido = ++habladoPedido;
+  caja.hidden = true;
+  lista.textContent = '';
+  callados.hidden = true;
+  if (!claseId) return;
+  const [h, a] = await Promise.all([
+    sb.from('llamada_participacion').select('persona_id, segundos').eq('class_session_id', claseId).order('segundos', { ascending: false }).range(0, 199),
+    sb.from('class_attendance').select('student_id, profiles(full_name)').eq('session_id', claseId).range(0, 199),
+  ]);
+  if (pedido !== habladoPedido || h.error || !h.data || !h.data.length) return;
+  const asistentes = a.error ? [] : (a.data || []);
+  const nombre = new Map(asistentes.map((x) => [x.student_id, (x.profiles && x.profiles.full_name) || 'Alguien']));
+  const soyAlumno = nombre.has(yoId);
+  const filas = soyAlumno ? h.data.filter((f) => f.persona_id === yoId) : h.data;
+  if (!filas.length) return;
+  for (const f of filas) {
+    const li = document.createElement('li');
+    li.textContent = soyAlumno ? 'Hablaste ' + textoDeSegundos(f.segundos) + '.'
+      : (nombre.get(f.persona_id) || 'Alguien') + ': ' + textoDeSegundos(f.segundos);   // nombres: textContent
+    lista.appendChild(li);
+  }
+  if (!soyAlumno) {
+    const hablaron = new Set(h.data.map((f) => f.persona_id));
+    const nada = asistentes.filter((x) => !hablaron.has(x.student_id)).map((x) => nombre.get(x.student_id));
+    callados.hidden = !nada.length;
+    callados.textContent = nada.length ? 'No hablaron: ' + nada.join(', ') + '.' : '';
+  }
+  caja.hidden = false;
+}
+
+/* Los temas de una parte, como capítulos: los anotó sola la página del profe
+   al grabar, cada vez que la clase cambió de diapositiva, de práctica, de
+   calentamiento, de tiempo para pensar o de posición (marcas con `tema`).
+   Cada uno es un botón que lleva el audio a ese minuto y lo hace sonar; el
+   que está sonando se marca (aria-current y «▶», no solo el color). Las
+   grabaciones de antes no tienen temas y no muestran nada. */
+function minutoYSegundo(s){
+  const t = Math.max(0, Math.floor(s || 0));
+  return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
+}
+function temasDeLaParte(marcas, audio, i){
+  const temas = Array.isArray(marcas)
+    ? marcas.filter((m) => m && typeof m.tema === 'string' && m.tema.trim() && isFinite(m.s)) : [];
+  if (!temas.length) return null;
+  const det = document.createElement('details');
+  det.className = 'mt-1';
+  det.open = temas.length <= 6;
+  const sum = document.createElement('summary');
+  sum.className = 'cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
+  sum.textContent = `Temas de esta parte (${temas.length})`;
+  const ol = document.createElement('ol');
+  ol.className = 'mt-1 space-y-1';
+  ol.id = 'grabacion-temas-' + i;
+  const botones = temas.map((m) => {
+    const li = document.createElement('li');
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'text-left text-sm text-brand-800 dark:text-brand-100 underline-offset-2 hover:underline rounded px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
+    const quien = document.createElement('span');
+    quien.className = 'grabacion-tema-marca';
+    quien.setAttribute('aria-hidden', 'true');
+    const texto = document.createElement('span');
+    texto.textContent = minutoYSegundo(m.s) + ' · ' + m.tema;   // lo escribió el profe (un título): textContent
+    b.append(quien, texto);
+    b.addEventListener('click', () => {
+      audio.currentTime = Math.max(0, m.s);
+      audio.play().catch(() => {});
+    });
+    li.appendChild(b);
+    ol.appendChild(li);
+    return { m, b, quien };
+  });
+  const marcar = () => {
+    let actualTema = null;
+    for (const x of botones) { if (x.m.s <= audio.currentTime + 0.05) actualTema = x; else break; }
+    for (const x of botones) {
+      const es = x === actualTema && audio.currentTime > 0;
+      x.b.setAttribute('aria-current', es ? 'true' : 'false');
+      x.quien.textContent = es ? '▶ ' : '';
+      x.b.classList.toggle('font-semibold', es);
+    }
+  };
+  audio.addEventListener('timeupdate', marcar);
+  audio.addEventListener('seeked', marcar);
+  det.append(sum, ol);
+  return det;
+}
+
+/* Lo que se dijo en una parte, en texto. Si ya está guardado, se muestra
+   plegado. Si no, «Pasar a texto» lo saca Whisper EN ESTA computadora
+   (js/reporte-transcribir.js, el mismo de Reportes: el audio no sale de acá).
+   Lo guarda solo el profe de la clase (guardar_texto_grabacion); al alumno le
+   queda en su pantalla. */
+function textoPlegado(texto, i){
+  const det = document.createElement('details');
+  det.className = 'mt-1';
+  const sum = document.createElement('summary');
+  sum.className = 'cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
+  sum.textContent = 'Lo que se dijo en esta parte, en texto';
+  const p = document.createElement('p');
+  p.id = 'grabacion-texto-' + i;
+  p.className = 'mt-1 text-sm text-brand-800 dark:text-brand-100 whitespace-pre-wrap max-h-64 overflow-y-auto';
+  p.tabIndex = 0;
+  p.textContent = texto;   // lo sacó un modelo de una voz: va por textContent
+  det.append(sum, p);
+  return det;
+}
+function cajaDeTexto(g, urlAudio, i){
+  const caja = document.createElement('div');
+  if (g.texto) { caja.appendChild(textoPlegado(g.texto, i)); return caja; }
+  if (!window.ReporteTranscribir || !ReporteTranscribir.hayCómo()) return caja;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'bctrl mt-1';
+  btn.textContent = '📝 Pasar a texto';
+  const estado = document.createElement('p');
+  estado.className = 'text-xs text-brand-600 dark:text-brand-300 mt-1';
+  estado.setAttribute('role', 'status');
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    try {
+      const resp = await fetch(urlAudio);
+      if (!resp.ok) throw new Error('No se pudo bajar la grabación.');
+      const texto = (await ReporteTranscribir.transcribir(await resp.blob(), (a) => { estado.textContent = a.detalle || ''; }) || '').trim();
+      if (!texto) { estado.textContent = 'No se entendió nada en esta parte.'; btn.disabled = false; return; }
+      btn.remove();
+      caja.insertBefore(textoPlegado(texto, i), estado);
+      if (g.profesor_id === yoId) {
+        const { error } = await sb.rpc('guardar_texto_grabacion', { p_id: g.id, p_texto: texto });
+        estado.textContent = error ? 'Se pasó a texto, pero no se pudo guardar: ' + error.message
+          : 'Listo: el texto quedó guardado y tus alumnos ya lo pueden leer.';
+      } else {
+        estado.textContent = 'Listo: el texto queda solo en tu pantalla.';
+      }
+    } catch (e) {
+      estado.textContent = 'No se pudo pasar a texto: ' + (e.message || e);
+      btn.disabled = false;
+    }
+  });
+  caja.append(btn, estado);
+  return caja;
+}
+
+/* La posición de ese momento de la grabación: la última marca que ya pasó.
+   Si es una posición de la partida de la clase, se mira ESE nodo (y se marca
+   en la lista de jugadas); si no (el profe armó otra cosa), se pinta igual.
+   Se dice solo si se marcó «Decir las jugadas mientras escucho»: con lector de
+   pantalla se oiría encima de la voz del profe. */
+let fenSeguida = null;
+function seguirGrabacion(marcas, t){
+  if (!actual) return;
+  let m = null;
+  for (const x of marcas) { if ((x.s || 0) <= t + 0.05) m = x; else break; }
+  if (!m || m.fen === fenSeguida) return;
+  fenSeguida = m.fen;
+  const n = actual.nodos.find((x) => x.valida && clavePos(x.fen) === clavePos(m.fen))
+    || (clavePos(actual.raiz.fen) === clavePos(m.fen) ? null : undefined);
+  const decir = document.getElementById('visor-grabacion-decir').checked;
+  if (n !== undefined) {
+    if (decir) { mirar(n); return; }
+    // Callado: lo mismo que mirar(), sin anunciar.
+    nodo = n;
+    pintarTablero(n ? n.fen : actual.raiz.fen, n ? n.ultima : null);
+    actual.nodos.forEach((x) => { if (x.boton) { x.boton.classList.toggle('actual', x === n); x.boton.setAttribute('aria-current', x === n ? 'true' : 'false'); } });
+    document.getElementById('visor-estado').textContent = n ? `Jugada ${nombreDe(n)}${n.enVariante ? ' (variante)' : ''}` : 'Posición de arranque';
+    pintarAvisoDePregunta(n ? n.fen : actual.raiz.fen);
+    return;
+  }
+  const texto = 'Posición de ese momento de la clase';
+  if (decir) { mirarPosicion(m.fen, texto); return; }
+  pintarTablero(m.fen, null);
+  document.getElementById('visor-estado').textContent = texto;
+}
+
 function abrir(p){
+  // Otra clase: la práctica contra el motor era de la posición de la anterior.
+  terminarPractica(false);
+  cargarGrabacion(p.class_session_id).catch(() => {});
+  cargarHablado(p.class_session_id).catch(() => {});
   const { datos, sinDatos } = datosDe(p);
   const raiz = PgnClase.arbol(datos.jugadas || [], datos.variantes || []);
   const inicio = datos.inicio || PgnClase.INICIAL;
@@ -142,7 +536,7 @@ function abrir(p){
      el título decía al recibir el foco lo dice el recuadro. */
   if (modoCiego() && comandos && comandos.input.checkVisibility()) {
     comandos.enfocar().decir(`${document.getElementById('visor-titulo').textContent}, ${document.getElementById('visor-fecha').textContent}. `
-      + 'Estás en la posición de arranque: escribe «siguiente», o «jugada 5» para ir a la jugada 5 de las blancas.');
+      + 'Estás en la posición de arranque: escribe «siguiente», o «jugada 5» para ir a la jugada 5 de las blancas. Para elegir otra clase, escribe «clases».');
   } else {
     document.getElementById('visor-titulo').focus();
   }
@@ -373,8 +767,15 @@ function montarAccesible(){
       // (#visor-anuncio) y la posición se pide con «posición».
       posicionViva: false,
       onEnviar: recorrerEscribiendo,
+      // Con el recuadro vacío, Enter o → avanzan sin escribir nada (js/cuadro-comandos.js).
+      recorrer: {
+        siguiente: (api) => { if ((nodo || actual.raiz).hijos[0]) { api.decir(''); siguiente(); } else api.decir('Ya estás en la última jugada de esta línea.'); },
+        anterior: (api) => { if (nodo) { api.decir(''); anterior(); } else api.decir('Ya estás en la posición de arranque.'); },
+        inicio: (api) => { api.decir(''); alPrincipio(); },
+        final: (api) => { api.decir(''); alFinal(); },
+      },
     });
-    if (comandos) comandos.ayuda('Recorrer: «siguiente», «anterior», «inicio», «final», «jugada 5» (la de las blancas; «jugada 5 negras», la de las negras), «girar». Preguntar: «posición», «caballos», «qué hay en e4». Escribe «ayuda» para todo.');
+    if (comandos) comandos.ayuda('Con el recuadro vacío: Enter o flecha derecha, la jugada siguiente; flecha izquierda, la anterior; Inicio y Fin, las puntas. Escribiendo: «jugada 5» (la de las blancas; «jugada 5 negras», la de las negras), «girar», «clases» (volver a la lista para elegir otra clase), «jugar» (jugar desde aquí contra el motor). Preguntar: «posición», «caballos», «qué hay en e4». Escribe «ayuda» para todo.');
   }
 }
 
@@ -394,8 +795,42 @@ function lineaActual(){
    de rivales (VisorLinea.pasoPedido): quien está en el recuadro no tiene que
    salir de él y tabular hasta ▶ en cada jugada. Las preguntas («caballos»)
    ya las contestó js/comandos-tablero.js antes de llegar acá. */
+/* Volver a la lista de clases desde el recuadro. Con la cuenta ciega el foco
+   queda en el recuadro al abrir una clase, y la lista está ANTES en la página:
+   quien no ve no tenía cómo saber que estaba ahí ni cómo llegar sin tabular
+   hacia atrás por los botones y el tablero. «clases» lleva el foco a la clase
+   abierta en la lista y dice cuántas hay y cómo moverse. */
+const PIDE_LISTA = /^\s*(clases|mis clases|lista|la lista|lista de clases|otra clase|elegir( otra)? clase|cambiar( de)? clase|volver a (la lista|las clases))\s*$/i;
+function irALaLista(){
+  const botones = [...document.querySelectorAll('#lista-clases button')];
+  if (!botones.length) return 'Todavía no hay clases en la lista.';
+  const abierta = botones.find((b) => b.getAttribute('aria-current') === 'true') || botones[0];
+  abierta.focus();
+  return 'Tus clases: ' + botones.length + (botones.length === 1 ? ' clase' : ' clases')
+    + '. Flecha arriba y flecha abajo pasan de una a otra; Enter abre la que elijas.';
+}
+/* Dentro de la lista, flecha arriba y abajo pasan de clase en clase (y Inicio
+   y Fin, a las puntas): con doscientas clases, Tab de una en una no alcanza. */
+document.getElementById('lista-clases').addEventListener('keydown', (e) => {
+  const b = e.target && e.target.closest && e.target.closest('#lista-clases button');
+  if (!b) return;
+  const botones = [...document.querySelectorAll('#lista-clases button')];
+  const i = botones.indexOf(b);
+  const destino = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: botones.length - 1 }[e.key];
+  if (destino === undefined) return;
+  e.preventDefault();
+  e.stopPropagation();   // que no lo tome el recorrido de la partida
+  if (botones[destino]) botones[destino].focus();
+});
+
 function recorrerEscribiendo(texto, api){
-  if (!actual) { api.decir('Primero elige una clase de la lista.'); return; }
+  if (PIDE_LISTA.test(texto)) { api.limpiar(); api.decir(irALaLista()); return; }
+  if (!actual) { api.decir('Primero elige una clase de la lista: escribe «clases».'); return; }
+  if (/^\s*(jugar|practicar|jugar contra el motor|jugar desde aqu[ií]( contra el motor)?)\s*$/i.test(texto)) {
+    api.limpiar().decir('');
+    empezarPractica();
+    return;
+  }
   if (/^\s*girar( el tablero)?\s*$/i.test(texto)) {
     api.limpiar();
     document.getElementById('btn-girar').click();
@@ -475,14 +910,214 @@ document.getElementById('btn-girar').addEventListener('click', () => {
 // (js/tablero-accesible.js), y robárselas dejaba el tablero sin poder mirarse
 // —cada flecha cambiaba de jugada en vez de pasar a la casilla de al lado—.
 document.addEventListener('keydown', (e) => {
-  if (!actual || document.getElementById('visor').hidden) return;
+  // Jugando contra el motor la partida de la clase está escondida: moverla a
+  // ciegas cambiaría desde dónde se vuelve sin que nadie lo vea.
+  if (!actual || document.getElementById('visor').hidden || practica.activa) return;
   if (/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '')) return;
-  if (e.target && e.target.closest && e.target.closest('#board, #repaso-board, .cc-caja, [role="application"]')) return;
+  if (e.target && e.target.closest && e.target.closest('#board, #repaso-board, #practica-board, .cc-caja, [role="application"]')) return;
   if (e.key === 'ArrowLeft') { e.preventDefault(); anterior(); }
   else if (e.key === 'ArrowRight') { e.preventDefault(); siguiente(); }
   else if (e.key === 'Home') { e.preventDefault(); alPrincipio(); }
   else if (e.key === 'End') { e.preventDefault(); alFinal(); }
 });
+
+/* ---------------- Jugar contra el motor desde la clase ----------------
+   Desde la posición que se está mirando, el alumno juega con el bando al que
+   le toca y el motor contesta por el otro: es el mismo Stockfish por Elo de la
+   práctica de la clase en vivo (js/practice-engine.js), con plazo y con
+   jugada de respaldo, así el tablero nunca se queda «pensando». Se juega
+   tocando el tablero o escribiendo en su propio recuadro, y cada jugada (la
+   suya y la del motor) se dice CONTADA. No se guarda en la base: es práctica
+   del alumno, no una entrega. Al terminar se vuelve a la partida de la clase
+   en la misma jugada. */
+const practica = { activa: false, juego: null, desde: null, humano: 'w', sel: null, ultima: null,
+  pensando: false, terminada: false, turnoDeJuego: 0, comandos: null, teclado: null };
+
+const RESULTADO = { '1-0': 'ganan las blancas', '0-1': 'ganan las negras', '½-½': 'tablas' };
+function colorDe(c){ return c === 'w' ? 'blancas' : 'negras'; }
+
+function empezarPractica(){
+  if (!actual) return;
+  if (typeof Chess !== 'function' || !window.PracticeEngine) {
+    avisarDelVisor('El motor no está disponible en este navegador.');
+    return;
+  }
+  /* Desde lo que se VE: puede ser la posición aparte de una pregunta del profe
+     («Ver la posición»), que se pinta sin moverse de la jugada de la partida. */
+  const enPartida = nodo ? nodo.fen : actual.raiz.fen;
+  const vista = posicionVista ? posicionVista.fen() : enPartida;
+  const aparte = clavePos(vista) !== clavePos(enPartida);
+  practica.desde = vista;
+  practica.aparte = aparte ? document.getElementById('visor-estado').textContent : null;
+  practica.desdeNombre = aparte ? 'la ' + practica.aparte.replace(/^./, (x) => x.toLowerCase())
+    : nodo ? 'la jugada ' + nombreDe(nodo) : 'la posición de arranque';
+  practica.activa = true;
+  document.getElementById('visor-mirar').hidden = true;
+  document.getElementById('practica').hidden = false;
+  montarPracticaAccesible();
+  PracticeEngine.preload();
+  reiniciarPractica();
+  if (modoCiego() && practica.comandos && practica.comandos.input.checkVisibility()) practica.comandos.enfocar();
+  else document.getElementById('practica-titulo').focus();
+}
+
+function reiniciarPractica(){
+  practica.juego = new Chess(practica.desde);
+  practica.humano = practica.juego.turn();
+  practica.sel = null; practica.ultima = null; practica.pensando = false; practica.terminada = false;
+  practica.turnoDeJuego += 1;   // una respuesta del motor que llegue tarde ya no es de esta partida
+  const intro = 'Juegas con ' + colorDe(practica.humano) + ' desde ' + practica.desdeNombre
+    + '; el motor responde con ' + colorDe(practica.humano === 'w' ? 'b' : 'w') + '. Te toca.';
+  document.getElementById('practica-intro').textContent = intro;
+  decirEnPractica(intro);
+  pintarPractica();
+}
+
+function montarPracticaAccesible(){
+  if (!practica.teclado && window.TableroAccesible) {
+    practica.teclado = TableroAccesible.montar(document.getElementById('practica-board'), {
+      nombre: 'Tablero contra el motor', juego: () => practica.juego, cuadro: () => practica.comandos && practica.comandos.input,
+    });
+  }
+  if (!practica.comandos && window.CuadroComandos) {
+    practica.comandos = CuadroComandos.montar(document.getElementById('practica-cmd'), {
+      etiqueta: 'Escribe tu jugada contra el motor, o una pregunta sobre la posición',
+      juego: () => practica.juego,
+      tablero: () => practica.teclado,
+      // La posición no se dicta en cada jugada: se dice la jugada y la posición se pide.
+      posicionViva: false,
+      onEnviar: (texto, api) => {
+        const t = texto.trim().toLowerCase();
+        if (/^(terminar|salir|volver|volver a la partida|dejar de jugar)$/.test(t)) { api.limpiar(); terminarPractica(true); return; }
+        if (/^(otra vez|de nuevo|empezar otra vez|reiniciar|revancha)$/.test(t)) { api.limpiar(); reiniciarPractica(); return; }
+        if (practica.terminada) { api.decir('La partida terminó. Escribe «otra vez» para jugarla de nuevo, o «terminar» para volver a la partida de la clase.'); return; }
+        if (practica.pensando) { api.decir('El motor está pensando su jugada. Espera un momento.'); return; }
+        const mv = window.ComandosTablero ? ComandosTablero.jugadaEscrita(practica.juego, texto) : null;
+        if (!mv) { api.decir(window.ComandosTablero ? ComandosTablero.noSePudoJugar(texto.trim()) : '«' + texto.trim() + '» no es una jugada legal en esta posición.'); try { api.input.select(); } catch (e) {} return; }
+        api.limpiar();
+        jugarEnPractica(mv.from, mv.to, mv.promotion);
+      },
+    });
+    if (practica.comandos) practica.comandos.ayuda('Escribe tu jugada («Cf3», «e4», «caballo a f3»). «otra vez», empezar de nuevo desde la misma posición; «terminar», volver a la partida de la clase. Preguntar: «posición», «caballos», «qué hay en e4».');
+  }
+}
+
+/* Lo que se dice: escrito en el renglón de estado (una región viva) y, con la
+   voz del sitio encendida, en voz alta. Vaciar y repoblar: una región viva no
+   vuelve a hablar si el texto es el mismo (dos «Te toca» seguidos). */
+function decirEnPractica(texto){
+  const e = document.getElementById('practica-estado');
+  e.textContent = '';
+  window.setTimeout(() => { e.textContent = texto; }, 50);
+  if (window.BlindNotation) BlindNotation.speak(texto);
+}
+
+function avisarDelVisor(texto){
+  if (comandos) comandos.decir(texto);
+  anunciar(texto);
+}
+
+function pintarPractica(){
+  const t = document.getElementById('practica-board');
+  const puede = !practica.terminada && !practica.pensando && practica.juego.turn() === practica.humano;
+  EjercicioTablero.dibujar(t, {
+    juego: practica.juego, orientacion: practica.humano,
+    seleccionada: puede && practica.sel ? practica.sel : null,
+    ultima: practica.ultima,
+    alTocar: (sq) => tocarPractica(sq),
+  });
+  if (puede && practica.sel) EjercicioTablero.marcarDestinos(t, practica.juego, practica.sel);
+  if (window.Coordenadas) Coordenadas.aplicar(t);
+  document.getElementById('practica-jugadas').textContent = practica.juego.history().join(' ') || 'ninguna todavía';
+}
+
+function tocarPractica(sq){
+  if (practica.terminada || practica.pensando || practica.juego.turn() !== practica.humano) return;
+  const p = practica.juego.get(sq);
+  if (practica.sel && practica.sel !== sq) {
+    const legal = practica.juego.moves({ square: practica.sel, verbose: true }).some((m) => m.to === sq);
+    if (legal) { const de = practica.sel; EjercicioTablero.jugarCoronando(practica.juego, de, sq, (pieza) => jugarEnPractica(de, sq, pieza)); return; }
+  }
+  practica.sel = p && p.color === practica.humano ? sq : null;
+  pintarPractica();
+}
+
+function resultadoDePractica(){
+  const g = practica.juego;
+  if (g.in_checkmate()) return g.turn() === 'w' ? '0-1' : '1-0';
+  if (g.in_stalemate() || g.insufficient_material() || g.in_threefold_repetition() || g.in_draw()) return '½-½';
+  return null;
+}
+
+function contada(mv){
+  // Sin el punto final: la frase sigue («Jugaste: … . El motor piensa»).
+  return window.VisorLinea ? VisorLinea.jugadaContada(mv).replace(/^./, (x) => x.toLowerCase()).replace(/\.$/, '') : mv.san;
+}
+
+async function jugarEnPractica(desde, hasta, pieza){
+  const mv = practica.juego.move({ from: desde, to: hasta, promotion: pieza || 'q' });
+  if (!mv) return;
+  practica.sel = null;
+  practica.ultima = { from: mv.from, to: mv.to };
+  const tuya = 'Jugaste: ' + contada(mv) + '.';
+  if (terminarSiAcabo(tuya)) return;
+  practica.pensando = true;
+  pintarPractica();
+  decirEnPractica(tuya + ' El motor piensa…');
+  const turno = practica.turnoDeJuego;
+  let uci = null;
+  try { uci = (await PracticeEngine.responder(practica.juego.fen(), document.getElementById('practica-nivel').value)).uci; }
+  catch (e) { uci = null; }
+  if (!uci) uci = PracticeEngine.jugadaDeRespaldo(practica.juego.fen());
+  // Mientras pensaba, el alumno terminó o empezó otra vez: esa respuesta ya no va.
+  if (!practica.activa || turno !== practica.turnoDeJuego) return;
+  practica.pensando = false;
+  if (!uci) { pintarPractica(); decirEnPractica('El motor no respondió. Escribe «otra vez» para empezar de nuevo.'); return; }
+  const rival = practica.juego.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.length > 4 ? uci[4] : undefined });
+  if (!rival) { pintarPractica(); decirEnPractica('El motor no respondió. Escribe «otra vez» para empezar de nuevo.'); return; }
+  practica.ultima = { from: rival.from, to: rival.to };
+  // Las dos jugadas juntas: quien llega al renglón después oye la jugada entera.
+  const suya = tuya + ' El motor jugó: ' + contada(rival) + '.';
+  if (terminarSiAcabo(suya)) return;
+  pintarPractica();
+  decirEnPractica(suya + (practica.juego.in_check() ? ' Estás en jaque.' : '') + ' Te toca.');
+}
+
+function terminarSiAcabo(previo){
+  const r = resultadoDePractica();
+  if (!r) return false;
+  practica.terminada = true;
+  practica.pensando = false;
+  const gano = (r === '1-0' && practica.humano === 'w') || (r === '0-1' && practica.humano === 'b');
+  const mate = practica.juego.in_checkmate() ? 'Jaque mate: ' : '';
+  pintarPractica();
+  decirEnPractica(previo + ' Fin de la partida. ' + mate + RESULTADO[r] + '.'
+    + (gano ? ' ¡Bien jugado!' : r === '½-½' ? '' : ' Escribe «otra vez» para intentarlo de nuevo.'));
+  return true;
+}
+
+function terminarPractica(enfocar){
+  if (!practica.activa) return;
+  practica.activa = false;
+  practica.pensando = false;
+  practica.turnoDeJuego += 1;
+  document.getElementById('practica').hidden = true;
+  document.getElementById('visor-mirar').hidden = false;
+  if (!actual) return;
+  if (practica.aparte) mirarPosicion(practica.desde, practica.aparte);
+  else mirar(nodo);
+  if (!enfocar) return;
+  if (modoCiego() && comandos && comandos.input.checkVisibility()) {
+    comandos.enfocar();
+    avisarDelVisor('De vuelta en la partida de la clase, en ' + practica.desdeNombre + '.');
+  } else {
+    document.getElementById('btn-practicar').focus();
+  }
+}
+
+document.getElementById('btn-practicar').addEventListener('click', empezarPractica);
+document.getElementById('practica-otra-btn').addEventListener('click', reiniciarPractica);
+document.getElementById('practica-terminar-btn').addEventListener('click', () => terminarPractica(true));
 
 /* ---------------- El repaso personal (?repaso=<clase>) ----------------
    Las preguntas de jugada de esa clase que a este alumno no le salieron

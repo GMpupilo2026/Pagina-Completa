@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,29 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: De Philidor a Kling y Horwitz</a></li>
+        <li><a href="#posicion-2">Posición 2: Diagrama de análisis: complicarse la vida</a></li>
+        <li><a href="#posicion-3">Posición 3: Kolesnikov - Bocharov, Sochi 2004</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Objetivo: Conocer los peones doblados, los peones de torre y alfil con el rey cortado en octava y el peón de alfil en quinta.</p>
 <p>Idea guía: Con dos peones el bando fuerte casi siempre gana, pero los peones doblados y los de torre y alfil tienen defensas conocidas.</p>
@@ -70,52 +96,128 @@
   <dt>La posición de Philidor</dt>
   <dd>La defensa básica de torre y peón contra torre: el defensor pone su torre en la tercera fila para impedir que el rey rival avance, y cuando el peón llega a esa fila, baja la torre a la octava a dar jaques por detrás.</dd>
   <dd><strong>El error de siempre:</strong> Dar jaques desde el principio. Mientras el peón no ha pasado de la quinta, los jaques por detrás no sirven: el rey rival se esconde delante de su peón. Primero la tercera fila.</dd>
-  <dd><strong>Para verlo:</strong> Rey negro en e8, torre negra en a6, peón blanco en e5 y rey blanco en e6. Mientras la torre esté en la sexta fila —la tercera desde el lado blanco—, el rey blanco no puede avanzar.</dd>
+  <dd><strong>Para verlo:</strong> Rey negro en eva 8, torre negra en anna 6, peón blanco en eva 5 y rey blanco en eva 6. Mientras la torre esté en la sexta fila —la tercera desde el lado blanco—, el rey blanco no puede avanzar.</dd>
   <dt>El valor de las piezas</dt>
   <dd>Peón 1, caballo y alfil 3, torre 5, dama 9. El rey no tiene valor de cambio porque no se puede entregar. Son números de referencia, no una verdad: sirven para decidir cambios rápido, no para juzgar una posición.</dd>
   <dd><strong>El error de siempre:</strong> Tratar los números como si fueran exactos. Un caballo clavado en el borde vale menos que un peón pasado a punto de coronar, y la calidad (torre por pieza menor) se entrega todos los días cuando la pieza menor domina una casilla fuerte.</dd>
   <dd><strong>Para verlo:</strong> Dos piezas menores (6) contra una torre y un peón (6) están igualadas en el papel; en la práctica las dos piezas suelen ser mejores en el medio juego, porque hacen dos trabajos a la vez, y peores en el final, donde la torre corre.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: De Philidor a Kling y Horwitz</h3>
+  <h3 id="posicion-1">Posición 1 de 3: De Philidor a Kling y Horwitz</h3>
   
-  <p>Piezas blancas: rey en c5; torre en g7; peones en d4, d5.</p>
-  <p>Piezas negras: rey en d8; torre en h6.</p>
+  <h4>Piezas blancas: 4</h4>
+  <ul>
+    <li>Rey en cesar 5.</li>
+    <li>Torre en gustav 7.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en david 5.</li>
+  </ul>
+  <h4>Piezas negras: 2</h4>
+  <ul>
+    <li>Rey en david 8.</li>
+    <li>Torre en hector 6.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 1. torre bella 7, torre gustav 6, 2. torre bella 6, torre gustav 4, 3. david 6, torre gustav 1, 4. rey cesar 6, torre cesar 1 jaque, 5. rey david 5, torre hector 1, 6. torre bella 8 jaque, rey david 7, 7. torre bella 7 jaque, rey david 8, 8. david 7, torre hector 5 jaque, 9. rey cesar 6, torre hector 6 jaque, 10. rey cesar 5, torre hector 5 jaque, 11. david 5, torre hector 6, 12. david 6, torre captura david 6</p>
+  <h4>La línea: 24 jugadas</h4>
+  <ul>
+    <li>1. Blancas: torre bella 7.</li>
+    <li>1. Negras: torre gustav 6.</li>
+    <li>2. Blancas: torre bella 6.</li>
+    <li>2. Negras: torre gustav 4.</li>
+    <li>3. Blancas: david 6.</li>
+    <li>3. Negras: torre gustav 1.</li>
+    <li>4. Blancas: rey cesar 6.</li>
+    <li>4. Negras: torre cesar 1 jaque.</li>
+    <li>5. Blancas: rey david 5.</li>
+    <li>5. Negras: torre hector 1.</li>
+    <li>6. Blancas: torre bella 8 jaque.</li>
+    <li>6. Negras: rey david 7.</li>
+    <li>7. Blancas: torre bella 7 jaque.</li>
+    <li>7. Negras: rey david 8.</li>
+    <li>8. Blancas: david 7.</li>
+    <li>8. Negras: torre hector 5 jaque.</li>
+    <li>9. Blancas: rey cesar 6.</li>
+    <li>9. Negras: torre hector 6 jaque.</li>
+    <li>10. Blancas: rey cesar 5.</li>
+    <li>10. Negras: torre hector 5 jaque.</li>
+    <li>11. Blancas: david 5.</li>
+    <li>11. Negras: torre hector 6.</li>
+    <li>12. Blancas: david 6.</li>
+    <li>12. Negras: torre captura david 6.</li>
+  </ul>
   <p>Resultado: Tablas</p>
-  <p>2. torre bella 6 rompe Philidor; 2… torre gustav 4! ataca el peón atrasado. Tras 3. david 6 la torre va atrás a dar jaques y el peón de d4 sólo ofrece un refugio pálido.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 3k4/6R1/7r/2KP4/3P4/8/8/8 w - - 0 1</p>
+  <p>2. torre bella 6 rompe Philidor; 2… torre gustav 4! ataca el peón atrasado. Tras 3. david 6 la torre va atrás a dar jaques y el peón de david 4 sólo ofrece un refugio pálido.</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 3k4/6R1/7r/2KP4/3P4/8/8/8 w - - 0 1</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Diagrama de análisis: complicarse la vida</h3>
+  <h3 id="posicion-2">Posición 2 de 3: Diagrama de análisis: complicarse la vida</h3>
   
-  <p>Piezas blancas: rey en c5; torre en a8; peones en d4, d5.</p>
-  <p>Piezas negras: rey en c7; torre en g7.</p>
+  <h4>Piezas blancas: 4</h4>
+  <ul>
+    <li>Rey en cesar 5.</li>
+    <li>Torre en anna 8.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en david 5.</li>
+  </ul>
+  <h4>Piezas negras: 2</h4>
+  <ul>
+    <li>Rey en cesar 7.</li>
+    <li>Torre en gustav 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 1… torre gustav 1, 2. torre anna 7 jaque, rey cesar 8, 3. rey cesar 6, torre cesar 1 jaque, 4. rey david 6, torre cesar 4, 5. rey eva 5, torre bella 4</p>
+  <h4>La línea: 9 jugadas</h4>
+  <ul>
+    <li>1. Negras: torre gustav 1.</li>
+    <li>2. Blancas: torre anna 7 jaque.</li>
+    <li>2. Negras: rey cesar 8.</li>
+    <li>3. Blancas: rey cesar 6.</li>
+    <li>3. Negras: torre cesar 1 jaque.</li>
+    <li>4. Blancas: rey david 6.</li>
+    <li>4. Negras: torre cesar 4.</li>
+    <li>5. Blancas: rey eva 5.</li>
+    <li>5. Negras: torre bella 4.</li>
+  </ul>
   <p>Resultado: Tablas</p>
   <p>Tras 2… torre gustav 7?!, 3. torre bella 8 jaque, rey cesar 7, 4. torre anna 8 todavía se salva con 4… torre gustav 1! (4… torre gustav 6?, 5. david 6 jaque), pero la defensa es más difícil. Si hay un método claro, mejor no apartarse de él.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: R7/2k3r1/8/2KP4/3P4/8/8/8 b - - 0 1</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: R7/2k3r1/8/2KP4/3P4/8/8/8 b - - 0 1</p>
 </div>
 <div class="posicion">
-  <h3>Posición 3: Kolesnikov - Bocharov, Sochi 2004</h3>
+  <h3 id="posicion-3">Posición 3 de 3: Kolesnikov - Bocharov, Sochi 2004</h3>
   
-  <p>Piezas blancas: rey en g2; torre en b4.</p>
-  <p>Piezas negras: rey en h4; torre en a3; peones en g4, g7.</p>
+  <h4>Piezas blancas: 2</h4>
+  <ul>
+    <li>Rey en gustav 2.</li>
+    <li>Torre en bella 4.</li>
+  </ul>
+  <h4>Piezas negras: 4</h4>
+  <ul>
+    <li>Rey en hector 4.</li>
+    <li>Torre en anna 3.</li>
+    <li>Peón en gustav 4.</li>
+    <li>Peón en gustav 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 1. torre bella 2, torre anna 4, 2. torre cesar 2, gustav 5, 3. torre bella 2, gustav 3, 4. torre bella 8</p>
+  <h4>La línea: 7 jugadas</h4>
+  <ul>
+    <li>1. Blancas: torre bella 2.</li>
+    <li>1. Negras: torre anna 4.</li>
+    <li>2. Blancas: torre cesar 2.</li>
+    <li>2. Negras: gustav 5.</li>
+    <li>3. Blancas: torre bella 2.</li>
+    <li>3. Negras: gustav 3.</li>
+    <li>4. Blancas: torre bella 8.</li>
+  </ul>
   <p>Resultado: Tablas</p>
   <p>En la partida siguió 1. torre bella 8?, torre anna 2 jaque, 2. rey gustav 1, rey hector 3, 3. torre bella 3 jaque, gustav 3, 4. torre bella 1 y el segundo peón decidió. 1. torre bella 2! mantiene el esquema de la segunda fila; cuando el peón llega a sexta (después del rey), jaques por detrás.</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/6p1/8/8/1R4pk/r7/6K1/8 w - - 0 1</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/6p1/8/8/1R4pk/r7/6K1/8 w - - 0 1</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Toma tres finales tuyos y cuenta en qué jugada moviste el rey por primera vez. Compáralo con el rival.</li>
   <li>Juega cinco finales de peones parejos poniéndote como única regla acercar el rey antes que tocar un peón.</li>
@@ -125,7 +227,7 @@
   <li>Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -178,7 +280,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «El mapa de los finales» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

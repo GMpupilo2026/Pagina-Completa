@@ -193,7 +193,7 @@
     <div id="start-screen">
       <p class="lead" id="lead-text">Se muestra el nombre de una casilla (por ejemplo, "e4"). Haz clic en esa casilla en el tablero antes de que se acabe el tiempo. Cuanto más rápido reconozcas las casillas, mejor puntuación.</p>
 
-      <div class="option-group">
+      <div class="option-group" id="orientation-group">
         <span class="label">Jugar contra el profe</span>
         <div class="option-switch" role="group" aria-label="Orientación del tablero" id="orientation-switch">
           <button type="button" class="option-btn active" data-value="white">Blancas abajo</button>
@@ -234,7 +234,7 @@
       <div class="board8" id="board" role="group" aria-label="Tablero de coordenadas"></div>
 
       <form id="blind-panel" class="blind-panel" style="display:none;">
-        <label for="blind-input">¿Es blanca o negra? Escribe «blanca» o «negra» (o «b» o «n») y presiona Enter. «repetir» vuelve a decir la casilla.</label>
+        <label for="blind-input">¿Es blanca o negra? Escribe «blanca» o «negra» (o «b» o «n») y presiona Enter. «repetir» vuelve a decir la casilla y «ayuda» dice qué más se puede escribir.</label>
         <input type="text" id="blind-input" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="text">
       </form>
     </div>

@@ -801,7 +801,7 @@ window.PlanEntrenamiento = (function () {
     'entreno/4x4.html': '4x4', 'entreno/visualizacion.html': 'visualizacion',
     'entreno/diagnostico.html': 'diagnostico',
     'entreno/finales.html': 'finales',
-    'entreno/memoria.html': 'memoria', 'entreno/precision-posicional.html': 'precision-posicional',
+    'entreno/memoria.html': 'memoria', 'entreno/oido.html': 'oido', 'entreno/precision-posicional.html': 'precision-posicional',
     'sonar.html': 'sonar', 'batalla-naval.html': 'batalla-naval', 'concentracion.html': 'concentracion',
   };
   function claveDeAvance(href) {

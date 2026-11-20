@@ -27,6 +27,9 @@
   const sinTildes = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
   async function buscar() {
+    // Con js/torneo-pareo-datos.js en la página, su búsqueda: sin el torneo
+    // publicado dos veces y en el orden de los niveles.
+    if (window.TorneoPareoDatos && window.TorneoPareoDatos.buscar) return window.TorneoPareoDatos.buscar();
     const sb = window.sb;
     if (!sb) throw new Error("sin cliente");
     const { data: orgs, error: e1 } = await sb.from("pareo_organizadores").select("id").eq("verificado", true);
@@ -42,7 +45,7 @@
 
   const enlaceTorneo = (t, titulo) => {
     const a = document.createElement("a");
-    a.href = "torneos-pareo.html#t=" + encodeURIComponent(t.id);
+    a.href = "torneos-pareo.html?en-ventana=1#t=" + encodeURIComponent(t.id);
     a.dataset.ventana = titulo;
     return a;
   };
@@ -78,6 +81,9 @@
     a.append(...partes.slice(0, -1), fin);
     vieja.replaceWith(a);
   }
+
+  // «En vivo» (#hoy-vivo) ya no está aquí: es js/torneo-en-vivo.js, la misma
+  // copia de la Eliminatoria JDN de Pérez Zeledón.
 
   buscar().then(pintar).catch(() => { /* sin conexión: la ficha sigue «Pronto» */ });
 })();

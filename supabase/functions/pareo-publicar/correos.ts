@@ -70,6 +70,94 @@ export function correoInscripcion(cabecera: string, torneo: string, inscrito: { 
   };
 }
 
+/** El contacto de una inscripción es un correo (si es un teléfono, no se escribe). */
+export const esCorreo = (s: unknown) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(s ?? "").trim());
+
+/** Los datos de la inscripción que se repiten en el correo (los escribió quien inscribió). */
+export type DatosInscrito = {
+  nombre: string; responsable?: string; institucion?: string; categoria?: string;
+  sexo?: string; nacimiento?: string; elo?: number | null; fide_id?: string;
+};
+/** Lo que se sabe del torneo publicado (la ficha Torneo y el anuncio de Pareo). */
+export type DatosEvento = {
+  fecha?: string | null; fechaFin?: string | null; hora?: string; lugar?: string; ritmo?: string;
+  rondas?: number; contacto?: string; bases?: string; url?: string;
+};
+
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre", "noviembre", "diciembre"];
+const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+/** «sábado 21 de noviembre de 2026» de un AAAA-MM-DD (sin zona horaria: es una fecha, no una hora). */
+export function fechaLarga(f: unknown) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(f ?? ""));
+  if (!m) return "";
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  if (isNaN(d.getTime()) || d.getUTCMonth() !== +m[2] - 1) return "";
+  return `${DIAS[d.getUTCDay()]} ${+m[3]} de ${MESES[+m[2] - 1]} de ${m[1]}`;
+}
+const fechaCorta = (f: unknown) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(f ?? "")); return m ? `${m[3]}/${m[2]}/${m[1]}` : ""; };
+
+// Una tabla de dos columnas (lo que es · su valor) sin las filas vacías.
+function tabla(titulo: string, filas: [string, unknown][]) {
+  const llenas = filas.filter(([, v]) => v != null && String(v).trim() !== "");
+  if (!llenas.length) return "";
+  const trs = llenas.map(([k, v]) => `<tr><td style="padding:6px 12px 6px 0;color:#486581;vertical-align:top;white-space:nowrap">${escapar(k)}</td><td style="padding:6px 0;font-weight:700;white-space:pre-line">${escapar(v)}</td></tr>`).join("");
+  return `<strong style="display:block;margin:8px 0 4px;font-size:16px">${escapar(titulo)}</strong><table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-top:1px solid #d9e2ec;font-size:15px">${trs}</table>`;
+}
+
+/** A quien inscribió: quien organiza aceptó (la bienvenida al torneo, con sus
+ *  datos) o rechazó su inscripción (con el motivo). */
+export function correoDecision(cabecera: string, torneo: string, organizacion: string,
+  inscrito: DatosInscrito, estado: "aceptada" | "rechazada", comentario: string, sePuedeResponder: boolean, evento: DatosEvento = {}): Correo {
+  const acepta = estado === "aceptada";
+  const quien = organizacion ? `<strong>${escapar(organizacion)}</strong>` : "Quien organiza el torneo";
+  const c = comentario.trim();
+  const hola = inscrito.responsable ? `Hola, ${escapar(inscrito.responsable)}. ` : "";
+  const recuadro = c ? [`<span style="display:block;padding:12px 16px;background:#f0f4f8;border-left:4px solid ${acepta ? "#2f8132" : "#b42318"};border-radius:4px;white-space:pre-line"><strong>${acepta ? "Comentario de la organización" : "Motivo"}:</strong> ${escapar(c)}</span>`] : [];
+  const datosInscrito = tabla("Datos de la inscripción", [
+    ["Jugador", inscrito.nombre], ["Centro o club", inscrito.institucion], ["Categoría", inscrito.categoria],
+    ["Sexo", inscrito.sexo === "F" ? "Femenino" : inscrito.sexo === "M" ? "Masculino" : ""],
+    ["Nacimiento", fechaCorta(inscrito.nacimiento)], ["Elo", inscrito.elo ? String(inscrito.elo) : ""], ["ID FIDE", inscrito.fide_id],
+  ]);
+  const responder = sePuedeResponder
+    ? "responde a este correo: le llega a quien organiza."
+    : "escríbele a quien organiza el torneo" + (evento.contacto ? ` (${escapar(evento.contacto)}).` : ".");
+  const url = evento.url && /^https:\/\/ajedrez-integral\.com\//.test(evento.url) ? evento.url : SITIO + "/torneos-pareo.html";
+
+  if (!acepta) {
+    return {
+      asunto: "Inscripción rechazada en «" + linea(torneo) + "»: " + linea(inscrito.nombre, 80),
+      html: cuerpo(cabecera, [
+        hola + `${quien} no aceptó la inscripción de <strong>${escapar(inscrito.nombre)}</strong> en <strong>${escapar(torneo)}</strong>.`,
+        ...recuadro,
+        "Si crees que es un error o quieres corregir algún dato, " + responder,
+        datosInscrito,
+      ].filter(Boolean), { texto: "Ver el torneo", url }),
+    };
+  }
+
+  const fecha = fechaLarga(evento.fecha);
+  const fin = evento.fechaFin && evento.fechaFin !== evento.fecha ? fechaLarga(evento.fechaFin) : "";
+  const datosEvento = tabla("El torneo", [
+    ["Torneo", torneo], ["Fecha", fecha ? fecha + (fin ? " al " + fin : "") : ""], ["Hora", evento.hora ? evento.hora + " (hora de Costa Rica)" : ""],
+    ["Lugar", evento.lugar], ["Ritmo de juego", evento.ritmo], ["Rondas", evento.rondas ? String(evento.rondas) : ""],
+    ["Contacto de la organización", evento.contacto],
+  ]);
+  const bases = evento.bases && evento.bases.trim()
+    ? `<strong style="display:block;margin:8px 0 4px;font-size:16px">Bases y detalles</strong><span style="display:block;white-space:pre-line">${escapar(evento.bases.trim())}</span>`
+    : "";
+  return {
+    asunto: "¡Bienvenida a «" + linea(torneo) + "»! Inscripción aceptada: " + linea(inscrito.nombre, 80),
+    html: cuerpo(cabecera, [
+      hola + `¡Les damos la bienvenida a <strong>${escapar(torneo)}</strong>! ${quien} aceptó la inscripción de <strong>${escapar(inscrito.nombre)}</strong>: ya está en la lista de jugadores.`,
+      ...recuadro,
+      datosInscrito,
+      datosEvento,
+      bases,
+      "Si algún dato está mal o tienes una pregunta, " + responder + " Lleguen con tiempo para la acreditación. ¡Mucha suerte!",
+    ].filter(Boolean), { texto: "Ver el torneo", url }),
+  };
+}
+
 const MOTIVO: Record<string, string> = {
   inapropiado: "tiene contenido inapropiado", datos_personales: "muestra datos personales que no debería",
   falso: "es falso o de prueba", error: "tiene un error (nombres, resultados…)", otro: "otra cosa",

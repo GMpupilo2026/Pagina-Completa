@@ -54,6 +54,9 @@
     // (Un torneo sin evento es de antes de los eventos: el Centroamericano.)
     const caraNeutra = () => !torneos.some((t) => !t.evento || marcas.get(t.evento) === "centroamericano");
     const hayPareo = () => torneos.some((t) => t.fuente === "pareo");
+    // De dónde salen las mesas: lo que el principal eligió para sus torneos. Con todos en Pareo Integral, la página no nombra chess-results.
+    const fuenteNombre = () => !hayPareo() ? "chess-results" : torneos.every((t) => t.fuente === "pareo") ? "Pareo Integral" : "chess-results y Pareo Integral";
+    const fuenteDe = (tnr) => ((torneos.find((t) => t.tnr === tnr) || {}).fuente === "pareo" ? "Pareo Integral" : "chess-results");
     let asignaciones = [];
     let avisos = [];
     let progreso = [];
@@ -183,7 +186,14 @@
     // solo los de prueba, para ensayar con las tablets sin ensuciar lo del torneo.
     let ensayo = false;
     let pruebas = new Set();
-    const dentro = (tnr) => pruebas.has(tnr) === ensayo;
+    // Cada evento, por separado: la organización elige arriba sobre cuál trabaja y todas las pestañas (la ronda, los árbitros,
+    // los avisos, las planillas, Fair Play, Transmisión y LiveChess) muestran solo sus torneos. Nada del Centroamericano se
+    // cuela en otro evento (ver «Cada evento de la Mesa, por separado» en docs/decisiones/juegos-y-torneos.md).
+    const EVENTO_VIEJO = "Centroamericano 2026"; // un torneo sin evento es de antes de los eventos
+    let eventoElegido = "";
+    let eventoDe = new Map();   // tnr → evento, de todos los torneos que se ven (también los archivados)
+    let todosAbiertos = [];     // los torneos abiertos de todos los eventos (para «Vincular», que dice en cuál está cada uno)
+    const dentro = (tnr) => pruebas.has(tnr) === ensayo && (!eventoElegido || (eventoDe.get(tnr) || EVENTO_VIEJO) === eventoElegido);
     const idsDentro = () => new Set(asignaciones.map((a) => a.id));
 
     // ------------------------------------------------------------- 1. ronda en curso
@@ -357,7 +367,7 @@
             const yo = filas.find((x) => x.id === f.asignacion_id);
             const lista = yo && yo.ronda === f.ronda ? C.sugerirAyuda(yo, filas) : [];
             sugerencias.push(el("p", { class: "mt-2 font-bold", texto: "Sugerencia: a dónde puede ir a ayudar" }));
-            if (!lista.length) sugerencias.push(el("p", { class: "cam-herramientas-nota", texto: "Nadie más tiene mesas pendientes según el último avance. Toca «Actualizar desde chess-results» para estar seguro." }));
+            if (!lista.length) sugerencias.push(el("p", { class: "cam-herramientas-nota", texto: "Nadie más tiene mesas pendientes según el último avance. Toca «Actualizar desde " + fuenteNombre() + "» para estar seguro." }));
             for (const s of lista) {
                 sugerencias.push(el("div", { class: "cam-sugerencia", "data-id": s.id },
                     el("span", { texto: s.arbitro + " (" + nombreTorneo(s.tnr) + (s.mismoTorneo ? ", su mismo torneo" : "") + "): le quedan " + s.quedan + (s.quedan === 1 ? " mesa" : " mesas") + "; podría tomar " + (s.mesas.length === 1 ? "la mesa " : "las mesas ") + C.listaMesas(s.mesas) + "." }),
@@ -434,7 +444,7 @@
     async function actualizarResumen() {
         const b = $("resumen-actualizar");
         b.disabled = true;
-        $("resumen-total").textContent = "Leyendo chess-results…";
+        $("resumen-total").textContent = "Leyendo " + fuenteNombre() + "…";
         try {
             const d = await invocar({ action: "resumen" });
             await cargarAvance();
@@ -479,16 +489,16 @@
             const { data, error } = await sb.rpc("centroamericano_hojas");
             if (error) throw new Error(error.message);
             const hojas = (data || []).filter((h) => h.mesas && h.mesas.length && dentro(h.tnr));
-            if (!hojas.length) { avisar("Todavía no hay mesas leídas. Toca «Actualizar desde chess-results» y vuelve a intentar.", true); return; }
+            if (!hojas.length) { avisar("Todavía no hay mesas leídas. Toca «Actualizar desde " + fuenteNombre() + "» y vuelve a intentar.", true); return; }
             const bloques = [];
             hojas.forEach((h, i) => {
                 if (i) bloques.push({ tipo: "salto" });
                 bloques.push({ tipo: "titulo", texto: h.arbitro + " — mesas " + h.mesa_desde + " a " + h.mesa_hasta });
-                bloques.push({ tipo: "parrafo", texto: (h.categoria ? h.categoria + " " + (h.rama || "") : h.torneo) + " · ronda " + h.ronda + " · mesas de chess-results a las " + window.HoraCR.hora(new Date(h.leida)) });
+                bloques.push({ tipo: "parrafo", texto: (h.categoria ? h.categoria + " " + (h.rama || "") : h.torneo) + " · ronda " + h.ronda + " · mesas de " + fuenteDe(h.tnr) + " a las " + window.HoraCR.hora(new Date(h.leida)) });
                 bloques.push({ tipo: "nota", texto: "Marca con una X el resultado de cada partida y anota al lado lo que haga falta (ilegales, control de tiempos, incidencias). Cuando vuelva la señal, pasa los resultados a la tablet." });
                 bloques.push({
                     tipo: "tabla", altoFila: 30, encabezados: ["Mesa", "Blancas", "Negras", "Resultado", "Notas"], anchos: [1.1, 3, 3, 3.6, 2.2],
-                    filas: h.mesas.map((m) => [String(m.mesa), m.blancas, m.negras, m.valor && m.valor !== "0" ? "ya en chess-results: " + M.textoResultado(m.valor) : "[   ] 1-0     [   ] 1/2     [   ] 0-1", ""]),
+                    filas: h.mesas.map((m) => [String(m.mesa), m.blancas, m.negras, m.valor && m.valor !== "0" ? "ya en " + fuenteDe(h.tnr) + ": " + M.textoResultado(m.valor) : "[   ] 1-0     [   ] 1/2     [   ] 0-1", ""]),
                 });
                 bloques.push({ tipo: "parrafo", texto: "Firma del árbitro: ______________________________" });
             });
@@ -632,31 +642,39 @@
     }
 
     // La cara neutra (Ajedrez Integral) cuando ningún torneo a la vista es del Centroamericano: el CSS cambia los colores y esconde
-    // las hojas y la mascota (html[data-marca]); aquí se esconde lo que es solo de ese evento: Fair Play, la transmisión por
-    // LiveChess y el vencimiento «al terminar el torneo (9 de noviembre)». El vencimiento por omisión pasa a «hasta el día…».
+    // las hojas y la mascota (html[data-marca]); aquí se esconde lo que es solo de ese evento: el vencimiento «al terminar el
+    // torneo (9 de noviembre)». El vencimiento por omisión pasa a «hasta el día…». Fair Play y Transmisión salen en las dos
+    // caras: leen cada torneo de su fuente, chess-results o Pareo Integral (ver «Fair Play y Transmisión en cualquier evento»).
     function ponerCara() {
         const neutra = caraNeutra();
         if (neutra) document.documentElement.setAttribute("data-marca", "ajedrez-integral");
         else document.documentElement.removeAttribute("data-marca");
-        for (const id of ["pest-fairplay", "pest-transmision"]) $(id).hidden = neutra;
         for (const o of document.querySelectorAll("#a-vence option[data-solo-marca]")) { o.hidden = neutra; o.disabled = neutra; }
         const vence = $("a-vence");
         if (!vence.dataset.tocado) { vence.value = neutra ? "fecha" : "torneo"; vence.dispatchEvent(new Event("cara")); }
         if (!$("a-vence-fecha").value) $("a-vence-fecha").value = window.HoraCR.hoy();
         $("a-vence-fecha").min = window.HoraCR.hoy();
         document.title = neutra ? "Mesas de los árbitros — Organización | Ajedrez Integral" : "Mesas de los árbitros — Centroamericano 2026 | Ajedrez Integral";
+        // La barra de la ventana: con la cara neutra, el evento de los torneos (si son de uno solo), no el Centroamericano.
+        const eventos = [...new Set(torneos.map((t) => t.evento).filter(Boolean))];
+        $("titulo-ventana").textContent = "Mesa del árbitro" + (!neutra ? " — Centroamericano 2026" : eventos.length === 1 ? " — " + eventos[0] : "");
+        for (const n of document.querySelectorAll("[data-fuente-nombre]")) n.textContent = fuenteNombre();
     }
 
     async function cargarTorneos() {
         const { data, error } = await sb.from("centroamericano_torneos").select("tnr, nombre, categoria, rama, orden, sid_en_boveda, clave_puesta, acceso_tnr, prueba, evento, archivado, ritmo, fuente, pareo_id").order("orden");
         if (error) { avisar("No se pudieron leer los torneos: " + error.message, true); return; }
         pruebas = new Set((data || []).filter((t) => t.prueba).map((t) => t.tnr));
+        eventoDe = new Map((data || []).map((t) => [t.tnr, t.evento || EVENTO_VIEJO]));
         // Un evento archivado (ya terminó) no se ve: lo medido queda de historia para Fair Play.
-        torneos = (data || []).filter((t) => dentro(t.tnr) && !t.archivado);
-        archivados = (data || []).filter((t) => !t.prueba && t.archivado);
+        todosAbiertos = (data || []).filter((t) => pruebas.has(t.tnr) === ensayo && !t.archivado);
         const { data: evs } = await sb.from("centroamericano_eventos").select("evento, marca");
         marcas = new Map((evs || []).map((e) => [e.evento, e.marca]));
+        elegirEvento();
+        torneos = todosAbiertos.filter((t) => dentro(t.tnr));
+        archivados = (data || []).filter((t) => !t.prueba && t.archivado);
         ponerCara();
+        mostrarChessResults();
         pintarTorneos();
         if (vincular) vincular.pintar();
         pintarEventos();
@@ -676,6 +694,44 @@
         }
         pintarEstadoGeneral();
         if (asignaciones.length) pintarAsignaciones();
+    }
+
+    // Los eventos abiertos que se ven (los de otro organizador no llegan: la base no los deja ver). Primero los que no son
+    // del Centroamericano. No se guarda en el navegador: esta página no guarda nada ahí (ver «Mesas de los árbitros del
+    // Centroamericano»); el elegido dura mientras la ventana siga abierta.
+    function elegirEvento() {
+        const viejo = (e) => (marcas.get(e) === "centroamericano" || e === EVENTO_VIEJO ? 1 : 0);
+        const lista = [...new Set(todosAbiertos.map((t) => eventoDe.get(t.tnr)))].sort((a, b) => (viejo(a) - viejo(b)) || a.localeCompare(b, "es"));
+        if (!lista.includes(eventoElegido)) eventoElegido = lista[0] || "";
+        const sel = $("evento-elegido");
+        sel.replaceChildren(...lista.map((e) => {
+            const n = todosAbiertos.filter((t) => eventoDe.get(t.tnr) === e).length;
+            return el("option", { value: e, texto: e + " (" + n + (n === 1 ? " torneo)" : " torneos)") });
+        }));
+        sel.value = eventoElegido;
+        $("evento-barra").hidden = lista.length < 2;
+        const caja = $("pareo-vincular");
+        if (caja && !caja.__evento && eventoElegido && !viejo(eventoElegido)) caja.__evento = eventoElegido;
+    }
+
+    async function cambiarEvento() {
+        eventoElegido = $("evento-elegido").value;
+        const caja = $("pareo-vincular");
+        if (caja) caja.__evento = marcas.get(eventoElegido) === "centroamericano" || eventoElegido === EVENTO_VIEJO ? "" : eventoElegido;
+        crPedido = false;
+        await recargarTodo();
+    }
+
+    // Lo de chess-results (la clave del grupo y las otras claves) solo sale si el evento tiene torneos de chess-results, o si
+    // la organización dice que también los tiene. Un evento de Pareo Integral no lo ve.
+    let crPedido = false;
+    function mostrarChessResults() {
+        const desdePareo = location.hash.replace("#", "") === "torneos";
+        const hayCr = torneos.some((t) => t.fuente !== "pareo");
+        const ver = hayCr || crPedido || (!torneos.length && !desdePareo);
+        for (const n of document.querySelectorAll("[data-solo-chess-results]")) n.hidden = !ver;
+        $("cr-mostrar-caja").hidden = ver;
+        $("cr-mostrar").setAttribute("aria-expanded", ver ? "true" : "false");
     }
 
     function pintarTorneos() {
@@ -847,7 +903,8 @@
             $("g-codigo").value = codigo;
             $("g-sid").value = sid;
             avisar("Listo: " + lista.length + (lista.length === 1 ? " torneo agregado" : " torneos agregados") + " a «" + nombreEvento + "». Ahora se guarda la clave.");
-            await cargarTorneos();
+            eventoElegido = nombreEvento; // la ventana pasa al evento donde quedaron
+            await recargarTodo();
             await guardarGrupo();
         } }, "Agregar al evento y guardar la clave");
         caja.replaceChildren(
@@ -866,7 +923,7 @@
         const caja = $("eventos");
         if (!caja || ensayo) { if (caja) caja.replaceChildren(); return; }
         const porEvento = (lista) => { const m = new Map(); lista.forEach((t) => { const k = t.evento || "Sin evento"; m.set(k, (m.get(k) || 0) + 1); }); return [...m]; };
-        const abiertos = porEvento(torneos.filter((t) => !t.prueba)), cerrados = porEvento(archivados);
+        const abiertos = porEvento(todosAbiertos.filter((t) => !t.prueba)), cerrados = porEvento(archivados);
         caja.replaceChildren(
             ...abiertos.map(([nombre, n]) => el("p", { class: "text-sm", "data-evento": nombre },
                 el("strong", { texto: "Evento «" + nombre + "»" }), ": " + n + (n === 1 ? " torneo. " : " torneos. "),
@@ -1798,10 +1855,17 @@
         ensayo = $("modo-ensayo").checked;
         $("aviso-ensayo").hidden = !ensayo;
         ponerTitulo();
+        await recargarTodo();
+        avisar(ensayo ? "Modo ensayo: ves solo los torneos de prueba." : "Volviste a los torneos reales.");
+    }
+
+    // Vuelve a leer todo con el modo y el evento de ahora (y avisa a Transmisión y a LiveChess, que leen por su lado).
+    async function recargarTodo() {
         await cargarTorneos();
         await cargarAsignaciones();
-        await Promise.all([cargarAvisos(), cargarTiempos(), cargarPlanillas(), cargarRegistro(), window.CentroamericanoFairPlay.cargar()]);
-        avisar(ensayo ? "Modo ensayo: ves solo los torneos de prueba." : "Volviste a los torneos reales.");
+        await Promise.all([cargarAvisos(), cargarTiempos(), cargarPlanillas(), cargarRegistro(), window.CentroamericanoFairPlay.cargar(),
+            window.CentroamericanoTransmision.cargar()]);
+        document.dispatchEvent(new CustomEvent("mesa-evento"));
     }
 
     async function pulso() {
@@ -1869,7 +1933,11 @@
         $("copia-archivo").addEventListener("change", restaurarArchivo);
         window.CentroamericanoFairPlay.iniciar({ raiz: $("fp-app"), principal: true, dentro, visible: () => !$("panel-fairplay").hidden });
         // La transmisión se lee aunque la pestaña no esté abierta (cada 10 s): su contador avisa desde cualquier pestaña.
-        window.CentroamericanoTransmision.iniciar({ raiz: $("tx-app"), principal: true, enlaces: $("tx-encargados"), contador: $("contador-tx") });
+        window.CentroamericanoTransmision.iniciar({ raiz: $("tx-app"), principal: true, enlaces: $("tx-encargados"), contador: $("contador-tx"), dentro });
+        // LiveChess (centroamericano-vivo-conectar.js) pregunta qué torneos son del evento elegido.
+        window.MesaEvento = { dentro: (tnr) => dentro(tnr), tnrs: () => torneos.map((t) => t.tnr) };
+        $("evento-elegido").addEventListener("change", cambiarEvento);
+        $("cr-mostrar").addEventListener("click", () => { crPedido = true; mostrarChessResults(); $("g-codigo").focus(); });
         $("r-actualizar").addEventListener("click", cargarRegistro);
         $("r-torneo").addEventListener("change", cargarRegistro);
         $("r-tipo").addEventListener("change", pintarRegistro);
@@ -1878,9 +1946,14 @@
         $("r-pdf").addEventListener("click", bajarPdf);
         $("r-informe").addEventListener("click", informeFinalPdf);
         vincular = window.MesaPareoVincular ? window.MesaPareoVincular.iniciar({
-            raiz: $("pareo-vincular"), sb, C, el, ensayo: () => ensayo, torneos: () => torneos,
-            eventos: () => [...new Set(torneos.map((t) => t.evento).filter((e) => marcas.get(e) !== "centroamericano"))],
-            alVincular: async () => { await cargarTorneos(); },
+            raiz: $("pareo-vincular"), sb, C, el, ensayo: () => ensayo, torneos: () => todosAbiertos,
+            eventos: () => [...new Set(todosAbiertos.map((t) => eventoDe.get(t.tnr)).filter((e) => marcas.get(e) !== "centroamericano" && e !== EVENTO_VIEJO))],
+            // Al vincular, la ventana pasa al evento donde quedó el torneo.
+            alVincular: async () => {
+                const caja = $("pareo-vincular");
+                if (caja && caja.__evento) eventoElegido = caja.__evento;
+                await recargarTodo();
+            },
         }) : null;
         await cargarTorneos();
         await cargarAsignaciones();

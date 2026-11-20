@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,28 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Héctor Rossetto – Miguel Najdorf, Mar del Plata 1962. Juegan las negras, con alfiles de distinto color. ¿Te conviene cambiar las torres?</a></li>
+        <li><a href="#posicion-2">Posición 2: Etienne Bacrot – Pascal Charbonneau, Trípoli (Mundial FIDE) 2004. Juegan las blancas. Con 22. torre captura david 5 quedan alfiles de distinto color, pero hay damas y torres. ¿Qué buscas después?</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Objetivo: Evaluar los finales y medios juegos con alfiles de distinto color según quién controla el complejo de casillas correcto.</p>
 <p>Idea guía: No son tablas automáticas: el bando con la iniciativa juega &quot;con pieza de más&quot; en las casillas de su alfil.</p>
@@ -75,50 +100,127 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>La estructura de peones</dt>
   <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
-  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: eva 4-david 5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Héctor Rossetto – Miguel Najdorf, Mar del Plata 1962. Juegan las negras, con alfiles de distinto color. ¿Te conviene cambiar las torres?</h3>
+  <h3 id="posicion-1">Posición 1 de 2: Héctor Rossetto – Miguel Najdorf, Mar del Plata 1962. Juegan las negras, con alfiles de distinto color. ¿Te conviene cambiar las torres?</h3>
   <p>Esta posición viene del curso Cambiar o no cambiar de la Academia.</p>
-  <p>Piezas blancas: rey en f2; torre en d4; alfil en c5; peones en b2, b4, c3, g2, h3.</p>
-  <p>Piezas negras: rey en g6; torre en h4; alfil en c6; peones en a6, b7, e6, f7, g5.</p>
+  <h4>Piezas blancas: 8</h4>
+  <ul>
+    <li>Rey en felix 2.</li>
+    <li>Torre en david 4.</li>
+    <li>Alfil en cesar 5.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en bella 4.</li>
+    <li>Peón en cesar 3.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 3.</li>
+  </ul>
+  <h4>Piezas negras: 8</h4>
+  <ul>
+    <li>Rey en gustav 6.</li>
+    <li>Torre en hector 4.</li>
+    <li>Alfil en cesar 6.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 5.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 28… torre felix 4 jaque, 29. torre captura felix 4, gustav captura felix 4, 30. gustav 3, felix captura gustav 3 jaque, 31. rey captura gustav 3, alfil anna 4, 32. hector 4, eva 5, 33. alfil david 6, felix 6, 34. rey felix 2</p>
+  <h4>La línea: 12 jugadas</h4>
+  <ul>
+    <li>28. Negras: torre felix 4 jaque.</li>
+    <li>29. Blancas: torre captura felix 4.</li>
+    <li>29. Negras: gustav captura felix 4.</li>
+    <li>30. Blancas: gustav 3.</li>
+    <li>30. Negras: felix captura gustav 3 jaque.</li>
+    <li>31. Blancas: rey captura gustav 3.</li>
+    <li>31. Negras: alfil anna 4.</li>
+    <li>32. Blancas: hector 4.</li>
+    <li>32. Negras: eva 5.</li>
+    <li>33. Blancas: alfil david 6.</li>
+    <li>33. Negras: felix 6.</li>
+    <li>34. Blancas: rey felix 2.</li>
+  </ul>
   <p>Resultado: Posición para jugar</p>
-  <p>28… torre felix 4 jaque acepta el cambio de torres, pero en f4: después de 29. torre captura felix 4, gustav captura felix 4, 30. gustav 3, felix captura gustav 3 jaque, 31. rey captura gustav 3 las negras quedan con peones pasados unidos en el centro. Con 31… alfil anna 4 el alfil paraliza los peones blancos del flanco de dama y los peones negros avanzan sin apuro. (Stockfish 17 a profundidad 22: torre felix 4 jaque está entre las mejores (−0,1; el motor prefiere apenas torre hector 7, −0,3).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/1p3p2/p1b1p1k1/2B3p1/1P1R3r/2P4P/1P3KP1/8 b - - 2 28</p>
+  <p>28… torre felix 4 jaque acepta el cambio de torres, pero en felix 4: después de 29. torre captura felix 4, gustav captura felix 4, 30. gustav 3, felix captura gustav 3 jaque, 31. rey captura gustav 3 las negras quedan con peones pasados unidos en el centro. Con 31… alfil anna 4 el alfil paraliza los peones blancos del flanco de dama y los peones negros avanzan sin apuro. (Stockfish 17 a profundidad 22: torre felix 4 jaque está entre las mejores (−0,1; el motor prefiere apenas torre hector 7, −0,3).)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/1p3p2/p1b1p1k1/2B3p1/1P1R3r/2P4P/1P3KP1/8 b - - 2 28</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Etienne Bacrot – Pascal Charbonneau, Trípoli (Mundial FIDE) 2004. Juegan las blancas. Con 22. torre captura david 5 quedan alfiles de distinto color, pero hay damas y torres. ¿Qué buscas después?</h3>
+  <h3 id="posicion-2">Posición 2 de 2: Etienne Bacrot – Pascal Charbonneau, Trípoli (Mundial FIDE) 2004. Juegan las blancas. Con 22. torre captura david 5 quedan alfiles de distinto color, pero hay damas y torres. ¿Qué buscas después?</h3>
   <p>Esta posición viene del curso Cambiar o no cambiar de la Academia.</p>
-  <p>Piezas blancas: rey en g1; dama en e2; torres en d1, f1; alfil en f3; peones en a2, b2, c3, e4, f2, g2, h2.</p>
-  <p>Piezas negras: rey en g8; dama en g6; torres en d8, f8; alfiles en d5, e7; peones en a6, b7, d6, e5, f7, g7, h4.</p>
+  <h4>Piezas blancas: 12</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en eva 2.</li>
+    <li>Torre en david 1.</li>
+    <li>Torre en felix 1.</li>
+    <li>Alfil en felix 3.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 3.</li>
+    <li>Peón en eva 4.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 13</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en gustav 6.</li>
+    <li>Torre en david 8.</li>
+    <li>Torre en felix 8.</li>
+    <li>Alfil en david 5.</li>
+    <li>Alfil en eva 7.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en david 6.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 4.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 22. torre captura david 5, torre cesar 8, 23. torre felix david 1, dama gustav 5, 24. anna 4, gustav 6, 25. dama cesar 2, torre cesar 6, 26. dama bella 3, torre bella 8, 27. alfil eva 2, dama felix 4</p>
+  <h4>La línea: 12 jugadas</h4>
+  <ul>
+    <li>22. Blancas: torre captura david 5.</li>
+    <li>22. Negras: torre cesar 8.</li>
+    <li>23. Blancas: torre felix david 1.</li>
+    <li>23. Negras: dama gustav 5.</li>
+    <li>24. Blancas: anna 4.</li>
+    <li>24. Negras: gustav 6.</li>
+    <li>25. Blancas: dama cesar 2.</li>
+    <li>25. Negras: torre cesar 6.</li>
+    <li>26. Blancas: dama bella 3.</li>
+    <li>26. Negras: torre bella 8.</li>
+    <li>27. Blancas: alfil eva 2.</li>
+    <li>27. Negras: dama felix 4.</li>
+  </ul>
   <p>Resultado: Posición para jugar</p>
-  <p>22. torre captura david 5 deja alfiles de distinto color con todas las piezas pesadas. Las blancas no buscan más cambios: llevan su alfil hacia c4 y d5, donde el alfil negro no lo puede discutir, y apuntan a f7. Con 28. torre 5 david 3 hasta entregan el peón de e4 para ganar tiempo. (Stockfish 17 a profundidad 22: torre captura david 5 es la que elige el motor (+0,3).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 3r1rk1/1p2bpp1/p2p2q1/3bp3/4P2p/2P2B2/PP2QPPP/3R1RK1 w - - 0 22</p>
+  <p>22. torre captura david 5 deja alfiles de distinto color con todas las piezas pesadas. Las blancas no buscan más cambios: llevan su alfil hacia cesar 4 y david 5, donde el alfil negro no lo puede discutir, y apuntan a felix 7. Con 28. torre 5 david 3 hasta entregan el peón de eva 4 para ganar tiempo. (Stockfish 17 a profundidad 22: torre captura david 5 es la que elige el motor (+0,3).)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 3r1rk1/1p2bpp1/p2p2q1/3bp3/4P2p/2P2B2/PP2QPPP/3R1RK1 w - - 0 22</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Revisa una partida tuya y marca en cada jugada quién estaba obligando. Vas a ver el momento exacto en que se te escapó.</li>
   <li>Juega tres partidas con el compromiso de no comer ningún peón lateral mientras tengas amenazas que hacer.</li>
   <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
   <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
-  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Arma en el tablero un peón aislado en david 4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -171,7 +273,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Desequilibrios de material» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
