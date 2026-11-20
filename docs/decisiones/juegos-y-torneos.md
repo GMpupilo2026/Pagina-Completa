@@ -18892,6 +18892,36 @@ el bye, la ronda 0, las tablas iguales a las del navegador, la migración, que c
 `guardarYComprobar`, el virtual solo desde la cola y que la página no escriba en el localStorage de Pareo). Roto a
 propósito el paso de mesa física a índice o el virtual por el canal, salta.
 
+### Cada evento de la Mesa, por separado
+
+Lo pidió el dueño el 19/11/2026, preparando la Eliminatoria Cantonal JDN de PZ: con sus torneos de Pareo Integral
+vinculados, la pestaña «Torneos» le seguía mostrando la clave de chess-results, y la lista de LiveChess traía las
+treinta categorías del Centroamericano, del Blitz y del Tacho Chess. «Cada torneo es independiente»: lo hecho para el
+Centroamericano sirve en todos, pero cada evento funciona solo en la Mesa del árbitro.
+
+- **Arriba, «Evento»** (`#evento-elegido`, en `js/centroamericano-mesas-pagina.js`): la organización elige sobre cuál
+  trabaja y **todo se filtra por ahí**, porque `dentro(tnr)` (el mismo filtro del Modo ensayo) ahora pregunta también
+  por el evento: la ronda en curso, los árbitros y sus enlaces, los avisos, el control de tiempos, las planillas, lo que
+  anotan, Fair Play y la Transmisión (que recibe `dentro`). No se guarda en el navegador (esta página no guarda nada ahí,
+  lo revisa `verificar-centroamericano-mesas.js`): dura mientras la ventana siga abierta. Se esconde cuando hay un
+  solo evento, y al agregar o vincular torneos a un evento la ventana pasa a ese evento. La lista para «Archivar»
+  sigue mostrando todos los eventos. Un torneo sin evento cuenta como «Centroamericano 2026». Primero salen los
+  eventos que no son del Centroamericano.
+- **LiveChess** (`js/centroamericano-vivo-conectar.js`) lista solo los torneos del evento (`window.MesaEvento`) y, al
+  pegar la tabla de tableros, manda sus `tnr`: la función `centroamericano-mesas-vivo` busca el «SUB-12 ABS» solo
+  entre ellos, no en otro evento que tenga la misma categoría.
+- **chess-results solo si el evento lo usa**: la clave del grupo y «Otras claves» (`data-solo-chess-results`) se
+  esconden cuando el evento elegido no tiene torneos de chess-results, o cuando se llegó por «Pareo Integral»
+  (`#torneos`) sin torneos todavía. El botón «Este evento también tiene torneos en chess-results» las vuelve a mostrar.
+- **«Vincular» sigue viendo todos los torneos de Pareo de la computadora** y dice en qué evento está cada uno; al
+  vincular, la ventana pasa al evento donde quedó.
+- **Un torneo vinculado desde otra cuenta ya no queda trabado.** El U12 de la Eliminatoria había quedado (archivado)
+  en un evento de una cuenta de prueba, y «Vincular» decía «Ese torneo ya está en el evento de otro organizador», sin
+  salida. Quien vincula ya probó con la clave de Pareo que el torneo es suyo, así que ahora se lo lleva a su evento;
+  los enlaces de árbitros del evento anterior se borran (`20261120001400_mesa_pareo_vincular_dueno_con_clave.sql`).
+
+Lo prueba `verificar-centroamericano-mesas-eventos.js`.
+
 ### Fair Play y Transmisión en cualquier evento
 
 Lo pidió el dueño el 14/11/2026, en pleno Tacho Chess 2: en la Mesa del árbitro de un evento que no es el
