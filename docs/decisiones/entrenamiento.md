@@ -4974,6 +4974,13 @@ las clases de ADAES, con su propia actividad (`finales_clases`) y la posición
 en `detail.theme` para mandarla de tarea una por una. Ver «Y para jugarlas en
 casa, de tarea» en `docs/decisiones/accesibilidad.md`.
 
+Con más de 60 posiciones, el tablero queda muy abajo de la lista y el clic
+parecía no hacer nada: al elegir una pestaña, la página baja hasta el título
+de la posición (descontando el encabezado fijo; sin animación si la persona
+pidió menos movimiento) y el foco pasa a ese título, para que el lector de
+pantalla diga cuál se cargó (`irAlTablero()` en `js/entreno-finales.js`;
+lo mide `verificar-finales-pagina.js`).
+
 ## El entrenador de IA
 
 Salió de comparar la Academia con otras plataformas (18/11/2026): varias
