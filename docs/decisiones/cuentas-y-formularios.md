@@ -2304,12 +2304,34 @@ Integral, como antes.
   configuración acepta exactamente lo mismo que antes. La función se
   despliega sola al entrar a `main`: hasta entonces, la de producción guarda
   solo `{ abierta, hasta }` y la página usa el formulario de siempre.
-- **Lo que falta: configurarla desde Pareo Integral.** No hay todavía
-  pantalla para llenar `t.inscripcionEvento`: `js/pareo/pagina.js` se está
-  partiendo en varios archivos en otra rama, y esta no lo tocó. Cuando eso
-  entre, la pantalla va en un archivo nuevo de `js/pareo/` con una sola
-  línea de enganche en la caja de la inscripción. Mientras, la usan las
-  páginas de evento con la configuración en su `js/`.
+- **Se configura desde Pareo Integral** (ficha Archivos, «Inscripción
+  antes del torneo» → «Configurar el formulario»; `js/pareo/inscripcion-config.js`,
+  con una sola línea de enganche en `cajaInscripcion` de
+  `js/pareo/pagina-publicar.js`). Ahí se pone el cierre con hora, las
+  categorías por año (con «juega junto con»), si la rama va en la
+  categoría, qué se pide y qué es obligatorio, la escuela ya escrita, la
+  búsqueda del ID FIDE, el aviso de arriba y el idioma. Solo se guarda lo
+  que se aparta del formulario de siempre (`armar()`): sin nada distinto,
+  `t.inscripcionEvento` no existe y se publica `{ abierta, hasta }`.
+  «Volver al formulario de siempre» la borra entera.
+  - **Cada cambio se publica sin redibujar la ficha**
+    (`publicarConfigInscripcion`). Con `actualizarPublicado`, la respuesta
+    redibujaba la ficha y movía la caja: si llegaba mientras alguien
+    escribía un año, se perdían teclas y la categoría quedaba a medias
+    (la prueba lo vio fallar una de cada dos veces). Además salen de a uno:
+    si llega otro cambio mientras uno va en camino, se manda una vez más
+    con lo último, para que uno viejo no pise a uno nuevo. Si falla, se
+    deja al camino de siempre.
+  - **La caja sobrevive a los redibujos de la ficha** (abrir o cerrar la
+    inscripción, por ejemplo): se recuerda por torneo publicado, con lo que
+    se estaba escribiendo (una categoría sin año todavía no entra en la
+    configuración, pero no se borra), abierta o cerrada y con el foco donde
+    estaba.
+  - **La vista previa es el formulario de verdad**
+    (`InscripcionEvento.montar`), siempre abierto para ver los campos, y
+    **nunca manda nada**: el envío se ataja antes de llegar al formulario.
+  - Lo prueba `verificar-pareo-configurar-inscripcion.js` (con `CAPTURA=`
+    guarda una imagen de la caja).
 - **El ID FIDE solo** es el de la Eliminatoria JDN de Pérez Zeledón,
   generalizado (`coincideFide`, con la federación del evento). La copia de
   `js/jdn-pz-inscripcion.js` se borra cuando esa página pase al módulo.

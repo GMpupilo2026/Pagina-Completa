@@ -231,6 +231,27 @@
   // árbitro lo retira, para no tocar emparejamientos ya hechos). Las dos cosas piden
   // un comentario (el motivo, si se rechaza) que queda con la inscripción y,
   // si quien inscribió dejó un correo, le llega en el aviso (pareo-publicar).
+  // Lo que se cambia en «Configurar el formulario» se publica SIN redibujar
+  // la ficha (redibujarla movía la caja y se perdían teclas a medio
+  // escribir) y de a uno: si llega otro cambio mientras sale uno, se manda
+  // una vez más con lo último, para que uno viejo no pise a uno nuevo. Si
+  // falla, el camino de siempre (actualizarPublicado) se encarga.
+  let configEnVuelo = false, configOtraVez = false;
+  async function publicarConfigInscripcion() {
+    guardar();
+    if (configEnVuelo) { configOtraVez = true; return; }
+    configEnVuelo = true;
+    try {
+      do {
+        configOtraVez = false;
+        const tor = t();
+        if (!tor.publicado) return;
+        const r = await PareoPublicar.actualizar(tor, extraPublicar(tor));
+        if (!r.ok) { actualizarPublicado(estado.id); return; }
+        if (t() === tor && tor.publicado) { tor.publicado.hora = Date.now(); guardar(); }
+      } while (configOtraVez);
+    } finally { configEnVuelo = false; }
+  }
   function cajaInscripcion(v) {
     const ins = v.inscripcion || {};
     const abierta = el("input", { type: "checkbox", id: "pi-insc-abierta", class: "mt-1", checked: !!ins.abierta });
@@ -254,6 +275,8 @@
       el("p", { class: C.nota + " mb-2", texto: tx("inscAyuda") }),
       el("div", { class: "flex items-start gap-2 text-sm" }, abierta, el("label", { for: "pi-insc-abierta", texto: tx("inscAbrir") })),
       el("div", { class: "mt-2 flex flex-wrap items-center gap-2 text-sm" }, el("label", { for: "pi-insc-hasta", class: "font-semibold", texto: tx("inscHasta") }), hasta),
+      // El formulario a la medida del torneo (js/pareo/inscripcion-config.js).
+      window.PareoInscripcionConfig ? PareoInscripcionConfig.caja({ v, torneo: t, el, tx, C, alCambiar: publicarConfigInscripcion }) : null,
       el("div", { class: "mt-3" }, ver), lista);
   }
   async function cargarInscripciones(lista, ver) {
