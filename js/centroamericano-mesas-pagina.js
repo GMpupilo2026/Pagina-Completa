@@ -193,7 +193,7 @@
     let eventoElegido = "";
     let eventoDe = new Map();   // tnr → evento, de todos los torneos que se ven (también los archivados)
     let todosAbiertos = [];     // los torneos abiertos de todos los eventos (para «Vincular», que dice en cuál está cada uno)
-    const dentro = (tnr) => pruebas.has(tnr) === ensayo && (!eventoElegido || eventoDe.get(tnr) === eventoElegido);
+    const dentro = (tnr) => pruebas.has(tnr) === ensayo && (!eventoElegido || (eventoDe.get(tnr) || EVENTO_VIEJO) === eventoElegido);
     const idsDentro = () => new Set(asignaciones.map((a) => a.id));
 
     // ------------------------------------------------------------- 1. ronda en curso
