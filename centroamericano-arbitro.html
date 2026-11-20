@@ -122,6 +122,8 @@
                     <button type="button" id="actualizar" class="cam-btn cam-btn-claro"><span aria-hidden="true">🔄</span> Actualizar</button>
                     <button type="button" id="ver-vivo" class="cam-btn cam-btn-claro" hidden><span aria-hidden="true">📡</span> Mis mesas en vivo</button>
                     <button type="button" id="horarios" class="cam-btn cam-btn-claro"><span aria-hidden="true">⏰</span> Horarios</button>
+                    <!-- Corregir un reloj (art. 6.10), lo que dice el reglamento y el ritmo del torneo (js/mesa-arbitro-consultas.js): lo que traía la mesa de «Dirijo solo», retirada el 19/11/2026. -->
+                    <button type="button" id="consultar" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">📖</span> Consultar</button>
                     <!-- Sin internet también funcionan: la copia la arma esta página en la tablet (js/centroamericano-respaldo.js). -->
                     <button type="button" id="bajar-copia" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">💾</span> Copia de seguridad</button>
                     <button type="button" id="cargar-copia" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">📂</span> Cargar copia</button>
@@ -174,7 +176,7 @@
             <section id="concluido" class="cam-concluido" aria-labelledby="concluido-titulo" hidden>
                 <h2 id="concluido-titulo" class="font-bold text-lg"><span aria-hidden="true">✓</span> Terminaste tu ronda completa</h2>
                 <p id="concluido-texto" class="text-sm mt-1"></p>
-                <div class="cam-acciones mt-3"><button type="button" id="bajar-bitacora" class="cam-btn"><span aria-hidden="true">📄</span> Descargar mi bitácora (PDF)</button></div>
+                <div class="cam-acciones mt-3"><button type="button" id="bajar-bitacora" class="cam-btn"><span aria-hidden="true">📄</span> Descargar mi bitácora (PDF)</button> <button type="button" id="bajar-bitacora-word" class="cam-btn cam-btn-claro"><span aria-hidden="true">📝</span> En Word</button></div>
                 <div class="cam-bit-correo mt-3">
                     <label class="cam-herramientas-campo"><span>¿Te la mandamos también a tu correo?</span>
                         <input type="email" id="bit-correo" class="cam-campo" autocomplete="email" inputmode="email" maxlength="120" placeholder="tucorreo@ejemplo.com" aria-describedby="bit-correo-ayuda"></label>
@@ -235,8 +237,10 @@
     <script src="js/avisos.js"></script>
     <script src="js/hora-cr.js"></script>
     <script src="js/marca-agua.js"></script>
+    <script src="js/reporte-docx.js"></script>
     <script src="js/reporte-pdf.js"></script>
     <script src="js/mesa-arbitro.js"></script>
+    <script src="js/mesa-arbitro-consultas.js"></script>
     <script src="js/centroamericano-mesas.js"></script>
     <script src="js/centroamericano-horario.js"></script>
     <script src="js/centroamericano-bitacora.js"></script>

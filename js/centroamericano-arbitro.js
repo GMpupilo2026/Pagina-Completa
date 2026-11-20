@@ -1640,19 +1640,68 @@
 
     // La bitácora en PDF, con la marca de agua de Ajedrez Integral: la función la arma con todo lo que anotó con sus enlaces.
     // La bitácora ya armada (los datos de la función + el PDF con la marca de agua), para descargarla o mandarla por correo.
-    async function armarBitacora() {
+    // En PDF o en Word (`cual` = "docx"; el mismo documento, con la marca de agua: js/reporte-docx.js). El evento que dice es
+    // el Centroamericano solo en sus eventos; con la cara neutra de Ajedrez Integral, ninguno.
+    let marcaEvento = "";
+    async function armarBitacora(cual) {
         const d = await invocar("bitacora", {}, { ms: 60000 });
-        const F = { hora: (x) => hora(x, { hour: "numeric", minute: "2-digit" }), fechaHora: (x) => window.HoraCR.fechaHora(x, { day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" }) };
-        const blob = await window.ReportePDF.generar(window.CentroamericanoBitacora.armar(d, F));
-        return { blob, nombre: window.CentroamericanoBitacora.nombreArchivo(d) };
+        const F = { hora: (x) => hora(x, { hour: "numeric", minute: "2-digit" }), fechaHora: (x) => window.HoraCR.fechaHora(x, { day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" }),
+            evento: marcaEvento === "ajedrez-integral" ? "" : "Centroamericano 2026", extension: cual === "docx" ? "docx" : "pdf" };
+        const doc = window.CentroamericanoBitacora.armar(d, F);
+        let blob;
+        if (cual === "docx") {
+            try { doc.marca = await window.MarcaAgua.preparar(); } catch (e) { /* sin conexión: sin marca */ }
+            blob = window.ReporteDOCX.generar(doc);
+        } else blob = await window.ReportePDF.generar(doc);
+        return { blob, nombre: window.CentroamericanoBitacora.nombreArchivo(d, F) };
     }
 
-    async function bajarBitacora() {
-        const boton = $("bajar-bitacora"), estadoEl = $("concluido-estado");
+    // «📖 Consultar»: corregir un reloj (art. 6.10), lo que dice el reglamento y el ritmo del torneo. Lo traía la mesa de
+    // «Dirijo solo», retirada el 19/11/2026 (una sola Mesa del árbitro); los cuadros son de js/mesa-arbitro-consultas.js. El
+    // ritmo lo escribe el árbitro y se recuerda en la tablet por torneo; el reloj se puede anotar como incidencia de una mesa.
+    const claveRitmo = () => "mesa:" + (estado && estado.tnr ? estado.tnr : "sin-torneo");
+    async function consultar() {
+        const C2 = window.MesaConsultas;
+        if (!C2) return;
+        const ritmo = C2.ritmo(claveRitmo());
+        const r = await Avisos.formulario({
+            titulo: "Consultar",
+            texto: "Ritmo de este torneo: " + M.textoRitmo(ritmo || M.RITMO_POR_DEFECTO) + (ritmo ? "." : " (sin confirmar)."),
+            campos: [{ nombre: "que", etiqueta: "¿Qué quieres consultar?", tipo: "select", valor: "reloj", opciones: [["reloj", "Corregir un reloj (art. 6.10)"], ["reglamento", "Lo que dice el reglamento de una irregularidad"], ["ritmo", "El ritmo del torneo"]] }],
+            aceptar: "Seguir",
+        });
+        if (r === null) return;
+        if (r.que === "ritmo") { const n = await C2.cambiarRitmo(claveRitmo()); if (n) avisar("Ritmo guardado: " + M.textoRitmo(n) + "."); return; }
+        if (r.que === "reglamento") { await C2.reglamento({ ritmo }); return; }
+        const mesas = estado && !concluida() ? estado.mesas : [];
+        let mesa = null;
+        if (mesas.length) {
+            const e = await Avisos.formulario({
+                titulo: "Corregir un reloj",
+                texto: "Si eliges una mesa, al final puedes anotarlo en tu bitácora.",
+                campos: [{ nombre: "mesa", etiqueta: "¿De qué mesa?", tipo: "select", valor: "", opciones: [["", "Solo consultar (no anotar)"], ...mesas.map((m) => [String(m.mesa), "Mesa " + m.mesa + ": " + m.blancas + " – " + m.negras])] }],
+                aceptar: "Seguir",
+            });
+            if (e === null) return;
+            mesa = e.mesa ? mesas.find((m) => String(m.mesa) === e.mesa) || null : null;
+        }
+        await C2.reloj({
+            ritmo, donde: mesa ? "mesa " + mesa.mesa : "",
+            anotar: mesa ? async (texto, articulo) => {
+                try {
+                    const w = await escribir("anotar", { ronda: estado.ronda, mesa: mesa.mesa, tipo: "incidencia", texto, articulo }, "Reloj de la mesa " + mesa.mesa, { mesa: mesa.mesa });
+                    avisar(w.encolado ? "Sin señal: el reloj de la mesa " + mesa.mesa + " queda en la cola y se manda solo." : "Reloj de la mesa " + mesa.mesa + " anotado en tu bitácora.");
+                } catch (err) { avisar(err.message || String(err), true); }
+            } : null,
+        });
+    }
+
+    async function bajarBitacora(cual) {
+        const boton = $(cual === "docx" ? "bajar-bitacora-word" : "bajar-bitacora"), estadoEl = $("concluido-estado");
         boton.disabled = true;
         estadoEl.textContent = "Armando tu bitácora…";
         try {
-            const { blob, nombre } = await armarBitacora();
+            const { blob, nombre } = await armarBitacora(cual);
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
             a.download = nombre;
@@ -1918,6 +1967,7 @@
     const mandadoDe = (m) => (esPareo() && (estado.mandados || []).find((x) => x.mesa === m.mesa && x.valor !== m.valor)) || null;
     const lineaMandado = (m) => { const x = mandadoDe(m); return x ? el("p", { class: "cam-resultado-actual", "data-mandado": x.valor, role: "status", texto: "⏳ Mandado (" + M.textoResultado(x.valor) + "): espera al árbitro principal." }) : null; };
     function ponerMarca(d) {
+        marcaEvento = d.marca || "";
         if (d.marca === "ajedrez-integral") document.documentElement.setAttribute("data-marca", "ajedrez-integral");
         else document.documentElement.removeAttribute("data-marca");
         // Los horarios son los del Centroamericano (js/centroamericano-horario.js): en otro evento no se ofrecen.
@@ -2418,6 +2468,7 @@
         $("problema-reintentar").addEventListener("click", () => { $("problema").hidden = true; $("cargando").hidden = false; leer(false); });
         $("pedir-ayuda").addEventListener("click", () => pedirAyuda(null));
         $("horarios").addEventListener("click", verHorarios);
+        $("consultar").addEventListener("click", consultar);
         // El pizote abre los emparejamientos de todas las categorías (para ayudar a un atleta a encontrar su mesa).
         $("ver-todas-mesas").addEventListener("click", () => window.CentroamericanoEmparejamientos.abrir(dondeJuega()));
         $("donde-juega").addEventListener("click", () => window.CentroamericanoEmparejamientos.abrir(dondeJuega()));
@@ -2438,7 +2489,8 @@
         $("ir-corregir").addEventListener("click", () => { corrigiendoInicio = true; pintarInicio(); $("ir-hora").focus(); });
         $("ir-cerrar").addEventListener("click", () => { corrigiendoInicio = false; pintarInicio(); $("ir-corregir").focus(); });
         $("concluir").addEventListener("click", concluirLabores);
-        $("bajar-bitacora").addEventListener("click", bajarBitacora);
+        $("bajar-bitacora").addEventListener("click", () => bajarBitacora("pdf"));
+        $("bajar-bitacora-word").addEventListener("click", () => bajarBitacora("docx"));
         setInterval(() => { if (!document.hidden && estado) pintarEspera(); }, 30000);
         setInterval(() => { if (!document.hidden) latirCuentas(); }, 1000);
         $("nombre-guardar").addEventListener("click", guardarNombre);

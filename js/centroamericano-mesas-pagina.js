@@ -1285,6 +1285,46 @@
         await cargarAsignaciones();
     }
 
+    // «Soy el único árbitro»: quien dirige solo usa la MISMA tablet que los adjuntos (desde el 19/11/2026 hay una sola Mesa
+    // del árbitro; la mesa aparte de «Dirijo solo» se retiró). Se crea un enlace a su nombre con todas las mesas del torneo
+    // (de la 1, o de la primera de un torneo de Pareo con mesaInicial, a la 9999) y se abre su tablet. Ver «Una sola Mesa del
+    // árbitro» en docs/decisiones/juegos-y-torneos.md.
+    async function soyElUnico() {
+        if (!torneos.length) { avisar("Primero agrega tu torneo en «Torneos» (Pareo Integral o chess-results).", true); return; }
+        let nombre = "";
+        try { const { data } = await sb.auth.getUser(); nombre = String((data && data.user && data.user.user_metadata && data.user.user_metadata.full_name) || "").trim().slice(0, 80); } catch (e) { /* sin nombre */ }
+        const hoy = window.HoraCR.hoy();
+        let previo = { tnr: torneos[0].tnr, arbitro: nombre, vence: hoy }, error = "";
+        for (;;) {
+            const r = await Avisos.formulario({
+                titulo: "Soy el único árbitro",
+                texto: (error ? error + "\n\n" : "") + "Se crea un enlace a tu nombre con todas las mesas del torneo y se abre tu tablet: la misma que usan los árbitros adjuntos, con los resultados, las ilegales, el reloj y la bitácora.",
+                campos: [
+                    { nombre: "tnr", etiqueta: "Torneo", tipo: "select", valor: previo.tnr, opciones: torneos.map((t) => [t.tnr, t.nombre]) },
+                    { nombre: "arbitro", etiqueta: "Tu nombre (sale en la bitácora)", valor: previo.arbitro, max: 80 },
+                    { nombre: "vence", etiqueta: "Último día del torneo (AAAA-MM-DD)", valor: previo.vence, inputmode: "numeric", ayuda: "El enlace sirve hasta ese día a las 11:59 p. m." },
+                ],
+                aceptar: "Crear y abrir mi tablet",
+            });
+            if (r === null) return;
+            previo = r;
+            const arbitro = String(r.arbitro || "").trim();
+            if (!arbitro) { error = "Escribe tu nombre: sale en la bitácora y en lo que anotas."; continue; }
+            let vence;
+            try { vence = C.vencimiento("fecha", new Date(), hoy, String(r.vence || "").trim()); } catch (e) { error = e.message; continue; }
+            const desde = primeraMesa.get(r.tnr) || 1;
+            const { data, error: e1 } = await sb.from("centroamericano_asignaciones")
+                .insert({ tnr: r.tnr, arbitro, nombrado: true, mesa_desde: desde, mesa_hasta: 9999, vence: vence.toISOString() })
+                .select("token").single();
+            if (e1 || !data || !data.token) { avisar("No se pudo crear tu enlace: " + ((e1 && e1.message) || "sin respuesta"), true); return; }
+            await cargarAsignaciones();
+            const enlace = C.enlaceArbitro(location.origin, data.token);
+            const abrir = await Avisos.confirmar("Tu enlace quedó en la lista de árbitros, con su QR, por si quieres abrirlo en otra tablet.", { titulo: "Listo, " + arbitro, aceptar: "Abrir mi tablet", cancelar: "Ahora no" });
+            if (abrir) window.open(enlace, "_blank", "noopener");
+            return;
+        }
+    }
+
     // El reparto entre árbitros por definir.
     // La primera mesa física de cada torneo de Pareo (su mesaInicial), leída con «Leer las mesas»: el reparto empieza ahí.
     const primeraMesa = new Map();
@@ -1910,6 +1950,7 @@
         verFecha();
         $("abrir-nuevo").addEventListener("click", () => { $("nuevo").open = true; $("a-arbitro").focus(); });
         $("abrir-reparto").addEventListener("click", () => { $("reparto").open = true; $("rp-mesas").focus(); });
+        $("soy-el-unico").addEventListener("click", soyElUnico);
         for (const id of ["rp-mesas", "rp-arbitros"]) $(id).addEventListener("input", vistaReparto);
         $("rp-torneo").addEventListener("change", vistaReparto);
         $("rp-leer").addEventListener("click", leerMesas);

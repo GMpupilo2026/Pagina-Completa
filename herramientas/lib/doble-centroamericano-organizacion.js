@@ -176,9 +176,11 @@ function dobleOrganizacion(licencia) {
       if (b.action === "drive_reintentar") { PLANILLAS.forEach((x) => { x.drive_ok = true; }); return Promise.resolve({ data: { ok: true, enviadas: 1, fallaron: 0, quedan: 0 }, error: null }); }
       return Promise.resolve(err(400, "Acción desconocida.")); } },
     from: (tabla) => { const f = {}; const fin = {}; const fgt = {}; let accion = "select", valores = null;
-      let orden = null;
+      let orden = null, una = false;
       const q = { select: () => q, order: (c, o) => { orden = [c, !(o && o.ascending === false)]; return q; }, range: () => q, eq: (c, v) => { f[c] = v; return q; }, gt: (c, v) => { fgt[c] = v; return q; }, in: (c, vs) => { fin[c] = vs; return q; },
         maybeSingle: () => { const x = filtrar(tabla, f)[0]; return Promise.resolve({ data: x ? Object.assign({}, x) : null, error: null }); },
+        // .single(): como PostgREST, UNA fila (con insert(...).select().single(), la que se creó).
+        single: () => { una = true; return q; },
         insert: (v) => { accion = "insert"; valores = v; return q; }, update: (v) => { accion = "update"; valores = v; return q; },
         then: (ok, ko) => { let r;
           if (accion === "select" && tabla === "centroamericano_torneos" && window.__torneosFallan) return Promise.resolve({ data: null, error: { message: "statement timeout" } }).then(ok, ko);
@@ -190,14 +192,15 @@ function dobleOrganizacion(licencia) {
              * con dos horas, la página los agrupaba como dos envíos y la tabla
              * de enviados no llegaba nunca a 2 filas (CI, 17/11/2026). */
             const ahora = new Date().toISOString();
+            const creadas = [];
             for (const v of lista) {
               const base = tabla === "centroamericano_avisos"
                 ? { id: "av-" + (++n + 20), creado: ahora, estado: "abierto", mesa: null, leido_en: null, atendido_en: null, tipo: "ayuda", ronda: null }
                 : { id: "a" + (++n), codigo: "T" + String(2222 + n).padStart(7, "5"), token: String(1000 + n).repeat(16), revocada: false, nombrado: true, creada: ahora, ultimo_uso: null };
-              (tabla === "centroamericano_avisos" ? AVISOS : ASIG).push(Object.assign(base, v)); }
-            window.__llamadas.push({ insert: tabla, valores }); r = { data: null, error: null }; }
+              (tabla === "centroamericano_avisos" ? AVISOS : ASIG).push(Object.assign(base, v)); creadas.push(base); }
+            window.__llamadas.push({ insert: tabla, valores }); r = { data: una ? Object.assign({}, creadas[0]) : null, error: null }; }
           else if (accion === "update") { filtrar(tabla, f, fin, fgt).forEach((x) => Object.assign(x, valores)); window.__llamadas.push({ update: tabla, valores, f, en: fin }); r = { data: null, error: null }; }
-          else { const datos = filtrar(tabla, f, fin, fgt).map((x) => Object.assign({}, x)); if (orden && ["ocurrio", "creada", "creado", "subida"].includes(orden[0])) datos.sort((a, b) => (a[orden[0]] < b[orden[0]] ? -1 : 1) * (orden[1] ? 1 : -1)); r = { data: datos, error: null }; }
+          else { const datos = filtrar(tabla, f, fin, fgt).map((x) => Object.assign({}, x)); if (orden && ["ocurrio", "creada", "creado", "subida"].includes(orden[0])) datos.sort((a, b) => (a[orden[0]] < b[orden[0]] ? -1 : 1) * (orden[1] ? 1 : -1)); r = { data: una ? (datos[0] || null) : datos, error: null }; }
           return Promise.resolve(r).then(ok, ko); } };
       return q; },
     channel: () => ({ on() { return this; }, subscribe() { return this; } }), removeChannel() {},

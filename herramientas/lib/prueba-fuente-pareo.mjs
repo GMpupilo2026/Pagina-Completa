@@ -42,10 +42,9 @@ console.log("Las tablas, iguales a las del navegador:");
 const M = require("../../js/mesa-arbitro.js");
 igual("DE_PAREO igual a js/mesa-arbitro.js", DE_PAREO, M.DE_PAREO);
 igual("A_PAREO es la inversa", Object.keys(DE_PAREO).every((k) => A_PAREO[DE_PAREO[k]] === k), true);
-const fs = require("node:fs");
-const fuenteMesa = fs.readFileSync(new URL("../../js/mesa-arbitro-pareo.js", import.meta.url), "utf8");
-const enMesa = fuenteMesa.match(/ARTICULO_PAREO = (\{[^}]*\})/);
-igual("ARTICULO_PAREO igual a js/mesa-arbitro-pareo.js", enMesa && JSON.parse(enMesa[1].replace(/'/g, '"')), ARTICULO_PAREO);
+// ARTICULO_PAREO se comparaba con su copia de js/mesa-arbitro-pareo.js; esa página (la mesa de «Dirijo solo») se retiró el
+// 19/11/2026 al quedar una sola Mesa del árbitro, y ya no hay segunda copia que comparar.
+igual("ARTICULO_PAREO lleva los cuatro artículos que Pareo cuenta", Object.keys(ARTICULO_PAREO).sort(), ["11.3.2", "11.5", "4.3", "6.7"]);
 
 console.log("Las partidas para Fair Play (centroamericano_fp_partidas):");
 const conElo = jugadores.map((j, i) => ({ ...j, elo: [1850, 0, 1500, 99, 2100][i] }));
