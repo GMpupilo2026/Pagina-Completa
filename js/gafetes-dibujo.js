@@ -200,6 +200,11 @@
     const sx = W / BASE_W, sy = H / BASE_H, s = Math.min(sx, sy);
     // Una caja pensada en 10 × 14, llevada al tamaño elegido.
     const caja = (x, y, w, h) => ({ x: x * sx, y: y * sy, w: w * sx, h: h * sy });
+    // `dorso.subir`: cuánto sube (en la escala de 10 × 14) lo de abajo del
+    // dorso —la franja, el QR y la ilustración— para dejar blanco abajo: al
+    // imprimir por ambos lados en casa el dorso puede quedar corrido unos
+    // milímetros, y al cortar se iba un pedazo de la franja.
+    const sube = Number((diseno.dorso || {}).subir) || 0;
     return {
       W, H, s, sx, sy,
       logoIzq: caja(5, 4, 30, 15), logoDer: caja(65, 4, 30, 15),
@@ -211,9 +216,10 @@
       foto: caja(61, 65, 33, 42.4),      // 3,3 × 4,24: la proporción del pasaporte
       // Con `fotoCentro` (la Eliminatoria JDN de PZ): la foto en el medio, el
       // nombre debajo y los detalles centrados debajo del nombre.
-      fotoCentro: caja(35, 39.5, 30, 38.5),
-      nombreCentro: { y1: 87 * sy, y2: 95.5 * sy, solo: 91 * sy, tam: 19 * s, max: 90 * sx },
-      detallesCentro: { y: 102 * sy, paso: 4.8 * sy, tam: 9 * s, max: 88 * sx },
+      // (más grande desde el 20/11: aprovecha el espacio entre el título y el nombre)
+      fotoCentro: caja(30, 38, 40, 48),
+      nombreCentro: { y1: 92 * sy, y2: 100 * sy, solo: 96 * sy, tam: 18 * s, max: 90 * sx },
+      detallesCentro: { y: 106 * sy, paso: 4.4 * sy, tam: 8.5 * s, max: 88 * sx },
       franja: caja(0, 115.5, 100, 14),
       icono: { lado: 10 * s, margen: 3 * sx },
       dorsoLogoIzq: caja(4, 3, 22, 10), dorsoLogoDer: caja(74, 3, 22, 10),
@@ -225,12 +231,16 @@
       patrocinador: caja(72, 48, 24, 22),
       // La ilustración del dorso, abajo y pegada al QR: la profe Karina lo
       // muestra con la mano (Eliminatoria JDN de PZ).
-      dorsoIlustracion: caja(24, 64, 40, 64),   // termina antes del texto del QR
+      dorsoIlustracion: caja(24, 64, 40, 64 - sube),   // termina antes del texto del QR y debajo del horario
       // Cuadrado siempre (con el lado chico de la escala): en un gafete que no
       // es de 10 × 14, como el de 5,5 × 8,5, salía más alto que ancho y le
       // sobraba blanco abajo. Pegado a la misma esquina de abajo a la derecha.
-      qr: { x: 96 * sx - 25 * s, y: 127 * sy - 25 * s, w: 25 * s, h: 25 * s },
+      qr: { x: 96 * sx - 25 * s, y: (127 - sube) * sy - 25 * s, w: 25 * s, h: 25 * s },
       cinta: caja(0, 129.5, 100, 10.5),
+      cintaDorso: caja(0, 129.5 - sube, 100, 10.5),
+      // `franjaArriba`: una franja delgada del color del gafete arriba, en las
+      // dos caras, de guía para cortar (lo pidió el dueño).
+      franjaArriba: (Number(diseno.franjaArriba) || 0) * sy,
       codigo: { x: 5 * sx, y: 137.2 * sy, tam: 15 * s },
     };
   }
@@ -482,6 +492,7 @@
       const fondo = (ctx) => {
         ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, M.W, M.H);
         if (img.fondoFrente) cubrir(ctx, img.fondoFrente, M.W, M.H);
+        if (M.franjaArriba) { ctx.fillStyle = color; ctx.fillRect(0, 0, M.W, M.franjaArriba); }
         if (img.logoIzq) contener(ctx, img.logoIzq, M.logoIzq, "izq");
         if (img.logoDer) contener(ctx, img.logoDer, M.logoDer, "der");
         // La foto de la persona (la inscripción del Metropolitano la trae en
@@ -570,6 +581,7 @@
     const fondo = (ctx) => {
       ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, M.W, M.H);
       if (img.fondoDorso) cubrir(ctx, img.fondoDorso, M.W, M.H);
+      if (M.franjaArriba) { ctx.fillStyle = color; ctx.fillRect(0, 0, M.W, M.franjaArriba); }
       if (diseno.dorso.repetirLogos) {
         if (img.logoIzq) contener(ctx, img.logoIzq, M.dorsoLogoIzq, "izq");
         if (img.logoDer) contener(ctx, img.logoDer, M.dorsoLogoDer, "der");
@@ -587,7 +599,7 @@
       }
       if (img.patrocinador) contener(ctx, img.patrocinador, M.patrocinador, "centro");
       if (ilDorso) contener(ctx, ilDorso, M.dorsoIlustracion, "der", true);
-      const c = M.cinta;
+      const c = M.cintaDorso;
       ctx.fillStyle = color; ctx.fillRect(c.x, c.y, c.w, c.h);
       if (qr) {     // el QR se apoya sobre la cinta con un borde blanco
         ctx.fillStyle = "#fff";
@@ -639,7 +651,7 @@
       });
     }
     if (g.codigo) {
-      const c = M.cinta;
+      const c = M.cintaDorso;
       const y = c.y + c.h / 2 + altoMayus(recursos.titulo) * M.codigo.tam * PT / 2;
       escribir(recursos.titulo, g.codigo, M.codigo.tam, { x: M.codigo.x, y, color: "#ffffff", espaciado: 0.28, max: (qr ? M.qr.x - 2 * M.sx : M.W - 2 * M.sx) - M.codigo.x });
     }

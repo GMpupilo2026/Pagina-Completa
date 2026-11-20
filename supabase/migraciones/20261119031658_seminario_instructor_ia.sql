@@ -1,3 +1,9 @@
+-- La sala de seminario de arbitraje: el nombre del instructor que ve el árbitro.
+-- Lo pidió el dueño (18/11/2026): la sala que abre la cuenta de administración
+-- la da «IA Oscar Angulo Cubero» (no «Administrador», que es el nombre de la
+-- cuenta). La página le pone el avatar del profe Oscar al ver ese nombre. Las
+-- salas de un organizador siguen con el nombre de su perfil.
+-- Misma firma y mismos permisos: create or replace los conserva.
 create or replace function public.seminario_salas_para_mi()
  returns table (sala_id uuid, titulo text, instructor text, abierta_en timestamptz, mi_estado text)
  language sql

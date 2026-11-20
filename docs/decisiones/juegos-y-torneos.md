@@ -4530,6 +4530,48 @@ aspecto reemplaza al de «programa de computadora» de la sección anterior
   `P.abrirMenuDe` solo lo abre (para las casillas de «Más opciones»).
   Un botón nuevo de Rondas que entre a un menú se prueba igual.
 
+### Proyectar la ronda y los resultados
+
+El 20/11/2026 el dueño pidió proyectar la ronda y los resultados «a
+pantalla completa, bien bonita», desde el propio Pareo (la computadora del
+árbitro conectada al proyector de la sala). El proyector del evento que ya
+había (`pintarProyector` en `js/pareo/ver.js`) es otra cosa: va en el
+enlace de solo lectura, pasa de torneo en torneo y necesita el evento en
+vivo; este no necesita internet ni enlace.
+
+- **Dónde.** «Proyectar» en Rondas, **a la vista y no en un menú** (es de
+  todos los días en la sala), y «Proyectar la clasificación» en
+  Clasificación. En torneos por equipos no está: la ronda de equipos son
+  encuentros con tableros, y el proyector es de mesas individuales.
+- **Qué muestra.** El nombre del torneo, «Ronda N» (con la fase en una
+  eliminación), la hora de Costa Rica, cuántos resultados van con su barra,
+  y cada mesa en una tarjeta: el número de la sala (`V.mesaFisica`, no la
+  posición), los dos nombres, los puntos de **antes** de la ronda y el
+  resultado corto; las que faltan dicen «en juego» en ámbar (escrito: el
+  color nunca va solo) y quien ganó va en negrita. C (o el botón) cambia a
+  la clasificación tras la última ronda completa.
+- **Páginas.** Nueve filas por columna, dos columnas desde 1000 px: si no
+  caben, pasa de página sola cada 12 segundos (Espacio pausa, las flechas
+  pasan a mano). La letra va en `min(vh, vw)`, para que en un proyector
+  4:3 los nombres no se partan; un nombre largo baja a una segunda línea.
+- **Se pone al día sola.** `guardar()` llama a `actualizarProyector()`:
+  cada resultado que se anota (en la computadora o desde el celular de un
+  adjunto, que también pasa por `guardar`) llega a la pantalla sin volver
+  a abrirla, en la misma página. Si se abrió en la última ronda, al
+  emparejar la siguiente pasa sola a ella.
+- **Una sola copia de las cuentas.** `js/pareo/proyectar.js` solo pinta: el
+  modelo (nombres, puntos y resultados ya escritos) lo arma
+  `modeloProyector` en `pagina.js` con las mismas funciones que la tabla
+  de la ronda, y los textos van en `textos.js` (`proy*`). Todo lo que
+  escribe una persona entra por `textContent`; los anchos van por el CSSOM.
+- **El foco.** Al abrir queda en «Salir»; Tab no sale de la proyección;
+  Escape o «Salir» la cierran y el foco vuelve al botón que la abrió.
+  **Se espera el pedido de pantalla completa antes de devolver el foco**:
+  si se sale enseguida, el pedido todavía está en camino, llega después de
+  cerrar y se lleva el foco (lo encontró el verificador).
+- `verificar-pareo-proyectar.js` lo prueba (se rompió a propósito la
+  actualización al guardar y saltó).
+
 ### Pareo Integral: los adjuntos con nombre, el chat, las llamadas y corregir con constancia
 
 Lo pidió el dueño del sitio (con una captura del formulario del enlace).
@@ -12724,6 +12766,19 @@ PDF, que se baja **solo después de completar todo lo de ese número**.
   inventados antes de la captura**: van en la lista `NOMBRES` del script, y un
   nombre nuevo en un doble hay que sumarlo ahí. La pestaña Transmisión no tiene
   doble en el navegador: la revista la cuenta sin captura.
+- **El N.º 21 es el Seminario de Árbitro FIDE completo** (pedido del dueño,
+  20/11/2026: «crear todo el curso como revista 21, con todos los textos,
+  prácticas, etc.»). Sigue las tres jornadas del seminario: Leyes del Ajedrez
+  (reglas del juego; reloj, anotación, tablas, conducta y apéndices),
+  Regulaciones Generales y juego limpio, sistemas de juego y desempates,
+  rating, títulos y el inglés del árbitro, y cierra con un cuaderno de casos y
+  un examen simulado de 40 preguntas con su corrección. Cada artículo trae su
+  recuadro «Practica» y las soluciones van al final de cada bloque. La fuente
+  es el material corregido del curso (las presentaciones y los reglamentos de
+  la carpeta «Corregidos 2026» de Drive y el examen con respuestas), revisado
+  contra la normativa FIDE vigente; las cifras de desempates y rating las
+  comprueban los scripts de `no21/calculos/`. Lo que no se pudo comprobar está
+  en `no21/notas.md`.
 
 ### Las ayudas de cálculo de los ejercicios
 
@@ -16327,6 +16382,28 @@ sus pts y su puesto actual».
   (`sinMargen` en `js/gafetes-dibujo.js`) se les quita el margen al
   cargarlos y los dos llenan su caja; el verificador mide el alto dibujado de
   cada uno en el píxel.
+- **El QR abre una vista corta** (20/11, el dueño lo leyó con el celular:
+  «hay demasiada información que no interesa al jugador, él solo quiere saber
+  su mesa y su rival y su color»). La dirección del QR, `#t=<torneo>&j=<jugador>`
+  sin vista, no la usa ningún enlace del sitio (todos llevan `v=jugadores`),
+  así que con esa forma `torneos-pareo.html` muestra solo su nombre y «Ahora»
+  (`vistaGafete` en `js/torneos-pareo-pagina.js`): la ronda, la mesa en grande,
+  el color y el rival en renglones aparte (el color con un cuadrito de adorno,
+  siempre escrito), lo que sacó y su puesto; sin la inscripción, las pestañas
+  ni las tablas. Debajo, «Ver todo el torneo» lleva a su ficha completa. Se
+  pone al día sola cada minuto. Los gafetes ya impresos abren esta vista.
+- **20/11, con los primeros impresos en la mano:** el dorso salió corrido
+  unos 4 mm hacia abajo (la doble cara de una impresora de casa no calza
+  exacto) y al cortar por las marcas del frente se iba un pedazo de la franja
+  de abajo del dorso. Ahora lo de abajo del dorso (la franja, el QR) sube
+  (`dorso.subir`, 6 en la escala de 10 × 14: unos 3,6 mm en 5,5 × 8,5) y deja
+  blanco debajo; la ilustración se achica por abajo, sin tapar el horario.
+  Arriba, en las dos caras, una **franja delgada del color** del gafete, de
+  guía para cortar (`franjaArriba`, lo pidió el dueño). Y **la foto, más
+  grande** (de 30 × 38,5 a 40 × 48 en la escala de 10 × 14), con el nombre y
+  los detalles más abajo. El ajuste del dorso en milímetros sigue para
+  corregir lo que corra cada impresora; el verificador mide en el píxel la
+  franja de arriba en las dos caras y el blanco de abajo del dorso.
 - **El personal del torneo** (pedido del dueño): en el diseño, un renglón
   por persona, «Rol | Apellidos | Nombre | Título | Avatar» (`personal`, se
   edita en la página), que se suma al final al traer los jugadores. El rol va
@@ -19181,6 +19258,55 @@ Centroamericano sirve en todos, pero cada evento funciona solo en la Mesa del á
   los enlaces de árbitros del evento anterior se borran (`20261120001400_mesa_pareo_vincular_dueno_con_clave.sql`).
 
 Lo prueba `verificar-centroamericano-mesas-eventos.js`.
+
+### Una sola Mesa del árbitro
+
+Lo pidió el dueño el 19/11/2026: «la mesa del árbitro: unificar ambas, que exista solo una general». Había dos: la del
+evento (la organización en `centroamericano-mesas.html` y la tablet de cada árbitro en `centroamericano-arbitro.html`) y,
+aparte, la de «Dirijo solo» (`mesa-arbitro.html#solo`: un árbitro que anotaba él mismo en chess-results con la clave, o
+que entraba con el código de un adjunto de Pareo, con su propia bitácora en `arbitro_bitacora`). Quedó **la del evento**,
+que ya hacía casi todo y para cualquier evento. La otra se usaba casi nada: en la base había 6 líneas de bitácora, de una
+sola persona, la última del 1/11 (una prueba).
+
+- **Quien dirige solo usa el mismo evento y la misma tablet.** En la organización, «Árbitros y mesas» tiene
+  **«Soy el único árbitro»**: elige el torneo, su nombre y el último día, y se crea un enlace a su nombre con todas las
+  mesas (de la primera, o de la `mesaInicial` de un torneo de Pareo ya leído, a la 9999) que se abre en otra pestaña.
+  Queda en la lista con su QR, por si lo abre en otra tablet. La clave de chess-results la pone una vez en el evento,
+  como cualquier organizador (antes no se guardaba: era la única diferencia de fondo, y se aceptó por ser el modelo que
+  ya usan los eventos).
+- **`mesa-arbitro.html` quedó como la entrada**: la licencia, «¿Sobre qué vas a trabajar?» (Pareo Integral o
+  chess-results), **«¿Te dieron mesas?»** y **«Consultar sin anotar»** (`js/mesa-arbitro-entrada.js`).
+  - «¿Te dieron mesas?» entiende el enlace de la tablet, la puerta corta (`/m/K7M2-9QXA`), el enlace de adjunto de Pareo
+    (`pareo.html#adjunto=…`) y el código suelto. **Los dos códigos tienen la misma forma** (8 letras del alfabeto
+    `A-HJKMNP-Z2-9`), así que se prueba primero como código de la tablet (`centroamericano-codigo`) y, si no existe,
+    como adjunto de Pareo (`pareo-publicar`, `adjunto_entrar`), que abre la vista del adjunto en Pareo. **De un enlace
+    pegado se toma solo el dato** (el token, la cadena del adjunto): la dirección la arma la página, siempre de este sitio.
+  - **Los enlaces viejos siguen sirviendo**: `#adjunto=…` y `#codigo=…` van a `pareo.html` con lo mismo (es lo que
+    hacía la mesa vieja: hablar con el Pareo del principal), antes de pedir la licencia, porque un adjunto no la tiene;
+    `#solo` explica dónde quedó y enfoca el aviso.
+- **Lo que solo tenía la mesa vieja pasó a la tablet**, para no perder nada:
+  - **«📖 Consultar»** (`js/mesa-arbitro-consultas.js`, `MesaConsultas`): corregir un reloj (art. 6.10, con las cuentas a la
+    vista), lo que dice el reglamento de una irregularidad y el ritmo del torneo. El ritmo lo escribe el árbitro y se
+    recuerda en el aparato (`mesa_arbitro_ritmo_v1`, la misma clave de antes; en la tablet, por torneo). El reloj se puede
+    anotar como incidencia de una de sus mesas (`anotar`, tipo `incidencia`, con el artículo); con la ronda terminada,
+    solo se consulta. La entrada ofrece las mismas consultas a cualquiera, sin torneo.
+  - **La bitácora en Word** («En Word», junto al PDF; `ReporteDOCX` con el mismo documento y la marca de agua) y **el
+    espacio para la firma** (`CentroamericanoBitacora.armar`). La bitácora decía **«Centroamericano 2026» siempre**,
+    también en la Eliminatoria de PZ: ahora lo dice solo en sus eventos, y con la cara neutra no nombra ninguno
+    (`F.evento`). Se sigue bajando después de «Terminé mi ronda completa» (lo exige la función; cambiarlo pedía volver a
+    desplegar `centroamericano-mesa`, y no hacía falta).
+- **Lo que se retiró**: `js/mesa-arbitro-pagina.js`, `js/mesa-arbitro-pareo.js` y sus verificadores. Quedan, sin
+  pantalla, la tabla `arbitro_bitacora` (sus 6 líneas no se borran) y la Edge Function `mesa-arbitro` (la de la clave de
+  chess-results directa, que ya nadie llama): borrarla es decisión aparte. `herramientas/revistas-arbitraje/no19/capturas.js`
+  tomaba el doble de `verificar-mesa-arbitro-pareo.js`; la revista ya salió, y volver a armar sus capturas pediría otro doble.
+- **El doble de la organización** (`herramientas/lib/doble-centroamericano-organizacion.js`) aprendió `single()` y a
+  devolver la fila creada en `insert(...).select().single()`, que es como la página recibe el token del enlace nuevo.
+
+Lo prueban `verificar-mesa-arbitro-entrada.js` (la licencia, los enlaces viejos, cada forma de «¿Te dieron mesas?» con los
+dos códigos, las consultas sin anotar y que no quede nada de la mesa vieja) y `verificar-centroamericano-mesas-pagina.js`
+(«Soy el único árbitro»: sin nombre no crea nada, el enlace con todas las mesas y su vencimiento, y la tablet que se abre;
+«En Word» con la marca y la firma; «Consultar»). Rotos a propósito el paso al código de Pareo y la redirección de
+`#adjunto=`, salta.
 
 ### Fair Play y Transmisión en cualquier evento
 

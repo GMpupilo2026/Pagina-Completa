@@ -376,8 +376,10 @@ igual("el módulo compartido no imprime nada ni habla con la base", [/console\./
 igual("la clave no va a la base ni a la caché desde la función", [/\.from\(/.test(fn), /service_role|SERVICE_ROLE/i.test(fn)], [false, false]);
 igual("mesa-arbitro usa el módulo compartido y no lleva su propio lector de chess-results", [/from "\.\/chess-results-ingreso\.ts"/.test(fn), /function leerPantalla|class Sesion|__VIEWSTATE/.test(fn)], [true, false]);
 igual("la función pide la licencia con el token de quien llama", /rpc\("tengo_herramienta", \{ p_herramienta: HERRAMIENTA \}/.test(fn) && /global: \{ headers: \{ Authorization: autorizacion \} \}/.test(fn), true);
-const pagina = fs.readFileSync(path.join(RAIZ, "js", "mesa-arbitro-pagina.js"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
-igual("la página no guarda la clave en el navegador", /(localStorage|sessionStorage|indexedDB|cookie)[^;\n]*sid/i.test(pagina) || /\bsid\b[^;\n]*(localStorage|sessionStorage|indexedDB)/i.test(pagina), false);
+// La mesa de «Dirijo solo», la única página que pedía la clave, se retiró el 19/11/2026 (una sola Mesa del árbitro): la
+// entrada que quedó no la pide nunca.
+const entrada = fs.readFileSync(path.join(RAIZ, "js", "mesa-arbitro-entrada.js"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+igual("la entrada de la Mesa no pide ni guarda la clave (SID)", /\bsid\b/i.test(entrada), false);
 
 
 

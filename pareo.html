@@ -332,6 +332,7 @@
                         <label class="flex items-center gap-2 text-sm"><span class="font-semibold" data-t="filtrarInstitucion">Institución</span><select id="pi-clas-institucion" class="rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-2 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select></label>
                         <button type="button" id="pi-clas-pdf" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed" data-t="bajarPdf">Bajar PDF</button>
                         <button type="button" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 pi-imprimir" data-t="imprimir">Imprimir</button>
+                        <button type="button" id="pi-clas-proyectar" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="proyBotonClas">Proyectar la clasificación</button>
                         <button type="button" id="pi-clas-pared" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="paredBoton">Para la pared (A3)</button>
                         <button type="button" id="pi-clas-whatsapp" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="whatsappBoton" aria-expanded="false" aria-controls="pi-clas-compartir">Compartir por WhatsApp</button>
                     </div>
@@ -433,6 +434,8 @@
     <div id="pi-plantilla" class="pi-plantilla"></div>
     <div id="pi-firmas" class="pi-firmas"></div>
     <div id="pi-sorteo" class="pi-sorteo" role="dialog" aria-modal="true" aria-labelledby="pi-sorteo-titulo" hidden></div>
+    <!-- La ronda y los resultados en el proyector (js/pareo/proyectar.js). -->
+    <div id="pi-proyectar" class="pi-proyectar" role="dialog" aria-modal="true" hidden></div>
     </main>
 
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
@@ -477,6 +480,7 @@
     <script src="js/pareo/camaras-adjunto.js"></script>
     <script src="js/pareo/ver.js"></script>
     <script src="js/pareo/nube.js"></script>
+    <script src="js/pareo/proyectar.js"></script>
     <script src="js/pareo/pagina.js"></script>
 </body>
 </html>

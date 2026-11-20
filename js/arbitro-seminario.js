@@ -32,6 +32,7 @@
     const EXAMEN_MINUTOS = 45;
 
     let yo = null;          // id de la cuenta
+    let soyAdmin = false;   // la sala de administración la da la IA (INSTRUCTOR_IA)
     let caja = null;        // la sección
     let canales = [];
     let sondeo = null;
@@ -82,8 +83,8 @@
     (C && C.modulos || []).forEach((m) => m.temas.forEach((t) => TEMAS.push(Object.assign({ modulo: m.nombre }, t))));
     const temaPorId = (id) => TEMAS.find((t) => t.id === id) || null;
 
-    function pintarTablero(cont, fen, pie) {
-        const fig = el("figure", "sem-diagrama");
+    function pintarTablero(cont, fen, pie, clase) {
+        const fig = el("figure", clase || "sem-diagrama");
         const tab = el("div", "example-board sem-tablero");
         fig.appendChild(tab);
         let lectura = "";
@@ -99,30 +100,187 @@
         cont.appendChild(fig);
     }
 
+    /* El instructor de la sala de administración es «IA Oscar Angulo Cubero»
+       (ese nombre lo manda seminario_salas_para_mi): donde sale, sale con su
+       avatar, y el avatar va cambiando de pose (js/avatar-profe-oscar.js,
+       siempre los dibujos del profe Oscar, sin mirar la academia). Con
+       «reducir movimiento» se elige una pose al azar y se queda quieta. */
+    const INSTRUCTOR_IA = "IA Oscar Angulo Cubero";
+    const POSES = {
+        tarjeta: ["hola", "bienvenidos", "arbitro", "presentando", "brazos-cruzados", "reloj-de-ajedrez"],
+        cabecera: ["arbitro", "presentando", "atencion", "idea", "reloj-de-ajedrez", "caballo", "a-repasar", "mmm"],
+        portada: ["bienvenidos", "presentando", "hola", "arbitro", "tablero-italiana", "clase-en-linea", "ensenando"],
+    };
+    const quieto = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    function avatarIA(clase, poses) {
+        const A = window.AvatarProfeOscar;
+        if (!A) return null;
+        const lista = poses.map((id) => A.LISTA.find((a) => a.id === id)).filter(Boolean);
+        if (!lista.length) return null;
+        let i = Math.floor(Math.random() * lista.length);
+        const img = el("img", "sem-avatar " + (clase || ""));
+        img.decoding = "async";
+        img.width = 160; img.height = 480;
+        const poner = (a) => { img.src = A.rutaDe("oscar", a.id); img.alt = a.alt; };
+        poner(lista[i]);
+        if (quieto() || lista.length < 2) return img;
+        // Precarga las demás para que el cambio no parpadee.
+        lista.forEach((a) => { const p = new Image(); p.src = A.rutaDe("oscar", a.id); });
+        const t = setInterval(() => {
+            if (!img.isConnected) { clearInterval(t); return; }
+            img.classList.add("sem-avatar-sale");
+            setTimeout(() => {
+                i = (i + 1) % lista.length;
+                poner(lista[i]);
+                img.classList.remove("sem-avatar-sale");
+            }, 350);
+        }, 6000);
+        return img;
+    }
+    // «Instructor: …» con el avatar al lado cuando es la IA.
+    function lineaInstructor(nombre, extra) {
+        const p = el("p", "sem-nota sem-instructor", "Instructor: " + nombre + (extra || ""));
+        if (nombre !== INSTRUCTOR_IA) return p;
+        const fila = el("div", "sem-con-avatar");
+        const img = avatarIA("sem-avatar-chico", POSES.tarjeta);
+        if (img) fila.appendChild(img);
+        const txt = el("div", "sem-con-avatar-txt");
+        txt.appendChild(p);
+        fila.appendChild(txt);
+        return fila;
+    }
+
+    /* Las diapositivas se ven como las láminas del seminario de asesores
+       (Formación Ajedrez, herramientas/formacion-laminas.js): 16:9, franja azul
+       con la sección arriba y el título grande, y el contenido en tarjetas
+       blancas con su ícono. Se dibujan en HTML (no son imágenes) y todo se mide
+       en cqw, así que la lámina entera escala con el ancho de la pantalla. */
+    function lamina(clase) {
+        const art = el("article", "sem-diapositiva sem-lamina" + (clase ? " " + clase : ""));
+        const marco = el("div", "sem-l-marco");
+        art.appendChild(marco);
+        return { art, marco };
+    }
+    function cabecera(marco, seccion, titulo, extras) {
+        const head = el("header", "sem-l-cab");
+        const txt = el("div", "sem-l-cab-txt");
+        if (seccion) txt.appendChild(el("p", "sem-l-seccion", seccion));
+        const h = el("h3", "sem-diap-titulo sem-l-titulo", titulo);
+        if (titulo.length > 30) h.classList.add("sem-l-largo");
+        txt.appendChild(h);
+        head.appendChild(txt);
+        if (extras && extras.length) {
+            const der = el("div", "sem-l-cab-der");
+            extras.forEach((x) => { if (x) der.appendChild(x); });
+            head.appendChild(der);
+        }
+        marco.appendChild(head);
+        return head;
+    }
+    function fila(texto, icono, clase) {
+        const f = el("div", "sem-l-fila sem-l-caja" + (clase ? " " + clase : ""));
+        const ic = el("span", "sem-l-ic", icono || "");
+        ic.setAttribute("aria-hidden", "true");
+        f.append(ic, el("p", "sem-l-texto", texto));
+        return f;
+    }
+    // Si el texto no cabe, se achica un poco la letra (nunca de menos del 70 %).
+    function ajustar(art) {
+        const cuerpo = art.querySelector(".sem-l-cuerpo");
+        if (!cuerpo) return;
+        let esc = 1;
+        art.style.setProperty("--esc", "1");
+        // Se mide cada caja contra el cuerpo: lo centrado se sale por arriba
+        // y por abajo, y scrollHeight solo ve lo de abajo.
+        const pasa = () => {
+            const c = cuerpo.getBoundingClientRect();
+            return Array.from(cuerpo.querySelectorAll(".sem-l-caja, .sem-l-clave"))
+                .some((x) => { const r = x.getBoundingClientRect(); return r.bottom > c.bottom + 1 || r.top < c.top - 1; });
+        };
+        while (pasa() && esc > 0.7) { esc -= 0.05; art.style.setProperty("--esc", esc.toFixed(2)); }
+    }
+    function alPintar(art) {
+        requestAnimationFrame(() => ajustar(art));
+        if (window.ResizeObserver) {
+            let ancho = 0;
+            new ResizeObserver((e) => {
+                const w = Math.round(e[0].contentRect.width);
+                if (w && w !== ancho) { ancho = w; ajustar(art); }
+            }).observe(art);
+        }
+        return art;
+    }
+
     // Una diapositiva tal como la ven todos (instructor y árbitros).
-    function diapositiva(tema, n) {
+    function diapositiva(tema, n, tituloSala, instructor) {
         const d = tema && tema.diapositivas[n];
-        const art = el("article", "sem-diapositiva");
         if (!d) {
-            art.appendChild(el("p", "sem-diap-vacia", "El instructor todavía no eligió qué mostrar."));
+            // Portada, como la primera lámina de cada sesión de asesores.
+            const { art, marco } = lamina("sem-l-portada");
+            marco.appendChild(el("p", "sem-l-seccion", "Ajedrez Integral · Arbitraje"));
+            marco.appendChild(el("h3", "sem-diap-titulo sem-l-portada-titulo", tituloSala || "Seminario de Árbitro FIDE"));
+            marco.appendChild(el("p", "sem-l-portada-sub", "En un momento empieza: el instructor todavía no eligió qué mostrar."));
+            const fig = instructor === INSTRUCTOR_IA ? avatarIA("sem-l-portada-avatar", POSES.portada) : null;
+            if (fig) {
+                marco.appendChild(el("p", "sem-l-portada-instructor", "Instructor: " + INSTRUCTOR_IA));
+                marco.appendChild(fig);
+                art.classList.add("sem-l-con-avatar");
+            } else {
+                const deco = el("span", "sem-l-deco", "♞");
+                deco.setAttribute("aria-hidden", "true");
+                marco.appendChild(deco);
+            }
             return art;
         }
-        const txt = el("div", "sem-diap-texto");
-        txt.appendChild(el("p", "sem-diap-tema", tema.modulo + " · " + tema.titulo + " · " + (n + 1) + " de " + tema.diapositivas.length));
-        const h = el("h3", "sem-diap-titulo");
-        if (d.icono) { const ic = el("span", "sem-diap-icono", d.icono + " "); ic.setAttribute("aria-hidden", "true"); h.appendChild(ic); }
-        h.appendChild(document.createTextNode(d.titulo));
-        txt.appendChild(h);
-        (d.parrafos || []).forEach((p) => txt.appendChild(el("p", "sem-diap-p", p)));
-        if (d.lista && d.lista.length) {
-            const ul = el("ul", "sem-diap-lista");
-            d.lista.forEach((x) => ul.appendChild(el("li", null, x)));
-            txt.appendChild(ul);
+        const { art, marco } = lamina(d.fen ? "sem-l-con-tablero" : "");
+        const cuenta = el("span", "sem-l-cuenta", (n + 1) + " / " + tema.diapositivas.length);
+        cuenta.setAttribute("aria-label", "Diapositiva " + (n + 1) + " de " + tema.diapositivas.length);
+        cabecera(marco, tema.modulo + " · " + tema.titulo, d.titulo, [d.articulo ? el("span", "sem-l-art", d.articulo) : null, cuenta]);
+
+        const cuerpo = el("div", "sem-l-cuerpo");
+        marco.appendChild(cuerpo);
+        let destino = cuerpo;
+        if (d.fen) {
+            const lado = el("div", "sem-l-lado");
+            pintarTablero(lado, d.fen, d.pie, "sem-diagrama sem-l-tabcaja sem-l-caja");
+            destino = el("div", "sem-l-filas");
+            lado.appendChild(destino);
+            cuerpo.appendChild(lado);
+        } else {
+            destino = el("div", "sem-l-filas");
+            cuerpo.appendChild(destino);
         }
-        if (d.articulo) txt.appendChild(el("p", "sem-diap-art", d.articulo));
-        art.appendChild(txt);
-        if (d.fen) pintarTablero(art, d.fen, d.pie);
-        return art;
+        const parrafos = d.parrafos || [];
+        const lista = d.lista || [];
+        // Un párrafo que presenta una lista («…, y además:») va como clave arriba de ella.
+        parrafos.forEach((p, i) => {
+            const presenta = lista.length && i === parrafos.length - 1 && /:\s*$/.test(p);
+            if (presenta) { destino.appendChild(el("p", "sem-l-clave", p)); return; }
+            destino.appendChild(fila(p, i === 0 ? (d.icono || "📌") : "▸", i === 0 ? "" : "sem-l-sigue"));
+        });
+        if (lista.length) {
+            const ul = el("ul", "sem-l-lista" + (lista.length > 3 && !d.fen ? " sem-l-dos" : ""));
+            lista.forEach((x, k) => {
+                const li = el("li", "sem-l-caja");
+                const num = el("span", "sem-l-num", String(k + 1));
+                num.setAttribute("aria-hidden", "true");
+                li.append(num, el("span", "sem-l-texto", x));
+                ul.appendChild(li);
+            });
+            if (!parrafos.length && d.icono) destino.classList.add("sem-l-solo-lista");
+            destino.appendChild(ul);
+        }
+        return alPintar(art);
+    }
+
+    // El marco de una pregunta: la misma franja azul de las láminas, sin el 16:9
+    // (la pregunta crece con sus opciones).
+    function marcoPregunta(seccion, texto, tiempo) {
+        const { art, marco } = lamina("sem-l-libre sem-pregunta");
+        cabecera(marco, seccion, texto, [tiempo]);
+        const cuerpo = el("div", "sem-l-cuerpo-libre");
+        marco.appendChild(cuerpo);
+        return { art, cuerpo };
     }
 
     function pararReloj(nombre) { clearInterval(relojes[nombre]); delete relojes[nombre]; }
@@ -169,7 +327,7 @@
         salas.forEach((s) => {
             const fila = el("div", "sem-tarjeta");
             fila.appendChild(el("h3", "sem-h3", s.titulo));
-            fila.appendChild(el("p", "sem-nota", "Instructor: " + s.instructor));
+            fila.appendChild(lineaInstructor(s.instructor));
             if (s.mi_estado === "esperando") {
                 fila.appendChild(el("p", "sem-estado", "⏳ Estás en la sala de espera. El instructor te deja entrar en cuanto te vea."));
             } else {
@@ -193,7 +351,10 @@
         caja.textContent = "";
         const cab = el("div", "sem-cabecera");
         cab.appendChild(el("h2", "sem-h2", "🎓 " + info.titulo));
-        cab.appendChild(el("p", "sem-nota", "Instructor: " + info.instructor + ". Lo que él proyecta aparece aquí."));
+        const linea = lineaInstructor(info.instructor, ". Lo que él proyecta aparece aquí.");
+        const img = linea.querySelector && linea.querySelector("img");
+        if (img) { img.remove(); const otra = avatarIA("sem-avatar-chico", POSES.cabecera); if (otra) linea.prepend(otra); }
+        cab.appendChild(linea);
         caja.appendChild(cab);
         const vista = el("div", "sem-vista");
         const preg = el("div", "sem-pregunta-caja");
@@ -206,7 +367,7 @@
             if (r.error || !r.data || r.data.cerrada_en) { salaArbitro = null; vistaArbitro(); return; }
             const s = r.data;
             if (!ultima || ultima.tema !== s.tema || ultima.diapositiva !== s.diapositiva) {
-                vista.replaceChildren(diapositiva(temaPorId(s.tema), s.diapositiva));
+                vista.replaceChildren(diapositiva(temaPorId(s.tema), s.diapositiva, info.titulo, info.instructor));
             }
             if (!ultima || ultima.pregunta_id !== s.pregunta_id || ultima.correcta !== s.correcta || ultima.pregunta_hasta !== s.pregunta_hasta) {
                 await pintarPreguntaArbitro(preg, s);
@@ -228,13 +389,9 @@
         if (!s.pregunta_id || !s.pregunta) return;
         const mia = await sb.from("seminario_respuestas").select("opcion").eq("sala_id", s.id).eq("pregunta_id", s.pregunta_id).maybeSingle();
         let elegida = mia.data ? mia.data.opcion : null;
-        const caja2 = el("div", "sem-tarjeta sem-pregunta");
-        const cab = el("div", "sem-fila");
-        cab.appendChild(el("h3", "sem-h3", "Pregunta"));
         const tiempo = el("span", "sem-tiempo");
-        cab.appendChild(tiempo);
-        caja2.appendChild(cab);
-        caja2.appendChild(el("p", "sem-diap-p", s.pregunta.texto));
+        const marco = marcoPregunta("Pregunta", s.pregunta.texto, tiempo);
+        const caja2 = marco.art;
         const ops = el("div", "sem-opciones");
         const abierta = s.correcta == null && new Date(s.pregunta_hasta).getTime() > Date.now();
         const botones = (s.pregunta.opciones || []).map((o, i) => {
@@ -257,9 +414,9 @@
             ops.appendChild(b);
             return b;
         });
-        caja2.appendChild(ops);
+        marco.cuerpo.appendChild(ops);
         const estado = el("p", "sem-estado");
-        caja2.appendChild(estado);
+        marco.cuerpo.appendChild(estado);
         if (s.correcta != null) {
             estado.textContent = elegida == null ? "No contestaste esta pregunta." : (elegida === s.correcta ? "¡Bien! Acertaste." : "Esta vez no: la correcta está marcada.");
             tiempo.textContent = "Cerrada";
@@ -442,7 +599,7 @@
         };
         const pintarVista = () => {
             const t = temaPorId(sala.tema);
-            vista.replaceChildren(diapositiva(t, sala.diapositiva));
+            vista.replaceChildren(diapositiva(t, sala.diapositiva, sala.titulo, soyAdmin ? INSTRUCTOR_IA : null));
             ant.disabled = !t || sala.diapositiva <= 0;
             sig.disabled = !t || sala.diapositiva >= t.diapositivas.length - 1;
             pintarPreguntasDelTema(pregCaja);
@@ -554,13 +711,9 @@
         cont.textContent = "";
         pararReloj("pregunta");
         if (!sala.pregunta_id || !sala.pregunta) return;
-        const t = el("div", "sem-tarjeta sem-pregunta");
-        const cab = el("div", "sem-fila");
-        cab.appendChild(el("h3", "sem-h3", "Pregunta en curso"));
         const tiempo = el("span", "sem-tiempo");
-        cab.appendChild(tiempo);
-        t.appendChild(cab);
-        t.appendChild(el("p", "sem-diap-p", sala.pregunta.texto));
+        const marco = marcoPregunta("Pregunta en curso", sala.pregunta.texto, tiempo);
+        const t = marco.cuerpo;
         const conocida = pregActual && pregActual.id === sala.pregunta_id ? pregActual : null;
         if (conocida && conocida.fen) pintarTablero(t, conocida.fen);
         let resp = [];
@@ -597,7 +750,7 @@
             try { await rpc("seminario_quitar_pregunta", { p_sala: sala.id }); } catch (e) { avisar(errorDe(e)); }
             pintarConteo();
         }));
-        cont.appendChild(t);
+        cont.appendChild(marco.art);
     }
 
     async function pintarExamenInstructor(cont) {
@@ -636,7 +789,8 @@
             const { data: { session } } = await sb.auth.getSession();
             if (!session) return;
             yo = session.user.id;
-            const perfil = await sb.from("profiles").select("role").eq("id", yo).maybeSingle();
+            const perfil = await sb.from("profiles").select("role, is_admin").eq("id", yo).maybeSingle();
+            soyAdmin = !!(perfil.data && perfil.data.is_admin);
             const esArbitro = perfil.data && perfil.data.role === "arbitro";
             if (esArbitro) { $("seminario-caja").hidden = false; return vistaArbitro(); }
             const puede = await sb.rpc("arbitros_puedo_dar");
