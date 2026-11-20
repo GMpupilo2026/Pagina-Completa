@@ -16520,6 +16520,15 @@ sus pts y su puesto actual».
   cara: si el dorso se corre hasta 2 mm, el corte cae todavía sobre el color.
   El verificador comprueba las posiciones, las 6 + 6 líneas y el sangrado en
   las dos caras (y salta si se quita).
+- **Y medido en su Brother DCP-T530DW (20/11, con una hoja cortada):** la
+  línea gris del dorso quedó unos 2,3 mm adentro del borde cortado por el
+  frente: esa impresora pone el dorso ~2,3 mm **más abajo** que el frente (en
+  la dirección del borde largo; volteando por el borde largo, arriba sigue
+  siendo arriba). Más que el sangrado de 2 mm. El diseño de la PZ trae ahora
+  `dorsoY` −2,5 (el campo va de 0,5 en 0,5), calle de 6 mm y sangrado de 3:
+  siguen cabiendo 9 (3 × 85 + 2 × 6 = 267 mm). Para otra impresora se mide
+  igual: imprimir una hoja, cortar por las líneas del frente y ver cuánto
+  queda la línea del dorso adentro del borde, y hacia qué lado.
 - **20/11, con los gafetes cortados en la mano: aprovechar todo el espacio.**
   En el frente, el título va **entre los dos logos** (`tituloEntreLogos`), la
   franja del club **justo en el borde de abajo** (`franjaAbajo`) y con eso la
