@@ -782,7 +782,8 @@ Deno.serve(async (req) => {
     // (o uno que no servía): de una inscripción a la vez. Pasa a ser el
     // contacto, y el teléfono queda en la nota para no perderlo.
     const correoNuevo = texto(body.correo, 120);
-    const cambios: Record<string, unknown> = { estado, comentario, avisado: null };
+    // Sin `avisado: null`: no se reenvía la decisión ya avisada (ver aviso_estado abajo).
+    const cambios: Record<string, unknown> = { estado, comentario };
     if (correoNuevo) {
       if (!esCorreo(correoNuevo)) return json({ ok: false, error: "Ese correo no es válido." }, 400);
       if (cuales.length !== 1 || estado === "pendiente") return json({ ok: false, error: "El correo se agrega de una inscripción a la vez." }, 400);
@@ -795,7 +796,7 @@ Deno.serve(async (req) => {
     }
     const { data: marcadas, error } = await admin.from("pareo_preinscripciones")
       .update(cambios).eq("publicado_id", pid).in("id", cuales)
-      .select("id, nombre, responsable, contacto, nota, institucion, categoria, sexo, nacimiento, elo, fide_id");
+      .select("id, nombre, responsable, contacto, nota, institucion, categoria, sexo, nacimiento, elo, fide_id, aviso_estado");
     if (error) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
     // El aviso a quien inscribió, si dejó un correo como contacto (con un
     // teléfono no se puede: Pareo le dice al árbitro que le avise él). Las
@@ -821,12 +822,16 @@ Deno.serve(async (req) => {
         url: `${SITE_URL}/torneos-pareo.html#t=${pid}`,
       };
       for (const x of marcadas ?? []) {
+        // Ya se avisó ESTA decisión: no reenviar. Así marcar en bucle (o el
+        // ciclo aceptada→pendiente→aceptada) no manda el mismo correo otra vez.
+        // Ver «aviso_estado» en la migración pareo_preinscripciones_aviso_estado.
+        if (x.aviso_estado === estado) continue;
         if (!esCorreo(x.contacto)) { sinCorreo.push(x.id); continue; }
         const salio = await mandar([x.contacto], correoDecision(cabecera(estado === "aceptada" ? "¡Bienvenida al torneo!" : "Inscripción rechazada"),
           fila.nombre || "el torneo", org?.nombre || "", x, estado as "aceptada" | "rechazada", comentario, !!responderA, evento), responderA);
         if (salio) avisados.push(x.id);
       }
-      if (avisados.length) await admin.from("pareo_preinscripciones").update({ avisado: new Date().toISOString() }).in("id", avisados);
+      if (avisados.length) await admin.from("pareo_preinscripciones").update({ avisado: new Date().toISOString(), aviso_estado: estado }).in("id", avisados);
     }
     // Con un correo agregado, el contacto y la nota como quedaron, para que
     // el panel los pinte sin volver a pedir la lista.

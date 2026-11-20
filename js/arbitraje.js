@@ -416,8 +416,12 @@ function fichaPublico(r) {
   const areas = (r.detalle && r.detalle.areas) || {};
   const porArea = AN.AREAS.map((a) => {
     const d = areas[a.id];
-    if (!d || !d.peso) return null;
-    return { ...a, porcentaje: Math.round((d.logrado / d.peso) * 100), aciertos: d.aciertos, total: d.total, nosabe: d.nosabe };
+    const peso = d && Number(d.peso) || 0;
+    if (!peso) return null;
+    // `r.detalle` lo guarda registrar_arbitraje_publico con lo que manda un
+    // anónimo; estos campos van a `innerHTML` abajo. Se fuerzan a número para
+    // que no entre HTML en la pantalla de profesores y administración.
+    return { ...a, porcentaje: Math.round((Number(d.logrado) / peso) * 100) || 0, aciertos: Number(d.aciertos) || 0, total: Number(d.total) || 0, nosabe: Number(d.nosabe) || 0 };
   }).filter(Boolean);
   const flojas = porArea.filter((a) => a.porcentaje < 60).sort((x, y) => x.porcentaje - y.porcentaje);
 

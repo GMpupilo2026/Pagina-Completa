@@ -48,7 +48,7 @@
                 const fecha = new Date(g.row.finished_at).toLocaleDateString("es-CR", { year: "numeric", month: "long", day: "numeric", timeZone: "America/Costa_Rica" });
                 li.innerHTML =
                     "<p class='font-semibold text-brand-800 dark:text-white'>" + escapeHtml(g.row.tournament_name) + "</p>" +
-                    "<p class='text-xs text-brand-450 dark:text-brand-350'>" + (FORMAT_LABEL[g.row.format] || g.row.format) + " · " + etiquetaModoTorneo(g.row.variant) + " · " + fecha + "</p>" +
+                    "<p class='text-xs text-brand-450 dark:text-brand-350'>" + escapeHtml(FORMAT_LABEL[g.row.format] || g.row.format) + " · " + escapeHtml(etiquetaModoTorneo(g.row.variant)) + " · " + fecha + "</p>" +
                     "<p class='text-sm text-accent-600 dark:text-accent-400 font-medium'>🏆 " + g.names.map(escapeHtml).join(" y ") + "</p>";
                 historyEl.appendChild(li);
             });

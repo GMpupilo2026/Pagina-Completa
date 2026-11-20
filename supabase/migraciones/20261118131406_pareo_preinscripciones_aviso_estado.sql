@@ -1,0 +1,12 @@
+-- Pareo Integral: «marcar» reenviaba el correo de la decisión (aceptada /
+-- rechazada) cada vez que se llamaba, porque ponía avisado = null a todas las
+-- filas en cada marca. Un atacante que inscribe correos en su propio torneo y
+-- vuelve a marcar en bucle manda correos sin tope desde el dominio.
+--
+-- Esta columna recuerda QUÉ decisión ya se avisó, igual que
+-- metropolitano.pago_aviso_estado: el aviso sale solo cuando la decisión
+-- cambia de verdad (aviso_estado is distinct from el nuevo estado), no en cada
+-- marca. Volver a «pendiente» no la toca, así el ciclo aceptada→pendiente→
+-- aceptada no reenvía. El freno de inscribir (30/h por IP, 400 por torneo) ya
+-- acota cuántos correos distintos puede juntar.
+alter table public.pareo_preinscripciones add column if not exists aviso_estado text;
