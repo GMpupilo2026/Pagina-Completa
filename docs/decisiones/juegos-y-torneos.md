@@ -218,6 +218,26 @@ dibujo, ni voz, ni frases): se tomó la receta.
 - Las animaciones (respira, salta, se sacude, el globo entra) se apagan con
   «reducir movimiento». Las caras se bajan al activarse, para que el cambio
   de gesto sea al instante.
+- **Habla con la voz del profe** (pedido del 20/11/2026: «dame las frases y
+  yo las digo»). Cada frase tiene un `id`, que es el nombre de su grabación:
+  `herramientas/rival-profe/grabaciones/<id>.<cualquier formato>` (no se
+  publica) → `audio/rival-profe/<id>.mp3`, mono, sin silencios en las puntas
+  y con el volumen parejo, con `herramientas/rival-profe-medios.py` (necesita
+  ffmpeg). El guion para grabar lo saca `herramientas/rival-profe-guion.js`
+  de las mismas frases. Mientras falta la grabación de una frase, la dice la
+  voz del navegador; la profe Pame nunca usa las grabaciones del profe. Hay
+  frases suyas de verdad, de las que dice en clase («¡Esa vara!», «Esa y no
+  otra», «Huelo que hay algo en la posición»). Un botón del panel la apaga
+  (`rival_profe_voz_v1`), y la voz de todo el sitio no lee el globo encima
+  (`data-voz-propia`, en `js/voz-pagina.js`).
+- **La boca y el parpadeo salen de cuadros dibujados**, no de deformar la
+  imagen: `herramientas/avatar-profe-<profe>/cuadros/<cara>-boca.png` (boca
+  abierta) y `<cara>-ojos.png` (ojos cerrados), iguales al original salvo
+  eso, del mismo script a `img/avatar-profe-<profe>/cuadros/`. La boca se abre
+  cuando la grabación suena fuerte (Web Audio, AnalyserNode), y parpadea cada
+  2,5 a 6 s. Sin el cuadro de boca, la cara se mece mientras habla; sin el de
+  ojos, no parpadea. `js/rival-profe-medios.js` (lo escribe el script) dice
+  qué grabaciones y cuadros existen, para no pedir archivos que no están.
 - Lo revisa `verificar-rival-profe.js` (sin navegador): que cada cara exista,
   los umbrales, que el regalo sea de verdad con chess.js aun con la recaptura,
   que no regale la dama, y las conexiones con `bot.js` y `bot.html`.
