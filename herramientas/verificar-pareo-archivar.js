@@ -76,7 +76,7 @@ async function pruebaArchivar(browser) {
   console.log("\n=== Archivar ===");
   const { ctx, page, errores } = await P.abrirPagina(browser, BASE, "", sembrar);
   ok(!(await P.vis(page, "#pi-archivar-caja")), "el panel no se ve hasta pedirlo");
-  await page.click("#pi-archivar");
+  await P.clicEnMenu(page, "#pi-archivar");
   ok(await P.vis(page, "#pi-archivar-caja") && (await page.getAttribute("#pi-archivar", "aria-expanded")) === "true", "al tocar «Archivar torneos» se abre, y lo dice");
   igual("una casilla por torneo, sin marcar", await page.$$eval("#pi-archivar-caja input[type=checkbox]", (l) => l.map((c) => c.checked)), [false, false, false]);
   ok(await page.$eval("#pi-archivar-hacer", (b) => b.disabled), "sin nada marcado, no se puede archivar");
@@ -129,7 +129,7 @@ async function pruebaEnlaces(browser) {
   await org.page.click('[data-ficha="rondas"]');
   await org.page.click("#pi-emparejar");
   await org.page.waitForSelector("#pi-mesa-0");
-  await org.page.click('#pi-ronda button:has-text("Ver desde el celular")');
+  await P.clicEnMenu(org.page, '#pi-ronda button:has-text("Ver desde el celular")');
   await org.page.check("#pi-ver-en-vivo");
   await org.page.waitForFunction(() => window.__enviados.some((x) => /^pareo-vivo-/.test(x.canal)));
   // El evento se pone en vivo un instante después que el torneo: se le da

@@ -65,7 +65,7 @@ function torneo() {
 
   console.log("\n=== Conectarse con el código de las cámaras ===");
   await page.click('[data-ficha="rondas"]');
-  await page.click("#pi-camaras");
+  await P.clicEnMenu(page, "#pi-camaras");
   await page.waitForSelector(dialogo);
   ok(/^[a-hjkmnp-z2-9]{8}$/.test(await page.inputValue(dialogo + ' [name="codigo"]')), "el código ya viene puesto (uno nuevo): no hace falta ir a Notara a buscarlo", await page.inputValue(dialogo + ' [name="codigo"]'));
   igual("y se elige el retraso de la transmisión pública", await page.$$eval(dialogo + ' [name="retraso"] option', (l) => l.map((x) => x.value)), ["0", "5", "10", "15", "30"]);
@@ -73,7 +73,7 @@ function torneo() {
   await page.click(dialogo + " [data-avisos-aceptar]");
   await page.waitForFunction(() => /Ese código no es válido/.test(document.body.textContent)).catch(() => {});
   ok(/Ese código no es válido/.test(await page.textContent("body")), "un código que no es válido se dice");
-  await page.click("#pi-camaras");
+  await P.clicEnMenu(page, "#pi-camaras");
   await page.waitForSelector(dialogo);
   await page.fill(dialogo + ' [name="codigo"]', CODIGO.toUpperCase());
   await page.click(dialogo + " [data-avisos-aceptar]");
@@ -93,7 +93,7 @@ function torneo() {
   ok(/Cámara de Notara/.test(await page.textContent('[data-rotulo-camara="2"]')) && /PRUEBA CÁMARAS/.test(await page.textContent('[data-rotulo-camara="2"]')), "con el torneo y para qué es, escritos");
   await page.evaluate(() => document.body.classList.remove("pi-imprimiendo-firmas"));
   // Con retraso: va en el QR, y queda guardado.
-  await page.click("#pi-camaras");
+  await P.clicEnMenu(page, "#pi-camaras");
   await page.waitForSelector(dialogo);
   igual("al volver a abrirlo, el código es el del torneo", await page.inputValue(dialogo + ' [name="codigo"]'), CODIGO);
   await page.selectOption(dialogo + ' [name="retraso"]', "15");
@@ -104,7 +104,7 @@ function torneo() {
   await page.waitForFunction(() => /&r=15$/.test((document.querySelector('[data-rotulo-camara="1"]') || { dataset: {} }).dataset.enlace || ""), null, { timeout: 5000 }).catch(() => {});
   ok(/&m=1&r=15$/.test(await page.getAttribute('[data-rotulo-camara="1"]', "data-enlace")), "el retraso elegido viaja en el QR de cada mesa");
   await page.evaluate(() => document.body.classList.remove("pi-imprimiendo-firmas"));
-  await page.click("#pi-camaras");
+  await P.clicEnMenu(page, "#pi-camaras");
   await page.waitForSelector(dialogo);
   await page.selectOption(dialogo + ' [name="retraso"]', "0");
   await page.click(dialogo + " [data-avisos-aceptar]");
@@ -407,7 +407,7 @@ function torneo() {
     });
     const pq = Q.page;
     await pq.click('[data-ficha="rondas"]');
-    await pq.click("#pi-camaras");
+    await P.clicEnMenu(pq, "#pi-camaras");
     await pq.waitForSelector(dialogo);
     await pq.fill(dialogo + ' [name="codigo"]', CODIGO);
     await pq.click(dialogo + " [data-avisos-aceptar]");

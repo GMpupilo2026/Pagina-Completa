@@ -265,12 +265,18 @@
     document.title = tx("tituloPagina");
   }
 
-  const FICHAS = ["torneo", "jugadores", "rondas", "centro", "clasificacion", "cruzada", "archivos"];
+  // La Portada y Herramientas (el comprobador, el generador y los créditos)
+  // son partes nuevas: ver «Pareo Integral con el aspecto del panel de la
+  // Academia» en docs/decisiones/juegos-y-torneos.md.
+  const FICHAS = ["inicio", "torneo", "jugadores", "rondas", "centro", "clasificacion", "cruzada", "archivos", "herramientas"];
   function pintarFichas() {
+    // Con «Solo lo de los JDE», Herramientas no se ve: si estaba abierta, se va a Archivos.
+    if (estado.ficha === "herramientas" && document.body.classList.contains("pi-modo-jde")) estado.ficha = "archivos";
+    if (!FICHAS.includes(estado.ficha)) estado.ficha = "jugadores";
     for (const f of FICHAS) {
       const b = $("pi-f-" + f);
       const si = f === estado.ficha;
-      b.className = C.ficha;
+      b.className = C.ficha + (f === "herramientas" ? " pi-no-jde" : "");
       b.setAttribute("aria-selected", si ? "true" : "false");
       b.tabIndex = si ? 0 : -1;
       $("pi-p-" + f).hidden = !si;
@@ -450,8 +456,9 @@
   }
 
   function pintarPanel() {
-    ({ torneo: pintarTorneo, jugadores: pintarJugadores, rondas: pintarRondas, centro: pintarCentro,
-      clasificacion: pintarClasificacion, cruzada: pintarCruzada, archivos: pintarEvento })[estado.ficha]();
+    ({ inicio: pintarInicio, torneo: pintarTorneo, jugadores: pintarJugadores, rondas: pintarRondas, centro: pintarCentro,
+      clasificacion: pintarClasificacion, cruzada: pintarCruzada, archivos: pintarEvento, herramientas: () => {} })[estado.ficha]();
+    pintarSiguiente();
   }
 
   function pintarTodo() {
@@ -533,7 +540,7 @@
     const barra = $("pi-barra-estado");
     if (!barra) return;
     const v = estado.t;
-    if (!v) { barra.replaceChildren(); return; }
+    if (!v) { barra.replaceChildren(); pintarResumen(); return; }
     const n = v.jugadores.length;
     const total = T.rondasDelTorneo(v);
     const r = v.rondas.length;
@@ -544,6 +551,211 @@
     ];
     if (estado.guardadoEn) partes.push(tx("estadoGuardado", { h: horaCR(estado.guardadoEn) }));
     barra.replaceChildren(...partes.map((texto) => el("span", { texto })));
+    pintarResumen();
+  }
+
+  // ---------- «Lo siguiente», la portada y lo que dice cada parte ----------
+  // Lo que toca hacer ahora con el torneo abierto, en una frase y con el botón
+  // para hacerlo: arriba de cada parte (#pi-siguiente) y en grande en la
+  // Portada. Ver «Pareo Integral con el aspecto del panel de la Academia» en
+  // docs/decisiones/juegos-y-torneos.md.
+  function mesasDe(R) {
+    const conMesa = R.mesas.filter((m) => m.n);
+    return { total: conMesa.length, faltan: conMesa.filter((m) => !T.rondaCompleta({ mesas: [m] })).length };
+  }
+  function irARonda(r, buscarPendiente) {
+    estado.ronda = r;
+    irA("rondas");
+    const sel = buscarPendiente && [...document.querySelectorAll("#pi-ronda select[data-resultado]")].find((s) => !s.value && s.checkVisibility());
+    if (sel) sel.focus();
+    else $("pi-f-rondas").focus();
+  }
+  function primeroDeLaClasificacion(v) {
+    const k = rondasCompletas();
+    if (!k || !v.jugadores.length) return null;
+    try {
+      const f = E.clasificacion(hasta(k), v.sistema === "eliminacion" ? [] : v.desempates)[0];
+      const j = f && jugador(f.id);
+      return j ? { nombre: j.nombre, puntos: puntosTexto(f.puntos) } : null;
+    } catch (e) { return null; }
+  }
+  function loSiguiente() {
+    const v = estado.t;
+    const n = v.jugadores.length;
+    const hay = v.rondas.length;
+    const total = totalRondas();
+    if (!n) {
+      return { titulo: tx("sigAgregarT"), detalle: tx("sigAgregarD"), ficha: "jugadores",
+        botones: [
+          { texto: tx("sigAgregarBoton"), hacer: () => { irA("jugadores"); $("pi-form-jugador").elements.nombre.focus(); } },
+          { texto: tx("sigSubirBoton"), hacer: () => { irA("torneo"); $("pi-subir-lista").focus(); } },
+        ] };
+    }
+    const ultima = hay ? v.rondas[hay - 1] : null;
+    if (ultima && !T.rondaCompleta(ultima)) {
+      const m = mesasDe(ultima);
+      return { titulo: tx("sigResultadosT", { r: hay }), detalle: tx(m.faltan === 1 ? "sigResultadosD1" : "sigResultadosD", { k: m.faltan, m: m.total }), ficha: "rondas", ronda: hay - 1, alerta: true,
+        botones: [
+          { texto: tx("sigResultadosBoton"), hacer: () => irARonda(hay - 1, true) },
+          { texto: tx("sigClasBoton"), hacer: () => irA("clasificacion") },
+        ] };
+    }
+    if (hay < total) {
+      return { titulo: tx("sigEmparejarT", { r: hay + 1 }), detalle: hay ? tx("sigEmparejarD", { p: hay }) : tx(n === 1 ? "sigEmparejar1D1" : "sigEmparejar1D", { n }), ficha: "rondas", ronda: hay,
+        botones: [
+          { texto: tx("sigEmparejarBoton", { r: hay + 1 }), hacer: () => irARonda(hay) },
+          hay ? { texto: tx("sigClasBoton"), hacer: () => irA("clasificacion") } : { texto: tx("sigRevisarBoton"), hacer: () => irA("jugadores") },
+        ] };
+    }
+    const primero = primeroDeLaClasificacion(v);
+    return { titulo: tx("sigTerminadoT"), detalle: primero ? tx("sigTerminadoD", { j: primero.nombre, p: primero.puntos }) : tx("sigTerminadoD0"), ficha: "clasificacion",
+      botones: [
+        { texto: tx("sigClasBoton"), hacer: () => irA("clasificacion") },
+        { texto: tx("bajarTrf"), hacer: () => irA("archivos") },
+      ] };
+  }
+  // La tira de arriba de cada parte: lo siguiente y su botón (en la parte a la
+  // que ya lleva el botón, sin botón). En la Portada no va: ahí está en grande.
+  function pintarSiguiente() {
+    const caja = $("pi-siguiente");
+    if (!caja) return;
+    const v = estado.t;
+    if (!v || estado.ficha === "inicio") { caja.hidden = true; caja.replaceChildren(); return; }
+    const s = loSiguiente();
+    const aqui = s.ficha === estado.ficha && (s.ronda == null || s.ronda === estado.ronda);
+    const b = s.botones[0];
+    caja.className = "pi-siguiente no-imprimir" + (s.alerta ? " pi-siguiente-alerta" : "");
+    caja.replaceChildren(...[
+      el("span", { class: "pi-siguiente-etiqueta", texto: tx("sigEtiqueta") }),
+      el("span", { class: "pi-siguiente-texto" }, el("b", { texto: s.titulo }), " ", s.detalle),
+      aqui ? null : el("button", { type: "button", class: "pi-boton-rosa", onclick: b.hacer }, b.texto)].filter(Boolean));
+    caja.hidden = false;
+  }
+  // Lo que dice cada parte en la barra lateral: cuántos juegan y cómo va la ronda.
+  function pintarInsignias() {
+    const v = estado.t;
+    const poner = (f, texto, alerta) => {
+      const s = document.querySelector("#pi-f-" + f + " .pi-insignia");
+      if (!s) return;
+      s.textContent = texto || "";
+      s.classList.toggle("pi-insignia-alerta", !!alerta);
+    };
+    if (!v) { for (const f of FICHAS) poner(f, ""); return; }
+    poner("jugadores", String(v.jugadores.length), !v.jugadores.length);
+    const hay = v.rondas.length;
+    const total = Math.max(totalRondas(), hay);
+    const ultima = hay ? v.rondas[hay - 1] : null;
+    const faltan = ultima && !T.rondaCompleta(ultima) ? mesasDe(ultima).faltan : 0;
+    poner("rondas", hay ? tx("insRondas", { r: hay, t: total }) + (faltan ? " · " + tx("insFaltan", { k: faltan }) : "") : (v.jugadores.length ? tx("porEmparejar") : ""), !!faltan);
+    poner("clasificacion", rondasCompletas() ? tx("insTras", { r: rondasCompletas() }) : "");
+  }
+  function pintarResumen() {
+    pintarInsignias();
+    pintarSiguiente();
+    if (estado.ficha === "inicio") pintarInicio();
+  }
+
+  // La Portada: «Lo siguiente» en grande, seis tarjetas de color que llevan a
+  // su parte (cada una con el dato escrito: el color nunca va solo) y «Lo que
+  // viene», la lista de las rondas.
+  // El color de la tarjeta de Resultados (el dato también va escrito).
+  const COLOR_FALTA = "naranja", COLOR_LISTO = "verde";
+  function pintarInicio() {
+    const caja = $("pi-inicio");
+    if (!caja) return;
+    const v = estado.t;
+    if (!v) { caja.replaceChildren(); return; }
+    const s = loSiguiente();
+    const n = v.jugadores.length;
+    const hay = v.rondas.length;
+    const total = Math.max(totalRondas(), hay);
+    const sistema = { suizo: "sistemaSuizoCorto", todos: "sistemaTodosCorto", scheveningen: "sistemaSchevCorto", eliminacion: "sistemaElimCorto", keizer: "sistemaKeizerCorto" }[v.sistema];
+    const chips = [
+      sistema ? tx(sistema) : null,
+      total ? tx(total === 1 ? "iniUnaRonda" : "iniRondas", { n: total }) : null,
+      v.ritmo || null,
+      v.fechaInicio ? fechaCorta(v.fechaInicio) : null,
+      v.ciudad || null,
+    ].filter(Boolean);
+    const heroe = el("div", { class: "pi-heroe" },
+      el("p", { class: "pi-heroe-nombre", texto: v.nombre || tx("estadoSinNombre") }),
+      chips.length ? el("ul", { class: "pi-chips", "aria-label": tx("iniDatos") }, chips.map((c) => el("li", { texto: c }))) : null,
+      el("p", { class: "pi-heroe-etiqueta", texto: tx("sigEtiqueta") }),
+      el("h2", { texto: s.titulo }),
+      el("p", { class: "pi-heroe-detalle", texto: s.detalle }),
+      el("div", { class: "pi-heroe-botones" }, s.botones.map((b, i) =>
+        el("button", { type: "button", class: i === 0 ? "pi-boton-rosa" : "pi-boton-blanco", onclick: b.hacer }, b.texto))));
+
+    const ultima = hay ? v.rondas[hay - 1] : null;
+    const m = ultima ? mesasDe(ultima) : null;
+    const primero = primeroDeLaClasificacion(v);
+    const sala = (color, icono, titulo, numero, detalle, hacer) => el("button", { type: "button", class: "pi-sala pi-sala-" + color, onclick: hacer },
+      el("span", { class: "pi-sala-icono", "aria-hidden": "true", texto: icono }),
+      el("span", { class: "pi-sala-titulo", texto: titulo }),
+      el("span", { class: "pi-sala-numero", texto: numero }),
+      el("span", { class: "pi-sala-detalle", texto: detalle }));
+    const salas = el("div", { class: "pi-salas" },
+      sala("azul", "👥", tx("fJugadores"), String(n), tx("iniJugadoresDet"), () => irA("jugadores")),
+      sala("turquesa", "♟️", tx("iniRonda"), hay ? tx("insRondas", { r: hay, t: total }) : "—", hay ? tx("iniRondaDet") : tx("iniSinEmpezar"), () => irARonda(Math.max(0, hay - 1))),
+      sala(m && m.faltan ? COLOR_FALTA : COLOR_LISTO, "✍️", tx("iniResultados"), !m ? "—" : m.faltan ? tx("insFaltan", { k: m.faltan }) : tx("iniCompletos"), m ? tx("iniResultadosDet", { r: hay }) : tx("iniSinEmpezar"), () => irARonda(Math.max(0, hay - 1), true)),
+      sala("rojo", "🏆", tx("iniPrimero"), primero ? primero.nombre : "—", primero ? tx("iniPuntos", { p: primero.puntos }) : tx("iniSinResultados"), () => irA("clasificacion")),
+      sala("morado", "📲", tx("iniVivo"), estado.enVivo ? tx("iniVivoSi") : tx("iniVivoNo"), tx("verDesdeElCelular"), () => irARonda(Math.max(0, hay - 1))),
+      sala("pizarra", "📁", tx("fArchivos"), "TRF", tx("iniArchivosDet"), () => irA("archivos")));
+
+    const items = [];
+    const enJuego = ultima && !T.rondaCompleta(ultima);
+    for (let r = 0; r < total; r++) {
+      let texto, clase = null;
+      if (r < hay) {
+        const mr = mesasDe(v.rondas[r]);
+        if (mr.faltan) { texto = tx("iniVieneJuego", { k: mr.faltan }); clase = "pi-viene-ahora"; }
+        else texto = tx("iniVieneJugada");
+      } else if (r === hay) { texto = tx("porEmparejar"); if (!enJuego) clase = "pi-viene-ahora"; }
+      else texto = tx("iniVieneLuego");
+      items.push(el("li", { class: clase }, el("span", { class: "pi-viene-que", texto: tx("rondaN", { r: r + 1 }) }), el("span", { class: "pi-viene-det", texto })));
+    }
+    // Las que ya se jugaron, salvo las dos últimas, se juntan en una línea.
+    const jugadas = Math.max(0, Math.min(hay, total) - 2);
+    const lista = jugadas > 1
+      ? [el("li", {}, el("span", { class: "pi-viene-que", texto: tx("iniVieneAntes", { n: jugadas }) }), el("span", { class: "pi-viene-det", texto: tx("iniVieneJugadas") }))].concat(items.slice(jugadas))
+      : items;
+    lista.push(el("li", {}, el("span", { class: "pi-viene-que", texto: tx("iniVieneFin") }), el("span", { class: "pi-viene-det", texto: tx("iniVieneFinDet") })));
+    const viene = el("section", { class: "pi-viene", "aria-labelledby": "pi-viene-titulo" },
+      el("h2", { id: "pi-viene-titulo", texto: tx("iniViene") }), el("ol", {}, lista));
+
+    caja.replaceChildren(el("div", { class: "pi-portada" }, el("div", { class: "pi-portada-principal" }, heroe, salas), viene));
+  }
+  function fechaCorta(iso) {
+    const [a, mes, d] = String(iso).split("-").map(Number);
+    if (!a || !mes || !d) return iso;
+    // Un día de calendario: se arma a mediodía UTC y se muestra en hora de Costa Rica.
+    return new Intl.DateTimeFormat(idioma === "en" ? "en-US" : "es-CR", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Costa_Rica" }).format(new Date(Date.UTC(a, mes - 1, d, 12)));
+  }
+
+  // Los menús de botones (<details class="pi-menu">): se cierran al elegir,
+  // al tocar afuera y con Escape, y nunca queda más de uno abierto.
+  function engancharMenus() {
+    document.addEventListener("click", (e) => {
+      const dentro = e.target.closest("details.pi-menu");
+      for (const d of document.querySelectorAll("details.pi-menu[open]")) {
+        if (d !== dentro) d.open = false;
+        else if (e.target.closest(".pi-menu-lista button")) d.open = false;
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      const abierto = document.querySelector("details.pi-menu[open]");
+      if (!abierto) return;
+      abierto.open = false;
+      abierto.querySelector("summary").focus();
+    });
+  }
+  // Un menú de botones; los que vienen nulos no se ponen, y sin ninguno no hay menú.
+  function menuDeBotones(id, etiqueta, botones) {
+    const lista = botones.filter(Boolean);
+    if (!lista.length) return null;
+    for (const b of lista) b.className = "pi-menu-item";
+    return el("details", { id, class: "pi-menu no-imprimir" }, el("summary", { class: C.botonSec }, etiqueta), el("div", { class: "pi-menu-lista" }, lista));
   }
 
   // Si el torneo cambia el Elo de quien juega: lo dice la lista pública.
@@ -924,6 +1136,12 @@
 
   function pintarJugadores() {
     const v = t();
+    // Cada parte empieza por lo que más se usa: con gente inscrita, la lista
+    // va arriba y «Agregar un jugador» debajo (con un botón que lleva ahí).
+    const panelJ = $("pi-p-jugadores"), cajaAgregar = $("pi-jug-agregar"), cajaInscritos = $("pi-jug-inscritos");
+    const listaPrimero = v.jugadores.length > 0;
+    if ((panelJ.firstElementChild === cajaInscritos) !== listaPrimero) panelJ.prepend(listaPrimero ? cajaInscritos : cajaAgregar);
+    $("pi-ir-agregar").hidden = !listaPrimero || E.esDeEquipos(v);
     const num = T.numeros(v);
     const orden = T.ordenInicial(v);
     const tabla = $("pi-tabla-jugadores");
@@ -3300,21 +3518,29 @@
     const R = v.rondas[r];
     const pendientes = R.mesas.filter((m) => m.n && !T.rondaCompleta({ mesas: [m] })).length;
     const ultima = r === v.rondas.length - 1;
+    // Los botones de la ronda, en tres menús (Imprimir, Compartir, Árbitros y
+    // cámaras) en vez de once sueltos; «Deshacer el emparejamiento» va aparte,
+    // al final («Los botones de Rondas, agrupados» en docs/decisiones/juegos-y-torneos.md).
     caja.append(el("div", { class: "flex flex-wrap items-baseline justify-between gap-3 mb-3" },
       el("h2", { class: "font-serif text-xl font-bold", texto: tx("emparejamientosRonda", { r: r + 1 }) + (v.sistema === "eliminacion" ? " · " + nombreRondaElim(v, r) : "") + (v.nombre ? " — " + v.nombre : "") }),
       el("div", { class: "flex flex-wrap gap-2 no-imprimir" },
-        el("button", { type: "button", class: C.botonSec, onclick: () => window.print() }, tx("imprimir")),
-        el("button", { type: "button", class: C.botonSec, onclick: () => imprimirPlantillaMesas(r) }, tx("plantillaMesas")),
-        el("button", { type: "button", id: "pi-planillas-firma", class: C.botonSec, onclick: () => imprimirPlanillasFirma(r) }, tx("planillasFirma")),
-        E.esDeEquipos(v) ? el("button", { type: "button", id: "pi-alineaciones", class: C.botonSec, onclick: () => imprimirAlineaciones(r) }, tx("alineacionesImprimir")) : null,
-        el("button", { type: "button", class: C.botonSec, onclick: () => compartirLectura(r) }, tx("verDesdeElCelular")),
-        el("button", { type: "button", id: "pi-ronda-whatsapp", class: C.botonSec, "aria-expanded": "false", "aria-controls": "pi-ronda-compartir",
-          onclick: (e) => abrirCompartir($("pi-ronda-compartir"), e.currentTarget, PareoCompartir.textoRonda(t(), r, { idioma, enlace: enlaceVivoActual() })) }, tx("whatsappBoton")),
-        ultima ? el("button", { type: "button", id: "pi-adjunto", class: C.botonSec, onclick: () => enlaceAdjunto(r) }, tx("adjuntoBoton")) : null,
-        ultima ? el("button", { type: "button", id: "pi-camaras", class: C.botonSec, onclick: pedirCodigoCamaras }, tx("camarasBoton")) : null,
-        el("button", { type: "button", id: "pi-planillas-anotacion", class: C.botonSec, onclick: () => imprimirPlanillasAnotacion(r) }, tx("anotacionBoton")),
-        el("button", { type: "button", id: "pi-imprimir-todo", class: C.botonSec, onclick: () => imprimirTodoDeRonda(r) }, tx("imprimirTodo")),
-        ultima ? el("button", { type: "button", class: C.miniPeligro + " px-3 py-2", onclick: () => deshacerRonda(r) }, tx("deshacerRonda")) : null)));
+        menuDeBotones("pi-menu-imprimir", tx("menuImprimir"), [
+          el("button", { type: "button", onclick: () => window.print() }, tx("imprimir")),
+          el("button", { type: "button", onclick: () => imprimirPlantillaMesas(r) }, tx("plantillaMesas")),
+          el("button", { type: "button", id: "pi-planillas-firma", onclick: () => imprimirPlanillasFirma(r) }, tx("planillasFirma")),
+          el("button", { type: "button", id: "pi-planillas-anotacion", onclick: () => imprimirPlanillasAnotacion(r) }, tx("anotacionBoton")),
+          E.esDeEquipos(v) ? el("button", { type: "button", id: "pi-alineaciones", onclick: () => imprimirAlineaciones(r) }, tx("alineacionesImprimir")) : null,
+          el("button", { type: "button", id: "pi-imprimir-todo", onclick: () => imprimirTodoDeRonda(r) }, tx("imprimirTodo")),
+        ]),
+        menuDeBotones("pi-menu-compartir", tx("menuCompartir"), [
+          el("button", { type: "button", onclick: () => compartirLectura(r) }, tx("verDesdeElCelular")),
+          el("button", { type: "button", id: "pi-ronda-whatsapp", "aria-expanded": "false", "aria-controls": "pi-ronda-compartir",
+            onclick: (e) => abrirCompartir($("pi-ronda-compartir"), e.currentTarget, PareoCompartir.textoRonda(t(), r, { idioma, enlace: enlaceVivoActual() })) }, tx("whatsappBoton")),
+        ]),
+        ultima ? menuDeBotones("pi-menu-arbitros", tx("menuArbitros"), [
+          el("button", { type: "button", id: "pi-adjunto", onclick: () => enlaceAdjunto(r) }, tx("adjuntoBoton")),
+          el("button", { type: "button", id: "pi-camaras", onclick: pedirCodigoCamaras }, tx("camarasBoton")),
+        ]) : null)));
     caja.append(el("div", { id: "pi-ronda-compartir", class: "no-imprimir", hidden: true }));
     caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", role: "status", texto: pendientes ? tx("faltanResultados", { n: pendientes }) : tx("rondaCompleta") }));
     if (!ultima) caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", texto: tx("avisoCorregir") }));
@@ -3323,7 +3549,8 @@
     const buscarMesa = el("input", { id: "pi-buscar-mesa", type: "search", autocomplete: "off", class: C.campo, "aria-describedby": "pi-atajos-ayuda" });
     caja.append(el("div", { class: "no-imprimir mb-3 max-w-md" },
       el("label", { for: "pi-buscar-mesa", class: "block text-sm font-semibold mb-1", texto: tx("buscarMesa") }), buscarMesa,
-      el("p", { id: "pi-atajos-ayuda", class: C.nota + " mt-1", texto: tx("atajosAyuda") })));
+      el("details", { class: "pi-ayuda" }, el("summary", { texto: tx("atajosTitulo") }),
+        el("p", { id: "pi-atajos-ayuda", class: C.nota + " mt-1", texto: tx("atajosAyuda") }))));
     buscarMesa.addEventListener("input", () => filtrarMesas(buscarMesa.value));
     buscarMesa.addEventListener("keydown", (e) => {
       if (e.key !== "Enter") return;
@@ -3350,6 +3577,10 @@
     pintarRevisionPareo(caja, r);
     pintarConfirmar(caja, r);
     pintarIncidencias(caja, r);
+    if (ultima) caja.append(el("section", { class: "pi-zona-peligro no-imprimir", "aria-labelledby": "pi-peligro-titulo" },
+      el("h3", { id: "pi-peligro-titulo", texto: tx("peligroTitulo") }),
+      el("p", { class: C.nota, texto: tx("peligroAyuda", { r: r + 1 }) }),
+      el("button", { type: "button", class: C.miniPeligro + " px-3 py-2", onclick: () => deshacerRonda(r) }, tx("deshacerRonda"))));
     for (const s of caja.querySelectorAll("select[data-resultado]")) atajosResultado(s);
   }
 
@@ -7859,18 +8090,26 @@
     const fichas = $("pi-fichas");
     fichas.addEventListener("click", (e) => { const b = e.target.closest("[data-ficha]"); if (b) irA(b.dataset.ficha); });
     fichas.addEventListener("keydown", (e) => {
-      const i = FICHAS.indexOf(estado.ficha);
-      const k = { ArrowRight: 1, ArrowLeft: -1, Home: -i, End: FICHAS.length - 1 - i }[e.key];
+      // La barra es vertical en la computadora y horizontal en el celular: sirven las cuatro flechas.
+      const visibles = FICHAS.filter((f) => $("pi-f-" + f).checkVisibility());
+      const i = Math.max(0, visibles.indexOf(estado.ficha));
+      const k = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1, Home: -i, End: visibles.length - 1 - i }[e.key];
       if (k == null) return;
       e.preventDefault();
-      irA(FICHAS[(i + k + FICHAS.length) % FICHAS.length], true);
+      irA(visibles[(i + k + visibles.length) % visibles.length], true);
     });
+    engancharMenus();
+    $("pi-ir-agregar").addEventListener("click", () => { $("pi-jug-agregar").scrollIntoView({ block: "start" }); $("pi-form-jugador").elements.nombre.focus(); });
 
     // «Solo lo de los JDE»: esconde el comprobador, el generador y los créditos.
     const modoJde = $("pi-modo-jde");
     modoJde.checked = leer(CLAVE_MODO_JDE) === "1";
     document.body.classList.toggle("pi-modo-jde", modoJde.checked);
-    modoJde.addEventListener("change", () => { escribir(CLAVE_MODO_JDE, modoJde.checked ? "1" : "0"); document.body.classList.toggle("pi-modo-jde", modoJde.checked); });
+    modoJde.addEventListener("change", () => {
+      escribir(CLAVE_MODO_JDE, modoJde.checked ? "1" : "0");
+      document.body.classList.toggle("pi-modo-jde", modoJde.checked);
+      if (modoJde.checked && estado.ficha === "herramientas") irA("archivos");
+    });
     const sonido = $("pi-sonido-ronda");
     sonido.checked = leer(CLAVE_SONIDO) === "1";
     sonido.addEventListener("change", () => { escribir(CLAVE_SONIDO, sonido.checked ? "1" : "0"); if (sonido.checked) sonar(); });

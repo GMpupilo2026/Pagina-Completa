@@ -4450,6 +4450,86 @@ la hora en que se guardó (`pintarEstado`, que corre en `pintarTodo` y en
   porque `replaceChildren` convierte un `null` en el texto «null»; ahora los
   botones que no van se filtran antes.
 
+### Pareo Integral con el aspecto del panel de la Academia
+
+El 20/11/2026 el dueño dijo que en Pareo Integral se perdía y veía mucho
+desorden, y pidió que se viera como el panel de la Academia (barra lateral
+turquesa, recuadro grande con botones rosados, tarjetas de color, «Lo que
+viene»). Antes de tocar nada se armó una simulación con ocho mejoras para
+prender y apagar en los cuatro momentos de un torneo (antes de la ronda 1,
+ronda en juego, ronda completa, terminado); el dueño eligió las ocho. Este
+aspecto reemplaza al de «programa de computadora» de la sección anterior
+(la barra de estado y las tablas como cuadrícula se quedan).
+
+- **El aspecto.** Adentro de `#pi-editor` se redefinen `--c-brand-*` y
+  `--c-accent-*` con la paleta del tema «jornada» (#1406, turquesa y
+  rosado), que se calibró a la luminancia del Clásico: cada clase de
+  Tailwind de la página (`text-brand-600`, `bg-brand-800`…) toma el
+  turquesa con el mismo contraste que tiene en el resto del sitio, sin
+  tocar el HTML. Por eso Pareo se ve turquesa con cualquier tema de la
+  plataforma: es el aspecto de la herramienta, no el del usuario. Todo el
+  CSS está en «Pareo Integral con el aspecto del panel de la Academia» de
+  `css/styles.css`.
+- **La barra lateral** es el mismo `#pi-fichas` de siempre (`role="tablist"`
+  con `aria-orientation="vertical"`; sirven las cuatro flechas porque en el
+  celular se vuelve una fila que se desliza). Cada parte lleva un ícono y
+  **una insignia que dice cómo va** (`pintarInsignias`): Jugadores, cuántos;
+  Rondas, «4 de 7 · faltan 4» (en ámbar si faltan resultados, y el texto lo
+  dice); Clasificación, «tras 3». El nombre de cada parte va en su propio
+  `<span data-t>`: `pintarTextos` pone el `textContent` de cada `[data-t]`
+  y, si fuera el botón entero, borraría la insignia.
+- **«Lo siguiente»** (`loSiguiente`): una frase con lo que toca hacer y el
+  botón para hacerlo. Hay cuatro casos: sin jugadores (agregar o subir la
+  lista), ronda con resultados pendientes (ir al primero que falta),
+  ronda completa (emparejar la siguiente) y torneo terminado (clasificación
+  y TRF). Va en la tira de arriba de cada parte (`#pi-siguiente`; sin
+  botón en la parte a la que ya lleva) y en grande en la Portada. Se
+  vuelve a pintar en `pintarEstado`, que corre en cada `guardar()`: anotar
+  un resultado cambia la tira y las insignias al momento.
+- **La Portada** (`#pi-p-inicio`, `pintarInicio`): el recuadro con el
+  nombre, los datos (sistema, rondas, ritmo, fecha, ciudad) y «Lo
+  siguiente»; seis tarjetas de color que llevan a su parte, cada una con
+  su dato escrito (el color nunca va solo; blanco sobre cada color ≥ 5,7:1,
+  medido); y «Lo que viene», las rondas una por una (las ya jugadas, salvo
+  las dos últimas, en una sola línea). **La parte que se abre al entrar
+  sigue siendo la última que se usó** (`pareo_ficha_v1`, y Jugadores la
+  primera vez): la Portada es la primera de la barra, no la obligatoria.
+- **Los botones de Rondas, agrupados.** Eran once sueltos; ahora son tres
+  menús (`menuDeBotones`, un `<details class="pi-menu">`): Imprimir
+  (imprimir, plantilla para la pared, planillas para firmar y de
+  anotación, hojas de alineación, todo para imprimir), Compartir (ver
+  desde el celular, WhatsApp) y Árbitros y cámaras (solo en la última
+  ronda). **«Deshacer el emparejamiento» va aparte, al final de la ronda**,
+  en una caja roja que dice qué saca, lejos de los botones de todos los
+  días. Los botones conservan su `id`. Un menú se cierra al elegir, al
+  tocar afuera y con Escape (que devuelve el foco a su botón), y nunca hay
+  dos abiertos (`engancharMenus`).
+- **Cada parte empieza por lo que más se usa.** En Jugadores, con gente
+  inscrita la lista va arriba y «Agregar un jugador» debajo, con un botón
+  en la lista que lleva al formulario. Se mueve el nodo solo si el orden
+  está mal, para no sacarle el foco a quien está escribiendo.
+- **Archivos y Herramientas, separados.** El comprobador, el generador y
+  «Con qué está hecho» salieron de «Archivos y comprobador» a su parte,
+  Herramientas, que con «Solo lo de los JDE» no se ve (si estaba abierta,
+  se pasa a Archivos). La parte se llama ahora «Archivos», y los textos
+  que nombraban «Archivos y comprobador» también.
+- **Explicaciones plegadas.** Los párrafos largos de ayuda van en «¿Cómo
+  funciona?» (`<details class="pi-ayuda">`). **No se pliegan los avisos**:
+  lo que sale de la computadora (el Elo Nacional), lo que se publica y
+  «si corriges un resultado…» siguen a la vista.
+- **La barra de arriba, corta.** El lema se esconde por debajo de 1024 px,
+  y «Solo lo de los JDE», el sonido y «Archivar torneos» van en «Más
+  opciones». **El aviso «queda guardado solo en este navegador» no entra
+  al menú**: es lo que evita perder un torneo, y `js/pareo/nube.js` lo
+  esconde solo cuando se guarda en la cuenta.
+- **En papel no cambia nada**: la barra lateral, la tira, la Portada y los
+  menús son `no-imprimir`, y el cuerpo deja de ser una cuadrícula.
+- **Los verificadores** tocan los botones de un menú como una persona:
+  `P.clicEnMenu(page, sel)` de `herramientas/lib/pareo-pruebas.js` abre el
+  menú que lo contiene (si no está abierto) y después hace clic;
+  `P.abrirMenuDe` solo lo abre (para las casillas de «Más opciones»).
+  Un botón nuevo de Rondas que entre a un menú se prueba igual.
+
 ### Pareo Integral: los adjuntos con nombre, el chat, las llamadas y corregir con constancia
 
 Lo pidió el dueño del sitio (con una captura del formulario del enlace).
