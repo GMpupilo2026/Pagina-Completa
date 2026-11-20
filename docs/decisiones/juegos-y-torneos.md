@@ -16463,6 +16463,16 @@ sus pts y su puesto actual».
   (`sinMargen` en `js/gafetes-dibujo.js`) se les quita el margen al
   cargarlos y los dos llenan su caja; el verificador mide el alto dibujado de
   cada uno en el píxel.
+- **El QR abre una vista corta** (20/11, el dueño lo leyó con el celular:
+  «hay demasiada información que no interesa al jugador, él solo quiere saber
+  su mesa y su rival y su color»). La dirección del QR, `#t=<torneo>&j=<jugador>`
+  sin vista, no la usa ningún enlace del sitio (todos llevan `v=jugadores`),
+  así que con esa forma `torneos-pareo.html` muestra solo su nombre y «Ahora»
+  (`vistaGafete` en `js/torneos-pareo-pagina.js`): la ronda, la mesa en grande,
+  el color y el rival en renglones aparte (el color con un cuadrito de adorno,
+  siempre escrito), lo que sacó y su puesto; sin la inscripción, las pestañas
+  ni las tablas. Debajo, «Ver todo el torneo» lleva a su ficha completa. Se
+  pone al día sola cada minuto. Los gafetes ya impresos abren esta vista.
 - **20/11, con los primeros impresos en la mano:** el dorso salió corrido
   unos 4 mm hacia abajo (la doble cara de una impresora de casa no calza
   exacto) y al cortar por las marcas del frente se iba un pedazo de la franja
