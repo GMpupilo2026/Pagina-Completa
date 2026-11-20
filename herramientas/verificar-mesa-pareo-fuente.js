@@ -66,12 +66,12 @@ const tx = leer("js/centroamericano-transmision.js");
 ok(!/2026-11-10T05:59:59Z/.test(tx) && /VENCE_DIAS \* 864e5/.test(tx), "el QR del encargado de transmisión no nace vencido (10 días desde hoy)");
 
 console.log("El Pareo del principal:");
-const pagina = leer("js/pareo/pagina.js");
+const pagina = require("./lib/pareo-pagina-fuente").leer();   // js/pareo/pagina.js y sus partes
 ok(/recibirDeAdjunto\(quien, d, virtual\)/.test(pagina) && /recibirNotaDeAdjunto\(quien, d, virtual\)/.test(pagina), "leerCola pasa el adjunto virtual de las filas de la Mesa");
 const canal = (pagina.match(/canal\.on\("broadcast", \{ event: "resultado" \}[^\n]*\n[^\n]*\n/) || [""])[0];
 ok(canal.length > 0 && !/virtual|adjuntoDeMesa/.test(canal) && /recibirDeAdjunto\(a\.codigo, msg\.payload \|\| \{\}\)\)/.test(canal), "el canal en vivo nunca trae un adjunto virtual");
 ok(/const a = v && \(virtual \|\| adjuntoActivo\(v, codigo\)\);[\s\S]*const a = v && \(virtual \|\| adjuntoActivo\(v, codigo\)\);/.test(pagina), "resultado y nota aceptan el virtual");
-ok(/if \(estado\.t\.publicado\) setTimeout\(\(\) => \{ if \(estado\.id === id\) conectarAdjuntos\(\); \}, 0\);/.test(pagina), "un torneo publicado lee la cola aunque no tenga adjuntos propios");
+ok(/if \(estado\.t\.publicado\) setTimeout\(\(\) => \{ if \(estado\.id === id\) (?:Pagina\.)?conectarAdjuntos\(\); \}, 0\);/.test(pagina), "un torneo publicado lee la cola aunque no tenga adjuntos propios");
 
 console.log("La página que vincula:");
 const vinc = leer("js/mesa-pareo-vincular.js");

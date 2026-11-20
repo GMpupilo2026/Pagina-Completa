@@ -1,5 +1,5 @@
 /* Pareo Integral: el enlace en vivo antes de la ronda 1 muestra los
- * inscritos (js/pareo/evento.js: inscritosVista; js/pareo/pagina.js:
+ * inscritos (js/pareo/evento.js: inscritosVista; js/pareo/pagina-vivo.js:
  * datosLecturaActual y difundirEnVivo; js/pareo/ver.js: bloqueInscritos).
  *
  * Lo que se prueba, porque se rompe sin dar ningún error:

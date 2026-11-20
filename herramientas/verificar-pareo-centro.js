@@ -1,4 +1,4 @@
-/* Pareo Integral, el Centro del evento (pintarCentro en js/pareo/pagina.js):
+/* Pareo Integral, el Centro del evento (pintarCentro en js/pareo/pagina-centro.js):
  *
  *   - sin rondas, dice que se llena al emparejar la ronda 1;
  *   - la ronda en juego con cuántas mesas van terminadas (escrito, no solo la
