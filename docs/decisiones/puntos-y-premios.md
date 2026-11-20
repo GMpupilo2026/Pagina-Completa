@@ -124,6 +124,15 @@ trae un enlace por cada archivo del producto, sacados de
 el catálogo de premios sale con sus enlaces sin tocar `js/puntos.js`. Lo
 revisa la prueba «4 bis» de `verificar-puntos.js`.
 
+### Una herramienta: la preparación de rivales por 15 000 puntos
+
+El premio más caro (`herramienta_preparacion_rivales`, tipo `herramienta`)
+no abre un material: abre para siempre `preparacion-rivales.html`, la
+herramienta del profesor. El canje mismo es el permiso
+(`puedo_preparar_rivales()` lo mira), un trigger le avisa a quien administra
+y rechaza el canje de quien ya la tenía, y en «Mis premios» trae «Abrir la
+herramienta». Ver «Desbloquearla con 15 000 puntos» en `paneles.md`.
+
 ## Los accesorios de avatar: lo único que otros alumnos (no solo quien lo tiene) llegan a ver
 
 Los títulos y los marcos de perfil solo se ven en el panel y la tienda de
