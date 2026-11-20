@@ -310,9 +310,17 @@ Deno.serve(async (req) => {
   // (crear cuentas sueltas, borrar, transferir admin, equipos, etc.) sigue
   // siendo exclusivo de is_admin, como siempre.
   const ACCIONES_COORDINADOR = ["approve_request", "reject_request"];
-  const permitido = ACCIONES_COORDINADOR.includes(String(action)) ? esCoordinador : esAdmin;
+  let permitido = esAdmin;
+  if (ACCIONES_COORDINADOR.includes(String(action))) {
+    // Resolver solicitudes es la función «solicitudes», no el flag crudo
+    // es_coordinador: un coordinador al que le quitaron esa función no debe
+    // poder aprobar (crea la cuenta y manda el correo). coordinador_puede ya
+    // devuelve true para admin y supervisión, así que no se frenan.
+    const { data: puede } = await callerClient.rpc("coordinador_puede", { p_funcion: "solicitudes" });
+    permitido = puede === true;
+  }
   if (!permitido) {
-    return json({ error: "Solo la persona administradora puede hacer esto" }, 403);
+    return json({ error: "Esto no está entre tus funciones de coordinación" }, 403);
   }
 
   if (action === "create") {
@@ -613,6 +621,15 @@ Deno.serve(async (req) => {
     const grupo = typeof body.grupo === "string" ? body.grupo.trim() : (solicitud.edad_nivel ?? "");
     const profes = await validarProfesores(adminClient, body.teacher_id);
     if (!profes.ok) return json({ error: profes.error }, 400);
+
+    // Cada profesor asignado tiene que estar bajo la coordinación de quien
+    // aprueba (bajo_mi_coordinacion con SU token): sin esto, un coordinador
+    // podía colgar al alumno nuevo de un profesor de otra academia.
+    // Administración y supervisión alcanzan a los suyos por la misma función.
+    for (const pid of profes.value) {
+      const { data: alcanza } = await callerClient.rpc("bajo_mi_coordinacion", { p_persona: pid });
+      if (alcanza !== true) return json({ error: "Ese profesor no está bajo tu coordinación" }, 403);
+    }
 
     const r = await invitarYCompletarPerfil(adminClient, {
       email: solicitud.email as string,
