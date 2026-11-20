@@ -18918,7 +18918,7 @@ Centroamericano sirve en todos, pero cada evento funciona solo en la Mesa del á
 - **Un torneo vinculado desde otra cuenta ya no queda trabado.** El U12 de la Eliminatoria había quedado (archivado)
   en un evento de una cuenta de prueba, y «Vincular» decía «Ese torneo ya está en el evento de otro organizador», sin
   salida. Quien vincula ya probó con la clave de Pareo que el torneo es suyo, así que ahora se lo lleva a su evento;
-  los enlaces de árbitros del evento anterior se borran (`…_mesa_pareo_vincular_dueno_con_clave.sql`).
+  los enlaces de árbitros del evento anterior se borran (`20261120001400_mesa_pareo_vincular_dueno_con_clave.sql`).
 
 Lo prueba `verificar-centroamericano-mesas-eventos.js`.
 
