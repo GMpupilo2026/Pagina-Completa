@@ -10,6 +10,12 @@
      2. debajo vienen «Blancas» y «Negras» (h3), cada uno con su lista y con una
         casilla en ella (la posición de verdad, no un cartel);
      3. uno solo por posición (la página con su propia lectura no lleva dos);
+     4. y que viene ANTES del tablero en el orden de lectura: primero se lee la
+        posición y después se resuelve (ver «Las piezas, arriba del tablero»).
+        El recuadro de comandos va debajo del tablero, así que su lista se muda
+        antes de él; verificar-piezas-arriba.js mira lo mismo sin navegador,
+        pero solo en el HTML escrito (#position-readout), no en la lista que
+        arma js/cuadro-comandos.js;
    que sin la marca el recuadro sigue sin ese encabezado; y que lo que no
    tiene piezas que poner ahí no se le ofrece (ver «Lo que no se puede hacer
    sin ver, no se ofrece»): Memoria, Coordenadas, el Sonar, la Batalla naval y
@@ -54,6 +60,8 @@ const EJERCICIOS = [
   { nombre: "Habilidades: Siete diferencias", ruta: "/entreno/tipos.html#diferencias", clic: "main :text-is('Empezar')",
     titulos: ["Piezas de la posición A", "Piezas de la posición B"] },
   { nombre: "Racha táctica", ruta: "/racha-tactica.html" },
+  { nombre: "Sin internet", ruta: "/entreno/sin-internet.html", clic: "#guardar-btn" },
+  { nombre: "Visor de un curso", ruta: "/cursos/academia/partidas-modelo.html", clic: "main button:has-text('Empezar:')" },
 ];
 
 async function abrir(browser, ruta, ciega) {
@@ -74,10 +82,21 @@ async function abrir(browser, ruta, ciega) {
   return { page, ctx };
 }
 
-/* Los encabezados de piezas que se ven, con lo que viene debajo. */
+/* Los encabezados de piezas que se ven, con lo que viene debajo y si están
+   antes del tablero. Cada tablero a la vista tiene que tener antes al menos
+   tantos encabezados como tableros van hasta él (sin pasar de los que hay):
+   con uno y uno, el encabezado va primero; en Siete diferencias, con un
+   tablero y las listas de A y de B, basta con la de A antes. */
 function leer() {
-  return Array.from(document.querySelectorAll("h1,h2,h3,h4,h5,h6"))
-    .filter((h) => /^Piezas\b/.test(h.textContent.trim()) && h.checkVisibility())
+  const SEL = '[aria-roledescription="tablero de ajedrez"], #board';
+  const tableros = Array.from(document.querySelectorAll(SEL))
+    .filter((t) => t.checkVisibility() && !(t.parentElement && t.parentElement.closest(SEL)));
+  const hs = Array.from(document.querySelectorAll("h1,h2,h3,h4,h5,h6"))
+    .filter((h) => /^Piezas\b/.test(h.textContent.trim()) && h.checkVisibility());
+  const antes = (a, b) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+  const tableroSinLista = tableros.findIndex((t, k) =>
+    hs.filter((h) => antes(h, t)).length < Math.min(k + 1, hs.length));
+  return hs
     .map((h) => {
       // Lo que sigue: hermanos del encabezado o, en el recuadro, el bloque de la posición.
       let cont = h.nextElementSibling;
@@ -87,7 +106,7 @@ function leer() {
         const ul = x.nextElementSibling;
         return x.textContent + ":" + (ul && ul.tagName === "UL" && / en [a-z]+ [1-8]/.test(ul.textContent) ? "con piezas" : "SIN LISTA");
       });
-      return { titulo: h.textContent.trim(), colores };
+      return { titulo: h.textContent.trim(), colores, arriba: tableroSinLista < 0 };
     });
 }
 
@@ -106,6 +125,7 @@ function leer() {
       hs.length === esperados.length && esperados.every((t, i) => hs[i] && hs[i].titulo === t
         && hs[i].colores.join() === "Blancas:con piezas,Negras:con piezas"),
       JSON.stringify(hs));
+    cierto(e.nombre + ": la lista de piezas viene antes del tablero", hs.length > 0 && hs.every((h) => h.arriba), JSON.stringify(hs));
     await ctx.close();
   }
 
