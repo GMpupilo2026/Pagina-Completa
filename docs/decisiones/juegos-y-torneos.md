@@ -5825,7 +5825,10 @@ Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
   resultados.
 - **La inscripción antes del torneo.** Con el torneo publicado (o
   anunciado), «Recibir inscripciones desde la página pública», hasta un
-  día. El formulario público pide lo de quien juega (nombre, centro,
+  día. Desde el 20/11/2026 el formulario lo arma `js/inscripcion-evento.js`
+  (ver «La inscripción configurable por evento» en
+  `cuentas-y-formularios.md`), con la configuración que traiga el torneo o,
+  sin ella, igual que antes. El formulario público pide lo de quien juega (nombre, centro,
   categoría, Elo, ID FIDE), quién lo inscribe y su contacto, y la casilla
   del consentimiento con la política de privacidad (también para menores:
   quien inscribe dice ser su encargado o tener su permiso). Va a la Edge
