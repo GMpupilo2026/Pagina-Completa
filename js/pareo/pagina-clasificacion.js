@@ -75,6 +75,7 @@
     $("pi-clas-nota").textContent = (k < v.rondas.length ? tx("clasSoloCompletas", { r: k }) : (v.nombre || ""))
       + (estado.filtroInstitucion ? tx("clasFiltroNota", { n: filas.length, total: todasFilas.length, inst: estado.filtroInstitucion }) : "");
     pintarSelectInstitucion($("pi-clas-institucion"));
+    $("pi-clas-proyectar").hidden = E.esDeEquipos(v) || !v.jugadores.length;
     pintarMarcadorSchev(v);
     pintarCuadroElim(v);
     const tabla = $("pi-tabla-clas");

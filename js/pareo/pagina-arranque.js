@@ -22,7 +22,7 @@
     CLAVE_LISTA_ELO, listaEloInicial, buscarEnListaElo, pintarListaElo, horaCR, activarEnVivo,
     desactivarEnVivo, compartirLectura, pintarClasificacion, enlaceOrganizacion, enlaceVivoActual,
     abrirCompartir, imprimirClasificacionPared, pintarCruzada, datosClasificacionPDF, datosCruzadaPDF,
-    bajarPDF, recibirEvento, abrirRespaldo, comprobarTexto, leerArchivo } = Pagina;
+    bajarPDF, recibirEvento, abrirRespaldo, comprobarTexto, leerArchivo, abrirProyector } = Pagina;
 
   // ---------- Archivos, comprobador y generador ----------
   function trfDelTorneo() {
@@ -78,6 +78,7 @@
       irA(visibles[(i + k + visibles.length) % visibles.length], true);
     });
     engancharMenus();
+    $("pi-clas-proyectar").addEventListener("click", () => abrirProyector("clasificacion", "pi-clas-proyectar"));
     $("pi-ir-agregar").addEventListener("click", () => { $("pi-jug-agregar").scrollIntoView({ block: "start" }); $("pi-form-jugador").elements.nombre.focus(); });
 
     // «Solo lo de los JDE»: esconde el comprobador, el generador y los créditos.

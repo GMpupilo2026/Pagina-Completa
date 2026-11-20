@@ -142,6 +142,7 @@
       Avisos.avisar(tx("noGuarda"), { tipo: "error" });
     } else estado.guardadoEn = Date.now();
     pintarEstado();
+    actualizarProyector();
     const item = estado.lista.find((x) => x.id === estado.id);
     const nombre = estado.t.nombre || "";
     // El evento va también en la lista, para separar los torneos de cada uno.
@@ -744,6 +745,54 @@
     return new Intl.DateTimeFormat(idioma === "en" ? "en-US" : "es-CR", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Costa_Rica" }).format(new Date(Date.UTC(a, mes - 1, d, 12)));
   }
 
+  // ---------- La ronda y los resultados en el proyector (js/pareo/proyectar.js) ----------
+  // El modelo ya trae todo escrito (nombres, puntos antes de la ronda y el
+  // resultado corto): proyectar.js solo lo pinta. La ronda que se abrió;
+  // si era la última, sigue a la última (al emparejar la siguiente, pasa sola).
+  const proy = { ronda: null, seguirUltima: true };
+  function modeloProyector() {
+    const v = t();
+    const hay = v.rondas.length;
+    const r = proy.seguirUltima || proy.ronda == null || proy.ronda >= hay ? hay - 1 : proy.ronda;
+    const k = rondasCompletas();
+    const base = { torneo: v.grupo || v.nombre || tx("estadoSinNombre"), mesas: [], totalMesas: 0, faltan: 0,
+      rondaTitulo: tx("fRondas"), clasTitulo: k ? tx("proyClasTras", { r: k }) : tx("fClasificacion"), clasificacion: [] };
+    if (k && v.jugadores.length) {
+      try {
+        base.clasificacion = E.clasificacion(hasta(k), v.sistema === "eliminacion" ? [] : v.desempates).map((f) => {
+          const j = jugador(f.id) || {};
+          return { p: f.puesto, nombre: (j.nombre || "?") + (j.titulo ? " (" + j.titulo + ")" : ""), inst: j.institucion || "", pts: puntosTexto(f.puntos) };
+        });
+      } catch (e) { base.clasificacion = []; }
+    }
+    if (r < 0) return base;
+    const R = v.rondas[r];
+    const antes = (id) => puntosTexto(T.puntosHasta(v, id, r));
+    const m = mesasDe(R);
+    return Object.assign(base, {
+      rondaTitulo: tx("proyRonda", { r: r + 1 }) + (v.sistema === "eliminacion" ? " · " + Pagina.nombreRondaElim(v, r) : ""),
+      totalMesas: m.total, faltan: m.faltan,
+      mesas: R.mesas.map((x, i) => ({ mesa: V.mesaFisica(v, i), r: x.r || null, rTexto: x.r ? tx("corto_" + x.r) : "",
+        b: { nombre: nombreDe(x.b), pts: antes(x.b) }, n: x.n === null ? null : { nombre: nombreDe(x.n), pts: antes(x.n) } })),
+    });
+  }
+  function textosProyector() {
+    const claves = ["proyTitulo", "proyResultados", "proyCompleta", "proyEnJuego", "proyPagina", "proyCambiaSola", "proyPausado", "proyPausar", "proySeguir",
+      "proyAnterior", "proySiguiente", "proyVerClas", "proyVerRonda", "proySalir", "proyClasSin", "proyAyuda"];
+    const o = Object.fromEntries(claves.map((c) => [c, X.t(idioma, c)]));
+    o.proyBye = tx("proyBye", { p: puntosTexto(t().puntos.bye) });
+    return o;
+  }
+  function abrirProyector(vista, volver) {
+    const v = t();
+    proy.seguirUltima = estado.ronda == null || estado.ronda >= v.rondas.length - 1;
+    proy.ronda = estado.ronda;
+    PareoProyectar.abrir(modeloProyector(), { textos: textosProyector(), vista, volver });
+  }
+  function actualizarProyector() {
+    if (window.PareoProyectar && PareoProyectar.abierto() && estado.t) PareoProyectar.actualizar(modeloProyector());
+  }
+
   // Los menús de botones (<details class="pi-menu">): se cierran al elegir,
   // al tocar afuera y con Escape, y nunca queda más de uno abierto.
   function engancharMenus() {
@@ -783,7 +832,7 @@
     normalizarBusqueda, nuevoId, idJugador, guardar, CLAVE_SONIDO, sonar, abrir, crear, t, jugador, nombreDe,
     rondasCompletas, totalRondas, hasta, formatoNum, puntosTexto, nombreArchivo, bajar, FICHAS, irA,
     pintarArchivar, quitarArchivados, pintarLista, cambiarFiltroEvento, pintarTodo, nubeLocal,
-    alTraerDeLaNube, engancharMenus, menuDeBotones, VALIDO_ELO, PROVINCIAS, horaCR });
+    alTraerDeLaNube, engancharMenus, menuDeBotones, abrirProyector, actualizarProyector, VALIDO_ELO, PROVINCIAS, horaCR });
   Object.defineProperty(Pagina, "idioma", { get: () => idioma, set: (x) => { idioma = x; } });
 })();
 

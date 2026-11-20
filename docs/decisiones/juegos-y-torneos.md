@@ -4611,6 +4611,48 @@ aspecto reemplaza al de «programa de computadora» de la sección anterior
   `P.abrirMenuDe` solo lo abre (para las casillas de «Más opciones»).
   Un botón nuevo de Rondas que entre a un menú se prueba igual.
 
+### Proyectar la ronda y los resultados
+
+El 20/11/2026 el dueño pidió proyectar la ronda y los resultados «a
+pantalla completa, bien bonita», desde el propio Pareo (la computadora del
+árbitro conectada al proyector de la sala). El proyector del evento que ya
+había (`pintarProyector` en `js/pareo/ver.js`) es otra cosa: va en el
+enlace de solo lectura, pasa de torneo en torneo y necesita el evento en
+vivo; este no necesita internet ni enlace.
+
+- **Dónde.** «Proyectar» en Rondas, **a la vista y no en un menú** (es de
+  todos los días en la sala), y «Proyectar la clasificación» en
+  Clasificación. En torneos por equipos no está: la ronda de equipos son
+  encuentros con tableros, y el proyector es de mesas individuales.
+- **Qué muestra.** El nombre del torneo, «Ronda N» (con la fase en una
+  eliminación), la hora de Costa Rica, cuántos resultados van con su barra,
+  y cada mesa en una tarjeta: el número de la sala (`V.mesaFisica`, no la
+  posición), los dos nombres, los puntos de **antes** de la ronda y el
+  resultado corto; las que faltan dicen «en juego» en ámbar (escrito: el
+  color nunca va solo) y quien ganó va en negrita. C (o el botón) cambia a
+  la clasificación tras la última ronda completa.
+- **Páginas.** Nueve filas por columna, dos columnas desde 1000 px: si no
+  caben, pasa de página sola cada 12 segundos (Espacio pausa, las flechas
+  pasan a mano). La letra va en `min(vh, vw)`, para que en un proyector
+  4:3 los nombres no se partan; un nombre largo baja a una segunda línea.
+- **Se pone al día sola.** `guardar()` llama a `actualizarProyector()`:
+  cada resultado que se anota (en la computadora o desde el celular de un
+  adjunto, que también pasa por `guardar`) llega a la pantalla sin volver
+  a abrirla, en la misma página. Si se abrió en la última ronda, al
+  emparejar la siguiente pasa sola a ella.
+- **Una sola copia de las cuentas.** `js/pareo/proyectar.js` solo pinta: el
+  modelo (nombres, puntos y resultados ya escritos) lo arma
+  `modeloProyector` en `pagina.js` con las mismas funciones que la tabla
+  de la ronda, y los textos van en `textos.js` (`proy*`). Todo lo que
+  escribe una persona entra por `textContent`; los anchos van por el CSSOM.
+- **El foco.** Al abrir queda en «Salir»; Tab no sale de la proyección;
+  Escape o «Salir» la cierran y el foco vuelve al botón que la abrió.
+  **Se espera el pedido de pantalla completa antes de devolver el foco**:
+  si se sale enseguida, el pedido todavía está en camino, llega después de
+  cerrar y se lleva el foco (lo encontró el verificador).
+- `verificar-pareo-proyectar.js` lo prueba (se rompió a propósito la
+  actualización al guardar y saltó).
+
 ### Pareo Integral: los adjuntos con nombre, el chat, las llamadas y corregir con constancia
 
 Lo pidió el dueño del sitio (con una captura del formulario del enlace).
@@ -12805,6 +12847,19 @@ PDF, que se baja **solo después de completar todo lo de ese número**.
   inventados antes de la captura**: van en la lista `NOMBRES` del script, y un
   nombre nuevo en un doble hay que sumarlo ahí. La pestaña Transmisión no tiene
   doble en el navegador: la revista la cuenta sin captura.
+- **El N.º 21 es el Seminario de Árbitro FIDE completo** (pedido del dueño,
+  20/11/2026: «crear todo el curso como revista 21, con todos los textos,
+  prácticas, etc.»). Sigue las tres jornadas del seminario: Leyes del Ajedrez
+  (reglas del juego; reloj, anotación, tablas, conducta y apéndices),
+  Regulaciones Generales y juego limpio, sistemas de juego y desempates,
+  rating, títulos y el inglés del árbitro, y cierra con un cuaderno de casos y
+  un examen simulado de 40 preguntas con su corrección. Cada artículo trae su
+  recuadro «Practica» y las soluciones van al final de cada bloque. La fuente
+  es el material corregido del curso (las presentaciones y los reglamentos de
+  la carpeta «Corregidos 2026» de Drive y el examen con respuestas), revisado
+  contra la normativa FIDE vigente; las cifras de desempates y rating las
+  comprueban los scripts de `no21/calculos/`. Lo que no se pudo comprobar está
+  en `no21/notas.md`.
 
 ### Las ayudas de cálculo de los ejercicios
 
@@ -16408,6 +16463,18 @@ sus pts y su puesto actual».
   (`sinMargen` en `js/gafetes-dibujo.js`) se les quita el margen al
   cargarlos y los dos llenan su caja; el verificador mide el alto dibujado de
   cada uno en el píxel.
+- **20/11, con los primeros impresos en la mano:** el dorso salió corrido
+  unos 4 mm hacia abajo (la doble cara de una impresora de casa no calza
+  exacto) y al cortar por las marcas del frente se iba un pedazo de la franja
+  de abajo del dorso. Ahora lo de abajo del dorso (la franja, el QR) sube
+  (`dorso.subir`, 6 en la escala de 10 × 14: unos 3,6 mm en 5,5 × 8,5) y deja
+  blanco debajo; la ilustración se achica por abajo, sin tapar el horario.
+  Arriba, en las dos caras, una **franja delgada del color** del gafete, de
+  guía para cortar (`franjaArriba`, lo pidió el dueño). Y **la foto, más
+  grande** (de 30 × 38,5 a 40 × 48 en la escala de 10 × 14), con el nombre y
+  los detalles más abajo. El ajuste del dorso en milímetros sigue para
+  corregir lo que corra cada impresora; el verificador mide en el píxel la
+  franja de arriba en las dos caras y el blanco de abajo del dorso.
 - **El personal del torneo** (pedido del dueño): en el diseño, un renglón
   por persona, «Rol | Apellidos | Nombre | Título | Avatar» (`personal`, se
   edita en la página), que se suma al final al traer los jugadores. El rol va
