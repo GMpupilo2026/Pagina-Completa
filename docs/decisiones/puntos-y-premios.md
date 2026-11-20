@@ -249,6 +249,11 @@ misma academia, el mismo conjunto que la rama de compañeros de
 Suma solo lo GANADO en la semana o el mes: lo gastado en canjes, regalos y
 bromas no resta, para que regalar no castigue. Sale quien sumó algo, y uno
 mismo siempre (marcado con `aria-current`).
+La base devuelve el salón entero, pero **la página pinta solo el podio**
+(los tres primeros que sumaron algo, en tarjetas) y, si uno no está en él,
+una línea con su propio puesto («Tú vas en el 4.º lugar, con 80 puntos.»):
+la lista completa, de trece o más filas, no le gustó al dueño (19/11/2026)
+y al que iba 13.º no le servía de nada.
 
 **Regalos.** `public.regalar_premio()` compra para un compañero
 (`es_companero()`) una tarjeta (estrella, flores, trofeo, pastel, caballito)
