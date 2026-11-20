@@ -4638,6 +4638,26 @@ vivo; este no necesita internet ni enlace.
   resultado corto; las que faltan dicen «en juego» en ámbar (escrito: el
   color nunca va solo) y quien ganó va en negrita. C (o el botón) cambia a
   la clasificación tras la última ronda completa.
+- **Cómo se ve cada mesa (lo pidió el dueño con la primera versión
+  proyectada, el 20/11).** Como una tabla con encabezado escrito: «Mesa ·
+  Blancas · Resultado · Negras», las dos columnas de nombres alineadas a la
+  izquierda y los puntos de antes de la ronda en gris junto a cada nombre.
+  **Nada de reyes ♔ ♚**: se confundían (los dos se veían iguales en el
+  fondo oscuro). Cada jugador lleva un cuadro blanco o negro con borde
+  claro, y el encabezado dice el color (no va solo). Las filas se reparten
+  parejo entre las dos columnas (12 mesas: 6 y 6), y con pocas filas el
+  nombre puede usar tres líneas en vez de cortarse.
+- **La marca de agua de Ajedrez Integral** va arriba, al centro y en
+  grande (`img/marca-agua-ajedrez-integral.png`, la de siempre, pasada a
+  blanco con `filter`: tiene fondo transparente), entre la ronda y la hora.
+- **Dos torneos a la vez («Al lado»).** Abajo se elige un segundo torneo
+  guardado en el navegador (primero los del mismo evento): la pantalla se
+  parte en dos mitades, cada una con su torneo, su ronda, su barra y sus
+  mesas en una columna, y la marca queda una sola vez arriba. Se recuerda
+  por torneo (`pareo_proyectar_lado_v1`). Cada mitad se arma por su id
+  (`modeloDe(v)`: el abierto sale de la memoria, el otro de lo guardado),
+  así que cambiar de torneo en Pareo para anotar los resultados del otro
+  no cambia lo que se proyecta, y cada `guardar()` pone al día las dos.
 - **Páginas.** Nueve filas por columna, dos columnas desde 1000 px: si no
   caben, pasa de página sola cada 12 segundos (Espacio pausa, las flechas
   pasan a mano). La letra va en `min(vh, vw)`, para que en un proyector

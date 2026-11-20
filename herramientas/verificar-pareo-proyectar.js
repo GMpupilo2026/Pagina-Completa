@@ -12,6 +12,9 @@
  *   - si no caben, hay páginas, y las flechas las pasan;
  *   - C cambia a la clasificación (tras la última ronda completa);
  *   - un nombre con «<b>» se ve tal cual (textContent, no HTML);
+ *   - las columnas dicen «Blancas» y «Negras», cada jugador lleva su cuadro
+ *     de color (sin los reyes, que confundían) y arriba va la marca de agua;
+ *   - dos torneos a la vez, uno en cada mitad, y se recuerda cuál va al lado;
  *   - Escape la cierra y el foco vuelve al botón que la abrió;
  *   - «Proyectar la clasificación» antes de la primera ronda completa
  *     dice que todavía no hay.
@@ -81,6 +84,12 @@ async function pruebaRonda(browser) {
   igual("la primera mesa: el número de la sala, los nombres, los puntos de antes y «en juego»", tarjeta,
     { mesa: "11", nombres: ["PRUEBA <b>CERO</b>", "PRUEBA JUGADOR 10"], pts: ["1", "1"], res: "en juego" });
   ok(!(await page.$("#pi-proyectar .pi-py-nombre b")), "un nombre con «<b>» se ve tal cual, sin volverse HTML", JSON.stringify(primera));
+  igual("las columnas dicen Mesa, Blancas, Resultado y Negras (escrito: el color no va solo)",
+    await page.$$eval("#pi-proyectar .pi-py-encabezado:first-child > span", (l) => l.map((x) => x.textContent.trim())), ["Mesa", "Blancas", "Resultado", "Negras"]);
+  igual("cada jugador lleva su cuadro: blanco el de blancas, negro el de negras",
+    await page.$eval("#pi-proyectar .pi-py-mesa:first-child", (x) => [...x.querySelectorAll(".pi-py-cuadro")].map((c) => getComputedStyle(c).backgroundColor)), ["rgb(255, 255, 255)", "rgb(0, 0, 0)"]);
+  ok(!(await page.$("#pi-proyectar .pi-py-ficha")) && !/[♔♚]/.test(await page.textContent("#pi-proyectar")), "sin los reyes, que confundían");
+  ok(await page.$eval("#pi-proyectar .pi-py-cab .pi-py-marca", (i) => i.complete && i.naturalWidth > 0 && /marca-agua-ajedrez-integral/.test(i.src) && i.checkVisibility()), "la marca de agua de Ajedrez Integral, arriba");
   igual("las dos que faltan dicen «en juego»", await page.$$eval("#pi-proyectar .pi-py-res-juego", (l) => l.map((x) => x.textContent)), ["en juego", "en juego"]);
   const tercera = await page.$eval("#pi-proyectar .pi-py-mesa:nth-child(3) .pi-py-res", (x) => x.textContent);
   igual("una con resultado, el resultado corto", tercera, "½-½");
@@ -100,7 +109,7 @@ async function pruebaRonda(browser) {
   await page.waitForFunction(() => /19 de 20/.test(document.querySelector(".pi-py-avance-texto").textContent), null, { timeout: 5000 }).catch(() => {});
   igual("al anotar un resultado, el proyector lo cuenta sin volver a abrirlo", await page.textContent(".pi-py-avance-texto"), "19 de 20 resultados");
   igual("y la mesa muestra el resultado", await page.textContent("#pi-proyectar .pi-py-mesa:first-child .pi-py-res"), "1-0");
-  ok(await page.$eval("#pi-proyectar .pi-py-mesa:first-child .pi-py-b", (x) => x.classList.contains("pi-py-gana")), "y marca a quien ganó");
+  ok(await page.$eval("#pi-proyectar .pi-py-mesa:first-child .pi-py-jug", (x) => x.classList.contains("pi-py-gana") && !!x.querySelector(".pi-py-cuadro-b")), "y marca a quien ganó (el de blancas)");
 
   console.log("\n=== La clasificación ===");
   await page.keyboard.press("c");
@@ -143,6 +152,47 @@ async function pruebaPorEmparejar(browser) {
   await ctx.close();
 }
 
+// Dos torneos a la vez: uno en cada mitad (dos categorías de un evento).
+async function pruebaDividida(browser) {
+  console.log("\n=== Dos torneos, mitad y mitad ===");
+  const otro = torneo();
+  otro.nombre = "PRUEBA FEMENINO";
+  otro.jugadores = otro.jugadores.map((j) => Object.assign({}, j, { nombre: j.nombre.replace("PRUEBA", "PRUEBA F") }));
+  const { ctx, page, errores } = await P.abrirPagina(browser, BASE, "", async (p) => {
+    await sembrar(torneo())(p);
+    await p.addInitScript((x) => {
+      const l = JSON.parse(localStorage.getItem("pareo_lista_v1"));
+      if (l.some((y) => y.id === "tf")) return;
+      l.push({ id: "tf", nombre: x.nombre, actualizado: 2 });
+      localStorage.setItem("pareo_lista_v1", JSON.stringify(l));
+      localStorage.setItem("pareo_torneo_v1_tf", JSON.stringify(x));
+    }, otro);
+  });
+  await page.click("#pi-proyectar-ronda");
+  await page.waitForSelector("#pi-py-lado");
+  igual("abajo se elige qué torneo va al lado", await page.$$eval("#pi-py-lado option", (l) => l.map((o) => o.textContent)), ["Solo este torneo", "PRUEBA FEMENINO"]);
+  await page.selectOption("#pi-py-lado", "tf");
+  await page.waitForFunction(() => document.querySelectorAll("#pi-proyectar .pi-py-bloque").length === 2);
+  igual("cada mitad, su torneo y su ronda", await page.$$eval("#pi-proyectar .pi-py-titulos", (l) => l.map((x) => x.querySelector(".pi-py-torneo").textContent + " · " + x.querySelector("h2").textContent)),
+    ["PRUEBA PROYECTOR · Ronda 2", "PRUEBA FEMENINO · Ronda 2"]);
+  ok(await page.$eval("#pi-proyectar .pi-py-mitades .pi-py-bloque:nth-child(2)", (b) => /PRUEBA F JUGADOR/.test(b.textContent)), "la otra mitad trae las mesas del otro torneo");
+  igual("y la marca de agua queda una sola vez, arriba", await page.$$eval("#pi-proyectar .pi-py-marca", (l) => l.length), 1);
+  // Un resultado del torneo abierto llega a su mitad.
+  await page.evaluate(() => { const s = document.getElementById("pi-mesa-0"); s.value = "1-0"; s.dispatchEvent(new Event("change", { bubbles: true })); });
+  await page.waitForFunction(() => /19 de 20/.test(document.querySelector("#pi-proyectar .pi-py-bloque .pi-py-avance-texto").textContent), null, { timeout: 5000 }).catch(() => {});
+  igual("al anotar, se pone al día su mitad (y la otra no cambia)", await page.$$eval("#pi-proyectar .pi-py-avance-texto", (l) => l.map((x) => x.textContent)), ["19 de 20 resultados", "18 de 20 resultados"]);
+  await page.keyboard.press("Escape");
+  await page.click("#pi-proyectar-ronda");
+  await page.waitForSelector("#pi-proyectar .pi-py-bloque");
+  igual("al volver a abrirla, recuerda el torneo de al lado", await page.$$eval("#pi-proyectar .pi-py-bloque", (l) => l.length), 2);
+  await page.selectOption("#pi-py-lado", "");
+  await page.waitForFunction(() => document.querySelectorAll("#pi-proyectar .pi-py-bloque").length === 1);
+  ok(true, "«Solo este torneo» vuelve a la pantalla entera");
+  await page.keyboard.press("Escape");
+  ok(!errores.length, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+}
+
 async function pruebaSinRondas(browser) {
   console.log("\n=== La clasificación antes de la primera ronda ===");
   const t = torneo();
@@ -164,6 +214,7 @@ async function pruebaSinRondas(browser) {
   try {
     await pruebaRonda(browser);
     await pruebaPorEmparejar(browser);
+    await pruebaDividida(browser);
     await pruebaSinRondas(browser);
   } finally {
     await browser.close();
