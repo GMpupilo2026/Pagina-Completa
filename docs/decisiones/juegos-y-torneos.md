@@ -16506,6 +16506,20 @@ sus pts y su puesto actual».
   verificador las cuenta en el PDF y comprueba que ninguna pase por dentro de
   un gafete. Sebastián lleva «Gracias por su colaboración» debajo del nombre
   (el título de su renglón del personal).
+- **20/11, otra vez con la impresión en la mano: las franjas de atrás no
+  coincidían.** Con los gafetes pegados (un corte separa dos), cualquier
+  corrimiento de la Brother al imprimir el dorso —uno o dos milímetros, y no
+  siempre el mismo— deja una raya blanca o una tira del vecino en el borde: el
+  ajuste del dorso en mm no alcanza porque el error no es fijo. Lo de las
+  imprentas: **calles y sangrado.** `salida.calle` (la PZ: 4 mm) separa los
+  gafetes —siguen cabiendo 9 por hoja: 3 × 55 + 2 × 4 = 173 mm de ancho y
+  3 × 85 + 2 × 4 = 263 de alto— y cada uno tiene sus cuatro cortes (6 líneas a
+  lo ancho y 6 a lo largo). Las franjas de color que tocan el borde de arriba
+  o el de abajo (`bordes`, que devuelve `cara()`) se prolongan media calle
+  (2 mm) hacia afuera en el PDF, como un rectángulo de su color debajo de la
+  cara: si el dorso se corre hasta 2 mm, el corte cae todavía sobre el color.
+  El verificador comprueba las posiciones, las 6 + 6 líneas y el sangrado en
+  las dos caras (y salta si se quita).
 - **20/11, con los gafetes cortados en la mano: aprovechar todo el espacio.**
   En el frente, el título va **entre los dos logos** (`tituloEntreLogos`), la
   franja del club **justo en el borde de abajo** (`franjaAbajo`) y con eso la

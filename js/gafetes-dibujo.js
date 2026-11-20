@@ -576,7 +576,7 @@
         const y = M.franja.y + M.franja.h / 2 + altoMayus(recursos.titulo) * altoLetra * PT / 2;
         escribir(recursos.titulo, g.franja, altoLetra, { x: M.W / 2, y, alinear: "centro", color: "#ffffff", max: libre, espaciado: 0.3 });
       }
-      return { clave, fondo, textos, avisos };
+      return { clave, fondo, textos, avisos, bordes: bordesDe(diseno, M, color, "frente") };
     }
 
     /* ---------- el dorso ---------- */
@@ -680,7 +680,19 @@
       const y = c.y + c.h / 2 + altoMayus(recursos.titulo) * M.codigo.tam * PT / 2;
       escribir(recursos.titulo, g.codigo, M.codigo.tam, { x: M.codigo.x, y, color: "#ffffff", espaciado: 0.28, max: (qr ? M.qr.x - 2 * M.sx : M.W - 2 * M.sx) - M.codigo.x });
     }
-    return { clave, fondo, textos, avisos };
+    return { clave, fondo, textos, avisos, bordes: bordesDe(diseno, M, color, "dorso") };
+  }
+
+  /* Las franjas de color que tocan el borde de arriba o el de abajo, de lado
+     a lado (en mm, sobre la cara): la hoja carta las prolonga hacia la calle
+     entre gafetes (el sangrado), para que si la impresora corre el dorso uno
+     o dos milímetros el corte no deje una raya blanca. */
+  function bordesDe(diseno, M, color, lado) {
+    const b = [];
+    if (M.franjaArriba) b.push({ y: 0, h: M.franjaArriba, color });
+    const z = lado === "frente" ? M.franja : M.cintaDorso;
+    if (z && z.x <= 0.01 && z.x + z.w >= M.W - 0.01 && z.y + z.h >= M.H - 0.01) b.push({ y: z.y, h: M.H - z.y, color });
+    return b;
   }
 
   /* Pinta una cara entera (fondo y letras) en un canvas: la vista previa. */

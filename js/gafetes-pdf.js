@@ -94,7 +94,7 @@
        desde arriba a la izquierda), y las marcas de corte como líneas finas
        (`lineas`: [x1, y1, x2, y2] en mm). Los fondos iguales se comparten
        igual que en las páginas sueltas. */
-    async function agregarHoja(caras, lineas, finas) {
+    async function agregarHoja(caras, lineas, finas, sangrado) {
       const recursos = [];
       const partes = [];
       for (const [k, cara] of caras.entries()) {
@@ -105,6 +105,17 @@
           imagenes.set(cara.clave, im);
         }
         recursos.push(`/F${k} ${im} 0 R`);
+        // El sangrado: las franjas que tocan el borde (`cara.bordes`) se
+        // prolongan `sangrado` mm hacia afuera, en la calle, debajo de la cara.
+        if (sangrado > 0) for (const b of cara.bordes || []) {
+          const rgb = /^#([0-9a-f]{6})$/i.exec(b.color || "");
+          if (!rgb) continue;
+          const n = parseInt(rgb[1], 16), col = [n >> 16, (n >> 8) & 255, n & 255].map((v) => num(v / 255)).join(" ");
+          const arriba = b.y <= 0.01, abajo = b.y + b.h >= cara.h - 0.01;
+          const ya = cara.y + b.y - (arriba ? sangrado : 0), yb = cara.y + b.y + b.h + (abajo ? sangrado : 0);
+          const xa = cara.x - sangrado, xb = cara.x + cara.w + sangrado;
+          partes.push(`${col} rg ${num(xa * MM)} ${num(H - yb * MM)} ${num((xb - xa) * MM)} ${num((yb - ya) * MM)} re f`);
+        }
         partes.push(`q ${num(cara.w * MM)} 0 0 ${num(cara.h * MM)} ${num(cara.x * MM)} ${num(H - (cara.y + cara.h) * MM)} cm /F${k} Do Q`);
         const t = trazos(cara.textos, H, cara.x, cara.y);
         if (t) partes.push(t);
