@@ -444,6 +444,8 @@
       $("resultado-sub").textContent = "Ninguna de sus " + r.totalRival.toLocaleString("es-CR") + " partidas pasa estos filtros.";
       aviso.textContent = "Amplía los filtros para ver el análisis.";
       $("resultado-cuerpo").textContent = "";
+      $("ficha").textContent = "";
+      $("indice").hidden = true;
       $("guardar").disabled = true;
       $("motor-revisar").disabled = true;
       $("motor-estado").textContent = "";
@@ -454,7 +456,8 @@
     const partes = [r.total.toLocaleString("es-CR") + (r.total === 1 ? " partida" : " partidas") +
       (r.totalRival && r.totalRival !== r.total ? " de " + r.totalRival.toLocaleString("es-CR") : "")];
     if (r.fechas.desde) partes.push("del " + P.fecha(r.fechas.desde) + " al " + P.fecha(r.fechas.hasta));
-    if (r.elo.reciente) partes.push("Elo reciente ≈ " + r.elo.reciente);
+    // Con la ficha, el Elo va por ritmo ahí: mezclado no es el Elo de nadie.
+    if (r.elo.reciente && !r.ficha) partes.push("Elo reciente ≈ " + r.elo.reciente);
     partes.push("una línea cuenta desde " + r.minimo + " partidas");
     $("resultado-sub").textContent = partes.join(" · ");
     aviso.textContent = r.pocas ? "Con " + r.total + (r.total === 1 ? " partida" : " partidas") + " el análisis dice poco: amplía los filtros si puedes." : "";
@@ -479,6 +482,8 @@
   function pintar(r) {
     P.cuerpo(r, $("resultado-cuerpo"), {
       pendiente: pendientes(r),
+      // Su ficha, arriba de todo (fuera del cuerpo: va antes del cruce).
+      fichaEn: $("ficha"),
       // La hoja de una página: se arma en #hoja (fuera de todo lo demás) y
       // solo ella sale al imprimir (css/styles.css, html.imprimir-hoja).
       alImprimir: () => {
@@ -512,6 +517,8 @@
         abrirVisor(sec, { en: donde, notas, titulo: en ? L.lineaEs(sec.slice(0, Math.min(sec.length, 8))) + (sec.length > 8 ? "…" : "") : L.lineaEs(sec) }, origen);
       },
     });
+    // El índice de arriba, con las tarjetas que se ven ahora.
+    P.indice($("indice"), $("resultado"));
   }
 
   // ------------------------------------------------------------ el tablero

@@ -3637,6 +3637,60 @@ cuánto saca). Se toca una jugada y se avanza; con ◀ del tablero se vuelve.
   da sus primeras jugadas desde el lado de las negras, que dice dónde ya no se
   repite nada y que un análisis viejo avisa que no tiene árbol.
 
+### Su ficha, el índice y las barras
+
+Se pidió mejorar cómo se ve la herramienta y los datos que da (sin pensarla
+para el Modo Adaptado: los textos y las tablas siguen accesibles, pero no se
+diseñó para él). Mirada con 500 partidas reales de Lichess, lo que más
+costaba era encontrar las cosas: el tablero entero del árbol y el cruce con el
+alumno iban antes de «Qué hacer contra él», las cifras quedaban en el tercer
+lugar y todo eran tablas de texto. Cambió:
+
+- **«Su ficha», arriba de todo** (`pintarFicha()`, en `#ficha`, fuera de
+  `#resultado-cuerpo`): cuánto saca en total, con blancas y con negras, cada
+  uno con la barra de ganadas, tablas y perdidas (los tres tonos de la del
+  árbol) y las cifras escritas; su Elo en cada ritmo; y sus últimas 10
+  partidas con la racha en que viene. Reemplaza las cuatro cifras que había
+  (`pintarCifras`, que se quitó). Un análisis guardado antes de la ficha no
+  trae `r.ficha`: se ven las tres cifras y un aviso de volver a analizar.
+- **Los datos nuevos salen de `fichaDe()`** (en `js/preparacion-analisis.js`,
+  sin pantalla) y viajan con el análisis guardado (pesan unos cientos de
+  bytes):
+  - **El Elo, por ritmo y nunca mezclado.** En Lichess y Chess.com el de
+    bullet, el de blitz y el de rápidas son escalas distintas: el «Elo
+    reciente» de antes, una mediana de las últimas 50 de cualquier ritmo, no
+    era el Elo de nadie (con penguingim1 daba 3161, entre su bullet de 3173 y
+    su blitz de 2808). Por ritmo: el de su última partida, el máximo y el de
+    hace unos tres meses (su última partida de 90 días antes o más).
+  - **El rendimiento**, a lo FIDE: el Elo medio de sus rivales más la
+    diferencia que da su porcentaje, con el tope de ±800, desde 5 partidas
+    con los dos Elo. Dice cómo está jugando en estas partidas mejor que el Elo
+    del perfil: con 500 de penguingim1, en blitz saca 69,5 % pero contra
+    rivales de unos 2500, y su rendimiento (2643) queda 165 por debajo de su
+    Elo. La frase de arriba de la tabla lo dice del ritmo en que más juega.
+  - **Sus últimas partidas y la racha**: la letra (G, T, P) es el dato y el
+    fondo la acompaña; el detalle de cada una (fecha, ritmo, color, rival,
+    enlace a la partida) va plegado.
+- **El índice** («Ir a», `pintarIndice()`): un enlace a cada tarjeta que se
+  ve, del cruce al árbol. Se vuelve a armar cada vez que se pinta el análisis,
+  porque Stockfish y la teoría suman tarjetas. No se enlaza a la ficha, que
+  está justo arriba. Los títulos llevan `scroll-mt-28` para que el
+  encabezado fijo no los tape.
+- **El árbol va después del análisis**: es para explorar, y arriba tapaba lo
+  esencial con un tablero entero. El cruce con el alumno queda antes del
+  análisis, porque cambia el plan.
+- **«Saca» con su barrita** en las tablas (`saca()`): solo a la vista
+  (`aria-hidden`), el porcentaje sigue escrito; la raya del medio es el 50 %.
+- El contraste de la letra de cada resultado se mide en la página con los
+  colores que pinta (4,5:1 o más), no se copia del CSS.
+
+Lo prueba `verificar-preparacion-rivales.js`: sin navegador, `pruebaFicha`
+(el Elo de cada ritmo por su lado, el de hace tres meses, el rendimiento de 10
+de 12 contra 2000 = 2280, sin rendimiento con menos de 5 partidas, el tope de
+±800 y la racha); en la página, que la ficha se ve con sus cifras antes del
+cruce y del análisis, que el árbol va después, el contraste de G, T y P, que
+el índice lleva a cada tarjeta y no a la ficha, y la barrita de «Saca».
+
 ## Los proyectos
 
 `admin.html#proyectos` y `proyecto.html`: un programa de clases armado de

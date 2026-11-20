@@ -241,6 +241,35 @@ function pruebaFiltros() {
   igual("si ninguna pasa, lo dice (y conserva lo disponible para volver a filtrar)", [nada.vacio, nada.totalRival, nada.disponibles.ritmos.length], [true, 20, 2]);
 }
 
+/* Su ficha (fichaDe): el Elo y el rendimiento POR RITMO, nunca mezclados, y
+   sus últimas partidas con la racha. Pedro, con blancas:
+   - blitz: 2 derrotas en febrero (Elo 1900) y 10 victorias en junio, con su
+     Elo subiendo de 2000 a 2090, siempre contra rivales de 2000;
+   - bullet: 4 tablas en mayo, con Elo 1500 (menos de 5: sin rendimiento). */
+function pruebaFicha() {
+  console.log("\n=== Su ficha: Elo y rendimiento por ritmo, sus últimas partidas ===");
+  const una = (tc, fecha, elo, res) => partida("Pedro", "Otro", res, "e4 e5 2. Nf3 Nc6")
+    .replace('[TimeControl "180+2"]', '[TimeControl "' + tc + '"]')
+    .replace('[Date "2025.03.04"]', '[Date "' + fecha + '"]')
+    .replace('[WhiteElo "2000"]', '[WhiteElo "' + elo + '"]')
+    .replace('[BlackElo "2010"]', '[BlackElo "2000"]');
+  let t = una("180+2", "2026.02.01", 1900, "0-1") + una("180+2", "2026.02.02", 1900, "0-1");
+  for (let i = 0; i < 10; i++) t += una("180+2", "2026.06." + String(1 + i).padStart(2, "0"), 2000 + 10 * i, "1-0");
+  for (let i = 0; i < 4; i++) t += una("60+0", "2026.05.0" + (1 + i), 1500, "1/2-1/2");
+  const f = A.analizar(A.leerPgn(t), "Pedro").ficha;
+  const blitz = f.ritmos.find((x) => x.ritmo === "blitz");
+  const bullet = f.ritmos.find((x) => x.ritmo === "bullet");
+  igual("cada ritmo por su lado, en el orden de siempre", f.ritmos.map((x) => [x.ritmo, x.n]), [["bullet", 4], ["blitz", 12]]);
+  igual("blitz: el Elo de su última partida, el máximo y el de hace tres meses", [blitz.actual, blitz.maximo, blitz.antes && blitz.antes.elo, blitz.antes && blitz.antes.fecha], [2090, 2090, 1900, "2026-02-02"]);
+  // 10 de 12 contra 2000: 2000 − 400·log10(1/0,8333 − 1) = 2279,6.
+  igual("blitz: el rendimiento a lo FIDE (10 de 12 contra rivales de 2000 = 2280)", [blitz.rivales, blitz.rendimiento], [2000, 2280]);
+  cierto("y sacó más de lo que esperaban sus Elo", blitz.puntosConElo > blitz.esperado);
+  igual("bullet: con 4 partidas no calcula el rendimiento (dice poco)", [bullet.actual, bullet.rendimiento], [1500, null]);
+  igual("sus últimas 10, la más nueva primero", [f.ultimas.length, f.ultimas[0].fecha, f.ultimas[0].res, f.ultimas[0].eloRival], [10, "2026-06-10", "G", 2000]);
+  igual("y viene de 10 victorias seguidas", f.racha, { res: "G", n: 10 });
+  igual("el rendimiento topa en ±800: todo ganado", A.analizar(A.leerPgn(una("180+2", "2026.01.01", 2000, "1-0").repeat(5)), "Pedro").ficha.ritmos[0].rendimiento, 2800);
+}
+
 // El plan en PGN: con encabezado, comentarios, variantes y jugadas legales.
 function pruebaPgnDelPlan(r) {
   console.log("\n=== El plan en PGN ===");
@@ -916,6 +945,39 @@ async function pruebaConPermiso(browser) {
   const titulos = await page.evaluate(() => [...document.querySelectorAll("#resultado-cuerpo h3")].filter((h) => h.checkVisibility()).map((h) => h.textContent));
   igual("están todas las partes, en orden", titulos,
     ["Qué hacer contra él", "Qué jugarle, jugada por jugada", "La línea a fondo", "Lo que dice Stockfish", "Análisis FODA, visto desde quien quiere ganarle", "Su táctica: con qué gana y con qué pierde", "Más allá de la apertura", "Su repertorio", "Dónde rinde menos y dónde más", "Por ritmo, por año y por Elo"]);
+  // Su ficha, arriba de todo y fuera del cuerpo; y el índice de las tarjetas.
+  igual("su ficha se ve, con las tres cifras y su Elo en blitz", await page.evaluate(() => [
+    SE_VE("ficha"),
+    [...document.querySelectorAll("#ficha [data-cifra]")].map((d) => d.dataset.cifra),
+    [...document.querySelectorAll("#ficha table tbody tr td:first-child")].slice(0, 1).map((td) => td.textContent),
+    document.querySelectorAll("#ficha .ficha-res").length,
+  ]), [true, ["En total", "Con blancas", "Con negras"], ["blitz"], 10]);
+  igual("la ficha va antes del cruce y del análisis, y el árbol después", await page.evaluate(() => {
+    const antes = (a, b) => !!(document.getElementById(a).compareDocumentPosition(document.getElementById(b)) & Node.DOCUMENT_POSITION_FOLLOWING);
+    return [antes("ficha", "alumno-caja"), antes("ficha", "resultado-cuerpo"), antes("resultado-cuerpo", "arbol-caja")];
+  }), [true, true, true]);
+  // El contraste se mide con los colores que pinta la página, no con los del CSS.
+  igual("la letra de cada resultado se lee: 4,5:1 o más contra su fondo (G, T, P)", await page.evaluate(() => {
+    const lum = (c) => { const v = c.match(/\d+(\.\d+)?/g).slice(0, 3).map((x) => { x = x / 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+    return ["G", "T", "P"].map((r) => {
+      const li = document.createElement("li");
+      li.className = "ficha-res ficha-res-" + r;
+      document.querySelector("#ficha ol").appendChild(li);
+      const cs = getComputedStyle(li);
+      const a = lum(cs.color), b = lum(cs.backgroundColor);
+      li.remove();
+      return Math.round(100 * (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) / 100 >= 4.5;
+    });
+  }), [true, true, true]);
+  const indice = await page.evaluate(() => [SE_VE("indice"), [...document.querySelectorAll("#indice a")].map((a) => a.getAttribute("href"))]);
+  igual("el índice se ve y no se enlaza a la ficha, que está justo arriba", [indice[0], indice[1].includes("#ficha-titulo")], [true, false]);
+  cierto("y lleva a cada tarjeta, del cruce al árbol (" + indice[1].join(" ") + ")",
+    indice[1][0] === "#alumno-titulo" && indice[1].includes("#resumen-titulo") && indice[1][indice[1].length - 1] === "#arbol-titulo" &&
+    (await page.evaluate((ids) => ids.every((h) => document.querySelector(h)), indice[1])));
+  igual("en las tablas, «Saca» lleva su barrita, solo a la vista", await page.evaluate(() => {
+    const b = document.querySelector("[aria-labelledby='repertorio-titulo'] .saca-barra");
+    return b && [b.getAttribute("aria-hidden"), b.closest("td").textContent.trim().endsWith("%")];
+  }), ["true", true]);
   igual("arriba de todo, qué hacer y qué no, con cada color", await page.evaluate(() => [...document.querySelectorAll("[aria-labelledby='resumen-titulo'] [data-lado] > h4")].map((h) => h.textContent)),
     ["Cuando tú llevas blancas", "Cuando tú llevas negras", "En toda la partida"]);
   igual("con blancas: la línea y lo que no hay que hacer", await page.evaluate(() => {
@@ -2397,6 +2459,7 @@ async function pruebaAlumnoConPuntos(browser) {
   pruebaDatosPorPartida();
   pruebaTransposiciones();
   pruebaFiltros();
+  pruebaFicha();
   pruebaPgnDelPlan(conMotor);
   pruebaPlanDelAlumno(conMotor);
   pruebaLibro(conMotor);
