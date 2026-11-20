@@ -5247,6 +5247,47 @@ país, y que el diseño aprobado sobreviva a recargar la página y viaje en su
 archivo. Se rompieron a propósito la cuenta del código y el tamaño de la
 placa del QR, y saltaron los dos.
 
+## Los niveles de la academia
+
+Cada academia tiene sus niveles, en orden (Iniciación, Básico, Intermedio…),
+y cada alumno va en uno, con su historial (18/11/2026). La idea salió del
+«itinerario de aprendizaje» de Chessgora. Migración `…_niveles_academia.sql`.
+
+- **`niveles_academia`**: los niveles de UNA academia. Los arma quien la
+  supervisa o quien administra, en `academias.html` («🪜 Los niveles de la
+  academia», `Niveles.montarEditor` de `js/niveles.js`): agregar, subir,
+  bajar, quitar y **Guardar la lista entera** con `set_niveles_academia()`,
+  que la deja exactamente como llega (un nivel que no viene se borra; la regla
+  de las `set_*`). El orden es único por academia (diferido, para poder
+  reordenar en una sola pasada) y el nombre también, sin importar mayúsculas.
+- **`niveles_alumno`** es el **historial**: una fila cada vez que un profe le
+  cambia el nivel a un alumno. El nivel de hoy es la última fila; no se guarda
+  aparte. La fila guarda el nombre del nivel en ese momento (el acta): si el
+  nivel se borra, la historia sigue diciendo lo que fue y la ficha avisa «ese
+  nivel ya no existe».
+- **Se cambia en el informe del alumno** (`Niveles.montarFicha`, bajo su
+  nombre): lo ve todo el que llega a su informe y la RLS deja; se lo cambia
+  quien da clase o administra, nunca mirando como otra persona ni el propio
+  alumno. `poner_nivel_alumno()` exige ser profe de ese alumno (o administrar)
+  y que el nivel sea de una academia del alumno; si ya estaba ahí, no deja
+  otra fila. Después de cambiarlo se vuelve a leer: lo que manda es la base.
+- **Quién ve qué**: los niveles, quien es de la academia, quien la supervisa,
+  el profe de un alumno de esa academia y quien administra (el conjunto lo arma
+  una vez `interno.academias_de_niveles()`, `SECURITY DEFINER` para no depender
+  de la RLS de `academia_miembros` dentro de la política); el historial, el
+  alumno, sus profes y quien administra. Las tablas no tienen política de
+  escritura: solo las dos funciones, que validan con `coalesce` y no son de
+  anon. No reparte permisos ni dinero: no va en la bitácora.
+- Al abrir otra academia en la misma página el editor se vuelve a montar con
+  copias limpias de sus botones: con los listeners viejos, «Guardar» habría
+  guardado también en la academia anterior.
+
+Lo prueba `verificar-niveles.js`: las cuentas (`validar`, `actual`, la fecha
+de Costa Rica), el editor con el marcado de `academias.html` y un doble (orden,
+foco, lista entera con sus ids, texto y no HTML, otra academia sin listeners
+viejos) y la ficha (nivel y desde cuándo, cambiarlo, historial, el alumno sin
+poder cambiarlo). Con los botones sin limpiar, salta.
+
 ## El panel jornada: el del alumno, con pestañas (en prueba)
 
 Desde el 18/11/2026, **solo para las cuentas anotadas** en `vistas_en_prueba`
