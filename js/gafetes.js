@@ -137,13 +137,14 @@
     d.bandera = { plantilla: "", texto: true };
     // La franja: el club del jugador o el rol del personal.
     d.franja = { plantilla: "{Franja}" };
-    // Contraste con la letra blanca: U12 6,0:1, U16 5,1:1 (el celeste oscuro
-    // que pidió el dueño en lugar del turquesa; el celeste de la bandera del
-    // cantón no aguanta letra blanca) y U20 14,2:1. La categoría va también
-    // escrita: el color nunca va solo.
+    // Colores fuertes y saturados (20/11: impresos en casa, los de antes salían
+    // opacos): U12 azul rey #0047cc (7,6:1 con la letra blanca), U16 celeste
+    // fuerte #0078b8 (4,8:1; el celeste de la bandera del cantón no aguanta
+    // letra blanca) y U20 azul marino #0b1f70 (14,5:1). La categoría va
+    // también escrita: el color nunca va solo.
     // El personal (organización, arbitraje y asistente), en negro (21:1):
     // lo pidió el dueño.
-    d.colores = { columna: "Grupo", valores: { u12: "#1d64b0", u16: "#1873b4", u20: "#1b2a4a", organizacion: "#000000", arbitraje: "#000000", asistente: "#000000" },
+    d.colores = { columna: "Grupo", valores: { u12: "#0047cc", u16: "#0078b8", u20: "#0b1f70", organizacion: "#000000", arbitraje: "#000000", asistente: "#000000" },
       etiquetas: { u12: "U12", u16: "U16", u20: "U20", organizacion: "Organización", arbitraje: "Arbitraje", asistente: "Asistente" }, omision: "#1b2a4a" };
     d.dorso.vertical = "{Lado}";
     d.dorso.horarioCentro = true;

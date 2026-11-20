@@ -209,7 +209,7 @@ async function aceptar(page, boton) {
   igual("los ID FIDE se pidieron a la función de los aceptados, por torneo", await page.evaluate(() => window.__pedidos.filter((p) => p.tabla === "rpc:pareo_fide_de_aceptados").length), 2);
   igual("la franja dice el club", g.map((x) => x.f), ["ESCUELA PEDREGOSO", "ADAPZ", "ADAPZ", "ADAPZ"]);
   igual("el horario va centrado en el dorso", await page.evaluate(() => window.Gafetes._estado().diseno.dorso.horarioCentro), true);
-  igual("un color por edad (U12, U16, U20)", g.map((x) => x.color), ["#1d64b0", "#1d64b0", "#1873b4", "#1b2a4a"]);
+  igual("un color por edad (U12, U16, U20)", g.map((x) => x.color), ["#0047cc", "#0047cc", "#0078b8", "#0b1f70"]);
   igual("abajo del dorso, la categoría sola (sin número)", g.map((x) => x.c), ["U12", "U12", "U16", "U20"]);
   // El nombre en negro (para el árbitro), aunque la franja vaya del color de la edad.
   const colores = await page.evaluate(async () => {
@@ -228,7 +228,7 @@ async function aceptar(page, boton) {
     const px = c.getContext("2d").getImageData(Math.round(c.width * 0.5), Math.round(c.height * 0.95), 1, 1).data;
     return "#" + [px[0], px[1], px[2]].map((v) => v.toString(16).padStart(2, "0")).join("");
   });
-  igual("la franja de la U16 se pinta de su color (celeste oscuro)", franja, "#1873b4");
+  igual("la franja de la U16 se pinta de su color (celeste fuerte)", franja, "#0078b8");
   // El frente aprovecha el espacio: la franja del club llega al borde de
   // abajo, el título va entre los logos y el lugar pasa al dorso.
   const espacio = await page.evaluate(() => {
@@ -237,14 +237,14 @@ async function aceptar(page, boton) {
     const x = window.Gafetes._estado().diseno;
     return ["#" + [d[0], d[1], d[2]].map((v) => v.toString(16).padStart(2, "0")).join(""), x.tituloEntreLogos, x.titulo.texto.split(/\n/).length, x.dorso.lineaArriba];
   });
-  igual("la franja llega abajo; el título, entre los logos, en dos renglones; el lugar, arriba del horario del dorso", espacio, ["#1873b4", true, 2, "HOTEL DEL SUR, PÉREZ ZELEDÓN"]);
+  igual("la franja llega abajo; el título, entre los logos, en dos renglones; el lugar, arriba del horario del dorso", espacio, ["#0078b8", true, 2, "HOTEL DEL SUR, PÉREZ ZELEDÓN"]);
   // Para imprimir en casa: la franja de guía arriba en las dos caras, y el
   // dorso con su franja hasta el borde de abajo (como el frente), en el píxel.
   const guia = await page.evaluate(() => {
     const px = (id, fx, fy) => { const c = document.getElementById(id); const d = c.getContext("2d").getImageData(Math.round(c.width * fx), Math.round(c.height * fy), 1, 1).data; return "#" + [d[0], d[1], d[2]].map((v) => v.toString(16).padStart(2, "0")).join(""); };
     return [px("g-lienzo-frente", 0.5, 0.005), px("g-lienzo-dorso", 0.5, 0.005), px("g-lienzo-dorso", 0.3, 0.992), px("g-lienzo-dorso", 0.3, 0.9)];
   });
-  igual("arriba, en las dos caras, la franja de guía del color; abajo del dorso, su franja llega al borde, como la del frente", guia, ["#1873b4", "#1873b4", "#1873b4", "#1873b4"]);
+  igual("arriba, en las dos caras, la franja de guía del color; abajo del dorso, su franja llega al borde, como la del frente", guia, ["#0078b8", "#0078b8", "#0078b8", "#0078b8"]);
   igual("la vista previa dice a quién muestra", await page.textContent("#g-fila"), "3 de 4: Mora Céspedes Ana Lucía");
   igual("sin avisos en la vista previa", await page.locator("#g-avisos li").allInnerTexts(), []);
 
