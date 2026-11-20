@@ -88,7 +88,7 @@ async function pruebaPagina(browser) {
   ok(/segunda jugada ilegal: pierde la partida \(art\. 7\.5\.5\)/.test(await page.textContent(".pi-inc-fila")), "con la segunda, que pierde la partida");
 
   console.log("\n=== Lo que anota el adjunto desde el celular ===");
-  await page.click("#pi-adjunto");
+  await P.clicEnMenu(page, "#pi-adjunto");
   await page.waitForSelector(dialogo);
   await page.fill(dialogo + ' [name="arbitro"]', "PRUEBA ADJUNTA");
   await page.click(dialogo + " [data-avisos-aceptar]");

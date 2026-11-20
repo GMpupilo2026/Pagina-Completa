@@ -28,6 +28,7 @@
 const { chromium } = require("playwright");
 const fs = require("fs");
 const path = require("path");
+const P = require("./lib/pareo-pruebas");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || process.env.BASE || "http://localhost:8777";
@@ -251,7 +252,8 @@ const igual = (m, a, b) => ok(JSON.stringify(a) === JSON.stringify(b), m, "esper
   }
 
   console.log("=== 5. El comprobador ===");
-  await ficha("archivos");
+  // El comprobador y el generador están en Herramientas, no en Archivos.
+  await ficha("herramientas");
   await p.click("#pi-fpc-este");
   await p.waitForFunction(() => /Correcto|no coinciden|No se pudo/.test(document.querySelector("#pi-fpc-resultado").textContent), null, { timeout: 20000 });
   ok(/Correcto: las 5 rondas/.test(await p.textContent("#pi-fpc-resultado")), "el torneo propio: «Correcto»");
@@ -315,7 +317,7 @@ const igual = (m, a, b) => ok(JSON.stringify(a) === JSON.stringify(b), m, "esper
     const raros = await p.$$eval("[data-t]", (ns) => ns.map((n) => [n.dataset.t, n.textContent]));
     const malos = raros.filter(([k, v]) => X.TEXTOS[k] && v !== X.TEXTOS[k][1]).map(([k]) => k);
     ok(!malos.length && (await p.getAttribute("html", "lang")) === "en", "cada [data-t] dice su inglés y <html lang=\"en\">", malos.join(", "));
-    ok((await p.textContent("#pi-f-clasificacion")) === "Standings" && (await p.title()).includes("pairings"), "las fichas y el título también");
+    ok((await p.textContent('#pi-f-clasificacion [data-t="fClasificacion"]')) === "Standings" && (await p.title()).includes("pairings"), "las fichas y el título también");
     await p.reload();
     ok((await p.getAttribute("html", "lang")) === "en", "y el idioma elegido se recuerda al recargar");
     await p.click("#pi-idioma");
@@ -368,7 +370,7 @@ const igual = (m, a, b) => ok(JSON.stringify(a) === JSON.stringify(b), m, "esper
 
     console.log("--- La plantilla para la pared ---");
     ok(!(await visible("#pi-plantilla")), "normalmente no se ve en pantalla");
-    await p.click('#pi-ronda button:has-text("Plantilla para la pared")');
+    await P.clicEnMenu(p, '#pi-ronda button:has-text("Plantilla para la pared")');
     const plantilla = await p.textContent("#pi-plantilla");
     ok(plantilla.includes("Ronda 1") && plantilla.includes("Reportes de prueba"), "trae el título de la ronda y el torneo", plantilla);
     ok(!/1-0|0-1/.test(plantilla), "no trae ningún resultado: es para escribirlo a mano", plantilla);
@@ -379,7 +381,7 @@ const igual = (m, a, b) => ok(JSON.stringify(a) === JSON.stringify(b), m, "esper
 
     console.log("--- Las planillas para firmar ---");
     ok(!(await visible("#pi-firmas")), "normalmente no se ven en pantalla");
-    await p.click('#pi-ronda button:has-text("Planillas para firmar")');
+    await P.clicEnMenu(p, '#pi-ronda button:has-text("Planillas para firmar")');
     const firmas = await p.textContent("#pi-firmas");
     ok(firmas.includes("Mesa 1") && firmas.includes("Mesa 2"), "una hoja por mesa", firmas);
     ok(/1-0/.test(firmas) && /0-1/.test(firmas), "a diferencia de la plantilla de la pared, SÍ trae el resultado ya anotado", firmas);
@@ -391,7 +393,7 @@ const igual = (m, a, b) => ok(JSON.stringify(a) === JSON.stringify(b), m, "esper
 
     console.log("--- Ver desde el celular (QR y enlace de solo lectura) ---");
     ok(!(await visible("#pi-ver-compartir")), "normalmente no se ve");
-    await p.click('#pi-ronda button:has-text("Ver desde el celular")');
+    await P.clicEnMenu(p, '#pi-ronda button:has-text("Ver desde el celular")');
     await p.waitForFunction(() => (document.getElementById("pi-ver-direccion") || {}).textContent?.includes("#ver="), null, { timeout: 10000 });
     ok(await visible("#pi-ver-compartir"), "al pedirlo se ve");
     ok(await p.getAttribute("#pi-ver-qr svg", "aria-label") === "Código QR para ver el torneo desde el celular", "el código tiene nombre para el lector de pantalla");
@@ -517,7 +519,7 @@ const igual = (m, a, b) => ok(JSON.stringify(a) === JSON.stringify(b), m, "esper
     await pOrg.waitForFunction(() => { const h = document.querySelector("#pi-ronda h2"); return h && h.textContent.startsWith("Emparejamientos de la ronda 1"); });
 
     ok(!(await pOrg.isVisible("#pi-ver-compartir")), "la caja de compartir no se ve hasta pedirla");
-    await pOrg.click('#pi-ronda button:has-text("Ver desde el celular")');
+    await P.clicEnMenu(pOrg, '#pi-ronda button:has-text("Ver desde el celular")');
     ok(await pOrg.isVisible("#pi-ver-compartir") && !(await pOrg.isChecked("#pi-ver-en-vivo")), "se abre con «Actualizar sola» sin marcar: estática por omisión");
 
     await pOrg.check("#pi-ver-en-vivo");

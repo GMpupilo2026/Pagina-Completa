@@ -86,16 +86,18 @@ async function pruebaIndividual(browser) {
   const { ctx, page, errores } = await P.abrirPagina(browser, BASE);
 
   console.log("\n=== «Solo lo de los JDE» ===");
-  await page.click('[data-ficha="archivos"]');
-  ok(await vis(page, ".pi-no-jde"), "de entrada se ve el comprobador");
-  await page.check("#pi-modo-jde");
-  const escondidas = await page.$$eval(".pi-no-jde", (l) => l.map((x) => x.checkVisibility()));
-  ok(escondidas.length >= 3 && escondidas.every((x) => !x), "al marcarlo, se esconden el comprobador, el generador y los créditos", JSON.stringify(escondidas));
+  // El comprobador, el generador y los créditos están en Herramientas: con
+  // «Solo lo de los JDE» se esconde la parte entera (y si estaba abierta, se va a Archivos).
+  await page.click('[data-ficha="herramientas"]');
+  ok(await vis(page, "#pi-fpc") && await vis(page, "#pi-rtg"), "de entrada se ven el comprobador y el generador, en Herramientas");
+  await P.abrirMenuDe(page, "#pi-modo-jde"); await page.check("#pi-modo-jde");
+  const escondidas = await page.$$eval("#pi-f-herramientas, #pi-p-herramientas, #pi-fpc, #pi-rtg", (l) => l.map((x) => x.checkVisibility()));
+  ok(escondidas.length === 4 && escondidas.every((x) => !x), "al marcarlo, se esconden Herramientas, el comprobador y el generador", JSON.stringify(escondidas));
+  igual("y queda abierta Archivos", await page.getAttribute("#pi-f-archivos", "aria-selected"), "true");
   await page.reload({ waitUntil: "networkidle" });
-  await page.click('[data-ficha="archivos"]');
-  ok(await page.isChecked("#pi-modo-jde") && !(await vis(page, ".pi-no-jde")), "y se recuerda al volver a abrir");
-  await page.uncheck("#pi-modo-jde");
-  ok(await vis(page, ".pi-no-jde"), "al desmarcarlo, vuelven");
+  ok(await page.isChecked("#pi-modo-jde") && !(await vis(page, "#pi-f-herramientas")), "y se recuerda al volver a abrir");
+  await P.abrirMenuDe(page, "#pi-modo-jde"); await page.uncheck("#pi-modo-jde");
+  ok(await vis(page, "#pi-f-herramientas"), "al desmarcarlo, vuelve Herramientas");
 
   console.log("\n=== Buscar una mesa y los atajos ===");
   await page.click('[data-ficha="jugadores"]');
@@ -126,7 +128,7 @@ async function pruebaIndividual(browser) {
   igual("= pone tablas y 0 gana negras", todos[0].rondas[0].mesas.map((x) => x.r), ["1-0", "=", "0-1"]);
 
   console.log("\n=== Imprimir todo ===");
-  await page.click("#pi-imprimir-todo");
+  await P.clicEnMenu(page, "#pi-imprimir-todo");
   const clases = await page.evaluate(() => [...document.body.classList].filter((c) => c.startsWith("pi-imprimiendo")).sort());
   igual("prepara la plantilla y las hojas a la vez", clases, ["pi-imprimiendo-firmas", "pi-imprimiendo-plantilla"]);
   const hojas = await page.evaluate(() => ({

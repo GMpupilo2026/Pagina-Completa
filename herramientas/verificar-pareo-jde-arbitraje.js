@@ -153,7 +153,7 @@ async function pruebaPagina(browser) {
   await page.waitForFunction(() => document.querySelector("#pi-ronda table select"));
 
   console.log("\n=== El árbitro adjunto anota desde el celular ===");
-  await page.click("#pi-adjunto");
+  await P.clicEnMenu(page, "#pi-adjunto");
   await page.waitForSelector(dialogo);
   await page.fill(dialogo + ' [name="arbitro"]', "PRUEBA ADJUNTA");
   await page.fill(dialogo + ' [name="desde"]', "1");
