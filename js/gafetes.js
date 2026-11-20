@@ -173,7 +173,7 @@
     // Abajo del dorso, la categoría sola: el número (U12 01…) no hace falta.
     d.codigo.plantilla = "{Grupo}";
     // Para la Brother T530 del dueño: hojas carta, frente y dorso, listas para cortar.
-    d.salida = { separarPor: "", formato: "carta", dorsoX: 0, dorsoY: 0, cortesCompletos: true };
+    d.salida = { separarPor: "", formato: "carta", dorsoX: 0, dorsoY: 0, cortesCompletos: true, calle: 4 };
     for (const [id, ruta] of [["logoIzq", "img/adapz/logo.jpg"], ["logoDer", "img/adapz/ccdr-pz.jpg"], ["ilustracion", "img/avatar-profe-karina/bienvenidos.webp"], ["ilustracionDorso", "img/avatar-profe-karina/presentando.webp"], ...POSES_KARINA.slice(1).map((n, i) => ["karina" + (i + 2), "img/avatar-profe-karina/" + n + ".webp"]), ...POSES_OSCAR.map((n) => ["oscar-" + n, "img/avatar-profe-oscar/" + n + ".webp"]), ["karina-arbitro", "img/avatar-profe-karina/arbitro.webp"]]) {
       try { d.imagenes[id] = { nombre: ruta.split("/").pop(), datos: await aDatos(await (await fetch(ruta)).blob()) }; } catch (e) { /* sin esa imagen */ }
     }
@@ -861,32 +861,46 @@
   const CARTA = { w: 215.9, h: 279.4 }, MARGEN_CASA = 5;
   function hojaCarta(d) {
     const w = d.tamano.ancho, h = d.tamano.alto;
-    const cols = Math.floor((CARTA.w - 2 * MARGEN_CASA) / w), filas = Math.floor((CARTA.h - 2 * MARGEN_CASA) / h);
+    // `salida.calle`: los mm de papel entre gafete y gafete. Sin calle, los
+    // gafetes van pegados y un solo corte separa dos; con calle, cada uno
+    // tiene sus cuatro cortes y las franjas del borde se prolongan media
+    // calle (el sangrado): así, si la impresora corre el dorso, el corte cae
+    // todavía sobre el color y no deja una raya blanca (lo pidió el dueño:
+    // en la Brother de la Eliminatoria PZ las franjas de atrás no coincidían).
+    const g = Math.max(0, Number(d.salida.calle) || 0);
+    const cuantos = (lado, total) => { let n = 0; while ((n + 1) * lado + n * g <= total - 2 * MARGEN_CASA) n++; return n; };
+    const cols = cuantos(w, CARTA.w), filas = cuantos(h, CARTA.h);
     if (cols < 1 || filas < 1) return null;
-    const x0 = (CARTA.w - cols * w) / 2, y0 = (CARTA.h - filas * h) / 2;
-    const x1 = x0 + cols * w, y1 = y0 + filas * h;
+    const pasoX = w + g, pasoY = h + g;
+    const x0 = (CARTA.w - (cols * pasoX - g)) / 2, y0 = (CARTA.h - (filas * pasoY - g)) / 2;
+    const x1 = CARTA.w - x0, y1 = CARTA.h - y0;
     const dx = Number(d.salida.dorsoX) || 0, dy = Number(d.salida.dorsoY) || 0;
+    // Los bordes de corte: sin calle, uno entre cada par; con calle, dos.
+    const bordes = (n, ini, lado) => {
+      const l = [ini];
+      for (let i = 0; i < n; i++) { const fin = ini + i * (lado + g) + lado; l.push(fin); if (g && i < n - 1) l.push(fin + g); }
+      return l;
+    };
+    const xs = bordes(cols, x0, w), ys = bordes(filas, y0, h);
     const marcas = [];
-    for (let c = 0; c <= cols; c++) { const x = x0 + c * w; marcas.push([x, 3, x, y0 - 2], [x, y1 + 2, x, CARTA.h - 3]); }
-    for (let f = 0; f <= filas; f++) { const y = y0 + f * h; marcas.push([3, y, x0 - 2, y], [x1 + 2, y, CARTA.w - 3, y]); }
+    xs.forEach((x) => marcas.push([x, 3, x, y0 - 2], [x, y1 + 2, x, CARTA.h - 3]));
+    ys.forEach((y) => marcas.push([3, y, x0 - 2, y], [x1 + 2, y, CARTA.w - 3, y]));
     // `salida.cortesCompletos`: las líneas de corte de lado a lado de la hoja,
     // en las dos caras, una por cada borde de cada gafete (para cortar con
     // guillotina; lo pidió el dueño). Van justo sobre el corte, en gris fino:
     // lo que queda en el borde casi no se ve. Las del dorso se corren con el
     // dorso (el ajuste en mm), para seguir encima de su corte.
     const completas = !!d.salida.cortesCompletos;
-    const lineas = (ox, oy) => {
-      const l = [];
-      for (let c = 0; c <= cols; c++) { const x = x0 + c * w + ox; l.push([x, 2, x, CARTA.h - 2]); }
-      for (let f = 0; f <= filas; f++) { const y = y0 + f * h + oy; l.push([2, y, CARTA.w - 2, y]); }
-      return l;
-    };
+    const lineas = (ox, oy) => [
+      ...xs.map((x) => [x + ox, 2, x + ox, CARTA.h - 2]),
+      ...ys.map((y) => [2, y + oy, CARTA.w - 2, y + oy]),
+    ];
     return {
-      hoja: CARTA, cols, filas, porHoja: cols * filas, completas,
+      hoja: CARTA, cols, filas, porHoja: cols * filas, completas, sangrado: g / 2,
       marcas: completas ? lineas(0, 0) : marcas,
       marcasDorso: completas ? lineas(dx, dy) : [],
-      frente: (k) => ({ x: x0 + (k % cols) * w, y: y0 + Math.floor(k / cols) * h, w, h }),
-      dorso: (k) => ({ x: x0 + (cols - 1 - (k % cols)) * w + dx, y: y0 + Math.floor(k / cols) * h + dy, w, h }),
+      frente: (k) => ({ x: x0 + (k % cols) * pasoX, y: y0 + Math.floor(k / cols) * pasoY, w, h }),
+      dorso: (k) => ({ x: x0 + (cols - 1 - (k % cols)) * pasoX + dx, y: y0 + Math.floor(k / cols) * pasoY + dy, w, h }),
     };
   }
 
@@ -928,7 +942,7 @@
         barra.value = hechas;
         texto.textContent = `Gafete ${Math.ceil(hechas / 2)} de ${todos.length}…`;
         if (hechas % 4 === 0) await new Promise((ok) => setTimeout(ok));
-        return { clave: c.clave, ...fondos.get(c.clave), textos: c.textos };
+        return { clave: c.clave, ...fondos.get(c.clave), textos: c.textos, bordes: c.bordes || [] };
       };
       for (const [grupo, lista] of grupos) {
         const titulo = `Gafetes ${carta ? "carta" : medida} - ${grupo || diseno.nombreDiseno}`;
@@ -944,8 +958,8 @@
               frentes.push({ ...(await caraLista(g, "frente")), ...H.frente(k) });
               dorsos.push({ ...(await caraLista(g, "dorso")), ...H.dorso(k) });
             }
-            await pdf.agregarHoja(frentes, H.marcas, H.completas);
-            await pdf.agregarHoja(dorsos, H.marcasDorso, H.completas);
+            await pdf.agregarHoja(frentes, H.marcas, H.completas, H.sangrado);
+            await pdf.agregarHoja(dorsos, H.marcasDorso, H.completas, H.sangrado);
             hojas++;
           }
           archivos.push({ nombre: nombreSeguro(titulo) + ".pdf", bytes: pdf.cerrar() });
