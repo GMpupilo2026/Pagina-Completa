@@ -118,6 +118,31 @@ async function pruebaRonda(browser) {
   await ctx.close();
 }
 
+// Lo que le pasó al dueño (20/11): con la ronda 1 completa, Rondas abre sola
+// «Ronda 2 · por emparejar», y «Proyectar» iba adentro de una ronda ya
+// emparejada: no aparecía. Ahora está al lado de las rondas y en la Portada.
+async function pruebaPorEmparejar(browser) {
+  console.log("\n=== Con la siguiente ronda por emparejar ===");
+  const t = torneo();
+  t.rondas = t.rondas.slice(0, 1);
+  const { ctx, page, errores } = await P.abrirPagina(browser, BASE, "", sembrar(t));
+  await page.waitForSelector("#pi-rondas-nav button");
+  ok(/por emparejar/.test(await page.textContent('#pi-rondas-nav button[aria-pressed="true"]')), "Rondas abre la ronda por emparejar");
+  ok(await P.vis(page, "#pi-proyectar-ronda"), "y «Proyectar» igual está a la vista");
+  await page.click("#pi-proyectar-ronda");
+  await page.waitForSelector("#pi-proyectar .pi-py-mesa");
+  igual("proyecta la última emparejada", await page.textContent("#pi-py-titulo"), "Ronda 1");
+  await page.keyboard.press("Escape");
+  await page.click('[data-ficha="inicio"]');
+  ok(await P.vis(page, "#pi-inicio-proyectar"), "en la Portada también está «Proyectar»");
+  await page.click("#pi-inicio-proyectar");
+  await page.waitForSelector("#pi-proyectar .pi-py-mesa");
+  igual("y proyecta la misma ronda", await page.textContent("#pi-py-titulo"), "Ronda 1");
+  await page.keyboard.press("Escape");
+  ok(!errores.length, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+}
+
 async function pruebaSinRondas(browser) {
   console.log("\n=== La clasificación antes de la primera ronda ===");
   const t = torneo();
@@ -138,6 +163,7 @@ async function pruebaSinRondas(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaRonda(browser);
+    await pruebaPorEmparejar(browser);
     await pruebaSinRondas(browser);
   } finally {
     await browser.close();

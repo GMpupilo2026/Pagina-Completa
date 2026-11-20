@@ -4540,8 +4540,15 @@ enlace de solo lectura, pasa de torneo en torneo y necesita el evento en
 vivo; este no necesita internet ni enlace.
 
 - **Dónde.** «Proyectar» en Rondas, **a la vista y no en un menú** (es de
-  todos los días en la sala), y «Proyectar la clasificación» en
-  Clasificación. En torneos por equipos no está: la ronda de equipos son
+  todos los días en la sala), **al lado de los botones de las rondas
+  (`#pi-rondas-acciones`) y no adentro de la ronda elegida**; también en
+  el recuadro de la Portada; y «Proyectar la clasificación» en
+  Clasificación. La primera versión lo ponía en la cabecera de la ronda
+  jugada, y el dueño no lo encontró: con la ronda completa, Rondas abre
+  sola «Ronda N · por emparejar», que no tiene esa cabecera. Ahora con la
+  ronda por emparejar abierta (o desde la Portada) proyecta la última
+  emparejada. Va afuera de `#pi-rondas-nav` porque varias pruebas tocan
+  «el último botón» de esa barra. En torneos por equipos no está: la ronda de equipos son
   encuentros con tableros, y el proyector es de mesas individuales.
 - **Qué muestra.** El nombre del torneo, «Ronda N» (con la fase en una
   eliminación), la hora de Costa Rica, cuántos resultados van con su barra,
