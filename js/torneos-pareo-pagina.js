@@ -898,14 +898,38 @@
       if (s.tipo === "bye") hijos.push(el("p", { class: "text-3xl font-bold", texto: "Libre" }), el("p", { texto: "Le toca descansar: suma " + pts(s.puntos) + "." }));
       else if (s.tipo === "ausente" || !mesa) hijos.push(el("p", { class: "text-2xl font-bold", texto: "No juega esta ronda" }));
       else {
+        // El color con su cuadrito (de adorno: el color va escrito) y el
+        // rival, cada uno en su renglón: es lo que busca el jugador.
+        const blancas = s.color === "w";
         hijos.push(el("p", { class: "font-bold leading-none mt-1" }, el("span", { class: "text-xl", texto: "Mesa " }), el("span", { id: "tp-ahora-mesa", class: "text-5xl", texto: String(mesa) })),
-          el("p", { class: "mt-2", texto: "Con " + (s.color === "w" ? "blancas" : "negras") + " contra " + (rival ? rival.nombre + (Number(rival.elo) > 0 ? " (" + rival.elo + ")" : "") : "—") }));
+          el("p", { id: "tp-ahora-color", class: "mt-3 text-lg" },
+            el("span", { "aria-hidden": "true", class: "inline-block w-4 h-4 mr-2 align-middle rounded border-2 border-brand-800 dark:border-white " + (blancas ? "bg-white" : "bg-black") }),
+            "Color: ", el("strong", { texto: blancas ? "Blancas" : "Negras" })),
+          el("p", { id: "tp-ahora-rival", class: "mt-1 text-lg" }, "Rival: ", el("strong", { texto: rival ? rival.nombre : "—" }), rival && Number(rival.elo) > 0 ? " (" + rival.elo + ")" : ""));
         if (s.tipo !== "pendiente") hijos.push(el("p", { class: "font-semibold", texto: "Resultado: " + pts(s.puntos) + (s.tipo === "incomparecencia" ? " (sin jugar)" : "") }));
       }
     }
     hijos.push(el("p", { id: "tp-ahora-puesto", class: "mt-3 font-semibold" },
       suFila ? "Puesto " + suFila.puesto + " de " + total + " · " + pts(suFila.puntos) + " tras la ronda " + k : "Sin puesto todavía: sale al terminar la ronda 1."));
     return el("section", { id: "tp-ahora", class: "mt-3 rounded-2xl border-l-4 border-accent-500 bg-brand-50 dark:bg-brand-800 text-brand-800 dark:text-white p-4", "aria-label": "Ahora" }, hijos);
+  }
+
+  // Lo que se ve al llegar por el QR del gafete (#t=<torneo>&j=<jugador>,
+  // sin vista: ningún enlace del sitio abre así a un jugador): solo su
+  // nombre y «Ahora» (la ronda, la mesa, el color y el rival, y su puesto),
+  // sin la inscripción, las pestañas ni lo demás del torneo (lo pidió el
+  // dueño: «él solo quiere saber su mesa y su rival y su color»). Debajo, el
+  // enlace a todo el torneo. Se pone al día sola cada minuto, como la ficha.
+  function vistaGafete(t, jid, fila) {
+    const j = t.jugadores.find((x) => x.id === jid);
+    const { k, filas } = clasificacion(t);
+    const suFila = filas.find((f) => f.id === jid);
+    return el("section", { id: "tp-gafete", class: C.tarjeta + " max-w-md mx-auto", "aria-labelledby": "tp-titulo" },
+      el("p", { class: C.nota, texto: fila.nombre }),
+      el("h1", { id: "tp-titulo", tabindex: "-1", class: "font-serif text-2xl font-bold mt-1 focus:outline-none", texto: j.nombre }),
+      cajaAhora(t, jid, suFila, filas.length, k),
+      el("p", { class: C.nota + " mt-3", texto: "Esta página se pone al día sola cada minuto." }),
+      el("p", { class: "mt-3" }, el("a", { id: "tp-gafete-todo", href: "#" + new URLSearchParams({ t: leerRuta().t, v: "jugadores", j: jid }).toString(), class: C.enlace + " text-sm font-semibold", texto: "Ver todo el torneo →" })));
   }
 
   function vistaJugadores(t, jid, fila) {
@@ -1204,6 +1228,11 @@
     // anuncio sin jugadores no tiene nada más que mostrar. (El formulario no
     // se vuelve a pintar con la relectura de cada minuto: se perdería lo escrito.)
     if (silencioso && $("tp-i-form") && $("tp-i-form").contains(document.activeElement)) return;
+    if (jid && !ruta.v && !E.esDeEquipos(t) && t.jugadores.some((x) => x.id === jid)) {
+      caja.replaceChildren(vistaGafete(t, jid, fila));
+      if (foco && $(foco)) $(foco).focus(); else if (!foco) $("tp-titulo").focus();
+      return;
+    }
     const previo = !t.rondas.length ? [tarjetaAnuncio(t), inscripcionAbierta(t) ? formularioInscripcion(t, fila) : null] : [];
     if (!t.jugadores.length) { caja.replaceChildren(cabecera(fila, t), ...previo.filter(Boolean)); if (!foco) $("tp-titulo").focus(); return; }
     caja.replaceChildren(cabecera(fila, t), ...previo.filter(Boolean), ...[cajaSeguidos(t)].filter(Boolean), pestanas(vista),
