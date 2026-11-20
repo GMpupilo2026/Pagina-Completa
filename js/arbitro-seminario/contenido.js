@@ -110,7 +110,7 @@ window.SEMINARIO_CONTENIDO = {
         "Cuando el rival la acepta"
        ],
        "correcta": 0,
-       "explicacion": "Art. 4.6.3 (pieza de promoción): la elección es definitiva cuando la pieza toca la casilla de coronación."
+       "explicacion": "Art. 4.4.4 (pieza de promoción): la elección es definitiva cuando la pieza toca la casilla de coronación."
       }
      ]
     },

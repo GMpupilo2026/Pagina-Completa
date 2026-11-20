@@ -1,4 +1,4 @@
-/* Aula de Arbitraje — las fichas de los números 2 al 20 de la revista
+/* Aula de Arbitraje — las fichas de los números 2 al 21 de la revista
    «Arbitraje de Ajedrez», revisados y actualizados a la normativa FIDE vigente
    (noviembre de 2026) por IA Oscar Angulo Cubero.
 
@@ -106,6 +106,11 @@
    "id": "revista-20",
    "titulo": "Revista Arbitraje de Ajedrez · N.º 20",
    "nota": "Edición especial: la mesa del árbitro del Centroamericano, manual completo"
+  },
+  {
+   "id": "revista-21",
+   "titulo": "Revista Arbitraje de Ajedrez · N.º 21",
+   "nota": "Edición especial: el Seminario de Árbitro FIDE completo (noviembre de 2026)"
   }
  ],
  "fichas": [
@@ -1452,6 +1457,389 @@
     "Nada se borra: «Anular» agrega una línea nueva, y sin internet la tableta guarda todo en una cola."
    ],
    "contenido": "<h3>Antes de la ronda</h3><p>Entrar con el QR (o el código en ajedrez-integral.com/m), escribir el nombre si lo pide, y la <b>revisión previa</b>: paso 1, los relojes con el ritmo de las bases; paso 2, los tableros bien orientados y con las 32 piezas.</p><h3>Durante la ronda</h3><div class=\"aula-tabla\"><table><tr><th>Botón</th><th>Qué anota</th></tr><tr><td>Inició la ronda ahora</td><td>La hora de inicio de su categoría.</td></tr><tr><td>Llegó</td><td>Que el jugador está sentado (o «Marcar que llegaron todos»).</td></tr><tr><td>Jugada ilegal</td><td>Qué jugada fue; marca la primera y la segunda.</td></tr><tr><td>Irregularidad</td><td>Tocó una pieza u otra falta.</td></tr><tr><td>Se levantó de la mesa</td><td>Cada vez que el jugador se levanta.</td></tr><tr><td>Guardar</td><td>El resultado de la mesa.</td></tr></table></div><div class=\"aula-norma\"><b>Art. 7.5.5</b> Primera jugada ilegal completada: dos minutos más al rival. Segunda del mismo jugador: pierde la partida, salvo que el rival no pueda dar mate por ninguna serie de jugadas legales (tablas). En rápidas y relámpago, Apéndices A y B.</div><div class=\"aula-norma aula-norma-aviso\">La tableta propone el resultado de la segunda ilegal o de una incomparecencia; lo decide el árbitro.</div><div class=\"aula-nota\">Al terminar: «Terminé mi ronda completa» y la bitácora en PDF. Sin señal, la cola guarda todo y lo manda al volver, sin duplicar.</div>"
+  },
+  {
+   "id": "r21-a-movimientos-especiales",
+   "coleccion": "revista-21",
+   "titulo": "Movimientos de las piezas: enroque, al paso y promoción",
+   "articulos": "Leyes 2023 · arts. 1.2, 1.3, 2.1, 3.1, 3.7, 3.8, 3.9, 3.10",
+   "resumen": "Cómo se mueven las piezas, qué es atacar una casilla y las tres jugadas especiales que más dudas generan en la sala.",
+   "claves": [
+    "La esquina derecha de cada jugador es clara (2.1); la dama empieza en su color (2.3).",
+    "Una pieza clavada sigue atacando sus casillas y puede dar jaque (3.1.3; 3.9.1).",
+    "El derecho a enrocar se pierde si se movió el rey o esa torre (3.8.2.1).",
+    "El enroque está impedido si la casilla del rey, la que cruza o la de llegada está atacada, o si hay piezas en medio (3.8.2.2).",
+    "Al paso: solo contra un peón que acaba de avanzar dos casillas, y solo en la jugada siguiente (3.7.3.1-3.7.3.2).",
+    "Promoción a dama, torre, alfil o caballo de su color, con efecto inmediato y sin depender de las piezas capturadas (3.7.3.3-3.7.3.5)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Art. 3.1.3</b> Una pieza ataca una casilla aunque no pueda moverse a ella porque dejaría o pondría en jaque a su propio rey.</div><div class=\"aula-norma\"><b>Art. 3.8.2</b> En el enroque, el rey va dos casillas hacia la torre, que está en su casilla original, y la torre pasa a la casilla que el rey cruzó. Cuenta como una jugada de rey.</div><div class=\"aula-norma\"><b>Art. 3.8.2.1</b> Derecho perdido (definitivo): el rey ya se movió, o la torre ya se movió. <b>Art. 3.8.2.2</b> Enroque impedido (temporal): casilla del rey, de paso o de llegada atacada, o piezas entre rey y torre.</div><div class=\"aula-norma aula-norma-aviso\"><b>Solo las casillas del rey.</b> En el enroque largo, que b1 (o b8) esté atacada no impide enrocar: por ahí pasa la torre, no el rey.</div><div class=\"aula-norma\"><b>Arts. 3.7.3.1-3.7.3.2</b> El peón que está al lado de un peón rival que acaba de avanzar dos casillas puede capturarlo como si hubiera avanzado una. Solo en la jugada inmediatamente siguiente.</div><div class=\"aula-norma\"><b>Arts. 3.7.3.3-3.7.3.5</b> El peón que llega a la última fila se cambia, en la misma jugada, por dama, torre, alfil o caballo de su color. No importa qué piezas se capturaron; el efecto es inmediato.</div><div class=\"aula-tabla\"><table><tr><th>Concepto</th><th>Art.</th></tr><tr><td>Jugada legal: cumple 3.1 a 3.9</td><td>3.10.1</td></tr><tr><td>Jugada ilegal: no los cumple</td><td>3.10.2</td></tr><tr><td>Posición ilegal: inalcanzable con jugadas legales</td><td>3.10.3</td></tr></table></div><p class=\"aula-nota\">Ejemplo de promoción menor: blancas Rc6, peón c7; negras Ra7. Con 1.c8=D el negro queda ahogado; con 1.c8=T la partida sigue.</p>"
+  },
+  {
+   "id": "r21-a-pieza-tocada",
+   "coleccion": "revista-21",
+   "titulo": "Pieza tocada y «compongo»",
+   "articulos": "Leyes 2023 · arts. 4.1 a 4.8",
+   "resumen": "Qué obliga a mover, cómo se tratan el enroque y la promoción, cuándo está realizada la jugada y hasta cuándo se puede reclamar.",
+   "claves": [
+    "Cada jugada con una sola mano (4.1).",
+    "Solo quien está en juego puede componer, y debe avisarlo antes de tocar (4.2.1).",
+    "Pieza propia tocada: mover la primera que pueda moverse; pieza rival: capturar la primera que pueda capturarse (4.3.1-4.3.2).",
+    "Si toca primero la torre, no puede enrocar por ese lado en esa jugada (4.4.2).",
+    "La elección de la pieza de promoción es definitiva cuando toca la casilla de promoción (4.4.4).",
+    "El rival pierde el derecho a reclamar en cuanto toca una pieza para moverla (4.8)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Art. 4.2.1</b> Solo el jugador que está en juego puede acomodar piezas, avisando antes («compongo», «j'adoube»). <b>Art. 4.2.2</b> Cualquier otro contacto, salvo el claramente accidental, se considera intencionado.</div><div class=\"aula-norma\"><b>Art. 4.3</b> Si el jugador en juego toca con intención de mover o capturar: piezas propias, mueve la primera tocada que pueda moverse; piezas rivales, captura la primera tocada que pueda capturarse; de ambos colores, captura la primera rival tocada con su primera tocada o, si es ilegal, mueve o captura la primera tocada que pueda. En la duda, se considera tocada antes la propia.</div><div class=\"aula-norma\"><b>Art. 4.4</b> Rey y torre: enroca por ese lado si es legal (4.4.1). Torre primero: no enroca por ese lado y debe mover la torre (4.4.2). Enroque ilegal con esa torre: otra jugada legal de rey, incluido el otro enroque; si el rey no puede moverse, cualquier jugada legal (4.4.3).</div><div class=\"aula-norma\"><b>Art. 4.5</b> Si ninguna pieza tocada puede moverse o capturarse, el jugador hace cualquier jugada legal.</div><div class=\"aula-norma\"><b>Arts. 4.4.4 y 4.6</b> La elección en la promoción es definitiva cuando la pieza toca la casilla de promoción. El peón no tiene que ir a la casilla de llegada; retirar el peón y poner la pieza, en cualquier orden; si hay una pieza rival en la casilla de llegada, debe capturarse.</div><div class=\"aula-norma\"><b>Art. 4.7</b> Pieza soltada como jugada legal: no puede ir a otra casilla. Captura: retirada la capturada y soltada la propia. Enroque: soltada la torre en la casilla que cruzó el rey. Promoción: soltada la nueva pieza y retirado el peón.</div><div class=\"aula-norma aula-norma-aviso\"><b>Art. 4.8</b> El derecho a reclamar por infracciones de los arts. 4.1 a 4.7 se pierde en cuanto el reclamante toca una pieza con intención de moverla o capturarla.</div><p class=\"aula-nota\">Realizada (4.7) no es completada: la jugada se completa al pulsar el reloj (6.2.1).</p>"
+  },
+  {
+   "id": "r21-a-fin-de-partida",
+   "coleccion": "revista-21",
+   "titulo": "La finalización de la partida",
+   "articulos": "Leyes 2023 · arts. 1.5, 5.1.1, 5.1.2, 5.2.1 a 5.2.3",
+   "resumen": "Mate, abandono, ahogado, posición muerta y tablas por acuerdo: cuándo termina la partida en el acto y qué excepciones hay.",
+   "claves": [
+    "El mate termina la partida en el acto, si la jugada cumple el art. 3 y los arts. 4.2-4.7 (5.1.1).",
+    "Abandonar pierde, salvo que el rival no pueda dar mate con ninguna serie de jugadas legales: tablas (5.1.2).",
+    "Ahogado: sin jugadas legales y sin jaque; tablas en el acto (5.2.1).",
+    "Posición muerta: ningún jugador puede dar mate; tablas en el acto (5.2.2).",
+    "Tablas por acuerdo solo si ambos jugadores hicieron al menos una jugada (5.2.3).",
+    "Lo que pase después de un final inmediato (una bandera, por ejemplo) no cuenta."
+   ],
+   "contenido": "<div class=\"aula-tabla\"><table><tr><th>Final</th><th>Resultado</th><th>Art.</th></tr><tr><td>Jaque mate</td><td>Gana quien da mate</td><td>5.1.1</td></tr><tr><td>Abandono</td><td>Pierde quien abandona, salvo que el rival no pueda dar mate (tablas)</td><td>5.1.2</td></tr><tr><td>Ahogado</td><td>Tablas</td><td>5.2.1</td></tr><tr><td>Posición muerta</td><td>Tablas</td><td>5.2.2</td></tr><tr><td>Acuerdo (ambos con al menos una jugada)</td><td>Tablas</td><td>5.2.3</td></tr></table></div><div class=\"aula-norma\"><b>Arts. 5.1.1, 5.2.1 y 5.2.2</b> El mate, el ahogado y la posición muerta terminan la partida de inmediato, siempre que la jugada que los produjo cumpla el art. 3 y los arts. 4.2 a 4.7. Un «mate» con jugada ilegal no termina nada: se aplica el art. 7.5.</div><div class=\"aula-norma aula-norma-aviso\"><b>«Ningún jugador» o «el rival».</b> Posición muerta: ninguno de los dos puede dar mate (5.2.2). Excepción del abandono (5.1.2) y de la segunda ilegal (7.5.5): basta con que el rival no pueda dar mate.</div><p class=\"aula-nota\">Material insuficiente típico: rey contra rey; rey y alfil o rey y caballo contra rey; alfiles del mismo color. También hay posiciones muertas con peones bloqueados: el árbitro debe estar seguro de que no existe ninguna serie de jugadas legales que lleve al mate.</p>"
+  },
+  {
+   "id": "r21-a-irregularidades-ilegales",
+   "coleccion": "revista-21",
+   "titulo": "Irregularidades y jugadas ilegales",
+   "articulos": "Leyes 2023 · arts. 7.1 a 7.6; Apéndice A (A.3, A.5.2)",
+   "resumen": "Posición inicial incorrecta, tablero mal colocado, colores cambiados, piezas desplazadas y la sanción de la jugada ilegal completada.",
+   "claves": [
+    "Al volver a una posición anterior, el árbitro fija los tiempos con criterio, incluso sin cambiarlos (7.1).",
+    "Posición inicial incorrecta: se anula y se juega otra (7.2.1).",
+    "Tablero mal colocado: sigue la partida en un tablero bien colocado (7.2.2).",
+    "Colores cambiados: menos de 10 jugadas de ambos, nueva partida; 10 o más, sigue (7.3).",
+    "Ilegal completada al pulsar: posición anterior y pieza tocada; 1.ª, +2 min al rival; 2.ª, pierde (7.5.1, 7.5.5).",
+    "Segunda ilegal: tablas si el rival no puede dar mate con ninguna serie de jugadas legales (7.5.5)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Arts. 7.2.1, 7.2.2 y 7.3</b> Posición inicial incorrecta: partida anulada. Tablero girado: se traslada la posición. Colores cambiados: con menos de 10 jugadas de ambos, nueva partida; con 10 o más, sigue.</div><div class=\"aula-norma\"><b>Arts. 7.4 y 7.6</b> Quien desplaza piezas las repone en su propio tiempo; el árbitro puede sancionarlo. Pieza desplazada descubierta después: posición anterior a la irregularidad o la última identificable.</div><div class=\"aula-norma\"><b>Art. 7.5.1</b> La ilegal se completa al pulsar. Se restablece la posición inmediatamente anterior y a la jugada que la reemplaza se le aplican los arts. 4.3 y 4.7.</div><div class=\"aula-tabla\"><table><tr><th>Se sanciona como ilegal</th><th>Art.</th></tr><tr><td>Peón en la última fila sin cambiar (se pone una dama)</td><td>7.5.2</td></tr><tr><td>Pulsar el reloj sin mover</td><td>7.5.3</td></tr><tr><td>Dos manos para una jugada y pulsar</td><td>7.5.4</td></tr></table></div><div class=\"aula-formula\">1.ª ilegal completada: +2 min al rival (rápidas y relámpago: +1 min) · 2.ª: pierde, salvo que el rival no pueda dar mate (tablas)</div><div class=\"aula-norma aula-norma-aviso\"><b>Sin pulsar no hay sanción.</b> Una ilegal que se corrige antes de pulsar no está completada; sí sigue la obligación de pieza tocada.</div><p class=\"aula-nota\">Varias infracciones en una misma acción cuentan como una sola jugada ilegal. En rápidas sin reglas de competición, la ilegal solo se corrige si el rival aún no hizo su siguiente jugada (A.5.2).</p>"
+  },
+  {
+   "id": "r21-b-reloj-bandera",
+   "coleccion": "revista-21",
+   "titulo": "El reloj y la caída de bandera",
+   "articulos": "Leyes 2023 · arts. 6.1 a 6.12",
+   "resumen": "Cómo se maneja el reloj, el tiempo de espera, cuándo se pierde por tiempo, la excepción de no poder dar mate y qué hacer con un reloj defectuoso o mal configurado.",
+   "claves": [
+    "La jugada se completa al pulsar el reloj, con la misma mano con que se movió (6.2.1, 6.2.3).",
+    "Mal manejo del reloj: sanción por el 12.9 (6.2.4).",
+    "Si las bases no fijan tiempo de espera, es cero: quien llega tarde pierde, salvo que el árbitro decida otra cosa (6.7.1).",
+    "La bandera cae cuando el árbitro lo observa o un jugador lo reclama válidamente (6.8).",
+    "Pierde quien no completa sus jugadas a tiempo, salvo que el rival no pueda dar mate con ninguna serie de jugadas legales: tablas (6.9).",
+    "Mate, ahogado, posición muerta y acuerdo van antes que la bandera (6.9).",
+    "Reloj defectuoso: se cambia; reloj mal configurado: se para, se corrige y se ajusta con el mejor criterio (6.10).",
+    "No se puede reclamar basándose solo en pantallas o contadores (6.12.2)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Art. 6.2</b> El jugador mueve, detiene su reloj y pone en marcha el del rival: eso completa la jugada. Se pulsa con la misma mano; prohibido dejar el dedo sobre el pulsador, golpear, levantar o botar el reloj, o pulsar antes de mover (12.9).</div><div class=\"aula-norma\"><b>Art. 6.7</b> Las bases fijan el tiempo de espera; si no lo fijan, es cero. Quien llegue después pierde, salvo que el árbitro decida otra cosa.</div><div class=\"aula-norma\"><b>Arts. 6.8 y 6.9</b> La bandera cae cuando el árbitro lo observa o un jugador lo reclama. Salvo mate, abandono, ahogado, posición muerta o acuerdo, quien no completa sus jugadas pierde; pero es tablas si el rival no puede dar mate con ninguna serie posible de jugadas legales.</div><div class=\"aula-norma aula-norma-aviso\"><b>Mate ayudado.</b> Basta con que exista una serie legal que termine en mate, aunque el que se quedó sin tiempo tenga que colaborar. Rey y caballo, o rey y alfil, ganan por tiempo si el rival tiene otra pieza o peón. La obligación de pieza tocada no cuenta al evaluar el 6.9.</div><div class=\"aula-norma\"><b>Art. 6.10</b> Lo que marca el reloj es concluyente salvo defecto evidente. El árbitro cambia el reloj defectuoso, o corrige la configuración y ajusta tiempos y contador de jugadas, con su mejor criterio.</div><div class=\"aula-norma\"><b>Arts. 6.11 y 6.12</b> El jugador solo pausa el reloj para pedir la ayuda del árbitro (si no hay motivo válido, 12.9). Las pantallas y contadores se permiten, pero no bastan para reclamar.</div><p class=\"aula-nota\">Ejemplo: 90′ + 30″ y el reloj no sumó el incremento en 11 jugadas: se para, se configura bien y se suman 11 × 30″ a cada jugador.</p>"
+  },
+  {
+   "id": "r21-b-planilla-tablas",
+   "coleccion": "revista-21",
+   "titulo": "La planilla y las tablas reclamadas",
+   "articulos": "Leyes 2023 · arts. 8, 9 y 10; Apéndice C",
+   "resumen": "La obligación de anotar y la excepción de los cinco minutos, las planillas incompletas, la oferta de tablas, la triple repetición, las 50 y 75 jugadas, la quíntuple repetición y la puntuación.",
+   "claves": [
+    "Cada jugador anota sus jugadas y las del rival, en notación algebraica (8.1.1).",
+    "Prohibido anotar por adelantado, salvo para reclamar por 9.2 o 9.3 (8.1.2).",
+    "Con menos de 5 minutos y sin incremento de 30″ o más, no hay obligación de anotar (8.4).",
+    "La oferta de tablas no se puede retirar y no admite condiciones (9.1.2.1).",
+    "La triple repetición y las 50 jugadas se reclaman; la quíntuple repetición y las 75 jugadas son automáticas (9.2, 9.3, 9.6).",
+    "Reclamación incorrecta: dos minutos al rival y, si había jugada escrita, hay que hacerla (9.5.3).",
+    "Una reclamación cuenta como oferta de tablas (9.1.2.3).",
+    "Ganar 1, empatar ½, perder 0; ¾-¼ no se permite (art. 10)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Art. 8.4</b> Con menos de cinco minutos en un período y sin un incremento de 30 segundos o más por jugada, el jugador no está obligado a anotar durante el resto de ese período.</div><div class=\"aula-norma\"><b>Art. 8.5</b> Si nadie anota, el árbitro procura anotar; al caer una bandera pausa el reloj y ambos actualizan. Si solo uno dejó de anotar, actualiza antes de mover, y puede usar la planilla del rival si le toca jugar.</div><div class=\"aula-norma\"><b>Art. 9.1.2</b> Se ofrece tras mover y antes de pulsar; en otro momento vale igual (con el 11.5 en cuenta). Vale hasta que el rival acepte, rechace de palabra, toque una pieza para moverla o la partida termine.</div><div class=\"aula-norma\"><b>Art. 9.2</b> Triple repetición: reclama quien tiene el turno, escribiendo la jugada sin hacerla y anunciándola al árbitro, o justo después de que aparece la posición. Misma posición = mismo turno, mismas piezas en las mismas casillas y mismas jugadas posibles (enroque y al paso incluidos).</div><div class=\"aula-norma\"><b>Art. 9.5</b> Al reclamar se pausa el reloj y no se puede retirar. Correcta: tablas. Incorrecta: +2 minutos al rival, sigue la partida y se hace la jugada escrita.</div><div class=\"aula-norma aula-norma-aviso\"><b>Art. 9.6</b> Tablas automáticas con la misma posición cinco veces o 75 jugadas de cada uno sin peón ni captura. Si la última jugada es mate, prevalece el mate.</div><table class=\"aula-tabla\"><tr><th></th><th>Se reclama</th><th>Automática</th></tr><tr><td>Repetición</td><td>3 veces (9.2)</td><td>5 veces (9.6.1)</td></tr><tr><td>Sin peón ni captura</td><td>50 jugadas (9.3)</td><td>75 jugadas (9.6.2)</td></tr></table><p class=\"aula-nota\">El árbitro no dice cuántas jugadas se han hecho, salvo al aplicar el 8.5 con una bandera caída (12.6).</p>"
+  },
+  {
+   "id": "r21-b-conducta-sanciones",
+   "coleccion": "revista-21",
+   "titulo": "Conducta de los jugadores y sanciones del árbitro",
+   "articulos": "Leyes 2023 · arts. 11 y 12",
+   "resumen": "Recinto y zona de juego, dispositivos electrónicos, molestias al rival, derechos de los jugadores, deberes del árbitro y la escala de sanciones del art. 12.9.",
+   "claves": [
+    "Recinto = zona de juego, baños, descanso, refrigerios, fumado y lo que designe el árbitro (11.2.1).",
+    "El jugador con turno necesita permiso para salir de la zona de juego (11.2.3).",
+    "Dispositivo electrónico encima: pierde y el rival gana; las bases pueden fijar algo menos severo (11.3.2.2).",
+    "Distraer o molestar al rival, incluso con ofertas o reclamaciones irrazonables, se sanciona con el 12.9 (11.5, 11.6).",
+    "Negativa persistente: partida perdida; si ambos, perdida para los dos (11.7, 11.8).",
+    "Se puede apelar aunque se haya firmado la planilla, salvo que las bases digan otra cosa (11.10).",
+    "El árbitro no avisa que el rival jugó ni que el jugador no ha pulsado (12.6).",
+    "El 12.9 va de la advertencia a la expulsión; la multa solo si se anunció de antemano."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Art. 11.2.3</b> Solo con permiso del árbitro: salir del recinto; salir de la zona de juego si se tiene el turno; entrar a la zona de juego si no se es jugador ni árbitro.</div><div class=\"aula-norma\"><b>Art. 11.3</b> Prohibido usar notas o consejos y tener cualquier dispositivo electrónico no aprobado. Las bases pueden permitirlo completamente apagado en el bolso. Si lo lleva encima, pierde y el rival gana. Revisión en privado, por alguien del mismo género; si se niega, 12.9.</div><div class=\"aula-norma aula-norma-aviso\"><b>Sin excepción de mate.</b> El 11.3.2.2 dice que el rival gana: no tiene la excepción de «no poder dar mate» del 6.9 o del 7.5.5.</div><div class=\"aula-norma\"><b>Arts. 11.5 a 11.8</b> Prohibido distraer o molestar al rival. Infracción de 11.1 a 11.5: 12.9. Negativa persistente: partida perdida (el árbitro decide la puntuación del rival); si ambos, perdida para los dos.</div><div class=\"aula-norma\"><b>Art. 12.6</b> El árbitro no interviene salvo en los casos de las Leyes; no indica el número de jugadas (salvo 8.5 con bandera caída) ni avisa que el rival jugó o que no se pulsó el reloj.</div><table class=\"aula-tabla\"><tr><th>Art.</th><th>Sanción</th></tr><tr><td>12.9.1</td><td>Advertencia</td></tr><tr><td>12.9.2</td><td>Más tiempo al rival</td></tr><tr><td>12.9.3</td><td>Menos tiempo al infractor</td></tr><tr><td>12.9.4</td><td>Más puntos al rival (hasta el máximo)</td></tr><tr><td>12.9.5</td><td>Menos puntos al infractor</td></tr><tr><td>12.9.6</td><td>Partida perdida</td></tr><tr><td>12.9.7</td><td>Multa anunciada de antemano</td></tr><tr><td>12.9.8</td><td>Exclusión de una o más rondas</td></tr><tr><td>12.9.9</td><td>Expulsión</td></tr></table>"
+  },
+  {
+   "id": "r21-b-rapidas-blitz",
+   "coleccion": "revista-21",
+   "titulo": "Rápidas, blitz, discapacidad visual y Guía III",
+   "articulos": "Leyes 2023 · Apéndices A, B y D; Guía III",
+   "resumen": "Cómo se clasifica un ritmo, qué cambia en rápidas y blitz con las reglas A.4/B.2 o A.5/B.3, las reglas para jugadores con discapacidad visual y el final rápido de las partidas sin incremento.",
+   "claves": [
+    "Se suma el tiempo base más 60 veces el incremento (A.1, B.1).",
+    "Rápida: más de 10 y menos de 60 minutos; blitz: 10 minutos o menos.",
+    "En rápidas no hay que anotar y las sanciones de los arts. 7 y 9 son de un minuto (A.2, A.3).",
+    "Con A.5, una jugada ilegal no reclamada antes de la siguiente jugada del rival se queda (A.5.2).",
+    "Dos reyes en jaque o un peón en la última fila: el árbitro espera la siguiente jugada; si sigue, tablas (A.5.4).",
+    "Blitz sin un árbitro por partida: rigen A.2, A.3 y A.5 (B.3).",
+    "Tablero especial: pieza tocada al sacarla del orificio (D.2.2).",
+    "La Guía III solo rige si se anunció y nunca en blitz (III.2)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Arts. A.1 y B.1</b> Rápida: tiempo base + 60 × incremento de más de 10 y menos de 60 minutos. Blitz: 10 minutos o menos.</div><div class=\"aula-norma\"><b>Art. A.4</b> Reglas de competición si un árbitro supervisa como máximo tres partidas y se anotan. En blitz (B.2), un árbitro por partida.</div><div class=\"aula-norma\"><b>Art. A.5</b> Tras 10 jugadas de cada uno, no se cambia el reloj ni se reclama por piezas o tablero mal colocados. Jugada ilegal: el árbitro o el rival actúan antes de la siguiente jugada del rival; si no, se queda. El reclamante por tiempo empata si no puede dar mate. El árbitro canta la bandera si la ve.</div><div class=\"aula-norma\"><b>Apéndice D</b> Dos tableros si se pide; jugadas anunciadas y repetidas; pieza tocada al sacarla del orificio; jugada hecha al colocarla en otro orificio y anunciarla; asistente permitido.</div><div class=\"aula-norma\"><b>Guía III</b> Dos banderas caídas sin saber cuál fue primero: sigue la partida si no es el último período; tablas en el período final. Con menos de 2 minutos: pedir 5 segundos de incremento (es oferta de tablas) o reclamar que el rival no puede ganar por medios normales.</div><table class=\"aula-tabla\"><tr><th>Ritmo</th><th>Cálculo</th><th>Tipo</th></tr><tr><td>15′ + 10″</td><td>25 min</td><td>Rápida</td></tr><tr><td>5′ + 5″</td><td>10 min</td><td>Blitz</td></tr><tr><td>30′ + 30″</td><td>60 min</td><td>No es rápida</td></tr></table><p class=\"aula-nota\">Las Guías no son parte de las Leyes, pero la FIDE recomienda usarlas cuando corresponda.</p>"
+  },
+  {
+   "id": "r21-c-bases-del-torneo",
+   "coleccion": "revista-21",
+   "titulo": "Regulaciones Generales y bases del torneo",
+   "articulos": "Regulaciones Generales (C.05) · Prefacio, arts. 1, 5, 6 · Leyes 2023 · arts. 6.7, 9.1.1, 10.1, 11.3.2, 11.10",
+   "resumen": "A qué torneos se aplican las Regulaciones Generales, los niveles L1-L3, qué deben fijar las bases y qué rige cuando no dicen nada.",
+   "claves": [
+    "Las Regulaciones Generales se usan junto con las Leyes; obligan en los eventos oficiales FIDE y, adaptadas, en todo torneo con rating (Prefacio).",
+    "Las leyes nacionales del país anfitrión tienen prioridad sobre las reglas FIDE (Prefacio).",
+    "L1: eventos oficiales FIDE; L2: torneos que dan títulos y normas; L3: torneos con rating (1.2).",
+    "Si las reglas internas no cubren una situación, las Regulaciones Generales son definitivas (1.1).",
+    "Sin tiempo de incomparecencia fijado, es cero (Leyes 6.7.1).",
+    "Ausente sin avisar = retirado, salvo explicación aceptable antes del siguiente emparejamiento (6.5).",
+    "Round robin: con menos del 50 % jugado, los resultados no cuentan para la clasificación (6.6)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Prefacio</b> Las Regulaciones Generales se usan junto con las Leyes del Ajedrez, se aplican a todas las competiciones oficiales de la FIDE y, con las adaptaciones que correspondan, a todas las competiciones con rating FIDE. Las leyes nacionales del país anfitrión tienen prioridad.</div><div class=\"aula-tabla\"><table><tr><th>Nivel</th><th>Torneos</th></tr><tr><td>L1</td><td>Eventos oficiales de la FIDE (mundiales, Olimpiada, continentales)</td></tr><tr><td>L2</td><td>Torneos donde se ganan títulos y normas (B.01)</td></tr><tr><td>L3</td><td>Torneos con rating FIDE (B.02)</td></tr></table></div><div class=\"aula-norma\"><b>Art. 1.1</b> Si el evento tiene una situación que sus reglas internas no cubren, las Regulaciones Generales son definitivas.</div><h3>Qué fijan las bases</h3><div class=\"aula-norma\">Sistema y emparejamiento anunciados (5.4) y restricciones comunicadas a más tardar al inicio de la ronda 1 (5.2); ritmo; tiempo de incomparecencia (Leyes 6.7.1); desempates; restricciones a las tablas (Leyes 9.1.1); cuota y plazo de apelación (10.4); teléfonos en el bolso y sanción menor (Leyes 11.3.2.1 y 11.3.2.2); régimen de rápidas y relámpago (Leyes A.6 y B.4); código de vestimenta y fumado; byes de medio punto en suizos L2/L3 (6.7.4).</div><h3>Si las bases no dicen nada</h3><div class=\"aula-tabla\"><table><tr><th>Tema</th><th>Rige</th></tr><tr><td>Incomparecencia</td><td>Cero (Leyes 6.7.1)</td></tr><tr><td>Puntuación</td><td>1 - ½ - 0 (Leyes 10.1)</td></tr><tr><td>Tablas acordadas</td><td>Permitidas (Leyes 9.1.1)</td></tr><tr><td>Dispositivo encima</td><td>Pierde, el rival gana (Leyes 11.3.2.2)</td></tr><tr><td>Apelar</td><td>Se puede, aunque haya firmado (Leyes 11.10)</td></tr><tr><td>Ausencia sin aviso</td><td>Retirado, salvo explicación antes del siguiente emparejamiento (6.5)</td></tr></table></div><div class=\"aula-norma aula-norma-aviso\"><b>Retiros (6.4, 6.6, 6.7).</b> Si alguien se retira tras el sorteo y antes de la ronda 1, el emparejamiento anunciado no cambia. En round robin: menos del 50 % jugado, los resultados quedan en la tabla pero no cuentan para la clasificación; al menos 50 %, sí cuentan. En suizo: los resultados quedan y solo se calcula el rating de las partidas jugadas.</div><p class=\"aula-nota\">Las Regulaciones Generales están en la sección C.05 del FIDE Handbook.</p>"
+  },
+  {
+   "id": "r21-c-sala-y-equipamiento",
+   "coleccion": "revista-21",
+   "titulo": "La sala de juego y el material (C.02)",
+   "articulos": "Regulaciones Generales (C.05) · arts. 3.2, 4, 11 · C.02 Chess Equipment without Electronic Components (desde 1-mar-2026)",
+   "resumen": "Qué revisa el árbitro principal antes de la ronda 1, las reglas de fumado y de prensa, y las medidas del tablero, las piezas, las mesas y las planillas.",
+   "claves": [
+    "El árbitro principal revisa iluminación, ventilación, ruido, seguridad; si las condiciones cumplen es su decisión final (3.2).",
+    "L1 con 30 jugadores o más: reloj digital grande; con menos, avisos a los 5 y a 1 minuto del inicio (4.4).",
+    "Casillas de 5 a 6 cm; caben cuatro peones en una casilla (C.02, 3.3).",
+    "Alturas estándar: R 95, D 85, A 70, C 60, T 55, P 50 mm, ±10 % si se mantiene el orden (C.02, 6.3.2).",
+    "Base de la pieza: 40 a 50 % de su altura (C.02, 6.3.3).",
+    "Flash: primeros 10 minutos de la ronda 1 y primeros 5 de las siguientes (11.2)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Art. 3.2</b> Antes del torneo, el árbitro principal revisa todas las condiciones de juego (recinto, zona de juego, iluminación, calefacción, aire acondicionado, ventilación, ruido, seguridad), consigue el material por medio del organizador y se asegura de que haya árbitros y personal suficientes. Si las condiciones cumplen las reglas de la FIDE es su decisión final.</div><div class=\"aula-norma\"><b>Art. 4</b> Zona de fumado fuera de la zona de juego, si es posible; si está prohibido fumar, se anuncia en las bases. Las partidas se juegan en la zona de juego a las horas fijadas. En L1 con 30 jugadores o más, reloj digital grande; con menos, aviso cinco minutos y un minuto antes del inicio.</div><h3>Material (C.02, desde el 1-mar-2026)</h3><div class=\"aula-tabla\"><table><tr><th>Elemento</th><th>Estándar</th></tr><tr><td>Tablero</td><td>Madera, mate, casillas de 5 a 6 cm, caben 4 peones por casilla</td></tr><tr><td>Piezas</td><td>Staunton; R 95, D 85, A 70, C 60, T 55, P 50 mm (±10 % con el orden R&gt;D&gt;A&gt;C&gt;T&gt;P); base del 40 al 50 % de la altura; resisten 30° de inclinación</td></tr><tr><td>Mesa (EVE/GSC)</td><td>110 × 85 cm (±15 %), 74 cm de alto (±10 %)</td></tr><tr><td>Planilla</td><td>Torneo, ronda, mesa, fecha, jugadores, resultado, firmas de ambos y del árbitro; con copia</td></tr><tr><td>Reloj mecánico</td><td>Con bandera; botones de 40 dB como máximo a 1 m; mismo modelo en todo el torneo</td></tr></table></div><div class=\"aula-norma\"><b>Art. 11</b> Cámaras de televisión silenciosas y discretas con aprobación del organizador y del árbitro principal. Solo fotógrafos autorizados; flash en los primeros 10 minutos de la ronda 1 y los primeros 5 de las siguientes, salvo que el árbitro principal decida otra cosa.</div><div class=\"aula-norma aula-norma-aviso\"><b>Recinto y zona de juego (Leyes 11.2).</b> El recinto incluye la zona de juego, baños, cafetería, zona de fumado y otros lugares que designe el árbitro. Fumar, también el cigarrillo electrónico, solo en la parte que designe el árbitro (Leyes 11.3.4).</div>"
+  },
+  {
+   "id": "r21-c-funciones-y-apelaciones",
+   "coleccion": "revista-21",
+   "titulo": "Organizador, árbitros, capitanes y apelaciones",
+   "articulos": "Regulaciones Generales (C.05) · arts. 2, 3, 6, 7, 9, 10 · Appeals Committee Procedural Rules (C.11) · Leyes 2023 · arts. 11.10, 12.4",
+   "resumen": "Funciones del organizador principal, del árbitro principal y de los adjuntos, reglas del capitán, conducta y vestimenta, y cómo funciona una apelación.",
+   "claves": [
+    "El organizador prepara las bases, el equipo antitrampas, el código de vestimenta, el registro del torneo y las reglas de prensa (2.2).",
+    "Si árbitro principal y organizador discrepan sobre las Leyes, prevalece el árbitro principal (3.3).",
+    "El sorteo y los emparejamientos son responsabilidad del árbitro principal (6.1).",
+    "El capitán puede aconsejar ofrecer o aceptar tablas, salvo que las bases lo prohíban; nada más (7.7).",
+    "Comité de apelaciones antes de la ronda 1, impar, mayores de 21 años; el involucrado no juzga (10.2).",
+    "Apelación por escrito, con cuota, en plazo fijados de antemano; decisión definitiva (10.4).",
+    "C.11: 1 hora en estándar, 15 minutos en rápidas y relámpago (3.4)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Art. 2.2</b> El organizador principal responde de: las bases, el personal y equipo antitrampas, el código de vestimenta, el registro del torneo, las reglas de prensa y la supervisión del personal técnico.</div><div class=\"aula-norma\"><b>Arts. 3.1 y 3.3</b> El árbitro principal lleva el registro de cada ronda, vigila el desarrollo, mantiene el orden y asegura la comodidad de los jugadores. Si discrepa con el organizador sobre la interpretación de las Leyes, prevalece su opinión.</div><div class=\"aula-norma\"><b>Leyes 12.4 y 12.6</b> El árbitro puede nombrar ayudantes para observar partidas. Ningún árbitro interviene en la partida salvo en los casos previstos por las Leyes.</div><h3>El capitán (art. 7)</h3><div class=\"aula-norma\">Entrega la lista de cada ronda si las bases lo piden; en L1 el equipo debe estar con más del 50 % de sus jugadores al inicio; firma el acta; sale y entra con permiso del árbitro; no se para detrás del equipo rival; habla con su jugador por medio del árbitro y en su presencia; puede aconsejar ofrecer o aceptar tablas salvo que las bases lo prohíban, sin comentar posiciones; puede delegar por escrito.</div><div class=\"aula-norma\"><b>Art. 9</b> Aceptada una invitación, se juega salvo fuerza mayor. Vestimenta adecuada. Abandonar sin rendirse ni avisar puede sancionarse (Leyes 12.9). Resultados arreglados: sanciones del art. 12.9. No se come en el tablero.</div><h3>Apelaciones</h3><div class=\"aula-norma\"><b>Art. 10</b> Primero se busca la conciliación. Comité elegido o nombrado antes de la ronda 1: presidente, al menos dos miembros y, si hace falta, dos suplentes; número impar de votantes; mayores de 21 años; el involucrado no juzga. Apela el jugador o un oficial que lo represente. Por escrito, con cuota y en plazo fijados de antemano; la decisión es definitiva; la cuota se devuelve si prospera (o si fue razonable, a criterio del comité).</div><div class=\"aula-tabla\"><table><tr><th>C.11 (eventos FIDE)</th><th>Regla</th></tr><tr><td>Plazo</td><td>1 h en estándar; 15 min en rápidas y relámpago (3.4)</td></tr><tr><td>Requisito previo</td><td>Decisión del árbitro principal (3.7)</td></tr><tr><td>Menor de 18</td><td>Apela su madre, padre, tutor o jefe de delegación (3.1.1)</td></tr><tr><td>Calendario</td><td>Con ¾ de las rondas o menos jugadas, la siguiente ronda va a su hora con el resultado del principal; con más, decide el principal (3.10.1)</td></tr></table></div><p class=\"aula-nota\">Leyes 11.10: salvo que las bases digan otra cosa, el jugador puede apelar aunque haya firmado la planilla.</p>"
+  },
+  {
+   "id": "r21-c-juego-limpio-en-sala",
+   "coleccion": "revista-21",
+   "titulo": "Juego limpio en la sala: el papel del árbitro",
+   "articulos": "Leyes 2023 · arts. 11.3, 12.2, 12.6, 12.8, 12.9 · Fair Play Regulations (desde 18-nov-2024) · arts. 1.7, 3.2, 4.11 · División de tareas CA-CFPO",
+   "resumen": "Cómo aplica el árbitro las reglas de dispositivos, cómo revisa, qué hace ante una sospecha o una queja, quién decide si hay oficial de juego limpio y qué no debe hacer nunca.",
+   "claves": [
+    "Dispositivo encima en el recinto: pierde y el rival gana, aunque no haya prueba de uso y aunque el rival no tenga material (11.3.2.2).",
+    "Revisión en privado, por alguien del mismo género; si se niega, art. 12.9 (11.3.3).",
+    "Nadie, tampoco el público, usa un teléfono en el recinto sin autorización (12.8).",
+    "Comunicar en privado una sospecha al árbitro está permitido; la queja formal es escrita y con formulario (FPR 1.7, 3.2.3, 3.2.5).",
+    "Con queja durante el torneo: advertir de la sanción por queja infundada, investigar, enviar a FPL y ARB (FPR 3.2.6).",
+    "Confidencialidad hasta que termine la investigación (FPR 3.2.12).",
+    "Si hay oficial principal de juego limpio, él decide los asuntos de juego limpio; el principal puede revocar por escrito y con fundamento."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Leyes 11.3.2 a 11.3.3</b> Prohibido tener en el recinto un dispositivo electrónico no aprobado por el árbitro. Las bases pueden permitirlo completamente apagado en el bolso, colocado donde se acuerde con el árbitro. Si es evidente que el jugador lo lleva encima, pierde y el rival gana, salvo sanción menor en las bases. Revisión en privado, por el árbitro o alguien autorizado del mismo género; si el jugador no coopera, art. 12.9.</div><div class=\"aula-norma\"><b>Leyes 12.9</b> Advertencia; más tiempo al rival; menos tiempo al infractor; más puntos al rival; menos puntos al infractor; partida perdida; multa anunciada de antemano; exclusión de rondas; expulsión.</div><h3>Ante una sospecha</h3><div class=\"aula-norma\"><b>FPR 1.7 y 3.2</b> Un jugador o capitán puede comunicar en privado una sospecha al árbitro para que vigile. La queja formal se presenta por escrito con el formulario; no se aceptan quejas orales o informales. Con una queja durante el torneo (sin oficial de juego limpio), el árbitro principal advierte de la sanción por queja infundada, investiga en la forma habitual con el art. 12.9 y envía la queja y su informe a la FPL y a la Comisión de Árbitros. Todo es confidencial hasta que termine la investigación.</div><div class=\"aula-norma\"><b>División de tareas CA-CFPO</b> Si hay oficial principal de juego limpio, todos los asuntos de juego limpio se le remiten y él decide (sanciones por escrito). El árbitro principal puede revocar su decisión por escrito, después de consultarlo y con fundamento reglamentario; ambos lo explican en sus informes.</div><div class=\"aula-norma aula-norma-aviso\"><b>Lo que el árbitro no hace:</b> acusar en público; revisar delante de todos; tramitar como queja el «juega más fuerte que su rating» (FPR 3.2.9); detener la partida sin motivo previsto (Leyes 12.6); decidir que hubo trampa por la precisión de las jugadas; romper la confidencialidad; imponer suspensiones fuera del torneo (las decide la Comisión de Ética, FPR 4.11).</div><p class=\"aula-nota\">El N.º 18 de la revista explica los niveles de protección, las quejas y los umbrales estadísticos.</p>"
+  },
+  {
+   "id": "r21-d-todos-contra-todos",
+   "coleccion": "revista-21",
+   "titulo": "Todos contra todos: tablas Berger y el fantasma",
+   "articulos": "C.05 · Anexo 1 (tablas Berger) y Anexo 2 (tablas Varma)",
+   "resumen": "Cuántas rondas y partidas tiene un todos contra todos, cómo se lee una tabla Berger, qué hacer con un número impar y a doble vuelta.",
+   "claves": [
+    "Con n jugadores: n − 1 rondas si n es par, n si es impar; n × (n − 1) ÷ 2 partidas.",
+    "En la tabla Berger, el primer número de cada pareja lleva blancas.",
+    "Con número impar se usa la tabla del par siguiente: el número más alto es el fantasma y su rival descansa.",
+    "A doble vuelta se recomienda invertir las dos últimas rondas de la primera vuelta (evita tres colores iguales seguidos).",
+    "Las tablas Varma (9 a 24 jugadores) reparten los números entre compatriotas.",
+    "Los desempates tipo Buchholz no se usan en un todos contra todos (C.07, art. 8)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>C.05 · Anexo 1.</b> Con un número impar de jugadores, el número más alto cuenta como descanso. En un torneo a doble vuelta se recomienda invertir el orden de las dos últimas rondas de la primera vuelta, para evitar tres partidas seguidas con el mismo color.</div><h3>Tabla Berger de 5 o 6 jugadores</h3><div class=\"aula-tabla\"><table><tr><th>Ronda</th><th>Mesa 1</th><th>Mesa 2</th><th>Mesa 3</th></tr><tr><td>1</td><td>1 – 6</td><td>2 – 5</td><td>3 – 4</td></tr><tr><td>2</td><td>6 – 4</td><td>5 – 3</td><td>1 – 2</td></tr><tr><td>3</td><td>2 – 6</td><td>3 – 1</td><td>4 – 5</td></tr><tr><td>4</td><td>6 – 5</td><td>1 – 4</td><td>2 – 3</td></tr><tr><td>5</td><td>3 – 6</td><td>4 – 2</td><td>5 – 1</td></tr></table></div><div class=\"aula-formula\">Partidas = n × (n − 1) ÷ 2 · Rondas = n − 1 (n par) o n (n impar)</div><div class=\"aula-norma aula-norma-aviso\"><b>El fantasma no es el bye del suizo.</b> En el todos contra todos, quien juega contra el número fantasma simplemente descansa; en el suizo, el bye asignado por el emparejamiento normalmente vale una victoria (C.04.1, regla 3).</div><div class=\"aula-norma\"><b>C.05 · Anexo 2 (Varma).</b> Para 9 a 24 jugadores. Los números se agrupan en cuatro sobres (A, B, C y D); los jugadores de una misma federación sacan del mismo sobre, y sacan primero las federaciones con más representantes.</div><p class=\"aula-nota\">Con 5 jugadores (tabla de 6) descansan, por ronda, el 1, el 4, el 2, el 5 y el 3.</p>"
+  },
+  {
+   "id": "r21-d-suizo-holandes",
+   "coleccion": "revista-21",
+   "titulo": "El suizo holandés de 2026",
+   "articulos": "C.04.1, C.04.2 y C.04.3 (vigentes desde el 1-feb-2026)",
+   "resumen": "Orden inicial y TPN, ronda 1, criterios absolutos, preferencias y reglas de color, flotaciones y criterios de calidad del Sistema Holandés vigente.",
+   "claves": [
+    "Orden inicial: rating, título (GM, IM, WGM, FM, WIM, CM, WFM, WCM) y orden alfabético; el TPN no se corrige después de emparejar la 4.ª ronda.",
+    "Ronda 1: mitad superior contra mitad inferior; con número impar, el último recibe el bye asignado.",
+    "C1 no repetir rival; C2 no dar el bye a quien ya lo tuvo o ya sumó sin jugar los puntos de una victoria; C3 no emparejar a dos con la misma preferencia absoluta (salvo máximos puntuadores); C4 completitud.",
+    "Preferencia absoluta: diferencia mayor que ±1 o mismo color en las dos últimas; fuerte: ±1; leve: 0.",
+    "Flotan hacia abajo, además, quien recibe el bye asignado o suma sin jugar más que una derrota (art. 1.4.3).",
+    "C5 (nuevo): minimizar la puntuación de quien recibe el bye; criterios de calidad C6 a C21."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>C.04.2 · arts. 2.2 y 2.3.</b> Orden inicial por fuerza (rating), título (GM-IM-WGM-FM-WIM-CM-WFM-WCM-sin título) y orden alfabético. Ese orden da el número de emparejamiento (TPN). No se modifica un TPN por corrección de datos después de emparejar la cuarta ronda.</div><div class=\"aula-norma\"><b>C.04.3 · art. 2.</b> C1: no repetir rival. C2: no dar el bye asignado a quien ya lo recibió o ya sumó, sin jugar, los puntos de una victoria. C3: no se enfrentan dos jugadores que no son máximos puntuadores con la misma preferencia absoluta. C4: los jugadores que quedan deben poder emparejarse cumpliendo C1 a C3. C5: minimizar la puntuación de quien recibe el bye.</div><h3>Preferencias de color (art. 1.7)</h3><div class=\"aula-tabla\"><table><tr><th>Preferencia</th><th>Cuándo</th></tr><tr><td>Absoluta</td><td>Diferencia mayor que +1 o menor que −1, o mismo color en las dos últimas partidas</td></tr><tr><td>Fuerte</td><td>Diferencia +1 (negras) o −1 (blancas)</td></tr><tr><td>Leve</td><td>Diferencia 0: alternar</td></tr></table></div><div class=\"aula-norma\"><b>Art. 5.2.</b> 5.2.1 conceder ambas; 5.2.2 la más fuerte (si ambas absolutas, la mayor diferencia); 5.2.3 alternar respecto de la última vez que tuvieron colores distintos; 5.2.4 la del mejor clasificado; 5.2.5 el mejor clasificado recibe el color inicial si su TPN es impar.</div><div class=\"aula-norma aula-norma-aviso\"><b>Flotaciones (art. 1.4.3).</b> Un bye de cero puntos o una derrota por incomparecencia ya no son flotación; el bye asignado y el bye de medio punto sí.</div><p class=\"aula-nota\">Lo nuevo de 2026: artículos 1 a 5 en lugar de secciones A a E; TPN; C5 y C9 para el bye; desaparecen el PSD, el PPB y el grupo colapsado; la aceleración Bakú pasa al C.04.7.</p>"
+  },
+  {
+   "id": "r21-d-desempates",
+   "coleccion": "revista-21",
+   "titulo": "Reglamento de Desempates: los más usados",
+   "articulos": "C.07 (aplicable desde el 1-mar-2026) · arts. 2 a 10 y 14",
+   "resumen": "Cómo se fija la lista de desempates, los tipos A a D, Buchholz y sus cortes, Sonneborn-Berger, Koya, encuentro directo, victorias y desempates por rating.",
+   "claves": [
+    "La lista ordenada la elige el organizador; el árbitro principal la completa y la publica antes del inicio (art. 4.1).",
+    "Si las bases no dicen nada: desempates fuera del tablero (art. 2). Empate final: sorteo, salvo otra regla (art. 4.2).",
+    "Tipos: A (entre empatados), B (propios), C (resultados finales de los rivales), D (datos ya conocidos de los rivales).",
+    "BH: suma de puntos de los rivales; Cut-1 quita el menor, Median-1 el menor y el mayor.",
+    "SB: puntos de los rivales vencidos más la mitad de los empatados; Koya: puntos contra los que hicieron 50 % o más.",
+    "Buchholz nunca en un todos contra todos (art. 8); desempates por rating fuera si hay jugadores sin rating, salvo reglas previas (art. 10)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Arts. 2 y 4.</b> Las bases dicen si los empatados comparten puesto, juegan un play-off o se desempatan fuera del tablero (la opción por defecto). La lista ordenada sale del art. 5 o de las bases; el árbitro principal la completa y la publica antes del inicio. El empate que sobrevive a toda la lista se sortea, salvo que las bases digan otra cosa.</div><h3>Los más usados</h3><div class=\"aula-tabla\"><table><tr><th>Sigla</th><th>Art.</th><th>Qué es</th></tr><tr><td>DE</td><td>6</td><td>Puntos entre los empatados (incomparecencias excluidas en suizo)</td></tr><tr><td>WIN / WON</td><td>7.1 / 7.2</td><td>Victorias con o sin jugar / ganadas sobre el tablero</td></tr><tr><td>BH</td><td>8.1</td><td>Suma de las puntuaciones de los rivales</td></tr><tr><td>FB</td><td>8.3</td><td>Buchholz suponiendo tablas en la última ronda</td></tr><tr><td>SB</td><td>9.1</td><td>Puntuación de cada rival × puntos sacados contra él</td></tr><tr><td>KS</td><td>9.2</td><td>Puntos contra los que lograron al menos el 50 %</td></tr><tr><td>ARO</td><td>10.1</td><td>Rating promedio de los rivales (0,5 hacia arriba)</td></tr></table></div><div class=\"aula-formula\">BH-C1 = BH − (rival de menos puntos) · BH-M1 = BH − menor − mayor</div><div class=\"aula-norma aula-norma-aviso\"><b>Art. 8.</b> Los desempates tipo Buchholz no deben usarse en torneos todos contra todos.</div><p class=\"aula-nota\">Si dos jugadores se enfrentaron más de una vez, cada partida cuenta por separado (art. 4.4), salvo en el encuentro directo, que usa el promedio (art. 6.1.2).</p>"
+  },
+  {
+   "id": "r21-d-rondas-no-jugadas",
+   "coleccion": "revista-21",
+   "titulo": "Rondas no jugadas en los desempates",
+   "articulos": "C.07 (aplicable desde el 1-mar-2026) · arts. 15 y 16",
+   "resumen": "Las cinco categorías de rondas no jugadas, cómo cuentan para el desempate de los rivales y para el propio (rival ficticio con tope), y el corte de las VUR.",
+   "claves": [
+    "VUR: bye solicitado (½ o 0) o derrota por incomparecencia; tras un retiro, cada ronda es bye de cero.",
+    "Categorías: 1 bye asignado o de punto entero; 2 victoria por inc.; 3 bye pedido seguido de alguna ronda no VUR; 4 derrota por inc.; 5 bye pedido seguido solo de VUR o en la última ronda.",
+    "Para los rivales (16.3): categorías 1 a 4 con el resultado asignado; la 5 como tablas.",
+    "Para el propio (16.4): rival ficticio con la puntuación propia, con tope: en incomparecencias, la ajustada del rival programado; en las demás, ½ × número de rondas.",
+    "Corte con VUR (16.5): se corta la menor aportación de una VUR.",
+    "En emparejamientos predeterminados, las incomparecencias cuentan como partidas normales (15.2)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Art. 16.2.</b> (1) bye asignado o de punto completo; (2) victoria por incomparecencia; (3) bye solicitado seguido de al menos una ronda no VUR; (4) derrota por incomparecencia; (5) bye solicitado seguido solo de VUR, o en la última ronda.</div><div class=\"aula-norma\"><b>Art. 16.3.</b> Para el desempate de los rivales, las categorías 1 a 4 cuentan con el resultado asignado y la 5 como tablas.</div><div class=\"aula-norma\"><b>Art. 16.4.</b> Para el desempate propio, cada ronda no jugada es una partida contra un rival ficticio con la puntuación del propio jugador, con tope: la puntuación ajustada del rival programado en las incomparecencias (16.4.1); los puntos de unas tablas por el número de rondas en las demás (16.4.2).</div><div class=\"aula-formula\">Aporte = mín(puntos propios; tope)</div><div class=\"aula-norma aula-norma-aviso\"><b>Art. 16.5.</b> Si hay que cortar y el jugador tiene VUR, se corta la menor aportación de una VUR (en el SB, la mayor entre esa y el valor menos significativo). Las bases pueden fijar otras reglas por adelantado (16.6).</div><p class=\"aula-nota\">Ejemplo de la revista: 5 rondas, bye asignado con 2½ puntos → mín(2½; 2½) = 2½. Un jugador retirado con 0 puntos vale ½ en el Buchholz de sus rivales.</p>"
+  },
+  {
+   "id": "r21-e-rating-fide",
+   "coleccion": "revista-21",
+   "titulo": "El rating FIDE: lista, primer rating y cálculo",
+   "articulos": "Reglamento de Rating FIDE (B.02, desde 1-mar-2024) · arts. 0.2, 1.1, 1.2, 5.1, 6, 7, 8 y 9.1",
+   "resumen": "Qué partidas se califican, quién entra en la lista, cómo se calcula el primer rating y cómo cambia el de un jugador con rating.",
+   "claves": [
+    "Ritmo mínimo por partida (60 jugadas): 120 min si alguno tiene 2400+, 90 si alguno tiene 1800+, 60 si ambos están bajo 1800 (1.1).",
+    "Las partidas no jugadas no cuentan; si ambos hicieron una jugada, sí (5.1).",
+    "Lista el día 1 de cada mes; se publica el rating de 1400 o más (7.1, 7.1.2).",
+    "Primer rating: 5 partidas contra rivales con rating, en hasta 26 meses; dos rivales hipotéticos de 1800 con tablas; máximo 2200 (7.1.4, 8.2).",
+    "Cambio = K × Σ(resultado − PD); diferencia máxima 400 para jugadores de menos de 2650 (8.3.1, 8.3.2).",
+    "K = 40 al jugador nuevo (30 partidas) y menores de 18 bajo 2300; 20 bajo 2400; 10 desde 2400 publicado; K × n ≤ 700 (8.3.3)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Art. 1.1</b> Mínimo por jugador para una partida de 60 jugadas: 120 minutos si alguno tiene 2400 o más; 90 si alguno tiene 1800 o más; 60 si ambos tienen menos de 1800. <b>Art. 1.2</b> Si el primer control fija jugadas, al menos 30.</div><div class=\"aula-norma\"><b>Art. 5.1</b> Las partidas no jugadas no cuentan. Toda partida en la que ambos hicieron al menos una jugada se califica, salvo fuerza mayor o reglas de juego limpio.</div><div class=\"aula-norma\"><b>Arts. 7.1.4 y 8.2</b> Primer rating con al menos 5 partidas contra rivales con rating (periodos seguidos de hasta 26 meses). Un cero en el primer evento se ignora. Se añaden dos rivales hipotéticos de 1800 con tablas.</div><div class=\"aula-formula\">Ru = Ra + dp (redondeado; máximo 2200; debe ser al menos 1400)</div><div class=\"aula-formula\">Cambio = K × Σ(resultado − PD), redondeado; 0,5 se aleja de cero</div><div class=\"aula-tabla\"><table><tr><th>K</th><th>Cuándo</th></tr><tr><td>40</td><td>Nuevo, hasta 30 partidas; menores (hasta fin del año en que cumplen 18) bajo 2300</td></tr><tr><td>20</td><td>Rating bajo 2400</td></tr><tr><td>10</td><td>Desde que el rating publicado llegó a 2400, aunque baje</td></tr></table></div><div class=\"aula-norma aula-norma-aviso\"><b>Art. 8.3.1 (desde 1-oct-2025)</b> Una diferencia mayor de 400 cuenta como 400 solo para jugadores de menos de 2650. <b>Art. 8.3.3</b> Si K × partidas del periodo pasa de 700, K es el mayor entero que no lo supere.</div><p class=\"aula-nota\">Ejemplo: Lucía, sin rating, hace 4 de 7 contra rivales que suman 11 820. Ra = (11 820 + 3600) ÷ 9 = 1713,33; p = 5/9 = 0,56 → dp 43; Ru = 1756.</p>"
+  },
+  {
+   "id": "r21-e-normas-jugadores",
+   "coleccion": "revista-21",
+   "titulo": "Títulos de jugadores y normas",
+   "articulos": "Reglamento de Títulos FIDE (B.01, desde 1-ene-2024) · arts. 0.3, 1.1, 1.3, 1.4, 1.5, 1.8 y 1.9",
+   "resumen": "Los ocho títulos, los tres caminos para obtenerlos, los requisitos de una norma y el cálculo del performance.",
+   "claves": [
+    "Títulos por rating (30 partidas): FM 2300, CM 2200, WFM 2100, WCM 2000 (1.3).",
+    "Norma: al menos 9 partidas; 2 federaciones extranjeras; máximo 3/5 de la propia y 2/3 de una misma (1.4.1, 1.4.3, 1.4.4).",
+    "50 % de titulados (sin CM ni WCM); 1/3 y mínimo 3 GM para GM, IM o GM para IM (1.4.5).",
+    "Piso: GM 2200, IM 2050, WGM 2000, WIM 1850; solo se sube al rival de menor rating; sin rating = 1400 (1.4.6).",
+    "Rp = Ra + dp; Ra y porcentaje redondeados (0,5 hacia arriba); mínimos GM 2600/2380, IM 2450/2230; 35 % (1.4.7 a 1.4.9).",
+    "Árbitro principal de un torneo de normas: AI o AF; firma el certificado IT1 (1.1.5, 1.8)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Art. 1.1</b> Torneo registrado 30 días antes; máximo 2 rondas por día y 12 horas; al menos dos horas por jugador (60 jugadas); mismo ritmo para todos; principal AI o AF y siempre un AI o AF en el recinto; ningún árbitro designado puede jugar.</div><div class=\"aula-tabla\"><table><tr><th>Norma</th><th>Piso</th><th>Ra mínimo</th><th>Rp mínimo</th></tr><tr><td>GM</td><td>2200</td><td>2380</td><td>2600</td></tr><tr><td>IM</td><td>2050</td><td>2230</td><td>2450</td></tr><tr><td>WGM</td><td>2000</td><td>2180</td><td>2400</td></tr><tr><td>WIM</td><td>1850</td><td>2030</td><td>2250</td></tr></table></div><div class=\"aula-formula\">Rp = Ra + dp (tabla 1.4.9; porcentaje redondeado al entero)</div><div class=\"aula-norma\"><b>Art. 1.4.5</b> Al menos 50 % de titulados (sin CM ni WCM). GM: 1/3 y mínimo 3 GM. IM: 1/3 y mínimo 3 IM o GM.</div><div class=\"aula-norma aula-norma-aviso\"><b>Art. 1.4.6</b> Solo un rival se sube al piso: el de menor rating. Los rivales sin rating que no se suben cuentan como 1400.</div><div class=\"aula-norma\"><b>Art. 1.5</b> Título: normas que sumen 27 partidas y haber alcanzado GM 2500, IM 2400, WGM 2300 o WIM 2200.</div><p class=\"aula-nota\">Ejemplo: 9 rondas, Ra 2297 tras subir al piso un rival de 2015. Con 6½ (72 % → +166) Rp = 2463: norma de MI. Con 6 (67 % → +125) Rp = 2422: no.</p>"
+  },
+  {
+   "id": "r21-e-titulos-arbitro",
+   "coleccion": "revista-21",
+   "titulo": "Títulos de árbitros (B.06.1, 2026)",
+   "articulos": "Reglamento de Títulos de Árbitros FIDE (B.06.1, desde 1-mar-2026) · arts. 1 a 6",
+   "resumen": "Árbitro Nacional, Árbitro FIDE y Árbitro Internacional: seminario, normas, límites por evento, vencimientos y solicitud.",
+   "claves": [
+    "AN: registrado por la federación con aprobación de la Comisión de Árbitros; 16 años (5.1).",
+    "AF: seminario aprobado con 80 % o más + 3 normas de torneos; 19 años; un año de AN (3.7, 3.8, 5.4).",
+    "Normas de AF: suizo de 20 con rating, todos contra todos de 8, doble vuelta de 6, equipos o eliminatorio de 20; 7 rondas (una de 5-6) (3.8, 3.10).",
+    "Dos sistemas distintos, salvo un suizo internacional de 100 jugadores, 30 % con rating y 7 rondas (2.5).",
+    "Certificados por evento: 1 por cada 25 jugadores o fracción; todos contra todos, máximo 2 (2.7).",
+    "AI: título de AF, seminario de AI + 4 normas de 9 rondas, posteriores al AF; 21 años; dos años de AF (4, 5.5).",
+    "Norma de torneo vence a los 6 años; la del seminario, a los 4 (5.3)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Art. 1.3</b> Los títulos son vitalicios. <b>Art. 1.4</b> Los evalúa la Comisión de Árbitros.</div><div class=\"aula-norma\"><b>Art. 3.7</b> Asistir a un Seminario de Árbitro FIDE y aprobar el examen con al menos el 80 %. <b>Art. 3.3</b> Un idioma oficial de la FIDE más los términos de ajedrez en inglés.</div><div class=\"aula-tabla\"><table><tr><th>Evento (norma de AF)</th><th>Mínimo con rating</th></tr><tr><td>Suizo</td><td>20</td></tr><tr><td>Todos contra todos</td><td>8</td></tr><tr><td>Doble vuelta</td><td>6</td></tr><tr><td>Equipos / eliminatorio</td><td>20</td></tr><tr><td>Rápidas o blitz (una vez)</td><td>30 y 9 rondas</td></tr></table></div><div class=\"aula-norma\"><b>Art. 2.7</b> Salvo mundiales y continentales: un certificado por cada 25 jugadores o fracción; en todos contra todos, máximo dos. <b>Art. 2.8.1</b> La norma de AI la firma un AI; la de AF, un AI o un AF.</div><div class=\"aula-norma aula-norma-aviso\"><b>Arts. 5.3 y 5.4</b> Norma de torneo: máximo 6 años; del seminario: 4. Solicitud antes de un año del último evento y con todos los torneos calificados. AF: 19 años y un año con licencia de AN (o un torneo FIDE adicional).</div><div class=\"aula-norma\"><b>Art. 4</b> AI: ser AF y estar activo, inglés de conversación, seminario de AI con evaluación positiva, 4 normas de al menos 9 rondas (una de 7-8), posteriores al AF y no todas con la misma firma.</div><p class=\"aula-nota\">Si el árbitro no paga la cuota de registro, el torneo puede no calificarse y sus normas no se aceptan (arts. 6.1 y 6.2).</p>"
+  },
+  {
+   "id": "r21-e-ingles-arbitro",
+   "coleccion": "revista-21",
+   "titulo": "El inglés del árbitro",
+   "articulos": "Módulo I1.1 English Terms · Leyes del Ajedrez 2023 · B.06.1 (2026) arts. 3.3 y 4.3",
+   "resumen": "Los términos en inglés más usados en la sala de juego, frases útiles y falsos amigos.",
+   "claves": [
+    "AF: términos de ajedrez en inglés (B.06.1 art. 3.3); AI: inglés de conversación (art. 4.3).",
+    "Touch-move = pieza tocada (4.3); I adjust / j'adoube = compongo (4.2.1).",
+    "Flag fall = caída de bandera (6.9); default time = tiempo de espera (6.7.1).",
+    "Resign = abandonar; draw = tablas; claim = reclamación.",
+    "Exchange = cambio; win the exchange = ganar la calidad.",
+    "En caso de duda de traducción, prevalece el texto inglés del FIDE Handbook."
+   ],
+   "contenido": "<div class=\"aula-tabla\"><table><tr><th>Inglés</th><th>Español</th></tr><tr><td>arbiter · chief arbiter</td><td>árbitro · árbitro principal</td></tr><tr><td>scoresheet</td><td>planilla</td></tr><tr><td>touch-move</td><td>pieza tocada (art. 4.3)</td></tr><tr><td>I adjust / j'adoube</td><td>compongo (art. 4.2.1)</td></tr><tr><td>illegal move</td><td>jugada ilegal (art. 7.5.1)</td></tr><tr><td>flag fall</td><td>caída de bandera (art. 6.9)</td></tr><tr><td>default time</td><td>tiempo de espera (art. 6.7.1)</td></tr><tr><td>draw offer · claim</td><td>oferta de tablas · reclamación</td></tr><tr><td>threefold repetition</td><td>triple repetición (art. 9.2)</td></tr><tr><td>dead position</td><td>posición muerta (art. 5.2.2)</td></tr><tr><td>stalemate</td><td>ahogado</td></tr><tr><td>playing venue · playing area</td><td>recinto de juego · zona de juego</td></tr><tr><td>pairing · bye · forfeit</td><td>emparejamiento · descanso · incomparecencia</td></tr><tr><td>tie-break · crosstable</td><td>desempate · tabla cruzada</td></tr></table></div><div class=\"aula-norma aula-norma-aviso\"><b>Falsos amigos.</b> Resign es abandonar, no «resignarse». Default no es «defecto». Exchange es cambio, y the exchange es la calidad. Castle como verbo es enrocar; la torre es rook.</div><p class=\"aula-nota\">Frases útiles: «Please stop the clocks», «What is your claim?», «Your flag has fallen», «Please write down your moves».</p>"
+  },
+  {
+   "id": "r21-f-examen-leyes",
+   "coleccion": "revista-21",
+   "titulo": "Examen simulado: Leyes",
+   "articulos": "Leyes 2023 · arts. 1.1, 4.2 a 4.8, 5.2.1, 6.2.3, 6.8 a 6.11, 7.4, 7.5, 8.1, 8.4, 9.1.2, 9.5, 9.6.2, 11.3.2.2 y Apéndice A.3",
+   "resumen": "Las veinte preguntas de Leyes del examen simulado del seminario AF: pieza tocada, jugadas ilegales, reloj, anotación, tablas y dispositivos.",
+   "claves": [
+    "Primera jugada ilegal completada: 2 minutos al rival en estándar y 1 minuto en rápidas y relámpago; la segunda pierde, salvo que el rival no pueda dar mate (7.5.5, A.3).",
+    "Pulsar sin jugar y mover con las dos manos se sancionan como jugada ilegal (7.5.3 y 7.5.4); pulsar con la otra mano, no (6.2.3 y 12.9).",
+    "El enroque está hecho cuando se suelta la torre; con el rey soltado, solo se puede enrocar a ese lado (4.7.2).",
+    "La pieza de coronación queda elegida al tocar la casilla (4.4.4).",
+    "Bandera caída: pierde, salvo que el rival no pueda dar mate con ninguna serie de jugadas legales (6.9).",
+    "Con incremento de 30 s o más siempre se anota (8.4).",
+    "La oferta de tablas no se retira (9.1.2); 75 jugadas son tablas automáticas (9.6.2).",
+    "Teléfono encima: pierde y el rival gana, aunque solo tenga el rey (11.3.2.2)."
+   ],
+   "contenido": "<div class=\"aula-norma\"><b>Pieza tocada (arts. 4.2 a 4.8).</b> «Compongo» se dice antes de tocar. Pieza propia tocada: se mueve; rival tocada: se captura. Si toca primero la torre, no enroca con ella. Si el enroque es ilegal, otra jugada de rey. El derecho a reclamar se pierde al tocar una pieza para jugarla.</div><div class=\"aula-norma\"><b>Jugadas ilegales (art. 7.5).</b> Se completan al pulsar el reloj. El peón sin cambiar en la octava pasa a dama (7.5.2). Pulsar sin jugar (7.5.3) y jugar con las dos manos (7.5.4) se sancionan igual. Primera: 2 minutos al rival (1 minuto en rápidas y relámpago, A.3); segunda: partida perdida, o tablas si el rival no puede dar mate (7.5.5).</div><div class=\"aula-norma\"><b>Reloj (art. 6).</b> Se pulsa con la misma mano (6.2.3). La bandera cae cuando el árbitro lo observa o se reclama bien (6.8); pierde quien no completó sus jugadas, salvo que el rival no pueda dar mate (6.9). Reloj defectuoso o mal puesto: mejor criterio del árbitro (6.10).</div><div class=\"aula-norma\"><b>Tablas (arts. 5.2 y 9).</b> El ahogado termina la partida (5.2.1). La oferta no se retira (9.1.2). Reclamación incorrecta: 2 minutos al rival y, si se anotó una jugada, debe hacerse (9.5). 75 jugadas o cinco repeticiones: tablas automáticas (9.6).</div><div class=\"aula-norma aula-norma-aviso\"><b>Ojo.</b> La salvedad de «el rival no puede dar mate» vale para la bandera y la segunda jugada ilegal; no para el teléfono (11.3.2.2), que pierde aunque el rival solo tenga el rey.</div>"
+  },
+  {
+   "id": "r21-f-examen-reglamentos",
+   "coleccion": "revista-21",
+   "titulo": "Examen simulado: reglamentos y sistemas",
+   "articulos": "Leyes 2023 · arts. 6.7.1, 7.3, 11.10, 12.7, 12.8 y Apéndices A y B · C.04.1, C.04.2 y C.04.3 (2026) · C.05 · C.07 (2026)",
+   "resumen": "Las doce preguntas de reglamentos del examen simulado: ritmos, incomparecencia, apelaciones, colores, lista inicial, primera ronda, todos contra todos y desempates.",
+   "claves": [
+    "Ritmo para 60 jugadas: 10 minutos o menos, relámpago; más de 10 y menos de 60, rápido; 60 o más, estándar (A.1, B.1).",
+    "Sin tiempo de espera en las bases, es cero (6.7.1).",
+    "Colores invertidos: con menos de 10 jugadas de cada bando, partida nueva; con 10 o más, sigue (7.3).",
+    "Lista inicial: rating, título (GM, IM, WGM, FM, WIM, CM, WFM, WCM) y orden alfabético (C.04.2, art. 2.2).",
+    "Primera ronda: mitad alta contra mitad baja, colores alternados; con número impar, descansa el último.",
+    "Todos contra todos impar: descansa quien enfrenta al número más alto (C.05); Varma, de 9 a 24 jugadores.",
+    "Los desempates se publican antes del inicio y no se cambian (C.07, arts. 4.1 y 4.2)."
+   ],
+   "contenido": "<div class=\"aula-formula\">Tiempo para 60 jugadas = tiempo base + 60 × incremento</div><div class=\"aula-norma\"><b>Apelación (art. 11.10 y C.11).</b> Se puede apelar una decisión del árbitro, salvo que las bases digan otra cosa: por escrito, en plazo y con cuota.</div><div class=\"aula-norma\"><b>Teléfonos (art. 12.8).</b> Nadie, tampoco el público, usa un teléfono en el recinto sin autorización del árbitro.</div><div class=\"aula-norma\"><b>Suizo (C.04, 2026).</b> Orden inicial por rating, título y nombre (C.04.2, art. 2.2). Preferencia de color: fuerte con diferencia de 1; absoluta con diferencia de 2 o el mismo color dos veces seguidas (C.04.3, art. 1.7).</div><div class=\"aula-norma\"><b>Todos contra todos (C.05).</b> Tablas Berger (Anexo 1); con número impar, el número más alto es el descanso; Varma para restringir el sorteo, de 9 a 24 jugadores (Anexo 2).</div><div class=\"aula-norma\"><b>Desempates (C.07).</b> Buchholz (8.1), Sonneborn-Berger (9.1), cortes (14.1). Los de tipo Buchholz no se usan en un todos contra todos (art. 8).</div>"
+  },
+  {
+   "id": "r21-f-examen-rating-titulos",
+   "coleccion": "revista-21",
+   "titulo": "Examen simulado: rating y títulos",
+   "articulos": "Reglamento de Rating (2024) · arts. 8.1.2 y 8.3 · Reglamento de Títulos (2024) · arts. 1.4.6 a 1.4.9 · B.06.1 (2026) · arts. 2.5, 2.7, 3.8 y 5.4",
+   "resumen": "Las ocho preguntas de cálculo del examen simulado: cambio de rating, factor K, normas de GM y normas de Árbitro FIDE.",
+   "claves": [
+    "Cambio de rating = K × (puntos − suma de PD), redondeado; PD sale de la tabla 8.1.2.",
+    "K = 40 para quien empieza (hasta completar 30 partidas) y menores de 18 por debajo de 2300; K = 20 por debajo de 2400; K = 10 desde que se publicó 2400 (8.3.3).",
+    "Si K × partidas pasa de 700, K baja al mayor entero que no lo supere.",
+    "Norma: Rp = promedio de rivales + dp; GM pide 2600 y promedio de 2380.",
+    "El piso (GM 2200) se aplica solo al rival de menor rating; el promedio se redondea al entero (1.4.6 y 1.4.7).",
+    "Normas de AF: un certificado por cada 25 jugadores o fracción en un suizo; dos como máximo en un todos contra todos (B.06.1, art. 2.7)."
+   ],
+   "contenido": "<div class=\"aula-formula\">ΔR = K × Σ(resultado − PD) · Rp = Ra + dp</div><div class=\"aula-tabla\"><table><tr><th>D</th><th>PD mayor</th><th>PD menor</th></tr><tr><td>47–53</td><td>0,57</td><td>0,43</td></tr><tr><td>54–61</td><td>0,58</td><td>0,42</td></tr><tr><td>291–302</td><td>0,85</td><td>0,15</td></tr></table></div><div class=\"aula-tabla\"><table><tr><th>Porcentaje</th><th>dp</th></tr><tr><td>61 %</td><td>80</td></tr><tr><td>67 %</td><td>125</td></tr><tr><td>72 %</td><td>166</td></tr></table></div><div class=\"aula-norma\"><b>Títulos de árbitro (B.06.1, 2026).</b> AF: seminario con examen aprobado (80 %) y tres normas de torneo; la solicitud incluye dos sistemas distintos (2.5), salvo la excepción del suizo internacional de 100 jugadores, 30 % con rating y 7 rondas (2.5.1); un año de licencia de árbitro nacional o un torneo FIDE más (5.4.3).</div><div class=\"aula-nota\">Las tablas completas están en el art. 8.1 del Reglamento de Rating; acá van solo las filas que usan las preguntas.</div>"
   }
  ],
  "preguntas": [
@@ -8186,6 +8574,2406 @@
    ],
    "correcta": 1,
    "explicacion": "La mesa dice «Guardado en chess-results» solo cuando chess-results ya lo tiene. Con Pareo Integral, cuando el principal lo acepta."
+  },
+  {
+   "ficha": "r21-a-movimientos-especiales",
+   "texto": "Las blancas tienen rey en e1 y torre en a1, sin haberlos movido. Un alfil negro ataca b1 y ninguna otra casilla de la primera fila. ¿Pueden enrocar largo?",
+   "opciones": [
+    "Sí: b1 la cruza la torre, no el rey",
+    "No: ninguna casilla entre rey y torre puede estar atacada",
+    "Solo si el negro lo acepta",
+    "Solo después de mover el rey"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 3.8.2.2: solo impiden el enroque los ataques a la casilla del rey, a la que cruza y a la de llegada (e1, d1, c1)."
+  },
+  {
+   "ficha": "r21-a-movimientos-especiales",
+   "texto": "Tras 1.e4 d5 2.e5 f5, ¿qué capturas al paso tiene el blanco?",
+   "opciones": [
+    "Solo exf6, y solo en esta jugada",
+    "exd6 y exf6",
+    "Solo exd6",
+    "Ninguna"
+   ],
+   "correcta": 0,
+   "explicacion": "Arts. 3.7.3.1-3.7.3.2: solo contra el peón que acaba de avanzar dos casillas (f7-f5) y en la jugada inmediatamente siguiente."
+  },
+  {
+   "ficha": "r21-a-movimientos-especiales",
+   "texto": "El rey blanco fue a f1 y volvió a e1; las torres no se movieron. ¿Puede enrocar?",
+   "opciones": [
+    "No, perdió el derecho para siempre",
+    "Sí, porque volvió a su casilla",
+    "Solo enroque corto",
+    "Sí, si no está en jaque"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 3.8.2.1: el derecho a enrocar se pierde si el rey ya se movió."
+  },
+  {
+   "ficha": "r21-a-movimientos-especiales",
+   "texto": "Un jugador quiere coronar en dama, pero su dama original sigue en el tablero. ¿Puede?",
+   "opciones": [
+    "Sí: la elección no depende de las piezas capturadas",
+    "No: solo puede elegir piezas capturadas",
+    "Solo si el árbitro lo autoriza",
+    "Debe coronar en torre"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 3.7.3.4: la elección no se limita a las piezas que ya fueron capturadas."
+  },
+  {
+   "ficha": "r21-a-movimientos-especiales",
+   "texto": "Un alfil negro está clavado contra su rey. ¿Puede estar dando jaque al rey blanco?",
+   "opciones": [
+    "Sí, una pieza clavada también da jaque",
+    "No, una pieza clavada no ataca",
+    "Solo si el negro está en juego",
+    "Solo si el jaque es doble"
+   ],
+   "correcta": 0,
+   "explicacion": "Arts. 3.1.3 y 3.9.1: el rey está en jaque aunque la pieza atacante no pueda moverse."
+  },
+  {
+   "ficha": "r21-a-movimientos-especiales",
+   "texto": "Ves los dos reyes en jaque a la vez sobre un tablero. ¿Qué es esa posición?",
+   "opciones": [
+    "Una posición ilegal",
+    "Un ahogado",
+    "Una posición muerta",
+    "Una posición legal"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 3.10.3: es ilegal la posición que no puede alcanzarse con jugadas legales."
+  },
+  {
+   "ficha": "r21-a-movimientos-especiales",
+   "texto": "Blancas: Rc6, peón c7. Negras: Ra7. Juegan las blancas y coronan en dama. ¿Qué ocurre?",
+   "opciones": [
+    "El negro queda ahogado: tablas",
+    "Es mate",
+    "La partida sigue normalmente",
+    "Es jaque"
+   ],
+   "correcta": 0,
+   "explicacion": "Arts. 3.7.3.5 y 5.2.1: la dama actúa de inmediato y deja al negro sin jugadas legales y sin jaque. Con 1.c8=T la partida seguiría."
+  },
+  {
+   "ficha": "r21-a-movimientos-especiales",
+   "texto": "¿Cómo debe estar colocado el tablero?",
+   "opciones": [
+    "Con la casilla de la esquina derecha de cada jugador clara",
+    "Con la casilla de la esquina izquierda clara",
+    "Con la dama blanca en casilla oscura",
+    "Da igual mientras ambos jugadores estén de acuerdo"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 2.1: la casilla de la esquina más cercana a la derecha de cada jugador es clara."
+  },
+  {
+   "ficha": "r21-a-pieza-tocada",
+   "texto": "Con el turno, el blanco toca primero la torre de h1 y luego el rey, para enrocar corto. ¿Qué debe hacer?",
+   "opciones": [
+    "Mover la torre",
+    "Enrocar corto",
+    "Mover el rey",
+    "Cualquier jugada"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 4.4.2: si toca primero la torre, no puede enrocar por ese lado en esa jugada y se aplica el art. 4.3.1."
+  },
+  {
+   "ficha": "r21-a-pieza-tocada",
+   "texto": "El blanco toca rey y torre de a1 para enrocar largo, pero d1 está atacada. ¿Qué debe hacer?",
+   "opciones": [
+    "Otra jugada legal con el rey, que puede ser el enroque corto",
+    "Mover la torre de a1",
+    "Cualquier jugada",
+    "Enrocar largo igualmente"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 4.4.3: si el enroque con esa torre es ilegal, debe hacer otra jugada legal con el rey, incluido el enroque con la otra torre."
+  },
+  {
+   "ficha": "r21-a-pieza-tocada",
+   "texto": "Un jugador dice «compongo» con el alfil ya en la mano. ¿Qué pasa?",
+   "opciones": [
+    "Debe mover el alfil si puede: el aviso es antes de tocar",
+    "Queda libre: dijo «compongo»",
+    "Se le dan 2 minutos al rival",
+    "Pierde la partida"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 4.2.1: el jugador debe expresar su intención antes de tocar; si no, rige la pieza tocada (4.3.1)."
+  },
+  {
+   "ficha": "r21-a-pieza-tocada",
+   "texto": "Un jugador toca su caballo, que no tiene ninguna jugada legal. ¿Qué puede jugar?",
+   "opciones": [
+    "Cualquier jugada legal",
+    "Debe mover el rey",
+    "Debe mover el caballo igual",
+    "Pierde el turno"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 4.5: si ninguna pieza tocada puede moverse o capturarse, el jugador puede hacer cualquier jugada legal."
+  },
+  {
+   "ficha": "r21-a-pieza-tocada",
+   "texto": "El negro suelta la torre en f1, la vuelve a tomar y juega …Tf2+. El blanco, sin reclamar, toca su rey y juega. ¿Qué pasa?",
+   "opciones": [
+    "Nada: el blanco perdió el derecho a reclamar",
+    "Se juega …Tf1",
+    "Dos minutos al blanco",
+    "Jugada ilegal"
+   ],
+   "correcta": 0,
+   "explicacion": "La jugada era …Tf1 (art. 4.7), pero el rival perdió el derecho al tocar su rey sin reclamar (art. 4.8)."
+  },
+  {
+   "ficha": "r21-a-pieza-tocada",
+   "texto": "¿Cuándo es definitiva la pieza elegida al coronar?",
+   "opciones": [
+    "Cuando toca la casilla de promoción",
+    "Cuando el jugador la toma fuera del tablero",
+    "Cuando pulsa el reloj",
+    "Cuando el rival la acepta"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 4.4.4: la elección es definitiva cuando la pieza ha tocado la casilla de promoción."
+  },
+  {
+   "ficha": "r21-a-pieza-tocada",
+   "texto": "Un jugador toca un peón rival y después su propio caballo, que puede capturar ese peón. ¿Qué debe hacer?",
+   "opciones": [
+    "Capturar el peón con el caballo",
+    "Mover el caballo a donde quiera",
+    "Capturar el peón con cualquier pieza",
+    "Cualquier jugada legal"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 4.3.3: si toca piezas de ambos colores, debe capturar la primera pieza rival tocada con su primera pieza tocada, si es legal."
+  },
+  {
+   "ficha": "r21-a-pieza-tocada",
+   "texto": "¿Quién puede acomodar las piezas en sus casillas?",
+   "opciones": [
+    "Solo el jugador que está en juego, avisando antes",
+    "Cualquier jugador en cualquier momento",
+    "Solo el árbitro",
+    "El jugador cuyo reloj está detenido"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 4.2.1: solo el jugador que está en juego, tras expresar su intención («compongo»)."
+  },
+  {
+   "ficha": "r21-a-fin-de-partida",
+   "texto": "Juegan las negras: rey en h8; blancas: dama en f7 y rey en g6. ¿Resultado?",
+   "opciones": [
+    "Tablas por ahogado",
+    "Ganan las blancas",
+    "La partida sigue",
+    "Tablas solo si el negro lo reclama"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 5.2.1: el negro no está en jaque y no tiene jugadas legales; la partida termina en el acto."
+  },
+  {
+   "ficha": "r21-a-fin-de-partida",
+   "texto": "Tras un ahogado, unos segundos después cae la bandera del jugador ahogado. ¿Resultado?",
+   "opciones": [
+    "Tablas",
+    "Pierde por tiempo",
+    "El árbitro decide",
+    "Se juega otra partida"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 5.2.1: el ahogado termina la partida de inmediato; lo posterior no cuenta."
+  },
+  {
+   "ficha": "r21-a-fin-de-partida",
+   "texto": "Quedan rey y alfil contra rey. ¿Qué hace el árbitro?",
+   "opciones": [
+    "Declara tablas: posición muerta",
+    "Espera la regla de las 50 jugadas",
+    "Deja seguir hasta que alguien reclame",
+    "Da la victoria al que tiene el alfil"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 5.2.2: ninguna serie de jugadas legales lleva al mate; tablas en el acto."
+  },
+  {
+   "ficha": "r21-a-fin-de-partida",
+   "texto": "Las blancas tienen rey y dama; las negras, solo rey. Las blancas dicen «abandono». ¿Resultado?",
+   "opciones": [
+    "Tablas",
+    "Ganan las negras",
+    "Ganan las blancas",
+    "Se juega otra partida"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 5.1.2: si el rival no puede dar mate con ninguna serie de jugadas legales, el abandono da tablas."
+  },
+  {
+   "ficha": "r21-a-fin-de-partida",
+   "texto": "El blanco juega 1.e4 y ofrece tablas; el negro acepta sin mover. ¿Es válido el acuerdo?",
+   "opciones": [
+    "No: ambos deben haber hecho al menos una jugada",
+    "Sí, siempre",
+    "Sí, si el árbitro lo aprueba",
+    "Sí, si se anota en la planilla"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 5.2.3: tablas por acuerdo siempre que ambos jugadores hayan hecho al menos una jugada."
+  },
+  {
+   "ficha": "r21-a-fin-de-partida",
+   "texto": "Un jugador da «mate» con una jugada ilegal y pulsa. ¿Terminó la partida?",
+   "opciones": [
+    "No: se aplica el art. 7.5",
+    "Sí, el mate prevalece",
+    "Sí, si el rival no reclama en un minuto",
+    "Es tablas"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 5.1.1: el mate termina la partida solo si la jugada cumple el art. 3 y los arts. 4.2-4.7."
+  },
+  {
+   "ficha": "r21-a-fin-de-partida",
+   "texto": "¿Qué diferencia hay entre la posición muerta y la excepción del abandono?",
+   "opciones": [
+    "Muerta: ningún jugador puede dar mate; abandono: basta que el rival no pueda",
+    "Ninguna",
+    "Muerta: solo el rival no puede dar mate",
+    "El abandono nunca tiene excepción"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 5.2.2 (ningún jugador puede dar mate) y art. 5.1.2 (el rival no puede dar mate)."
+  },
+  {
+   "ficha": "r21-a-fin-de-partida",
+   "texto": "¿Cuál de estas situaciones NO termina la partida en el acto?",
+   "opciones": [
+    "Una oferta de tablas aún sin responder",
+    "Jaque mate",
+    "Ahogado",
+    "Posición muerta"
+   ],
+   "correcta": 0,
+   "explicacion": "Arts. 5.1.1, 5.2.1 y 5.2.2: mate, ahogado y posición muerta terminan la partida de inmediato; una oferta sin aceptar no."
+  },
+  {
+   "ficha": "r21-a-irregularidades-ilegales",
+   "texto": "En la jugada 15 se descubre que rey y dama blancos empezaron en casillas cambiadas. ¿Qué decides?",
+   "opciones": [
+    "Se anula y se juega otra partida",
+    "Sigue la partida",
+    "Se corrige y sigue",
+    "Pierde el blanco"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 7.2.1: posición inicial incorrecta, partida anulada y nueva partida."
+  },
+  {
+   "ficha": "r21-a-irregularidades-ilegales",
+   "texto": "En la jugada 20 se descubre que el tablero estaba girado. ¿Qué decides?",
+   "opciones": [
+    "Sigue, trasladando la posición a un tablero bien colocado",
+    "Se anula la partida",
+    "Se repite desde la jugada 1",
+    "Pierden ambos"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 7.2.2: la partida continúa y la posición se traslada a un tablero colocado según el art. 2.1."
+  },
+  {
+   "ficha": "r21-a-irregularidades-ilegales",
+   "texto": "Colores cambiados descubiertos en la jugada 8. ¿Qué decides?",
+   "opciones": [
+    "Se interrumpe y se juega una nueva con los colores correctos",
+    "La partida sigue",
+    "Pierde quien tenía las blancas",
+    "Se cambian los relojes"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 7.3: con menos de 10 jugadas de ambos se juega una nueva; con 10 o más, sigue."
+  },
+  {
+   "ficha": "r21-a-irregularidades-ilegales",
+   "texto": "En estándar, primera jugada ilegal completada. ¿Qué recibe el rival?",
+   "opciones": [
+    "Dos minutos",
+    "Un minuto",
+    "Cinco minutos",
+    "Nada"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 7.5.5: dos minutos más al rival por la primera jugada ilegal completada."
+  },
+  {
+   "ficha": "r21-a-irregularidades-ilegales",
+   "texto": "Un jugador lleva el peón a la última fila, no lo cambia y pulsa. ¿Qué pasa?",
+   "opciones": [
+    "Ilegal; el peón se cambia por una dama de su color",
+    "Se le deja elegir la pieza sin sanción",
+    "Pierde la partida",
+    "El peón queda como peón"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 7.5.2: se considera ilegal y el peón se reemplaza por una dama del mismo color; se sanciona según el 7.5.5."
+  },
+  {
+   "ficha": "r21-a-irregularidades-ilegales",
+   "texto": "Segunda jugada ilegal completada, pero el rival solo tiene el rey. ¿Resultado?",
+   "opciones": [
+    "Tablas",
+    "Pierde el infractor",
+    "Dos minutos al rival",
+    "Se anula la partida"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 7.5.5: tablas si el rival no puede dar mate con ninguna serie de jugadas legales."
+  },
+  {
+   "ficha": "r21-a-irregularidades-ilegales",
+   "texto": "El blanco mueve el alfil como caballo y, antes de pulsar, lo devuelve. ¿Qué decides?",
+   "opciones": [
+    "Sin sanción, pero debe mover el alfil si puede",
+    "Dos minutos al negro",
+    "Pierde",
+    "Puede jugar otra pieza libremente"
+   ],
+   "correcta": 0,
+   "explicacion": "La ilegal no se completó (7.5.1), pero tocó el alfil: debe moverlo si tiene jugada legal (4.3.1)."
+  },
+  {
+   "ficha": "r21-a-irregularidades-ilegales",
+   "texto": "Un jugador desplaza varias piezas con la manga. ¿Quién las repone y con qué tiempo?",
+   "opciones": [
+    "Él mismo, en su propio tiempo",
+    "El árbitro, con el reloj detenido",
+    "El rival",
+    "Nadie: se sigue así"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 7.4.1; si hace falta, se detiene el reloj y se pide ayuda al árbitro (7.4.2), que puede sancionar (7.4.3)."
+  },
+  {
+   "ficha": "r21-b-reloj-bandera",
+   "texto": "Las bases no fijan tiempo de espera. Un jugador llega dos minutos tarde. ¿Qué pasa?",
+   "opciones": [
+    "Juega con dos minutos menos",
+    "Pierde, salvo que el árbitro decida otra cosa",
+    "Tiene 15 minutos de tolerancia",
+    "Se aplaza la partida"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. 6.7.1: si no se especifica, el tiempo de espera es cero."
+  },
+  {
+   "ficha": "r21-b-reloj-bandera",
+   "texto": "Cae la bandera del blanco. El negro solo tiene el rey; el blanco, rey, torre y peón. ¿Resultado?",
+   "opciones": [
+    "Tablas",
+    "Gana el negro",
+    "Gana el blanco",
+    "Se sigue jugando"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 6.9: el negro no puede dar mate con ninguna serie de jugadas legales."
+  },
+  {
+   "ficha": "r21-b-reloj-bandera",
+   "texto": "Cae la bandera del negro. El blanco tiene rey y caballo; el negro, rey y torre. ¿Resultado?",
+   "opciones": [
+    "Tablas por material insuficiente",
+    "Gana el negro",
+    "Decide el árbitro según la posición",
+    "Gana el blanco: existe un mate ayudado"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 6.9: basta con que exista una serie legal que termine en mate (por ejemplo, con la torre negra tapando la salida de su propio rey)."
+  },
+  {
+   "ficha": "r21-b-reloj-bandera",
+   "texto": "El blanco juega y ahoga al negro; después se ve que la bandera del blanco había caído. ¿Resultado?",
+   "opciones": [
+    "Gana el negro por tiempo",
+    "Gana el blanco",
+    "Tablas por ahogado",
+    "Se repite la partida"
+   ],
+   "correcta": 2,
+   "explicacion": "Arts. 5.2.1 y 6.9: el ahogado termina la partida en el acto y va antes que la bandera."
+  },
+  {
+   "ficha": "r21-b-reloj-bandera",
+   "texto": "Un jugador mueve con una mano y pulsa con la otra. ¿Qué es?",
+   "opciones": [
+    "Jugada ilegal",
+    "Infracción del 6.2.3, sancionable por el 12.9",
+    "Pérdida de la partida",
+    "Nada: está permitido"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. 6.2.3: se pulsa con la misma mano; se sanciona con el 12.9. No es el caso del 7.5.4 (una sola jugada hecha con las dos manos)."
+  },
+  {
+   "ficha": "r21-b-reloj-bandera",
+   "texto": "Ritmo 90′ + 30″. En la jugada 12 se nota que el reloj no sumó el incremento a ninguno. ¿Qué hace el árbitro?",
+   "opciones": [
+    "Para el reloj, lo configura bien y ajusta los tiempos con su mejor criterio",
+    "Nada: lo que marca el reloj es concluyente",
+    "Repite la partida",
+    "Sanciona a quien configuró el reloj"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 6.10.2."
+  },
+  {
+   "ficha": "r21-b-reloj-bandera",
+   "texto": "Un jugador pausa el reloj para pedir una dama que no encuentra al coronar. ¿Es correcto?",
+   "opciones": [
+    "No: es una jugada ilegal",
+    "No: el rival recibe 2 minutos",
+    "Solo en rápidas",
+    "Sí: puede pausarlo para pedir la ayuda del árbitro"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 6.11.2."
+  },
+  {
+   "ficha": "r21-b-reloj-bandera",
+   "texto": "Un jugador reclama que el rival no completó 40 jugadas porque el contador del reloj marca 39. ¿Basta?",
+   "opciones": [
+    "Sí: el contador es concluyente",
+    "Sí, si el árbitro no vio la jugada",
+    "No: no se puede reclamar solo con lo que muestran esos dispositivos; se comprueba con las planillas",
+    "Solo si el rival lo acepta"
+   ],
+   "correcta": 2,
+   "explicacion": "Arts. 6.12.2 y 6.4."
+  },
+  {
+   "ficha": "r21-b-planilla-tablas",
+   "texto": "Ritmo 90′ + 30″. Al blanco le quedan 3 minutos y deja de anotar.",
+   "opciones": [
+    "Puede dejar de anotar",
+    "Debe seguir anotando: tiene incremento de 30″",
+    "Solo anota las jugadas del rival",
+    "El árbitro anota por él"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. 8.4: la exención solo vale sin un incremento de 30 segundos o más."
+  },
+  {
+   "ficha": "r21-b-planilla-tablas",
+   "texto": "Ritmo 60′ sin incremento. Solo el blanco dejó de anotar y cae la bandera del negro. Le toca jugar al blanco. ¿Qué debe hacer antes de mover?",
+   "opciones": [
+    "Actualizar su planilla completa (puede usar la del rival y devolverla)",
+    "Nada: la partida terminó",
+    "Pedir que el árbitro le diga las jugadas",
+    "Seguir sin anotar"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 8.5.2: en cuanto cae cualquier bandera, quien no anotó actualiza su planilla antes de mover. Si la bandera cayó en el período final, en cambio, la partida terminó (6.9)."
+  },
+  {
+   "ficha": "r21-b-planilla-tablas",
+   "texto": "Un jugador anota su jugada antes de hacerla, sin reclamar nada. ¿Está permitido?",
+   "opciones": [
+    "Sí, siempre",
+    "Sí, si no la tapa",
+    "Solo en rápidas",
+    "No: solo se permite al reclamar por 9.2 o 9.3 o al sellar"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 8.1.2."
+  },
+  {
+   "ficha": "r21-b-planilla-tablas",
+   "texto": "El negro ofrece tablas antes de mover; el blanco acepta cinco minutos después de que el negro jugó. ¿Resultado?",
+   "opciones": [
+    "La oferta caducó al mover",
+    "Gana el blanco",
+    "Tablas: la oferta no se puede retirar y nadie la rechazó",
+    "El árbitro decide"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 9.1.2.1: la oferta sigue vigente hasta que se acepte, se rechace o la partida termine."
+  },
+  {
+   "ficha": "r21-b-planilla-tablas",
+   "texto": "Una reclamación de triple repetición con la jugada escrita resulta incorrecta. ¿Consecuencia?",
+   "opciones": [
+    "Pierde la partida",
+    "Dos minutos más al rival y se debe hacer la jugada escrita",
+    "Puede hacer otra jugada",
+    "Un minuto más al rival"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. 9.5.3."
+  },
+  {
+   "ficha": "r21-b-planilla-tablas",
+   "texto": "La primera aparición de la posición fue cuando el negro aún podía enrocar; las otras dos, no. ¿Hay triple repetición?",
+   "opciones": [
+    "No: las jugadas posibles no eran las mismas",
+    "Sí: las piezas están en las mismas casillas",
+    "Sí, si el árbitro lo considera",
+    "Solo en blitz"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 9.2.3.2."
+  },
+  {
+   "ficha": "r21-b-planilla-tablas",
+   "texto": "Se completan 75 jugadas de cada uno sin captura ni movimiento de peón y nadie reclama.",
+   "opciones": [
+    "La partida sigue hasta que alguien reclame",
+    "Gana quien tiene más material",
+    "Se reclama a las 100 jugadas",
+    "Tablas automáticas"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 9.6.2. Con 50 jugadas solo hay derecho a reclamar (9.3)."
+  },
+  {
+   "ficha": "r21-b-planilla-tablas",
+   "texto": "Un organizador quiere anotar ¾-¼ en una partida. ¿Es posible?",
+   "opciones": [
+    "Sí, si lo dicen las bases",
+    "Sí, con permiso del árbitro",
+    "No: las puntuaciones deben ser las normales de una partida",
+    "Solo en torneos por equipos"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 10.2."
+  },
+  {
+   "ficha": "r21-b-conducta-sanciones",
+   "texto": "Las bases no permiten teléfonos. Suena un celular en el bolsillo de un jugador; su rival solo tiene el rey.",
+   "opciones": [
+    "Tablas, porque el rival no puede dar mate",
+    "Pierde el del teléfono y el rival gana",
+    "Advertencia",
+    "Dos minutos al rival"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. 11.3.2.2: el rival gana; no hay excepción por material."
+  },
+  {
+   "ficha": "r21-b-conducta-sanciones",
+   "texto": "El jugador que tiene el turno quiere salir de la zona de juego. ¿Qué necesita?",
+   "opciones": [
+    "Permiso del árbitro",
+    "Nada",
+    "Permiso del rival",
+    "Detener el reloj"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 11.2.3.2."
+  },
+  {
+   "ficha": "r21-b-conducta-sanciones",
+   "texto": "Un jugador ofrece tablas en cada jugada, pese al rechazo del rival.",
+   "opciones": [
+    "Está en su derecho",
+    "Pierde automáticamente",
+    "El rival recibe 2 minutos por cada oferta",
+    "Molesta al rival: se sanciona con el 12.9"
+   ],
+   "correcta": 3,
+   "explicacion": "Arts. 11.5 y 11.6: las ofertas irrazonables son una forma de molestar."
+  },
+  {
+   "ficha": "r21-b-conducta-sanciones",
+   "texto": "Un jugador se niega a que el árbitro lo revise.",
+   "opciones": [
+    "No pasa nada: la revisión es voluntaria",
+    "Pierde automáticamente por el 11.3.2.2",
+    "El árbitro toma medidas conforme al 12.9",
+    "Se suspende la ronda"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 11.3.3."
+  },
+  {
+   "ficha": "r21-b-conducta-sanciones",
+   "texto": "Los dos jugadores, persistentemente, se niegan a cumplir las Leyes.",
+   "opciones": [
+    "Tablas",
+    "Partida perdida para ambos",
+    "Gana el que tenga mejor posición",
+    "Se repite la partida"
+   ],
+   "correcta": 1,
+   "explicacion": "Arts. 11.7 y 11.8."
+  },
+  {
+   "ficha": "r21-b-conducta-sanciones",
+   "texto": "Un jugador firmó la planilla y luego quiere apelar la decisión del árbitro. Las bases no dicen nada.",
+   "opciones": [
+    "Puede apelar",
+    "No: al firmar aceptó la decisión",
+    "Solo si el rival está de acuerdo",
+    "Solo el capitán puede apelar"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 11.10."
+  },
+  {
+   "ficha": "r21-b-conducta-sanciones",
+   "texto": "El árbitro ve que un jugador jugó pero no pulsó su reloj.",
+   "opciones": [
+    "Le avisa en voz baja",
+    "Pulsa el reloj por él",
+    "Le suma un minuto al rival",
+    "No le avisa"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 12.6."
+  },
+  {
+   "ficha": "r21-b-conducta-sanciones",
+   "texto": "¿Cuál de estas sanciones solo es posible si se anunció de antemano?",
+   "opciones": [
+    "La advertencia",
+    "La reducción de tiempo",
+    "La multa",
+    "La expulsión"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 12.9.7."
+  },
+  {
+   "ficha": "r21-b-rapidas-blitz",
+   "texto": "¿Cómo se clasifica 10′ + 5″?",
+   "opciones": [
+    "Blitz",
+    "Rápida (10 + 60 × 5″ = 15 min)",
+    "Estándar",
+    "No es válido"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. A.1: más de 10 y menos de 60 minutos."
+  },
+  {
+   "ficha": "r21-b-rapidas-blitz",
+   "texto": "¿Cómo se clasifica 5′ + 5″?",
+   "opciones": [
+    "Blitz (5 + 60 × 5″ = 10 min)",
+    "Rápida",
+    "Estándar",
+    "No es válido"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. B.1: 10 minutos o menos."
+  },
+  {
+   "ficha": "r21-b-rapidas-blitz",
+   "texto": "Rápidas con A.5: el blanco hace una jugada ilegal, el negro no reclama y juega. ¿Se corrige?",
+   "opciones": [
+    "Sí: el árbitro la corrige siempre",
+    "Sí, con un minuto para el negro",
+    "Pierde el blanco",
+    "No: queda, salvo acuerdo de los jugadores sin intervención del árbitro"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. A.5.2."
+  },
+  {
+   "ficha": "r21-b-rapidas-blitz",
+   "texto": "En rápidas, ¿cuánto tiempo recibe el rival por una reclamación de tablas incorrecta?",
+   "opciones": [
+    "Dos minutos",
+    "Nada",
+    "Un minuto",
+    "Tres minutos"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. A.3: las sanciones de los arts. 7 y 9 son de un minuto."
+  },
+  {
+   "ficha": "r21-b-rapidas-blitz",
+   "texto": "Blitz con B.3: el árbitro ve los dos reyes en jaque.",
+   "opciones": [
+    "Declara perdida la partida del que movió",
+    "Espera a que se complete la jugada siguiente; si la posición ilegal sigue, tablas",
+    "Corrige la posición de inmediato",
+    "No hace nada"
+   ],
+   "correcta": 1,
+   "explicacion": "Arts. B.3 y A.5.4."
+  },
+  {
+   "ficha": "r21-b-rapidas-blitz",
+   "texto": "Rápidas con A.4. ¿Cuántas veces puede pedir el jugador que le muestren la planilla?",
+   "opciones": [
+    "Cinco veces, cuando tiene el turno",
+    "Ilimitadas",
+    "Una vez",
+    "Nunca"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. A.4.3: más pedidos se consideran distracción del rival."
+  },
+  {
+   "ficha": "r21-b-rapidas-blitz",
+   "texto": "Un jugador con discapacidad visual saca una pieza del orificio de su tablero especial. ¿Qué significa?",
+   "opciones": [
+    "Nada, hasta que la anuncie",
+    "Ya hizo la jugada",
+    "Debe pedir permiso al árbitro",
+    "Se considera pieza tocada"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. D.2.2."
+  },
+  {
+   "ficha": "r21-b-rapidas-blitz",
+   "texto": "60′ a finish con la Guía III anunciada. Caen las dos banderas y no se sabe cuál cayó primero.",
+   "opciones": [
+    "Pierden los dos",
+    "Gana el que tenga más material",
+    "Tablas, porque es el período final",
+    "Se sigue jugando"
+   ],
+   "correcta": 2,
+   "explicacion": "Guía III.3.1.2."
+  },
+  {
+   "ficha": "r21-c-bases-del-torneo",
+   "texto": "Las bases de un abierto con rating no fijan tiempo de incomparecencia. ¿Cuál rige?",
+   "opciones": [
+    "Cero",
+    "15 minutos",
+    "30 minutos",
+    "Una hora"
+   ],
+   "correcta": 0,
+   "explicacion": "Leyes 6.7.1: si no se especifica, el tiempo de incomparecencia es cero; quien llega después pierde, salvo que el árbitro decida otra cosa."
+  },
+  {
+   "ficha": "r21-c-bases-del-torneo",
+   "texto": "¿A qué torneos se aplican las Regulaciones Generales para Competiciones?",
+   "opciones": [
+    "Solo a los torneos que dan normas",
+    "Solo si las bases lo dicen expresamente",
+    "A las competiciones oficiales de la FIDE y, adaptadas, a todas las competiciones con rating FIDE",
+    "Solo a los campeonatos mundiales"
+   ],
+   "correcta": 2,
+   "explicacion": "Prefacio de las Regulaciones Generales (C.05)."
+  },
+  {
+   "ficha": "r21-c-bases-del-torneo",
+   "texto": "La ley del país prohíbe algo que un reglamento FIDE permite. ¿Qué prevalece?",
+   "opciones": [
+    "Lo que voten los jugadores",
+    "La ley nacional del país anfitrión",
+    "El reglamento FIDE",
+    "Lo que decida el árbitro principal"
+   ],
+   "correcta": 1,
+   "explicacion": "Prefacio de las Regulaciones Generales: las leyes nacionales del país anfitrión tienen prioridad sobre las reglas de la FIDE."
+  },
+  {
+   "ficha": "r21-c-bases-del-torneo",
+   "texto": "Un abierto con rating en el que se pueden obtener normas de MI es de nivel…",
+   "opciones": [
+    "L1",
+    "L3",
+    "No tiene nivel",
+    "L2"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 1.2: L2 son las competiciones donde se pueden ganar títulos y normas FIDE."
+  },
+  {
+   "ficha": "r21-c-bases-del-torneo",
+   "texto": "Surge una situación que las bases no prevén. ¿Qué texto es definitivo?",
+   "opciones": [
+    "El reglamento del torneo anterior",
+    "La opinión del organizador",
+    "Las Regulaciones Generales",
+    "La costumbre del club"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 1.1 de las Regulaciones Generales."
+  },
+  {
+   "ficha": "r21-c-bases-del-torneo",
+   "texto": "Round robin de 12 jugadores. Uno se retira tras jugar 5 de sus 11 partidas. ¿Qué pasa con sus resultados?",
+   "opciones": [
+    "Quedan en la tabla para rating, pero no cuentan para la clasificación final",
+    "Se borran de la tabla",
+    "Cuentan para la clasificación final",
+    "Se le dan por perdidas todas"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 6.6: con menos del 50 % de las partidas jugadas, los resultados no cuentan para la clasificación, aunque quedan en la tabla."
+  },
+  {
+   "ficha": "r21-c-bases-del-torneo",
+   "texto": "Un jugador falta a una ronda de un suizo sin avisar. ¿Cuándo deja de considerarse retirado?",
+   "opciones": [
+    "Nunca",
+    "Si paga una multa",
+    "Si su rival está de acuerdo",
+    "Si explica la ausencia con razones aceptables antes de que se publique el siguiente emparejamiento"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 6.5 de las Regulaciones Generales (salvo que las bases digan otra cosa)."
+  },
+  {
+   "ficha": "r21-c-bases-del-torneo",
+   "texto": "Tras el sorteo y antes de la primera ronda se retira un jugador. ¿Qué se hace con el emparejamiento anunciado?",
+   "opciones": [
+    "Lo decide el organizador sin consultar",
+    "No se cambia; solo se admiten cambios mínimos a criterio del árbitro principal, consultando a los afectados",
+    "Se repite el sorteo completo",
+    "Se suspende el torneo"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. 6.4 de las Regulaciones Generales."
+  },
+  {
+   "ficha": "r21-c-sala-y-equipamiento",
+   "texto": "¿Entre qué medidas debe estar el lado de una casilla del tablero?",
+   "opciones": [
+    "Entre 5 y 6 cm",
+    "Entre 4 y 5 cm",
+    "Entre 6 y 7 cm",
+    "Exactamente 5,5 cm"
+   ],
+   "correcta": 0,
+   "explicacion": "C.02 (sin componentes electrónicos), 3.3.1; además deben caber cuatro peones en una casilla (3.3.2)."
+  },
+  {
+   "ficha": "r21-c-sala-y-equipamiento",
+   "texto": "¿Cuál es la altura estándar del rey?",
+   "opciones": [
+    "100 mm",
+    "75 mm",
+    "95 mm",
+    "85 mm"
+   ],
+   "correcta": 2,
+   "explicacion": "C.02, 6.3.2: rey 95 mm, con un margen del 10 % si se mantiene el orden de alturas."
+  },
+  {
+   "ficha": "r21-c-sala-y-equipamiento",
+   "texto": "¿Qué porcentaje de su altura debe medir el diámetro de la base de una pieza?",
+   "opciones": [
+    "Siempre el 50 %",
+    "Entre 40 y 50 %",
+    "Entre 20 y 30 %",
+    "Entre 60 y 70 %"
+   ],
+   "correcta": 1,
+   "explicacion": "C.02, 6.3.3."
+  },
+  {
+   "ficha": "r21-c-sala-y-equipamiento",
+   "texto": "Evento L1 con 40 jugadores. ¿Qué exige el art. 4.4?",
+   "opciones": [
+    "Solo un aviso un minuto antes",
+    "Nada en especial",
+    "Una pantalla con las partidas en vivo",
+    "Un reloj o temporizador digital grande en la sala"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 4.4: en L1 con 30 jugadores o más, reloj digital grande; con menos, avisos cinco minutos y un minuto antes."
+  },
+  {
+   "ficha": "r21-c-sala-y-equipamiento",
+   "texto": "Ronda 3. ¿Durante cuánto tiempo pueden los fotógrafos usar flash?",
+   "opciones": [
+    "Toda la ronda",
+    "Nunca",
+    "Los primeros 5 minutos, salvo que el árbitro principal decida otra cosa",
+    "Los primeros 10 minutos"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 11.2: 10 minutos en la primera ronda y 5 en las siguientes."
+  },
+  {
+   "ficha": "r21-c-sala-y-equipamiento",
+   "texto": "¿Quién tiene la decisión final sobre si las condiciones de juego cumplen las reglas FIDE?",
+   "opciones": [
+    "El árbitro principal",
+    "El organizador",
+    "El comité de apelaciones",
+    "La federación"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 3.2.3 de las Regulaciones Generales."
+  },
+  {
+   "ficha": "r21-c-sala-y-equipamiento",
+   "texto": "Un juego tiene rey de 98 mm y dama de 99 mm. ¿Cumple?",
+   "opciones": [
+    "Sí, porque ambas alturas están en el margen",
+    "Sí, si el árbitro lo aprueba",
+    "Solo en rápidas",
+    "No: debe mantenerse el orden rey > dama"
+   ],
+   "correcta": 3,
+   "explicacion": "C.02, 6.3.1 y 6.3.2: el margen del 10 % vale solo si se mantiene el orden de alturas."
+  },
+  {
+   "ficha": "r21-c-sala-y-equipamiento",
+   "texto": "¿Qué debe tener la planilla de papel según C.02?",
+   "opciones": [
+    "La firma del organizador",
+    "Espacio para los datos del torneo, jugadores, resultado, firmas de ambos y del árbitro, y copia",
+    "Solo las jugadas",
+    "Un código QR"
+   ],
+   "correcta": 1,
+   "explicacion": "C.02, 5.1 y 5.2."
+  },
+  {
+   "ficha": "r21-c-funciones-y-apelaciones",
+   "texto": "¿Quién responde del personal y el equipo antitrampas y del código de vestimenta?",
+   "opciones": [
+    "El organizador principal",
+    "El árbitro principal",
+    "El comité de apelaciones",
+    "Los capitanes"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 2.2 (2) y (3) de las Regulaciones Generales."
+  },
+  {
+   "ficha": "r21-c-funciones-y-apelaciones",
+   "texto": "Árbitro principal y organizador discrepan sobre la interpretación de una regla de las Leyes. ¿Qué prevalece?",
+   "opciones": [
+    "La de la federación",
+    "Se vota entre los jugadores",
+    "La opinión del árbitro principal",
+    "La del organizador"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 3.3 de las Regulaciones Generales."
+  },
+  {
+   "ficha": "r21-c-funciones-y-apelaciones",
+   "texto": "Un capitán le aconseja a su jugador aceptar tablas. Las bases no dicen nada. ¿Es correcto?",
+   "opciones": [
+    "Solo con permiso del rival",
+    "Sí, puede aconsejar ofrecer o aceptar tablas",
+    "No, nunca puede",
+    "Solo si va ganando el encuentro"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. 7.7: puede hacerlo salvo que las bases lo prohíban; no puede intervenir de otra forma ni comentar posiciones."
+  },
+  {
+   "ficha": "r21-c-funciones-y-apelaciones",
+   "texto": "¿Cuál es un requisito del comité de apelaciones según el art. 10.2?",
+   "opciones": [
+    "Que lo presida el árbitro principal",
+    "Que lo nombre el comité después de la primera disputa",
+    "Que todos sean de la misma federación",
+    "Número impar de votantes y miembros de 21 años o más"
+   ],
+   "correcta": 3,
+   "explicacion": "Art. 10.2 de las Regulaciones Generales."
+  },
+  {
+   "ficha": "r21-c-funciones-y-apelaciones",
+   "texto": "¿Qué apelación es válida?",
+   "opciones": [
+    "Por escrito, sin importar el plazo",
+    "Sin cuota si la decisión fue polémica",
+    "Por escrito, en plazo y con la cuota",
+    "Verbal al árbitro principal"
+   ],
+   "correcta": 2,
+   "explicacion": "Art. 10.4: cuota y plazo fijados de antemano; la apelación se presenta por escrito."
+  },
+  {
+   "ficha": "r21-c-funciones-y-apelaciones",
+   "texto": "Con las reglas C.11, ¿cuál es el plazo para apelar en un torneo de rápidas?",
+   "opciones": [
+    "15 minutos tras la ronda o la infracción",
+    "1 hora",
+    "24 horas",
+    "Hasta el final del torneo"
+   ],
+   "correcta": 0,
+   "explicacion": "C.11, 3.4.2 (en estándar, 1 hora: 3.4.1)."
+  },
+  {
+   "ficha": "r21-c-funciones-y-apelaciones",
+   "texto": "Suizo de 8 rondas; apelación pendiente de la ronda 5. ¿Qué pasa con la ronda 6?",
+   "opciones": [
+    "Se espera la decisión del comité",
+    "Se suspende el torneo",
+    "La partida se anula",
+    "Se juega a su hora, emparejada con el resultado que decidió el árbitro principal"
+   ],
+   "correcta": 3,
+   "explicacion": "C.11, 3.10.1: ¾ de 8 son 6; con 5 rondas jugadas (6 o menos) la siguiente se juega como estaba previsto."
+  },
+  {
+   "ficha": "r21-c-funciones-y-apelaciones",
+   "texto": "Un jugador abandona su partida sin rendirse ni avisar. ¿Qué dicen las Regulaciones Generales?",
+   "opciones": [
+    "Se anula la partida",
+    "Es descortés y puede ser sancionado por falta de deportividad (Leyes 12.9)",
+    "No pasa nada",
+    "Pierde también la siguiente ronda automáticamente"
+   ],
+   "correcta": 1,
+   "explicacion": "Art. 9.3 de las Regulaciones Generales."
+  },
+  {
+   "ficha": "r21-c-juego-limpio-en-sala",
+   "texto": "Las bases no dicen nada de teléfonos. A un jugador le suena el celular en el bolsillo. Su rival solo tiene rey. ¿Resultado?",
+   "opciones": [
+    "Pierde el jugador del teléfono y gana el rival",
+    "Tablas, porque el rival no puede dar mate",
+    "Advertencia",
+    "Se le restan 10 minutos"
+   ],
+   "correcta": 0,
+   "explicacion": "Leyes 11.3.2.2: si es evidente que lleva el dispositivo encima, pierde y el rival gana; no hay excepción por material."
+  },
+  {
+   "ficha": "r21-c-juego-limpio-en-sala",
+   "texto": "¿Cómo debe hacerse la revisión de un jugador?",
+   "opciones": [
+    "En la zona de juego, en voz alta",
+    "Por cualquier voluntario del público",
+    "En privado, por el árbitro o una persona autorizada del mismo género",
+    "Delante del rival para que haya testigos"
+   ],
+   "correcta": 2,
+   "explicacion": "Leyes 11.3.3."
+  },
+  {
+   "ficha": "r21-c-juego-limpio-en-sala",
+   "texto": "Un jugador se niega a ser revisado. ¿Qué hace el árbitro?",
+   "opciones": [
+    "Lo revisa a la fuerza",
+    "Aplica una sanción del art. 12.9",
+    "Nada, porque no se puede obligar",
+    "Llama a la policía"
+   ],
+   "correcta": 1,
+   "explicacion": "Leyes 11.3.3: si el jugador no coopera, se aplica el art. 12.9."
+  },
+  {
+   "ficha": "r21-c-juego-limpio-en-sala",
+   "texto": "Un jugador te dice en voz baja que sospecha de su rival. ¿Qué haces?",
+   "opciones": [
+    "Revisas al rival delante de todos",
+    "Detienes la partida",
+    "Lo sancionas por acusación infundada",
+    "Vigilas con discreción y, si quiere presentar una queja formal, se la pides por escrito con el formulario"
+   ],
+   "correcta": 3,
+   "explicacion": "Fair Play Regulations 1.7 (comunicar en privado está permitido) y 3.2.3 y 3.2.5 (la queja es escrita, con formulario)."
+  },
+  {
+   "ficha": "r21-c-juego-limpio-en-sala",
+   "texto": "¿Basta «juega demasiado bien para su rating» para fundar una queja?",
+   "opciones": [
+    "Solo si el rival es GM",
+    "Solo en relámpago",
+    "No: es manifiestamente infundada",
+    "Sí"
+   ],
+   "correcta": 2,
+   "explicacion": "Fair Play Regulations 3.2.9."
+  },
+  {
+   "ficha": "r21-c-juego-limpio-en-sala",
+   "texto": "Al recibir una queja durante el torneo (sin oficial de juego limpio), ¿qué NO es un deber del árbitro principal?",
+   "opciones": [
+    "Publicar el nombre del sospechoso en la sala",
+    "Advertir al denunciante de la sanción por queja infundada",
+    "Investigar en la forma habitual",
+    "Enviar la queja y su informe a la FPL y a la Comisión de Árbitros"
+   ],
+   "correcta": 0,
+   "explicacion": "Fair Play Regulations 3.2.6 y 3.2.12: todo es confidencial hasta que termine la investigación."
+  },
+  {
+   "ficha": "r21-c-juego-limpio-en-sala",
+   "texto": "En un torneo con oficial principal de juego limpio, ¿quién decide los asuntos de juego limpio?",
+   "opciones": [
+    "Siempre el árbitro principal",
+    "El organizador",
+    "El comité de apelaciones de oficio",
+    "El oficial principal de juego limpio, aunque el árbitro principal puede revocar por escrito y con fundamento"
+   ],
+   "correcta": 3,
+   "explicacion": "Chief Arbiter – Chief Fair Play Officer Division of Tasks (aplicada desde el 18-nov-2024)."
+  },
+  {
+   "ficha": "r21-c-juego-limpio-en-sala",
+   "texto": "¿Quién puede imponer a un jugador una suspensión por trampa más allá del torneo?",
+   "opciones": [
+    "El comité de apelaciones",
+    "La Comisión de Ética y Disciplina, si la FPL le envía el caso",
+    "El árbitro principal",
+    "El organizador"
+   ],
+   "correcta": 1,
+   "explicacion": "Fair Play Regulations 4.11; el árbitro sanciona dentro del torneo con el art. 12.9."
+  },
+  {
+   "ficha": "r21-d-todos-contra-todos",
+   "texto": "Todos contra todos de 9 jugadores: ¿cómo se asigna el descanso?",
+   "opciones": [
+    "Con la tabla de 10: descansa quien juega contra el número 10",
+    "Descansa el de menor rating en cada ronda",
+    "Por sorteo antes de cada ronda",
+    "No hay descanso"
+   ],
+   "correcta": 0,
+   "explicacion": "C.05, Anexo 1: con número impar, el número más alto (el 10, fantasma) cuenta como descanso."
+  },
+  {
+   "ficha": "r21-d-todos-contra-todos",
+   "texto": "Tabla Berger de 6: ¿en qué ronda juegan los números 2 y 3?",
+   "opciones": [
+    "Ronda 4",
+    "Ronda 1",
+    "Ronda 3",
+    "Ronda 5"
+   ],
+   "correcta": 0,
+   "explicacion": "Ronda 4: 6 – 5, 1 – 4, 2 – 3 (C.05, Anexo 1)."
+  },
+  {
+   "ficha": "r21-d-todos-contra-todos",
+   "texto": "En una tabla Berger, ¿qué indica el orden de los números en cada pareja?",
+   "opciones": [
+    "El primero lleva blancas",
+    "El primero tiene más rating",
+    "El primero es el local",
+    "Nada, el color se sortea en cada mesa"
+   ],
+   "correcta": 0,
+   "explicacion": "En las tablas Berger el primer número de cada pareja juega con blancas."
+  },
+  {
+   "ficha": "r21-d-todos-contra-todos",
+   "texto": "¿Cuántas partidas tiene un todos contra todos de 8 jugadores a una vuelta?",
+   "opciones": [
+    "28",
+    "56",
+    "32",
+    "7"
+   ],
+   "correcta": 0,
+   "explicacion": "8 × 7 ÷ 2 = 28, en 7 rondas."
+  },
+  {
+   "ficha": "r21-d-todos-contra-todos",
+   "texto": "Doble vuelta de 6 jugadores. ¿Qué recomienda el Anexo 1 del C.05?",
+   "opciones": [
+    "Invertir el orden de las dos últimas rondas de la primera vuelta",
+    "Sortear colores en la segunda vuelta",
+    "Usar la tabla de 12",
+    "Repetir la primera vuelta con los mismos colores"
+   ],
+   "correcta": 0,
+   "explicacion": "Así nadie juega tres veces seguidas con el mismo color (C.05, Anexo 1)."
+  },
+  {
+   "ficha": "r21-d-todos-contra-todos",
+   "texto": "Todos contra todos de 7 jugadores: ¿cuántas rondas se juegan?",
+   "opciones": [
+    "7",
+    "6",
+    "8",
+    "14"
+   ],
+   "correcta": 0,
+   "explicacion": "Con número impar hay n rondas: se usa la tabla de 8 (7 rondas) y cada uno descansa una vez."
+  },
+  {
+   "ficha": "r21-d-todos-contra-todos",
+   "texto": "¿Para cuántos jugadores sirven las tablas Varma?",
+   "opciones": [
+    "De 9 a 24",
+    "De 4 a 8",
+    "Cualquier número",
+    "Solo para 10"
+   ],
+   "correcta": 0,
+   "explicacion": "C.05, Anexo 2: tablas para 9/10 hasta 23/24 jugadores."
+  },
+  {
+   "ficha": "r21-d-todos-contra-todos",
+   "texto": "Un organizador propone Buchholz como primer desempate de su todos contra todos de 10. ¿Qué respondes?",
+   "opciones": [
+    "No: los desempates tipo Buchholz no deben usarse en todos contra todos",
+    "Sí, es el más recomendado",
+    "Solo con corte 1",
+    "Solo si hay jugadores sin rating"
+   ],
+   "correcta": 0,
+   "explicacion": "C.07, art. 8. En su lugar: encuentro directo, Sonneborn-Berger, victorias o Koya."
+  },
+  {
+   "ficha": "r21-d-suizo-holandes",
+   "texto": "Dos jugadoras con 2267 y título IM: Cori y Krush. ¿Cómo se ordenan para la ronda 1?",
+   "opciones": [
+    "Cori antes que Krush (orden alfabético)",
+    "Krush antes que Cori",
+    "Por sorteo",
+    "Por edad"
+   ],
+   "correcta": 0,
+   "explicacion": "C.04.2, art. 2.2: rating, título y, si todo coincide, orden alfabético."
+  },
+  {
+   "ficha": "r21-d-suizo-holandes",
+   "texto": "A igual rating, ¿quién va antes en el orden inicial?",
+   "opciones": [
+    "Una WIM antes que un CM",
+    "Un CM antes que una WIM",
+    "Un WFM antes que un CM",
+    "El título no cuenta"
+   ],
+   "correcta": 0,
+   "explicacion": "C.04.2, art. 2.2.2: GM, IM, WGM, FM, WIM, CM, WFM, WCM, sin título."
+  },
+  {
+   "ficha": "r21-d-suizo-holandes",
+   "texto": "Suizo de 11 jugadoras; la n.º 1 juega con negras en la ronda 1. ¿Primera mesa?",
+   "opciones": [
+    "6 – 1",
+    "1 – 6",
+    "1 – 7",
+    "7 – 1"
+   ],
+   "correcta": 0,
+   "explicacion": "S1 = 1-5, S2 = 6-10 y la 11 recibe el bye: 6 – 1, 2 – 7, 8 – 3, 4 – 9, 10 – 5 (C.04.3, arts. 3 y 5.2.5)."
+  },
+  {
+   "ficha": "r21-d-suizo-holandes",
+   "texto": "Historial de colores B N B. ¿Qué preferencia tiene?",
+   "opciones": [
+    "Fuerte por negras (diferencia +1)",
+    "Absoluta por negras",
+    "Leve por negras",
+    "Ninguna"
+   ],
+   "correcta": 0,
+   "explicacion": "C.04.3, art. 1.7.2: 2 blancas − 1 negra = +1."
+  },
+  {
+   "ficha": "r21-d-suizo-holandes",
+   "texto": "Historial B N N. ¿Qué preferencia tiene?",
+   "opciones": [
+    "Absoluta por blancas",
+    "Fuerte por blancas",
+    "Leve por blancas",
+    "Absoluta por negras"
+   ],
+   "correcta": 0,
+   "explicacion": "C.04.3, art. 1.7.1: mismo color (negras) en las dos últimas partidas, aunque la diferencia sea −1."
+  },
+  {
+   "ficha": "r21-d-suizo-holandes",
+   "texto": "En la versión 2026, ¿un bye de 0 puntos cuenta como flotación descendente?",
+   "opciones": [
+    "No",
+    "Sí",
+    "Solo en la última ronda",
+    "Solo si el jugador tiene rating"
+   ],
+   "correcta": 0,
+   "explicacion": "C.04.3, art. 1.4.3: solo el bye asignado o los puntos sin jugar mayores que una derrota."
+  },
+  {
+   "ficha": "r21-d-suizo-holandes",
+   "texto": "Suizo holandés 2026: ¿qué minimiza el criterio C5?",
+   "opciones": [
+    "La puntuación de quien recibe el bye asignado",
+    "Las diferencias de color",
+    "Los flotantes ascendentes",
+    "El número de rondas"
+   ],
+   "correcta": 0,
+   "explicacion": "C.04.3, art. 2.3 (criterio del bye)."
+  },
+  {
+   "ficha": "r21-d-suizo-holandes",
+   "texto": "Se descubre un rating mal cargado después de emparejar la ronda 5. ¿Se cambia el TPN?",
+   "opciones": [
+    "No: después de emparejar la cuarta ronda no se modifica el TPN por esa razón",
+    "Sí, y se reempareja la ronda",
+    "Sí, desde la ronda siguiente",
+    "Solo si el jugador lo pide"
+   ],
+   "correcta": 0,
+   "explicacion": "C.04.2, art. 2.3."
+  },
+  {
+   "ficha": "r21-d-desempates",
+   "texto": "Rivales con 4, 5½, 6, 3, 5, 4½ y 7 puntos. ¿Buchholz corte 1?",
+   "opciones": [
+    "32",
+    "35",
+    "31",
+    "29"
+   ],
+   "correcta": 0,
+   "explicacion": "BH = 35; Cut-1 quita el menor (3): 32 (C.07, arts. 8.1 y 14.1)."
+  },
+  {
+   "ficha": "r21-d-desempates",
+   "texto": "Rivales: 5,5 / 6,5 / 9,5 / 7 / 8 / 10 / 8,5 / 10 / 8. ¿Buchholz corte 1?",
+   "opciones": [
+    "67,5",
+    "73",
+    "62",
+    "70"
+   ],
+   "correcta": 0,
+   "explicacion": "BH = 73; se quita el 5,5: 67,5."
+  },
+  {
+   "ficha": "r21-d-desempates",
+   "texto": "¿Se pueden cambiar los desempates a mitad de torneo si todos los jugadores aceptan?",
+   "opciones": [
+    "No: la lista se publica antes del inicio y se aplica",
+    "Sí",
+    "Solo el árbitro principal, cuando quiera",
+    "Solo antes de la última ronda"
+   ],
+   "correcta": 0,
+   "explicacion": "C.07, art. 4.1: el árbitro principal completa y publica la lista antes del inicio del torneo."
+  },
+  {
+   "ficha": "r21-d-desempates",
+   "texto": "Tras aplicar toda la lista, dos jugadores siguen empatados y las bases no dicen nada más. ¿Qué se hace?",
+   "opciones": [
+    "Sorteo",
+    "Comparten el premio obligatoriamente",
+    "Gana el de más rating",
+    "Gana el más joven"
+   ],
+   "correcta": 0,
+   "explicacion": "C.07, art. 4.2: el empate restante se decide por sorteo, salvo que las bases digan otra cosa."
+  },
+  {
+   "ficha": "r21-d-desempates",
+   "texto": "¿Cómo se calcula el Sonneborn-Berger?",
+   "opciones": [
+    "Puntos de los rivales vencidos más la mitad de los puntos de los empatados",
+    "Suma de los puntos de todos los rivales",
+    "Número de victorias con negras",
+    "Puntos contra los que hicieron 50 % o más"
+   ],
+   "correcta": 0,
+   "explicacion": "C.07, art. 9.1: puntuación final de cada rival multiplicada por los puntos sacados contra él."
+  },
+  {
+   "ficha": "r21-d-desempates",
+   "texto": "¿Qué desempate puede calcularse en cuanto se publica el emparejamiento de la última ronda?",
+   "opciones": [
+    "Fore Buchholz",
+    "Buchholz",
+    "Sonneborn-Berger",
+    "Koya"
+   ],
+   "correcta": 0,
+   "explicacion": "C.07, art. 8.3: el FB supone tablas en todas las partidas de la última ronda (tipo D)."
+  },
+  {
+   "ficha": "r21-d-desempates",
+   "texto": "En un abierto hay varios jugadores sin rating. ¿Qué pasa con los desempates por rating de las bases?",
+   "opciones": [
+    "Se quitan de la lista, salvo que las bases o el árbitro principal hayan publicado antes cómo tratarlos",
+    "Se aplican igual, con rating 0",
+    "Se aplican con rating 1000",
+    "Se reemplazan por Buchholz"
+   ],
+   "correcta": 0,
+   "explicacion": "C.07, art. 10."
+  },
+  {
+   "ficha": "r21-d-desempates",
+   "texto": "Rivales de 1850, 1923, 2010 y 1764 sobre el tablero. ¿ARO?",
+   "opciones": [
+    "1887",
+    "1886",
+    "1890",
+    "1886,75"
+   ],
+   "correcta": 0,
+   "explicacion": "7547 ÷ 4 = 1886,75, redondeado al entero más cercano (0,5 hacia arriba): 1887 (C.07, art. 10.1)."
+  },
+  {
+   "ficha": "r21-d-rondas-no-jugadas",
+   "texto": "¿Qué es una VUR?",
+   "opciones": [
+    "Un bye solicitado (de ½ o de 0) o una derrota por incomparecencia",
+    "Cualquier ronda sin rival",
+    "El bye asignado por el emparejamiento",
+    "Una victoria por incomparecencia"
+   ],
+   "correcta": 0,
+   "explicacion": "C.07, art. 16.1.2: ronda en que el participante no estaba disponible para jugar."
+  },
+  {
+   "ficha": "r21-d-rondas-no-jugadas",
+   "texto": "Bye de medio punto pedido en la ronda 2; el jugador juega todas las demás. ¿Categoría?",
+   "opciones": [
+    "3",
+    "1",
+    "5",
+    "4"
+   ],
+   "correcta": 0,
+   "explicacion": "C.07, art. 16.2.3: bye solicitado seguido de al menos una ronda que no es VUR."
+  },
+  {
+   "ficha": "r21-d-rondas-no-jugadas",
+   "texto": "Un jugador se retira antes de la última ronda. Para el Buchholz de sus rivales, ¿cómo cuenta esa ronda?",
+   "opciones": [
+    "Como tablas",
+    "Como derrota",
+    "Como victoria",
+    "No cuenta"
+   ],
+   "correcta": 0,
+   "explicacion": "Es un bye de cero (16.1.1) en la última ronda: categoría 5, que cuenta como tablas (16.3)."
+  },
+  {
+   "ficha": "r21-d-rondas-no-jugadas",
+   "texto": "Torneo a 9 rondas: bye asignado; el jugador termina con 6½. ¿Cuánto aporta esa ronda a su propio Buchholz?",
+   "opciones": [
+    "4½",
+    "6½",
+    "5½",
+    "0"
+   ],
+   "correcta": 0,
+   "explicacion": "C.07, art. 16.4.2: mín(6½; ½ × 9) = 4½."
+  },
+  {
+   "ficha": "r21-d-rondas-no-jugadas",
+   "texto": "Torneo a 9 rondas: pierde por incomparecencia, termina con 5; su rival programado termina con 6. ¿Aporte de esa ronda a su Buchholz?",
+   "opciones": [
+    "5",
+    "6",
+    "4½",
+    "0"
+   ],
+   "correcta": 0,
+   "explicacion": "C.07, art. 16.4.1: mín(5; 6) = 5."
+  },
+  {
+   "ficha": "r21-d-rondas-no-jugadas",
+   "texto": "Una jugadora con una derrota por incomparecencia: al calcular su Buchholz corte 1, ¿qué se corta?",
+   "opciones": [
+    "La aportación de la ronda no jugada (VUR)",
+    "Siempre el rival de menos puntos",
+    "El rival de más puntos",
+    "Nada"
+   ],
+   "correcta": 0,
+   "explicacion": "C.07, art. 16.5.1: con VUR se corta la menor aportación que venga de esas rondas."
+  },
+  {
+   "ficha": "r21-d-rondas-no-jugadas",
+   "texto": "En un todos contra todos, un jugador gana por incomparecencia. Para el Sonneborn-Berger, ¿cómo cuenta?",
+   "opciones": [
+    "Como una partida normal ganada",
+    "Como tablas",
+    "No cuenta",
+    "Con un rival ficticio"
+   ],
+   "correcta": 0,
+   "explicacion": "C.07, art. 15.2: con emparejamientos predeterminados las incomparecencias se tratan como partidas normales (salvo en desempates por rating y las derrotas en los de tipo B)."
+  },
+  {
+   "ficha": "r21-d-rondas-no-jugadas",
+   "texto": "¿Cuántas rondas eligió jugar (REP) una jugadora de un suizo a 5 rondas con una derrota por incomparecencia?",
+   "opciones": [
+    "4",
+    "5",
+    "3",
+    "4½"
+   ],
+   "correcta": 0,
+   "explicacion": "C.07, art. 7.6: rondas menos byes de ½ o de 0 y derrotas por incomparecencia."
+  },
+  {
+   "ficha": "r21-e-rating-fide",
+   "texto": "Partida entre un jugador de 2420 y uno de 1950. ¿Qué tiempo mínimo por jugador (60 jugadas) exige el Reglamento de Rating?",
+   "opciones": [
+    "120 minutos",
+    "90 minutos",
+    "60 minutos",
+    "Depende de la federación"
+   ],
+   "correcta": 0,
+   "explicacion": "Art. 1.1 del B.02: si alguno de los dos tiene 2400 o más, cada uno necesita al menos 120 minutos."
+  },
+  {
+   "ficha": "r21-e-rating-fide",
+   "texto": "¿Cuánto equivale el ritmo de 90 minutos con 30 segundos de incremento para el cálculo del art. 1.1?",
+   "opciones": [
+    "120 minutos",
+    "90 minutos",
+    "105 minutos",
+    "150 minutos"
+   ],
+   "correcta": 0,
+   "explicacion": "Se supone una partida de 60 jugadas: 90 + 60 × 30 s = 90 + 30 = 120 minutos (B.02 art. 1.1)."
+  },
+  {
+   "ficha": "r21-e-rating-fide",
+   "texto": "Un jugador gana por incomparecencia. ¿Cuenta esa partida para rating?",
+   "opciones": [
+    "No: las partidas no jugadas no cuentan",
+    "Sí, como victoria",
+    "Sí, como tablas",
+    "Solo si el rival tiene rating"
+   ],
+   "correcta": 0,
+   "explicacion": "B.02 art. 5.1: las partidas no jugadas, por incomparecencia o cualquier otra causa, no se califican."
+  },
+  {
+   "ficha": "r21-e-rating-fide",
+   "texto": "¿Desde qué rating aparece publicado un jugador en la lista FIDE?",
+   "opciones": [
+    "1400",
+    "1000",
+    "1200",
+    "1600"
+   ],
+   "correcta": 0,
+   "explicacion": "B.02 arts. 7.1.2 y 7.1.4: se publica el rating de 1400 o más; quien baja de 1400 queda sin rating (7.2.1)."
+  },
+  {
+   "ficha": "r21-e-rating-fide",
+   "texto": "Para calcular el primer rating, ¿qué se agrega a los rivales reales del jugador?",
+   "opciones": [
+    "Dos rivales hipotéticos de 1800 con los que hizo tablas",
+    "Un rival de 1400 con el que perdió",
+    "Dos rivales de 2000 con los que perdió",
+    "Nada: es el rating performance"
+   ],
+   "correcta": 0,
+   "explicacion": "B.02 art. 8.2.2: Ra es el promedio de los rivales con rating más dos rivales hipotéticos de 1800; el resultado contra ellos se considera tablas."
+  },
+  {
+   "ficha": "r21-e-rating-fide",
+   "texto": "Un jugador de 2000 (K = 20) le gana a uno de 2300. ¿Cuánto sube?",
+   "opciones": [
+    "+17",
+    "+15",
+    "+20",
+    "+3"
+   ],
+   "correcta": 0,
+   "explicacion": "D = 300 → PD del de menor rating 0,15 (tabla 8.1.2). (1 − 0,15) × 20 = 17 (B.02 art. 8.3.2)."
+  },
+  {
+   "ficha": "r21-e-rating-fide",
+   "texto": "Un juvenil con K = 40 juega 20 partidas en el periodo. ¿Qué K se le aplica?",
+   "opciones": [
+    "35",
+    "40",
+    "20",
+    "30"
+   ],
+   "correcta": 0,
+   "explicacion": "B.02 art. 8.3.3: 40 × 20 = 800 > 700, así que K es el mayor entero con K × 20 ≤ 700: 35."
+  },
+  {
+   "ficha": "r21-e-rating-fide",
+   "texto": "Un jugador de 2500 enfrenta a uno de 2030. ¿Qué diferencia se usa para buscar su PD?",
+   "opciones": [
+    "400",
+    "470",
+    "350",
+    "La real, siempre"
+   ],
+   "correcta": 0,
+   "explicacion": "B.02 art. 8.3.1 (desde 1-oct-2025): para jugadores de menos de 2650, una diferencia mayor de 400 cuenta como 400."
+  },
+  {
+   "ficha": "r21-e-normas-jugadores",
+   "texto": "¿Qué rating da el título de Maestro FIDE (FM)?",
+   "opciones": [
+    "2300, con al menos 30 partidas",
+    "2200",
+    "2400",
+    "2300, con 9 partidas"
+   ],
+   "correcta": 0,
+   "explicacion": "B.01 art. 1.3: FM 2300, CM 2200, WFM 2100, WCM 2000, con al menos 30 partidas calificadas."
+  },
+  {
+   "ficha": "r21-e-normas-jugadores",
+   "texto": "¿Cuál es el número mínimo general de partidas de una norma?",
+   "opciones": [
+    "9",
+    "7",
+    "11",
+    "13"
+   ],
+   "correcta": 0,
+   "explicacion": "B.01 art. 1.4.1: al menos 9 partidas (7 en campeonatos mundiales o continentales por equipos; 8 en la Copa Mundial)."
+  },
+  {
+   "ficha": "r21-e-normas-jugadores",
+   "texto": "Aspirante a GM, 5½ de 9. Sus ocho primeros rivales promedian 2523. ¿Qué rating mínimo debe tener el noveno?",
+   "opciones": [
+    "2492",
+    "2496",
+    "2520",
+    "2475"
+   ],
+   "correcta": 0,
+   "explicacion": "Con 61 % (dp 80) hace falta Ra 2520, es decir, promedio de al menos 2519,5: suma 22 676. 22 676 − 8 × 2523 = 2492 (B.01 arts. 1.4.7 a 1.4.9)."
+  },
+  {
+   "ficha": "r21-e-normas-jugadores",
+   "texto": "6 de 9 contra un promedio de 2510. ¿Cuál es el performance?",
+   "opciones": [
+    "2635",
+    "2600",
+    "2585",
+    "2660"
+   ],
+   "correcta": 0,
+   "explicacion": "6/9 = 67 % → dp 125 (tabla 1.4.9). Rp = 2510 + 125 = 2635 (B.01 art. 1.4.8)."
+  },
+  {
+   "ficha": "r21-e-normas-jugadores",
+   "texto": "Dos rivales de una posible norma de GM están por debajo de 2200. ¿Qué se hace?",
+   "opciones": [
+    "Solo el de menor rating se sube a 2200",
+    "Los dos se suben a 2200",
+    "Ninguno se sube",
+    "Se eliminan esas partidas"
+   ],
+   "correcta": 0,
+   "explicacion": "B.01 art. 1.4.6 c: no más de un rival se sube al piso; si hay varios por debajo, se sube el de menor rating."
+  },
+  {
+   "ficha": "r21-e-normas-jugadores",
+   "texto": "Para una norma de MI, ¿cuenta una WGM entre los rivales «IM o GM» que exige el art. 1.4.5?",
+   "opciones": [
+    "No; cuenta como titulada, pero no como IM o GM",
+    "Sí, siempre",
+    "Sí, si tiene más de 2400",
+    "No cuenta para nada"
+   ],
+   "correcta": 0,
+   "explicacion": "B.01 art. 1.4.5: para la norma de MI hace falta 1/3 y al menos 3 IM o GM. La WGM sí cuenta en el 50 % de titulados (que excluye solo CM y WCM)."
+  },
+  {
+   "ficha": "r21-e-normas-jugadores",
+   "texto": "En un suizo a 9 rondas, ¿cuántos rivales de la propia federación se admiten como máximo para una norma?",
+   "opciones": [
+    "5",
+    "6",
+    "3",
+    "4"
+   ],
+   "correcta": 0,
+   "explicacion": "B.01 art. 1.4.4 y anexo: máximo 3/5 de la propia federación; en 9 rondas, 5."
+  },
+  {
+   "ficha": "r21-e-normas-jugadores",
+   "texto": "¿Qué título debe tener el árbitro principal de un torneo de normas?",
+   "opciones": [
+    "AI o AF",
+    "Solo AI",
+    "Árbitro Nacional basta",
+    "Ninguno en especial"
+   ],
+   "correcta": 0,
+   "explicacion": "B.01 art. 1.1.5: el principal debe ser AI o AF, y un AI o AF debe estar siempre en el recinto."
+  },
+  {
+   "ficha": "r21-e-titulos-arbitro",
+   "texto": "¿Con qué nota mínima se aprueba el examen del Seminario de Árbitro FIDE?",
+   "opciones": [
+    "80 %",
+    "70 %",
+    "75 %",
+    "90 %"
+   ],
+   "correcta": 0,
+   "explicacion": "B.06.1 (2026) art. 3.7: asistir al seminario y aprobar el examen con al menos el 80 %."
+  },
+  {
+   "ficha": "r21-e-titulos-arbitro",
+   "texto": "Suizo de 60 jugadores: ¿cuántos certificados de norma de árbitro como máximo?",
+   "opciones": [
+    "3",
+    "2",
+    "4",
+    "1"
+   ],
+   "correcta": 0,
+   "explicacion": "B.06.1 art. 2.7.1: uno por cada 25 jugadores o fracción; 60 ÷ 25 = 2,4 → 3."
+  },
+  {
+   "ficha": "r21-e-titulos-arbitro",
+   "texto": "Todos contra todos de 10 jugadores: ¿cuántos certificados como máximo?",
+   "opciones": [
+    "2",
+    "10",
+    "5",
+    "1"
+   ],
+   "correcta": 0,
+   "explicacion": "B.06.1 art. 2.7.2: en los todos contra todos (simples o dobles), dos certificados en total."
+  },
+  {
+   "ficha": "r21-e-titulos-arbitro",
+   "texto": "¿Cuántos jugadores con rating necesita un todos contra todos para dar norma de AF desde el 1-mar-2026?",
+   "opciones": [
+    "8",
+    "10",
+    "6",
+    "20"
+   ],
+   "correcta": 0,
+   "explicacion": "B.06.1 (2026) art. 3.8.2: mínimo 8 con rating (a doble vuelta, 6: art. 3.8.3)."
+  },
+  {
+   "ficha": "r21-e-titulos-arbitro",
+   "texto": "¿Cuántas normas de torneos lleva la solicitud del título de AF, además de la del seminario?",
+   "opciones": [
+    "3",
+    "4",
+    "5",
+    "2"
+   ],
+   "correcta": 0,
+   "explicacion": "B.06.1 art. 5.4.4: exactamente una norma del seminario y tres certificados de torneos."
+  },
+  {
+   "ficha": "r21-e-titulos-arbitro",
+   "texto": "¿Cuánto tiempo vale una norma de seminario?",
+   "opciones": [
+    "4 años",
+    "6 años",
+    "2 años",
+    "De por vida"
+   ],
+   "correcta": 0,
+   "explicacion": "B.06.1 art. 5.3.2: la norma del seminario no puede tener más de 4 años el día de la solicitud (la de torneo, 6)."
+  },
+  {
+   "ficha": "r21-e-titulos-arbitro",
+   "texto": "¿Qué edad mínima se exige para solicitar el título de AF?",
+   "opciones": [
+    "19 años",
+    "16 años",
+    "18 años",
+    "21 años"
+   ],
+   "correcta": 0,
+   "explicacion": "B.06.1 art. 5.4.2: 19 años para el AF (21 para el AI; 18 para pedir normas de AF; 16 para ser AN)."
+  },
+  {
+   "ficha": "r21-e-titulos-arbitro",
+   "texto": "¿Cuántas rondas debe tener, en general, un torneo para norma de AI?",
+   "opciones": [
+    "Al menos 9 (se acepta uno de 7 u 8)",
+    "Al menos 7",
+    "Al menos 5",
+    "Al menos 11"
+   ],
+   "correcta": 0,
+   "explicacion": "B.06.1 arts. 4.10 y 4.10.1. Para el AF son 7 rondas, con un evento de 5 o 6 aceptado (3.10)."
+  },
+  {
+   "ficha": "r21-e-ingles-arbitro",
+   "texto": "«Flag fall» significa…",
+   "opciones": [
+    "Caída de bandera",
+    "Bandera nacional",
+    "Partida aplazada",
+    "Reloj descompuesto"
+   ],
+   "correcta": 0,
+   "explicacion": "Flag = bandera del reloj; flag fall = caída de bandera (Leyes art. 6.9)."
+  },
+  {
+   "ficha": "r21-e-ingles-arbitro",
+   "texto": "«Default time» es…",
+   "opciones": [
+    "El tiempo de espera para la incomparecencia",
+    "El tiempo programado por defecto en el reloj",
+    "El tiempo de reflexión",
+    "Una prórroga"
+   ],
+   "correcta": 0,
+   "explicacion": "Leyes art. 6.7.1: el tiempo tras el cual el jugador que no ha llegado pierde; si las bases no dicen otra cosa, es cero."
+  },
+  {
+   "ficha": "r21-e-ingles-arbitro",
+   "texto": "«Touch-move» es…",
+   "opciones": [
+    "Pieza tocada, pieza jugada",
+    "Jugada rápida",
+    "Compongo",
+    "Captura al paso"
+   ],
+   "correcta": 0,
+   "explicacion": "Regla de la pieza tocada, Leyes art. 4.3."
+  },
+  {
+   "ficha": "r21-e-ingles-arbitro",
+   "texto": "¿Cómo se dice «compongo» en inglés?",
+   "opciones": [
+    "I adjust",
+    "I resign",
+    "I claim",
+    "Check"
+   ],
+   "correcta": 0,
+   "explicacion": "Leyes art. 4.2.1: «I adjust» o «j'adoube»."
+  },
+  {
+   "ficha": "r21-e-ingles-arbitro",
+   "texto": "Un jugador dice «I resign». ¿Qué hace?",
+   "opciones": [
+    "Abandona la partida",
+    "Ofrece tablas",
+    "Reclama tablas",
+    "Pide al árbitro"
+   ],
+   "correcta": 0,
+   "explicacion": "To resign = abandonar (falso amigo: no es «resignarse»)."
+  },
+  {
+   "ficha": "r21-e-ingles-arbitro",
+   "texto": "«He won the exchange» quiere decir…",
+   "opciones": [
+    "Ganó la calidad",
+    "Ganó el cambio de horario",
+    "Ganó por incomparecencia",
+    "Ganó el desempate"
+   ],
+   "correcta": 0,
+   "explicacion": "The exchange es la calidad: ganar una torre por una pieza menor."
+  },
+  {
+   "ficha": "r21-e-ingles-arbitro",
+   "texto": "«Stalemate» es…",
+   "opciones": [
+    "Ahogado",
+    "Jaque mate",
+    "Posición muerta",
+    "Tablas por acuerdo"
+   ],
+   "correcta": 0,
+   "explicacion": "Stalemate = ahogado; checkmate = jaque mate; dead position = posición muerta (art. 5.2.2)."
+  },
+  {
+   "ficha": "r21-e-ingles-arbitro",
+   "texto": "¿Qué exige el B.06.1 sobre el inglés para el título de AF?",
+   "opciones": [
+    "Conocer los términos de ajedrez en inglés, además de un idioma oficial de la FIDE",
+    "Inglés de conversación",
+    "Ningún conocimiento de inglés",
+    "Un certificado oficial de inglés"
+   ],
+   "correcta": 0,
+   "explicacion": "B.06.1 art. 3.3. El inglés de conversación es requisito del AI (art. 4.3)."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 1) Con el turno, el blanco toca su alfil de c1 para acomodarlo y, ya con la mano en la pieza, dice «compongo». El negro reclama. ¿Qué decides?",
+   "opciones": [
+    "Nada: dijo «compongo» y puede jugar lo que quiera",
+    "El blanco debe mover ese alfil, si tiene una jugada legal con él",
+    "Advertencia al blanco y juega lo que quiera",
+    "Jugada ilegal: 2 minutos más al negro"
+   ],
+   "correcta": 1,
+   "explicacion": "Para acomodar sin obligación hay que avisar antes de tocar la pieza (art. 4.2.1). Si se avisa después, el contacto fue deliberado y rige la pieza tocada: debe moverla si puede (art. 4.3.1)."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 2) Con el turno, el blanco toca primero la torre de h1 y después el rey, con la idea de enrocar corto (el enroque es legal). ¿Qué debe jugar?",
+   "opciones": [
+    "El enroque corto, porque tocó rey y torre",
+    "Cualquier jugada de rey",
+    "Lo que quiera: tocar dos piezas anula la obligación",
+    "Una jugada de esa torre: no puede enrocar a ese lado en esta jugada"
+   ],
+   "correcta": 3,
+   "explicacion": "Si toca primero la torre, no puede enrocar con ella en esa jugada y se aplica la pieza tocada sobre la torre (art. 4.4.2, que remite al 4.3.1)."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 3) Partida rápida de 15 min + 10 s, con un árbitro para cada tres partidas. El blanco completa su primera jugada ilegal. ¿Cuánto tiempo recibe el negro?",
+   "opciones": [
+    "1 minuto",
+    "2 minutos",
+    "30 segundos",
+    "Nada: en rápidas solo se corrige la jugada"
+   ],
+   "correcta": 0,
+   "explicacion": "Con supervisión adecuada rigen las Reglas de Competición con la sanción en tiempo de 1 minuto para rápidas y relámpago (Apéndice A.3). La segunda jugada ilegal pierde (art. 7.5.5)."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 4) A mitad de partida la pantalla del reloj se apaga y no vuelve a encender. ¿Qué haces?",
+   "opciones": [
+    "Ordenas repetir la partida desde el inicio",
+    "Declaras tablas",
+    "Cambias el reloj y fijas los tiempos con tu mejor criterio, con los datos que tengas (planillas, control de tiempos)",
+    "Dejas que sigan sin reloj hasta el final"
+   ],
+   "correcta": 2,
+   "explicacion": "Ante un reloj defectuoso, el árbitro lo reemplaza y usa su mejor criterio para fijar los tiempos (art. 6.10.1). Por eso conviene que los árbitros de sala vayan anotando tiempos."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 5) El blanco toma su caballo de c3 y lo lleva a a5 como si fuera un alfil; antes de pulsar, lo devuelve a c3, juega Ae3-h6 y pulsa. El negro reclama de inmediato. ¿Qué decides?",
+   "opciones": [
+    "2 minutos más al negro por la jugada ilegal Cc3-a5",
+    "La partida sigue con Ah6: el caballo volvió a su casilla",
+    "No hay jugada ilegal que sancionar, pero restableces la posición y el blanco debe mover el caballo",
+    "El blanco pierde la partida"
+   ],
+   "correcta": 2,
+   "explicacion": "Cc3-a5 nunca se completó (no pulsó con esa jugada, art. 7.5.1), así que no hay sanción por jugada ilegal. Pero tocó deliberadamente el caballo y el negro reclamó a tiempo: debe moverlo si tiene una jugada legal (arts. 4.3.1 y 4.8)."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 6) Blancas: Re1, Ta1, Th1 y peones a2, b2, c2, f2, g2, h2. Negras: Re8, Dd5, Cc6, Ta8, Th8 y peones. Con el turno, el blanco toca deliberadamente el rey y la torre de a1 para enrocar largo, pero el enroque es ilegal porque la dama negra controla d1. ¿Qué debe jugar?",
+   "opciones": [
+    "Otra jugada legal de rey: Re2, Rf1 o el enroque corto",
+    "Una jugada de la torre de a1",
+    "Cualquier jugada legal",
+    "El enroque largo de todos modos"
+   ],
+   "correcta": 0,
+   "explicacion": "Si el enroque que intentó es ilegal, debe hacer otra jugada legal con el rey, y eso incluye enrocar con la otra torre (art. 4.4.3). Rd1 y Rd2 no son legales: ambas casillas están atacadas."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 7) Ritmo de 120 min por 40 jugadas + 30 s por jugada desde la primera. Al blanco le quedan 3 minutos; no anota su jugada 25, el negro responde y el blanco hace enseguida su jugada 26. El negro detiene el reloj y se queja. ¿Qué decides?",
+   "opciones": [
+    "Con menos de 5 minutos el blanco ya no está obligado a anotar",
+    "El blanco solo debe completar la planilla al final de la partida",
+    "El blanco pierde la partida",
+    "El blanco debe anotar: con 30 s de incremento no hay excepción; puede responder antes de anotar la jugada del rival, pero no hacer otra sin anotar la suya anterior"
+   ],
+   "correcta": 3,
+   "explicacion": "La excepción de los cinco minutos solo existe cuando no hay un incremento de 30 segundos o más (art. 8.4). Rige el art. 8.1: se puede contestar antes de anotar la jugada del rival, pero hay que anotar la propia anterior antes de hacer otra. Si persiste, sanciones del art. 12.9."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 8) El blanco corona en g8, coloca una torre de cabeza, dice «dama» y pulsa. ¿Qué pieza hay en g8?",
+   "opciones": [
+    "Una dama, porque lo anunció",
+    "Una torre",
+    "La que acepte el rival",
+    "Ninguna: es jugada ilegal y se cambia por una dama"
+   ],
+   "correcta": 1,
+   "explicacion": "La elección queda hecha cuando la pieza toca la casilla de coronación (art. 4.4.4), y una torre invertida es una torre, diga lo que diga el jugador (criterio del Manual del Árbitro FIDE). Si falta la pieza, lo correcto es detener el reloj y pedirla al árbitro (art. 6.11.2)."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 9) Con 3 segundos en su reloj, el negro juega, derriba varias piezas al hacerlo y pulsa el reloj sin reponerlas. ¿Qué corresponde?",
+   "opciones": [
+    "El negro debe reponerlas en su propio tiempo; el blanco puede detener el reloj y pedir tu ayuda, y puedes sancionar al negro",
+    "El blanco debe reponerlas en su tiempo",
+    "El negro pierde automáticamente",
+    "Se reponen con los relojes detenidos y sin consecuencias"
+   ],
+   "correcta": 0,
+   "explicacion": "Quien desplaza piezas las repone en su tiempo (art. 7.4.1); si hace falta, cualquiera de los dos detiene el reloj y pide ayuda al árbitro (7.4.2), que puede sancionar al infractor (7.4.3)."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 10) Partida estándar. El negro suelta la torre en f1, la vuelve a tomar, juega …Tf2+ y pulsa. El blanco no reclama, toca su rey y juega Ra1. Tú lo viste todo. ¿Qué haces?",
+   "opciones": [
+    "Obligas a jugar …Tf1",
+    "2 minutos más al blanco por jugada ilegal",
+    "Nada: el blanco perdió el derecho a reclamar al tocar su rey, y la partida sigue",
+    "Advertencia al negro y se juega …Tf1"
+   ],
+   "correcta": 2,
+   "explicacion": "La jugada era …Tf1, porque la torre se soltó en f1 (art. 4.7). Pero el blanco tocó una pieza para moverla sin reclamar y perdió ese derecho (art. 4.8). El árbitro no interviene de oficio en pieza tocada."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 11) Partida estándar. El blanco hace una jugada que ahoga al negro y pulsa. El negro, sin darse cuenta, dice «abandono». ¿Resultado?",
+   "opciones": [
+    "Ganan las blancas por abandono",
+    "Tablas: el ahogado terminó la partida antes del abandono",
+    "Anulas el abandono y la partida sigue",
+    "Tablas solo si el negro lo reclama"
+   ],
+   "correcta": 1,
+   "explicacion": "El ahogado termina la partida de inmediato si la jugada fue legal (art. 5.2.1); lo que pase después no cuenta."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 12) El blanco toca su peón de a6 para moverlo y, antes de completar la jugada, cae su bandera. El negro tiene rey, torre y peones. ¿Resultado?",
+   "opciones": [
+    "Tablas, porque el blanco ya había tocado una pieza",
+    "El blanco puede terminar la jugada que tocó",
+    "Ganan las blancas",
+    "Ganan las negras"
+   ],
+   "correcta": 3,
+   "explicacion": "Quien no completa sus jugadas en el tiempo asignado pierde, salvo que el rival no pueda darle mate con ninguna serie de jugadas legales (art. 6.9). Con torre, el negro puede dar mate; la obligación de pieza tocada no cambia ese análisis."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 13) Partida estándar. El negro, sin infracciones previas, pulsa el reloj sin haber hecho ninguna jugada. ¿Qué decides?",
+   "opciones": [
+    "Solo una advertencia",
+    "El negro pierde la partida",
+    "Nada: no movió ninguna pieza",
+    "Se sanciona como una jugada ilegal: 2 minutos más al blanco, y el negro debe jugar"
+   ],
+   "correcta": 3,
+   "explicacion": "Pulsar el reloj sin jugar se considera y sanciona como jugada ilegal (art. 7.5.3): primera vez, 2 minutos al rival; segunda, partida perdida (art. 7.5.5)."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 14) Partida estándar. El blanco ya cometió una jugada ilegal. Ahora enroca moviendo el rey con una mano y la torre con la otra, y pulsa. El negro tiene dama y torre. ¿Qué decides?",
+   "opciones": [
+    "Advertencia: es una infracción de conducta",
+    "Pierde el blanco: mover con las dos manos se sanciona como jugada ilegal y es la segunda",
+    "2 minutos más al negro",
+    "Nada: el enroque es legal"
+   ],
+   "correcta": 1,
+   "explicacion": "Hacer una sola jugada con las dos manos y pulsar se considera y sanciona como jugada ilegal (art. 7.5.4). Es la segunda, así que pierde, porque el negro puede dar mate con alguna serie de jugadas legales (art. 7.5.5)."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 15) Un jugador mueve una pieza con la mano derecha y pulsa el reloj con la izquierda. ¿Qué es?",
+   "opciones": [
+    "Una infracción sancionable según el art. 12.9, no una jugada ilegal",
+    "Una jugada ilegal: 2 minutos al rival",
+    "Una jugada ilegal que hace perder si ya tenía otra",
+    "Nada: está permitido"
+   ],
+   "correcta": 0,
+   "explicacion": "El reloj se pulsa con la misma mano con la que se movió (art. 6.2.3). No figura entre las acciones que se sancionan como jugada ilegal (7.5.3 y 7.5.4), así que se trata con las sanciones del art. 12.9 (lo habitual, una advertencia)."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 16) El negro escribe en la planilla su próxima jugada y reclama triple repetición. Compruebas que la posición no se repetiría tres veces. ¿Qué pasa?",
+   "opciones": [
+    "El negro pierde la partida",
+    "La partida sigue y el negro juega lo que quiera",
+    "2 minutos más al blanco y el negro debe jugar la jugada que anotó",
+    "1 minuto más al blanco"
+   ],
+   "correcta": 2,
+   "explicacion": "Si la reclamación es incorrecta, el árbitro agrega 2 minutos al rival y la partida sigue; si se basó en una jugada anotada, esa jugada debe hacerse (art. 9.5)."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 17) Sin reglas que limiten las tablas, el negro ofrece tablas antes de mover; el blanco le pide que primero juegue. El negro juega y, cinco minutos después, el blanco acepta. El negro dice que la oferta ya no vale. ¿Qué decides?",
+   "opciones": [
+    "La oferta caducó cuando el negro jugó",
+    "Tablas: la oferta no se puede retirar y seguía vigente",
+    "Sancionas al blanco por demorar",
+    "La partida sigue: la aceptación llegó tarde"
+   ],
+   "correcta": 1,
+   "explicacion": "Una oferta de tablas no puede retirarse y sigue vigente hasta que el rival la acepta, la rechaza de palabra o tocando una pieza para moverla, o la partida termina de otro modo (art. 9.1.2). Pedir que juegue primero no es un rechazo."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 18) Se completan 75 jugadas de cada bando sin capturas ni movimientos de peón y ninguno de los jugadores dice nada. ¿Qué pasa?",
+   "opciones": [
+    "Solo es tablas si alguien lo reclama",
+    "La partida sigue normalmente",
+    "La partida es tablas automáticamente",
+    "Gana quien tenga más tiempo en el reloj"
+   ],
+   "correcta": 2,
+   "explicacion": "Con 75 jugadas de cada bando sin captura ni movimiento de peón (y la última no es mate), la partida termina en tablas sin necesidad de reclamación (art. 9.6.2). Con 50 jugadas solo hay derecho a reclamar (art. 9.3)."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 19) Las bases no dicen nada sobre teléfonos. Al blanco, que tiene dama y rey, le suena el celular en el bolsillo durante la partida. El negro solo tiene el rey. ¿Resultado?",
+   "opciones": [
+    "Pierde el blanco y gana el negro, aunque solo tenga el rey",
+    "Tablas, porque el negro no puede dar mate",
+    "Advertencia y la partida sigue",
+    "2 minutos más al negro"
+   ],
+   "correcta": 0,
+   "explicacion": "Si es evidente que el jugador lleva encima un dispositivo no autorizado, pierde y el rival gana (art. 11.3.2.2). Aquí no se aplica la excepción por falta de material: esa salvedad es de la bandera y de la segunda jugada ilegal."
+  },
+  {
+   "ficha": "r21-f-examen-leyes",
+   "texto": "(Examen simulado, pregunta 20) Partida relámpago con supervisión adecuada. Ves que la bandera del blanco cayó; antes de que intervengas, el negro hace una jugada ilegal. El blanco la señala y el negro reclama la victoria por tiempo. ¿Qué decides?",
+   "opciones": [
+    "Sanción por la jugada ilegal y la partida sigue",
+    "Tablas: hubo infracciones de los dos",
+    "Ganan las blancas por la jugada ilegal",
+    "Ganan las negras: la bandera ya había caído cuando la observaste, antes de la jugada ilegal"
+   ],
+   "correcta": 3,
+   "explicacion": "Una bandera se considera caída cuando el árbitro lo observa o un jugador lo reclama válidamente (art. 6.8). Si el negro tiene material para dar mate, el blanco pierde por tiempo (art. 6.9); la jugada ilegal posterior no cambia el resultado."
+  },
+  {
+   "ficha": "r21-f-examen-reglamentos",
+   "texto": "(Examen simulado, pregunta 21) Un torneo se juega a 40 minutos + 10 segundos por jugada desde la primera. ¿Qué ritmo es?",
+   "opciones": [
+    "Estándar",
+    "Relámpago",
+    "Rápido",
+    "Ninguno: no se puede clasificar"
+   ],
+   "correcta": 2,
+   "explicacion": "Se cuenta el tiempo para 60 jugadas: 40 + 60 × 10 s = 50 minutos. Más de 10 y menos de 60 minutos es rápido (Apéndice A.1). Con 60 minutos o más sería estándar; con 10 o menos, relámpago (B.1)."
+  },
+  {
+   "ficha": "r21-f-examen-reglamentos",
+   "texto": "(Examen simulado, pregunta 22) Las bases no fijan el tiempo de espera. Un jugador llega 2 minutos después de que se pusieron en marcha los relojes. ¿Qué pasa?",
+   "opciones": [
+    "Pierde por incomparecencia: si no se especifica, el tiempo de espera es cero",
+    "Juega con 2 minutos menos",
+    "Tiene 15 minutos de tolerancia",
+    "Tiene 30 minutos de tolerancia"
+   ],
+   "correcta": 0,
+   "explicacion": "El tiempo de espera lo fijan las bases; si no lo hacen, es cero (art. 6.7.1)."
+  },
+  {
+   "ficha": "r21-f-examen-reglamentos",
+   "texto": "(Examen simulado, pregunta 23) ¿Qué apelación debe admitir a trámite el comité de apelaciones?",
+   "opciones": [
+    "La presentada de palabra al árbitro principal, aunque sea fuera de plazo",
+    "La presentada por escrito y con cuota, sin importar el plazo",
+    "La presentada por escrito sin cuota, si la decisión fue polémica",
+    "La presentada por escrito, dentro del plazo de las bases y con la cuota pagada"
+   ],
+   "correcta": 3,
+   "explicacion": "Salvo que las bases digan otra cosa, se puede apelar cualquier decisión del árbitro (art. 11.10), pero en la forma, el plazo y con la cuota que fijen las bases y las reglas del comité de apelaciones (Handbook C.11)."
+  },
+  {
+   "ficha": "r21-f-examen-reglamentos",
+   "texto": "(Examen simulado, pregunta 24) Un espectador habla por teléfono dentro de la sala de juego. ¿Qué haces?",
+   "opciones": [
+    "Nada: la prohibición es solo para los jugadores",
+    "Le pides que corte y, si hace falta, que salga: nadie puede usar un teléfono en el recinto sin tu autorización",
+    "Sancionas al jugador que vino con él",
+    "Detienes todas las partidas de la sala"
+   ],
+   "correcta": 1,
+   "explicacion": "Sin autorización del árbitro, nadie puede usar teléfonos ni aparatos de comunicación en el recinto de juego ni en las zonas contiguas que él designe (art. 12.8). El árbitro puede expulsar a quien infrinja las reglas (art. 12.7)."
+  },
+  {
+   "ficha": "r21-f-examen-reglamentos",
+   "texto": "(Examen simulado, pregunta 25) Tras 6 jugadas de cada bando se descubre que la partida empezó con los colores invertidos. ¿Qué haces?",
+   "opciones": [
+    "La partida sigue con los colores con que empezó",
+    "Se cambian las piezas de lugar y se sigue desde esa posición",
+    "Tablas",
+    "Se interrumpe y se juega una partida nueva con los colores correctos"
+   ],
+   "correcta": 3,
+   "explicacion": "Si se jugaron menos de 10 jugadas de cada bando, se empieza una nueva partida con los colores correctos; con 10 o más, la partida sigue (art. 7.3)."
+  },
+  {
+   "ficha": "r21-f-examen-reglamentos",
+   "texto": "(Examen simulado, pregunta 26) Para la lista inicial de un suizo, una WGM y una FM tienen el mismo rating. ¿Quién va primero?",
+   "opciones": [
+    "La FM",
+    "La WGM",
+    "La de nombre que va antes en orden alfabético",
+    "Se decide por sorteo"
+   ],
+   "correcta": 1,
+   "explicacion": "Orden inicial: rating; a igual rating, título en este orden: GM, IM, WGM, FM, WIM, CM, WFM, WCM y sin título; y después, orden alfabético (C.04.2, art. 2.2)."
+  },
+  {
+   "ficha": "r21-f-examen-reglamentos",
+   "texto": "(Examen simulado, pregunta 27) Suizo de 15 jugadores. En la ronda 1, el n.º 1 juega con blancas. ¿Cuál es la mesa 2?",
+   "opciones": [
+    "9 contra 2 (el 9 con blancas)",
+    "2 contra 9 (el 2 con blancas)",
+    "2 contra 10",
+    "8 contra 2"
+   ],
+   "correcta": 0,
+   "explicacion": "El n.º 15, el último, recibe el descanso. Quedan 14: la mitad alta (1 a 7) juega contra la baja (8 a 14), 1-8, 2-9… y los colores se alternan mesa por mesa: 1-8, 9-2, 3-10, 11-4… (C.04.1 y C.04.3, 2026)."
+  },
+  {
+   "ficha": "r21-f-examen-reglamentos",
+   "texto": "(Examen simulado, pregunta 28) Suizo holandés. Una jugadora jugó blancas, negras y blancas. ¿Qué preferencia de color tiene para la ronda 4?",
+   "opciones": [
+    "Absoluta, por negras",
+    "Leve, por negras",
+    "Fuerte, por negras",
+    "Ninguna"
+   ],
+   "correcta": 2,
+   "explicacion": "Diferencia de color +1 (dos blancas y una negra): preferencia fuerte por negras. Sería absoluta con diferencia de 2 o con el mismo color en las dos últimas rondas (C.04.3, 2026, art. 1.7)."
+  },
+  {
+   "ficha": "r21-f-examen-reglamentos",
+   "texto": "(Examen simulado, pregunta 29) Todos contra todos de 9 jugadores. ¿Cómo se asigna el descanso en cada ronda?",
+   "opciones": [
+    "Se usa la tabla Berger de 10 y descansa quien enfrenta al n.º 10",
+    "Descansa el de menor rating",
+    "Por sorteo en cada ronda",
+    "No hay descanso: se juega con un fantasma"
+   ],
+   "correcta": 0,
+   "explicacion": "Con número impar, el número más alto de la tabla cuenta como descanso: quien lo enfrenta descansa (C.05, arts. 5.1 a 5.3 y Anexo 1)."
+  },
+  {
+   "ficha": "r21-f-examen-reglamentos",
+   "texto": "(Examen simulado, pregunta 30) Tabla Berger de 6 jugadores. ¿En qué ronda se enfrentan los números 2 y 3?",
+   "opciones": [
+    "En la ronda 1",
+    "En la ronda 3",
+    "En la ronda 5",
+    "En la ronda 4"
+   ],
+   "correcta": 3,
+   "explicacion": "Ronda 1: 1-6, 2-5, 3-4; ronda 2: 6-4, 5-3, 1-2; ronda 3: 2-6, 3-1, 4-5; ronda 4: 6-5, 1-4, 2-3; ronda 5: 3-6, 4-2, 5-1 (C.05, Anexo 1)."
+  },
+  {
+   "ficha": "r21-f-examen-reglamentos",
+   "texto": "(Examen simulado, pregunta 31) Suizo a 7 rondas sin partidas no jugadas. Los rivales de una jugadora terminaron con 4; 6; 5,5; 3; 7; 4,5 y 6,5 puntos. ¿Cuál es su Buchholz con corte 1?",
+   "opciones": [
+    "36,5",
+    "30,5",
+    "33,5",
+    "32"
+   ],
+   "correcta": 2,
+   "explicacion": "Buchholz: 36,5 (suma de los puntos de los rivales, C.07 art. 8.1). El corte 1 quita el rival de menor puntuación (3): 33,5 (C.07 art. 14.1)."
+  },
+  {
+   "ficha": "r21-f-examen-reglamentos",
+   "texto": "(Examen simulado, pregunta 32) Antes de la última ronda, todos los jugadores que pueden empatar piden cambiar el orden de los desempates. ¿Qué haces?",
+   "opciones": [
+    "Lo cambias, porque todos están de acuerdo",
+    "No lo cambias: la lista de desempates se publica antes del inicio y no se modifica",
+    "Lo decide el árbitro principal si le parece más justo",
+    "Lo cambias solo para la última ronda"
+   ],
+   "correcta": 1,
+   "explicacion": "Los desempates son una lista ordenada que se publica antes del inicio del torneo (C.07, arts. 4.1 y 4.1.1) y se aplican en ese orden (4.2)."
+  },
+  {
+   "ficha": "r21-f-examen-rating-titulos",
+   "texto": "(Examen simulado, pregunta 33) Una jugadora adulta de 2150 (K = 20) juega 4 partidas contra rivales de 2210 cada uno y hace 3 puntos. Son sus únicas partidas del periodo. ¿Qué rating tendrá?",
+   "opciones": [
+    "2163",
+    "2176",
+    "2182",
+    "2170"
+   ],
+   "correcta": 1,
+   "explicacion": "D = 60 → PD = 0,42 por partida (tabla 8.1.2). Esperado: 4 × 0,42 = 1,68. Cambio: (3 − 1,68) × 20 = 26,4 → +26 (art. 8.3). Nuevo rating: 2176."
+  },
+  {
+   "ficha": "r21-f-examen-rating-titulos",
+   "texto": "(Examen simulado, pregunta 34) Un jugador con K = 40 juega 20 partidas válidas en un mismo periodo. ¿Qué K se le aplica?",
+   "opciones": [
+    "40",
+    "20",
+    "35",
+    "30"
+   ],
+   "correcta": 2,
+   "explicacion": "Si K × número de partidas pasa de 700, K es el mayor entero que no supera ese límite: 40 × 20 = 800 > 700, y 700 ÷ 20 = 35 (art. 8.3.3)."
+  },
+  {
+   "ficha": "r21-f-examen-rating-titulos",
+   "texto": "(Examen simulado, pregunta 35) Un jugador alcanzó 2400 en una lista publicada hace un año y hoy tiene 2350. ¿Qué K tiene?",
+   "opciones": [
+    "20",
+    "40",
+    "15",
+    "10"
+   ],
+   "correcta": 3,
+   "explicacion": "K = 10 desde que el rating publicado llegó a 2400, aunque después baje (art. 8.3.3)."
+  },
+  {
+   "ficha": "r21-f-examen-rating-titulos",
+   "texto": "(Examen simulado, pregunta 36) Un adulto de 2000 (K = 20) le gana a un rival de 2300. ¿Cuánto sube por esa partida?",
+   "opciones": [
+    "17",
+    "15",
+    "20",
+    "3"
+   ],
+   "correcta": 0,
+   "explicacion": "D = 300 → el de mayor rating tiene PD 0,85 y el de menor, 0,15 (tabla 8.1.2). Cambio: (1 − 0,15) × 20 = 17."
+  },
+  {
+   "ficha": "r21-f-examen-rating-titulos",
+   "texto": "(Examen simulado, pregunta 37) Un aspirante hace 6 de 9 contra un promedio de rivales de 2510, y la composición de rivales es válida para norma de GM. ¿Logra la norma?",
+   "opciones": [
+    "Sí: 6/9 es 67 %, dp = 125, y 2510 + 125 = 2635",
+    "No: le falta medio punto",
+    "Solo si los nueve rivales son GM",
+    "No se puede saber sin conocer su propio rating"
+   ],
+   "correcta": 0,
+   "explicacion": "Rp = Ra + dp, con el porcentaje redondeado (Reglamento de Títulos, arts. 1.4.8 y 1.4.9). 2635 supera los 2600 de la norma de GM, y el promedio supera el mínimo de 2380."
+  },
+  {
+   "ficha": "r21-f-examen-rating-titulos",
+   "texto": "(Examen simulado, pregunta 38) Una aspirante a GM ya jugó 7 rondas de 9 y se conoce el rival de la 8. El promedio de sus 8 rivales es 2523. Si hace tablas en las rondas 8 y 9 (5,5 de 9), ¿qué rating mínimo debe tener el rival de la ronda 9?",
+   "opciones": [
+    "2496",
+    "2492",
+    "2520",
+    "2475"
+   ],
+   "correcta": 1,
+   "explicacion": "Con 5,5/9 (61 %, dp = 80) hace falta un promedio de 2520. Como el promedio se redondea al entero (0,5 hacia arriba, art. 1.4.7), basta una suma de 22 676 (22 676 ÷ 9 = 2519,56 → 2520). Ya suma 8 × 2523 = 20 184: falta 2492."
+  },
+  {
+   "ficha": "r21-f-examen-rating-titulos",
+   "texto": "(Examen simulado, pregunta 39) Todos contra todos de 10 jugadores válido para normas de Árbitro FIDE. ¿Cuántos certificados de norma se pueden otorgar como máximo?",
+   "opciones": [
+    "1",
+    "3",
+    "10",
+    "2"
+   ],
+   "correcta": 3,
+   "explicacion": "En un todos contra todos (simple o doble) el máximo es de dos certificados; en los suizos, uno por cada 25 jugadores o fracción (B.06.1, 2026, art. 2.7)."
+  },
+  {
+   "ficha": "r21-f-examen-rating-titulos",
+   "texto": "(Examen simulado, pregunta 40) Una aspirante a AF ya tiene el seminario aprobado y dos normas de torneos suizos. ¿Qué torneo necesita para la última norma?",
+   "opciones": [
+    "Otro suizo cualquiera de 7 rondas",
+    "Un torneo relámpago de 20 jugadores",
+    "Uno de otro sistema (todos contra todos, por equipos…) que cumpla las condiciones de norma",
+    "Ninguno: con el seminario y dos normas ya puede pedir el título"
+   ],
+   "correcta": 2,
+   "explicacion": "El título de AF pide el seminario y tres normas de torneo (B.06.1, 2026, arts. 3.8 y 5.4), y la solicitud debe incluir dos sistemas distintos (art. 2.5). Solo se acepta una solicitud de puros suizos si uno de ellos es internacional, con al menos 100 jugadores, 30 % con rating y 7 rondas (art. 2.5.1)."
   }
  ],
  "casos": [
@@ -9156,6 +11944,291 @@
     ],
     "correcta": 3,
     "explicacion": "«Para» deja elegir a todos, a los de un torneo o a uno solo. En «Avisos enviados» ves quién lo leyó."
+   }
+  },
+  {
+   "id": "r21-a-caballo-clavado",
+   "ficha": "r21-a-irregularidades-ilegales",
+   "titulo": "El caballo clavado",
+   "nivel": "Intermedio",
+   "ritmo": null,
+   "escena": "Ritmo clásico. Blancas: Rh1, Dd2, Cg2, peones f2 y h2. Negras: Rg8, Ab7, Te3, peones f7, g7 y h7. Con el turno, el blanco toma su caballo de g2, captura la torre de e3 y pulsa. El negro detiene el reloj y llama al árbitro. Es la primera jugada ilegal del blanco.",
+   "decision": {
+    "texto": "¿Qué decides?",
+    "opciones": [
+     "Restableces la posición; el blanco debe capturar la torre con otra pieza (Dxe3 o fxe3) y el negro recibe dos minutos",
+     "Restableces la posición; el blanco juega lo que quiera y el negro recibe dos minutos",
+     "La jugada queda, porque el negro no está en jaque",
+     "Pierde el blanco"
+    ],
+    "correcta": 0,
+    "explicacion": "Cg2xe3 deja al rey blanco en jaque del alfil de b7 (3.9.2): es ilegal y se completó al pulsar (7.5.1). Se restablece la posición y se aplica la pieza tocada (4.3.3): el caballo no puede moverse, así que debe capturarse la primera pieza tocada que pueda capturarse, la torre, con otra pieza. Primera ilegal: dos minutos al rival (7.5.5)."
+   }
+  },
+  {
+   "id": "r21-a-abandono-sin-mate",
+   "ficha": "r21-a-fin-de-partida",
+   "titulo": "El abandono que no da la victoria",
+   "nivel": "Básico",
+   "ritmo": null,
+   "escena": "Abierto con ritmo clásico. Al final de una partida larga, las blancas tienen rey y dama; las negras, solo el rey. Muy cansado, el jugador de las blancas dice «abandono» y tiende la mano. El jugador de las negras anota 0-1 en su planilla.",
+   "decision": {
+    "texto": "¿Qué resultado registras?",
+    "opciones": [
+     "Tablas: las negras no pueden dar mate con ninguna serie de jugadas legales",
+     "0-1, porque las blancas abandonaron",
+     "1-0, porque las blancas tenían ventaja decisiva",
+     "Se reanuda la partida"
+    ],
+    "correcta": 0,
+    "explicacion": "Art. 5.1.2: el abandono termina la partida, pero si la posición es tal que el rival no puede dar mate con ninguna serie de jugadas legales, el resultado es tablas. Conviene explicarlo a los dos jugadores antes de que firmen las planillas."
+   }
+  },
+  {
+   "id": "r21-b-bandera-caballo",
+   "ficha": "r21-b-reloj-bandera",
+   "titulo": "La bandera y el caballo solitario",
+   "nivel": "Intermedio",
+   "ritmo": null,
+   "escena": "Abierto a 90′ + 30″. En un final, el negro tiene rey y torre; el blanco, rey y caballo. Al negro se le cae la bandera y el blanco dice «tiempo». El negro protesta: «con un caballo no se puede dar mate, son tablas».",
+   "decision": {
+    "texto": "¿Qué decides?",
+    "opciones": [
+     "Tablas: rey y caballo no pueden dar mate",
+     "Tablas, porque el blanco reclamó tarde",
+     "Gana el blanco: existe una serie legal que termina en mate (la torre negra puede tapar la salida de su rey)",
+     "Se sigue jugando con dos minutos más para el negro"
+    ],
+    "correcta": 2,
+    "explicacion": "Art. 6.9: la partida solo es tablas si el rival no puede dar mate con ninguna serie posible de jugadas legales. Con rey y torre negros en el tablero existe un mate ayudado (por ejemplo, rey negro en h8, torre en g8, rey blanco en h6 y Cf7 mate). Rey y caballo contra rey solo sería posición muerta (5.2.2), pero aquí el negro tiene la torre."
+   }
+  },
+  {
+   "id": "r21-b-triple-escrita",
+   "ficha": "r21-b-planilla-tablas",
+   "titulo": "La triple repetición mal reclamada",
+   "nivel": "Intermedio",
+   "ritmo": null,
+   "escena": "Ritmo 90′ + 30″. El negro escribe en su planilla su próxima jugada, pausa el reloj y le dice al árbitro que con ella la posición aparecerá por tercera vez. Al comprobarlo con ambos jugadores, la posición solo habría aparecido dos veces.",
+   "decision": {
+    "texto": "¿Cómo sigue la partida?",
+    "opciones": [
+     "El negro pierde por reclamación falsa",
+     "Dos minutos más al blanco; la partida sigue y el negro debe hacer la jugada que escribió",
+     "El negro puede jugar otra cosa y no hay sanción",
+     "Tablas, porque la reclamación es una oferta"
+    ],
+    "correcta": 1,
+    "explicacion": "Art. 9.5.3: si la reclamación es incorrecta, el árbitro suma dos minutos al tiempo del rival, la partida sigue y la jugada escrita se debe hacer conforme a los arts. 3 y 4. La reclamación cuenta como oferta de tablas (9.1.2.3): solo serían tablas si el blanco la acepta."
+   }
+  },
+  {
+   "id": "r21-c-apelacion-oral-24h",
+   "ficha": "r21-c-funciones-y-apelaciones",
+   "titulo": "Las bases que piden apelaciones orales",
+   "nivel": "Intermedio",
+   "ritmo": null,
+   "escena": "Te invitan como árbitro principal de un abierto con rating de 7 rondas en tres días, con dos rondas diarias. El borrador de las bases dice: «Las apelaciones se presentan de forma verbal ante el organizador, dentro de las 24 horas siguientes a la ronda. No hay cuota». No menciona comité de apelaciones.",
+   "decision": {
+    "texto": "¿Qué le recomiendas al organizador?",
+    "opciones": [
+     "Eliminar el derecho a apelar para evitar problemas",
+     "Que las apelaciones las resuelva el propio árbitro principal",
+     "Nombrar un comité de apelaciones antes de la ronda 1 (impar, mayores de 21 años) y fijar de antemano apelación por escrito, con cuota y con un plazo corto (por ejemplo, una hora después de la ronda)",
+     "Dejarlo así: las apelaciones verbales son más rápidas"
+    ],
+    "correcta": 2,
+    "explicacion": "GR 10.2 exige un comité de apelaciones en todas las competiciones, nombrado antes de la primera ronda. GR 10.4 pide apelación escrita, con cuota y plazo fijados de antemano. Con 24 horas y dos rondas diarias se jugarían dos rondas más con un resultado en duda; las reglas C.11 de la FIDE usan una hora en estándar. El árbitro no juzga la apelación contra su propia decisión."
+   }
+  },
+  {
+   "id": "r21-c-sospecha-en-la-sala",
+   "ficha": "r21-c-juego-limpio-en-sala",
+   "titulo": "La sospecha en la ronda 6",
+   "nivel": "Intermedio",
+   "ritmo": null,
+   "escena": "Abierto con rating, sin oficial de juego limpio. En la ronda 6, un jugador se te acerca muy molesto y, delante de otros jugadores, dice en voz alta que su rival «está haciendo trampa porque va al baño cada diez jugadas y juega como un programa». Has visto que ese rival salió de la zona de juego cuatro veces en una hora.",
+   "decision": {
+    "texto": "¿Qué haces?",
+    "opciones": [
+     "Ignoras al denunciante porque la queja fue oral",
+     "Llevas al denunciante aparte, le explicas que una queja formal va por escrito con el formulario y que una queja infundada tiene sanción, vigilas con discreción, anotas las salidas y, si hay motivo, revisas al rival en privado; todo va a tu informe",
+     "Detienes la partida y revisas al rival en la sala, delante de todos, para tranquilizar al denunciante",
+     "Le das la partida por perdida al rival por las salidas al baño"
+    ],
+    "correcta": 1,
+    "explicacion": "FPR 1.7 permite comunicar una sospecha al árbitro, pero en privado; acusar en voz alta puede ser una acusación infundada (5.3). La queja formal es escrita, con formulario (3.2.3, 3.2.5), y al recibirla el árbitro advierte de la sanción, investiga y envía su informe (3.2.6). La revisión es en privado y por alguien del mismo género (Leyes 11.3.3). Salir de la zona de juego cuando no tiene el turno no es una infracción por sí sola (Leyes 11.2.3), y la precisión de las jugadas no la evalúa el árbitro."
+   }
+  },
+  {
+   "id": "r21-d-bases-sin-desempates",
+   "ficha": "r21-d-desempates",
+   "titulo": "Las bases que olvidaron los desempates",
+   "nivel": "Intermedio",
+   "ritmo": null,
+   "escena": "Te nombran árbitro principal de un abierto suizo a 7 rondas. Leyendo las bases la víspera, ves que no dicen nada sobre cómo se clasifican los empatados. El organizador te dice: «Ponga lo que use siempre el programa».",
+   "decision": {
+    "texto": "¿Qué haces?",
+    "opciones": [
+     "Completas la lista con desempates del art. 5 adecuados para un suizo (por ejemplo BH-C1, BH, DE, WIN), la publicas antes de la ronda 1 y configuras el programa igual",
+     "Esperas al final del torneo y eliges los desempates que mejor separen a los empatados",
+     "Decides que todos los empatados comparten el puesto y se reparten los premios",
+     "Pones Sonneborn-Berger y Koya, que sirven para todo"
+    ],
+    "correcta": 0,
+    "explicacion": "C.07, arts. 2 y 4.1: si no se fija el método, se usan desempates fuera del tablero; el árbitro principal completa la lista con los del art. 5 y la publica antes del inicio. Elegirlos al final sería arbitrario. El Koya es para todos contra todos."
+   }
+  },
+  {
+   "id": "r21-d-resultado-mal-anotado",
+   "ficha": "r21-d-suizo-holandes",
+   "titulo": "El resultado mal anotado",
+   "nivel": "Intermedio",
+   "ritmo": null,
+   "escena": "Suizo a 9 rondas. Ya está publicado el emparejamiento de la ronda 6 cuando una jugadora te avisa de que en la ronda 5 se cargó 0-1 en su partida, pero ella ganó con blancas; el rival lo confirma y las planillas también.",
+   "decision": {
+    "texto": "¿Qué corresponde según el C.04.2?",
+    "opciones": [
+     "Corriges el resultado para la clasificación y para los emparejamientos de la ronda 7 en adelante; el emparejamiento ya publicado de la ronda 6 se mantiene",
+     "Anulas la ronda 6 y vuelves a emparejar",
+     "No corriges nada hasta que termine el torneo",
+     "Corriges el resultado y cambias el emparejamiento de la ronda 6 de inmediato"
+    ],
+    "correcta": 0,
+    "explicacion": "C.04.2, art. 4.3: los errores se comunican en un plazo fijado de antemano; si se notifican después de publicar los emparejamientos pero antes del final de la ronda siguiente, la corrección afecta a los emparejamientos que se hagan después; si llegan tras terminar la ronda siguiente, se corrige después del torneo y solo para la evaluación de rating. Los emparejamientos publicados solo se cambian en los casos del art. 4.4."
+   }
+  },
+  {
+   "id": "r21-e-caso-ritmo-abierto",
+   "ficha": "r21-e-rating-fide",
+   "titulo": "El abierto a 75 minutos",
+   "nivel": "Intermedio",
+   "ritmo": null,
+   "escena": "Un club te pide revisar las bases de su abierto con rating FIDE: 75 minutos más 30 segundos por jugada, 7 rondas en tres días. Entre los inscritos hay un MI de 2415; los demás tienen entre 1500 y 2250.",
+   "decision": {
+    "texto": "¿Qué le dices al organizador?",
+    "opciones": [
+     "75 + 30 = 105 minutos: las partidas entre jugadores de menos de 2400 cumplen, pero las del MI no; conviene subir el ritmo a 90 + 30 (120 minutos) si quiere que todas se califiquen",
+     "Todo está bien: el ritmo se mide solo con el tiempo base de 75 minutos",
+     "Ninguna partida puede calificarse, porque el torneo tiene un jugador de más de 2400",
+     "Basta con que el MI acepte por escrito el ritmo"
+    ],
+    "correcta": 0,
+    "explicacion": "B.02 art. 1.1: el mínimo se calcula para cada partida, suponiendo 60 jugadas (75 + 30 = 105 minutos). Con un jugador de 2400 o más hacen falta 120; si alguno tiene 1800 o más, 90; si ambos están bajo 1800, 60. El acuerdo de los jugadores no cambia el reglamento."
+   }
+  },
+  {
+   "id": "r21-e-caso-norma-principal",
+   "ficha": "r21-e-titulos-arbitro",
+   "titulo": "La norma del árbitro principal",
+   "nivel": "Avanzado",
+   "ritmo": null,
+   "escena": "Eres AN y fuiste el árbitro principal de un suizo nacional a 9 rondas con 48 jugadores, 31 con rating. No había ningún AI ni AF en el torneo. Quieres pedir una norma de AF.",
+   "decision": {
+    "texto": "¿Quién puede firmar tu certificado?",
+    "opciones": [
+     "Un supervisor presente en el torneo (el organizador o un dirigente de la federación) con título de AF o AI, después de revisar tu trabajo; tú eres el único árbitro del evento que puede recibir norma",
+     "Tú mismo, porque eres el principal",
+     "Cualquier dirigente de la federación, aunque no tenga título",
+     "Nadie: un AN no puede ser principal de un torneo que dé normas"
+    ],
+    "correcta": 0,
+    "explicacion": "B.06.1 (2026) art. 2.8.2: si el aspirante es el principal, firma un supervisor físicamente presente; para una norma de AF debe tener el título de AF o AI. Art. 2.8.3: si el principal no es AI ni AF, no puede firmar certificados y es el único árbitro del evento que puede obtener norma. El torneo cumple el art. 3.8.1 (20 o más con rating) y, con 48 jugadores, permitiría hasta 2 certificados (art. 2.7.1)."
+   }
+  },
+  {
+   "id": "r21-f-enroque-a-medias",
+   "ficha": "r21-f-examen-leyes",
+   "titulo": "El enroque a medias",
+   "nivel": "Intermedio",
+   "ritmo": null,
+   "escena": "Partida estándar. Con el turno, el blanco lleva el rey de e1 a g1 para enrocar corto (es legal), lo suelta y pulsa el reloj sin mover la torre de h1. Es su primera infracción. El negro detiene el reloj y te llama.",
+   "decision": {
+    "texto": "¿Qué decides?",
+    "opciones": [
+     "Nada: el enroque se da por hecho y acomodas la torre",
+     "Jugada ilegal: restableces la posición, 2 minutos más al negro y el blanco debe enrocar corto",
+     "Jugada ilegal: 2 minutos más al negro y el blanco juega lo que quiera",
+     "El blanco pierde por enrocar con una sola pieza"
+    ],
+    "correcta": 1,
+    "explicacion": "El enroque se completa al soltar la torre en f1 (art. 4.7.2); pulsar antes completa una jugada ilegal (7.5.1): 2 minutos más al negro (7.5.5). En la jugada que reemplaza a la ilegal rigen los arts. 4.3 y 4.7: con el rey ya soltado en g1, debe enrocar corto."
+   }
+  },
+  {
+   "id": "r21-f-caballo-clavado",
+   "ficha": "r21-f-examen-leyes",
+   "titulo": "El caballo clavado",
+   "nivel": "Intermedio",
+   "ritmo": null,
+   "escena": "Partida estándar. Blancas: Rb1, Dd2, Cc2 y peones f2, g2, h2. Negras: Rg8, Dg6, Ab4 y peones f7, g7, h7. El blanco juega 42.Cxb4 y pulsa. El caballo estaba clavado por la dama de g6. Nadie reclama, pero tú lo viste.",
+   "decision": {
+    "texto": "¿Qué haces?",
+    "opciones": [
+     "Nada: solo el negro puede reclamar",
+     "Jugada ilegal: 2 minutos más al negro y el blanco juega lo que quiera",
+     "Jugada ilegal: 2 minutos más al negro y el blanco debe capturar el alfil con otra pieza, 42.Dxb4",
+     "El blanco pierde la partida"
+    ],
+    "correcta": 2,
+    "explicacion": "En estándar el árbitro interviene ante una jugada ilegal (arts. 7.5.1 y 7.5.5): 2 minutos al negro. Luego rige la pieza tocada: tocó su caballo y el alfil rival; el caballo no tiene jugadas legales, así que debe capturar el alfil con otra pieza (art. 4.3.3). La única es 42.Dxb4."
+   }
+  },
+  {
+   "id": "r21-f-repeticion-enroque",
+   "ficha": "r21-f-examen-leyes",
+   "titulo": "La repetición que no era",
+   "nivel": "Avanzado",
+   "ritmo": null,
+   "escena": "Partida estándar. El negro aún no movió su rey ni su torre de h8. Siguió 6.Axf7+ Rd8 7.Ab3 Re8 8.Af7+ Rd8 9.Ab3 Re8 10.Af7+. Con el turno, el negro reclama tablas por triple repetición; el blanco no acepta las tablas.",
+   "decision": {
+    "texto": "¿Qué decides?",
+    "opciones": [
+     "Tablas: la posición con el alfil en f7 apareció tres veces",
+     "Rechazas la reclamación sin sanción",
+     "Rechazas la reclamación y das 2 minutos más al blanco: la primera vez el negro tenía derecho a enrocar",
+     "Rechazas la reclamación y el negro pierde"
+    ],
+    "correcta": 2,
+    "explicacion": "Tras 6.Axf7+ el negro conservaba el derecho a enrocar; lo perdió al jugar 6…Rd8. Las posiciones no son iguales si cambian los derechos de enroque (art. 9.2.3): solo hay dos repeticiones. Reclamación incorrecta: 2 minutos más al rival y la partida sigue (art. 9.5)."
+   }
+  },
+  {
+   "id": "r21-f-sospecha-al-oido",
+   "ficha": "r21-f-examen-reglamentos",
+   "titulo": "La sospecha dicha al oído",
+   "nivel": "Intermedio",
+   "ritmo": null,
+   "escena": "Abierto con rating FIDE. Un jugador te dice en voz baja que su rival «juega demasiado bien para su rating» y te pide que lo expulses.",
+   "decision": {
+    "texto": "¿Qué haces?",
+    "opciones": [
+     "Lo expulsas: la palabra de un jugador basta",
+     "Le explicas que una queja se presenta por escrito, con el formulario, y que esa razón sola es manifiestamente infundada; observas con discreción",
+     "Revisas al rival delante de todos para cortar el rumor",
+     "Detienes la partida hasta que el rival demuestre que no hizo trampa"
+    ],
+    "correcta": 1,
+    "explicacion": "Las quejas de juego limpio son por escrito y con formulario; no se aceptan las orales (Fair Play Regulations, arts. 3.1.1, 3.2.3 y 3.2.5). Basarse solo en que alguien juega mejor que su rating es manifiestamente infundado (3.2.9). El árbitro puede vigilar y, si hay motivo, pedir una revisión en privado (Leyes, art. 11.3.3)."
+   }
+  },
+  {
+   "id": "r21-f-norma-gm",
+   "ficha": "r21-f-examen-rating-titulos",
+   "titulo": "¿Hay norma de GM?",
+   "nivel": "Avanzado",
+   "ritmo": null,
+   "escena": "Un IM costarricense hace 6 de 9 en un todos contra todos. Sus rivales: 5 de su propia federación y 4 de cuatro federaciones distintas; 8 con título, 7 de ellos GM. Ratings: 2402, 1837, 2636, 2610, 2374, 2555, 2625, 2624 y 2567.",
+   "decision": {
+    "texto": "¿Logra la norma de GM?",
+    "opciones": [
+     "No: el promedio de rivales es 2470 y con 6/9 hacen falta 2475",
+     "Sí: con el rival de 1837 subido al piso de 2200, el promedio es 2510 y el rendimiento, 2510 + 125 = 2635",
+     "No: tiene demasiados rivales de su federación",
+     "Sí, pero solo si los nueve rivales fueran GM"
+    ],
+    "correcta": 1,
+    "explicacion": "Composición válida: 5 de su federación (máximo 3/5 de 9 = 5), 4 federaciones extranjeras, 8 titulados y 7 GM (arts. 1.4.3 a 1.4.5). El rival más débil sube a 2200 (1.4.6): 22 593 ÷ 9 = 2510,3 → 2510 (1.4.7). Con 67 %, dp = 125: 2635 ≥ 2600 (1.4.8 y 1.4.9)."
    }
   }
  ],
