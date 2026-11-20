@@ -491,7 +491,7 @@
   }
 
   // ---------- Los clasificados, en el formato de la inscripción ----------
-  // Las mismas columnas que lee «Subir una lista» (js/pareo/pagina.js), más
+  // Las mismas columnas que lee «Subir una lista» (js/pareo/pagina-listas.js), más
   // «Torneo» (Mujeres o Abierto), que la inscripción del MEP no trae: así la
   // etapa siguiente sabe dónde juega cada una sin suponerlo.
   // «Etapa» y «Lugar» dicen de dónde salió la lista: al subirla, la página

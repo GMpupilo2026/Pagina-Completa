@@ -369,7 +369,7 @@ function reglas() {
     e.estudiantes[2].nombre = "";
     const filas = I.filasExcel(e);
     igual("una fila por estudiante con nombre", filas.length, 2);
-    const pagina = fs.readFileSync(path.join(RAIZ, "js/pareo/pagina.js"), "utf8");
+    const pagina = require("./lib/pareo-pagina-fuente").leer();   // js/pareo/pagina.js y sus partes
     const bloque = pagina.slice(pagina.indexOf("const SINONIMOS_COLUMNA"), pagina.indexOf("const sinTildes", pagina.indexOf("const SINONIMOS_COLUMNA")));
     const sinTildes = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
     const claves = new Set([...bloque.matchAll(/"([^"]+)":\s*"/g)].map((m) => m[1]).concat([...bloque.matchAll(/\b([a-z]+):\s*"/g)].map((m) => m[1])));

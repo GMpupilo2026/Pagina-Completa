@@ -1,7 +1,7 @@
 /* Pareo Integral: archivar los torneos que ya no hacen falta a la vista, y
  * pasar de un torneo a otro del mismo evento desde el celular
- * (js/pareo/pagina.js: pintarArchivar, archivarMarcados, abrirRespaldo,
- * enlacesDelEvento; js/pareo/ver.js: otrosDelEvento, irATorneo).
+ * (js/pareo/pagina.js: pintarArchivar, archivarMarcados; pagina-respaldo.js: abrirRespaldo;
+ * pagina-vivo.js: enlacesDelEvento; js/pareo/ver.js: otrosDelEvento, irATorneo).
  *
  * Lo que se prueba, porque se rompe sin dar ningún error:
  *   - «Marcar los terminados» marca solo los terminados, y archivar baja el

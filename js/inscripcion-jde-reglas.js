@@ -388,7 +388,7 @@
   // ------------------------------------------------------- los archivos
   // Las mismas columnas del Excel que baja el sistema del MEP, así Pareo
   // Integral lo lee con «Subir una lista» sin tocar nada y propone un torneo
-  // por grupo (js/pareo/pagina.js, SINONIMOS_COLUMNA). Las columnas que no
+  // por grupo (js/pareo/pagina-listas.js, SINONIMOS_COLUMNA). Las columnas que no
   // conoce (tipo de documento, suplente, apoyos) las ignora.
   const ENCABEZADOS = ["Nombre", "Sexo", "FDN", "Nombre de Centro Educativo", "Dirección Regional", "Categoría", "Equipo/Ind", "Torneo", "Documento de identidad", "Tipo de documento", "Suplente", "Apoyos"];
   function filasExcel(estado) {

@@ -115,7 +115,7 @@ function pruebaSinNavegador() {
   const toque = leer("supabase/functions/_compartido/toque-vivo.ts");
   ok(/\/realtime\/v1\/api\/broadcast/.test(toque) && /catch \{\s*return false;/.test(toque) && !/payload: \{[^}]/.test(toque),
     "el toque va por la API de Broadcast, sin el dato, y si falla no tira (las vueltas de siempre siguen)");
-  ok(leer("js/pareo/pagina.js").includes("const ESPERA_PUBLICAR = 5000;"), "Pareo publica a los 5 segundos de un cambio (eran 30)");
+  ok(require("./lib/pareo-pagina-fuente").leer().includes("const ESPERA_PUBLICAR = 5000;"), "Pareo publica a los 5 segundos de un cambio (eran 30)");
 }
 
 // El doble de la Edge Function: anota cada pedido y contesta como ella.

@@ -143,7 +143,7 @@ const correr = async (p, ms) => { await p.clock.runFor(ms); await p.waitForTimeo
     } finally { await browser.close(); }
 
     console.log("\nEl Pareo del principal:");
-    const pagina = fs.readFileSync(path.join(__dirname, "..", "js", "pareo", "pagina.js"), "utf8");
+    const pagina = require("./lib/pareo-pagina-fuente").leer();   // js/pareo/pagina.js y sus partes
     const espera = /const ESPERA_PUBLICAR_MESA = (\d+);/.exec(pagina);
     igual("en un evento de la Mesa publica a los pocos segundos (10 s o menos)", !!espera && Number(espera[1]) > 0 && Number(espera[1]) <= 10000, true);
     igual("y es la espera que usa programarPublicacion cuando el torneo es de la Mesa",

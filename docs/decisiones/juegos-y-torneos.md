@@ -2552,7 +2552,7 @@ cambiar sin borrar la ronda». Antes la única salida era deshacer el
 emparejamiento entero, y con partidas ya empezadas eso no sirve.
 
 - **Debajo de las mesas de la ronda en juego** va «Modificar la ronda sin
-  deshacerla» (`pintarModificarRonda` en `js/pareo/pagina.js`): cambiar a dos
+  deshacerla» (`pintarModificarRonda` en `js/pareo/pagina-resultados.js`): cambiar a dos
   de lugar, invertir colores, sacar a alguien, armar una mesa con quienes no
   juegan (o darle a uno el bye del pareo) y agregar un jugador nuevo ahí
   mismo, sin ir a la ficha Jugadores. Quien llegó tarde entra **cambiándolo
@@ -2634,6 +2634,87 @@ comprueba: ni una petición a otro origen, salvo la publicación). Lo que sí
 sale se activa aparte, con su consentimiento y su mención en
 `privacidad.html`: la publicación en «Torneos en Pareo Integral» y, desde
 noviembre de 2026, guardar los torneos en la cuenta (abajo).
+
+### Pareo Integral: la página partida por zonas
+
+El 20/11/2026 `js/pareo/pagina.js` (8425 líneas, todo el código de
+`pareo.html` en una sola función) se partió en dieciocho archivos, uno por
+zona de la pantalla. Fue un **refactor puro**: se movió el código tal cual,
+sin cambiar lógica, textos ni el orden en que corre lo que corre al cargar
+(los dos avisos entre pestañas, los dos `setInterval` de las cámaras y
+Lichess, y el `afterprint` quedan en el mismo orden relativo), porque el
+domingo 22/11 se usaba en vivo en una eliminatoria.
+
+- **Cómo se comparten las cosas**: cada archivo es su propia función
+  `(function () { … })()`, y lo que una parte usa de otra pasa por
+  `window.PareoPagina` (en cada archivo, `Pagina`). Al final de cada parte,
+  `Object.assign(Pagina, { … })` pone lo que las demás usan de ella; al
+  principio, `const { … } = Pagina;` toma lo de las que **ya cargaron**. Lo
+  de una parte que carga **después** se llama como `Pagina.<nombre>(…)`, que
+  se busca en el momento de llamarlo (para entonces ya cargó todo: la página
+  arranca en `DOMContentLoaded`). La única variable que cambia y que usan
+  varias partes es `idioma`: vive en el núcleo y las otras la leen y la
+  escriben como `Pagina.idioma` (un `get`/`set`).
+- **Nada corre al cargar con algo de una parte posterior**: lo comprobó el
+  partidor (un análisis de ámbitos con `eslint-scope`), y que ninguna parte
+  use un nombre suelto que antes no fuera global. Si se agrega algo que corre
+  al cargar (un `const` calculado, un `addEventListener` fuera de una
+  función), solo puede usar lo de su parte o de las anteriores.
+- **El orden en `pareo.html` importa** y es el de la lista de abajo.
+  `herramientas/lib/pareo-pagina-fuente.js` tiene la misma lista: los
+  verificadores que buscan algo en el código de la página leen todas las
+  partes juntas con su `leer()`, y si `pareo.html` carga otras partes o en
+  otro orden, falla. Una parte nueva va en los dos lugares.
+- **Qué hay en cada archivo** (en el orden en que se cargan):
+  - `pagina.js`, el núcleo: lo guardado en el navegador (`escribir()`,
+    `quitar()`), `estado`, `guardar()`, abrir y crear torneos, las fichas, la
+    lista de torneos y archivar, los torneos en la cuenta, «Lo siguiente» y
+    la portada, y lo que usan todas (`el`, `$`, `C`, `tx`, `horaCR`…).
+  - `pagina-torneo.js`: la ficha «Torneo», la configuración fija de los JDE
+    y los desempates.
+  - `pagina-jugadores.js`: la ficha «Jugadores» (a mano, instituciones, Elo
+    pendiente, equipos e integrantes, categorías, editar, borrar en bloque,
+    pasar a otro torneo, retirar, eliminar).
+  - `pagina-listas.js`: subir un Word o un Excel (`SINONIMOS_COLUMNA`,
+    `FILAS_ANTES_DE_CABECERA`), recoger la inscripción de los JDE, el Elo
+    Nacional y las listas de Elo.
+  - `pagina-grupos.js`: la sugerencia de un torneo por grupo y crear los
+    torneos del evento.
+  - `pagina-evento.js`: repetir un evento, lo que falta revisar, la pantalla
+    del evento (`pintarEvento`), el horario, el desempate en vivo, las
+    constancias, los certificados, el cartel, los diplomas, cuánto duró cada
+    ronda y las mesas de la sala.
+  - `pagina-respaldo.js`: el campo a medio escribir, el borrador al salir,
+    el respaldo (archivo y automático), el historial y deshacer, dos
+    pestañas con el mismo torneo y pasar el evento a otra computadora.
+  - `pagina-vivo.js`: el evento en vivo desde el celular, la lectura del
+    enlace de solo lectura y en vivo (`compartirLectura`) y WhatsApp.
+  - `pagina-rondas.js`: la ficha «Rondas», la ronda nueva, pasar lista,
+    revisar el pareo, emparejar y deshacer.
+  - `pagina-resultados.js`: las marcas, los resultados para confirmar, el
+    reloj del retraso, las incidencias y sanciones, las mesas de un torneo
+    individual, la eliminación directa, «No juegan» y modificar la ronda en
+    juego.
+  - `pagina-adjuntos.js`: los árbitros adjuntos (canal, cola en la base), el
+    chat y las llamadas, sus notas, y los capitanes.
+  - `pagina-mesas.js`: las cámaras, un teléfono para cada mesa y Lichess.
+  - `pagina-centro.js`: el Centro del evento, el sorteo del congresillo, el
+    PGN de una mesa y la partida de la foto de las planillas.
+  - `pagina-equipos.js`: los encuentros por equipos, alineaciones, planillas
+    de anotación y Scheveningen.
+  - `pagina-impresion.js`: lo que se imprime (la ronda, la plantilla de
+    mesas, gafetes, rótulos, el plano, las planillas de firma, la
+    clasificación para la pared) y las firmas del acta.
+  - `pagina-clasificacion.js`: la ficha «Clasificación», el cuadro de la
+    eliminación, los mejores tableros, los premios, la tabla cruzada y sus
+    PDF.
+  - `pagina-publicar.js`: la inscripción desde el celular, publicar en
+    «Torneos en Pareo Integral» (`ESPERA_PUBLICAR`), las inscripciones en
+    línea y «Tu organización».
+  - `pagina-arranque.js`: abrir archivos, `enganchar()`, usarla sin internet
+    y `arrancar()`. Se carga de último.
+- La caché de «usarlo sin internet» no cambió: guarda cada `<script src>` de
+  la página, así que las partes nuevas entran solas.
 
 ### Pareo Integral: los torneos en la cuenta
 
@@ -2802,7 +2883,7 @@ pruebas con decenas de miles de torneos. Mientras no haya aprobación, la
 página dice que no la tiene.
 
 - **El bye de punto entero pide confirmación** (`confirmarByeEntero` en
-  `js/pareo/pagina.js`): FIDE lo desaconseja y la lista de verificación de
+  `js/pareo/pagina-resultados.js`): FIDE lo desaconseja y la lista de verificación de
   los programas pide avisar al darlo. En «No juegan esta ronda» y al pedir
   ausencias antes de emparejar, elegir «Bye de punto entero» abre un aviso
   («Dar el bye de punto entero» / «Dejar como estaba»); si quien arbitra se
@@ -2847,7 +2928,7 @@ lo tenga.
   «Institución», «Elo»… (en español o en inglés, sin mirar tildes ni
   mayúsculas) esa es la columna, en cualquier orden; si no reconoce ninguna
   columna de nombre, se lee en el orden fijo de siempre
-  (`js/pareo/pagina.js:ORDEN_LISTA`). El diccionario de etiquetas
+  (`js/pareo/pagina-listas.js:ORDEN_LISTA`). El diccionario de etiquetas
   (`SINONIMOS_COLUMNA`) es una tabla de `"etiqueta": "campo"`, no una lista
   de arrays de dos elementos: esa forma exacta —dos cadenas entre
   corchetes— es justo el patrón con el que `verificar-pareo-pagina.js`
@@ -2876,7 +2957,7 @@ lo tenga.
   se guarda qué se buscó ni quién lo buscó, solo el freno de los envíos
   públicos antes de salir a buscar (`pareo_elo_frenar`, mismo patrón que
   `jde_frenar` y `jdn_frenar`, pero solo por IP —Pareo Integral no pide
-  ningún otro dato—). Tope por pedido: 40 jugadores (`js/pareo/pagina.js:
+  ningún otro dato—). Tope por pedido: 40 jugadores (`js/pareo/pagina-listas.js:
   TOPE_BUSQUEDA_ELO`, el mismo que exige la función); con más, hay que volver
   a tocar el botón para el resto.
 - **El lector de ajedrezcostarica.com ya existía y se compartió, no se
@@ -3005,7 +3086,7 @@ mujeres, equipos e individual y las categorías A a E juntos. Cada combinación
 se juega aparte, y armar cada torneo a mano era copiar y pegar filas.
 
 - **La cabecera se busca en las primeras diez filas, no solo en la primera**
-  (`FILAS_ANTES_DE_CABECERA` en `js/pareo/pagina.js`). Ese Excel trae arriba
+  (`FILAS_ANTES_DE_CABECERA` en `js/pareo/pagina-listas.js`). Ese Excel trae arriba
   el título del reporte y la fecha en que se exportó; antes la cabecera no
   se reconocía, se caía al orden fijo y **esas dos filas entraban como
   jugadores** (y el resto con las columnas cambiadas). Sin error.
@@ -4790,7 +4871,7 @@ Lo pidió el dueño del sitio para que el día del torneo se trabaje más rápid
 
 - **«Repetir este evento»** (ficha Archivos, en el evento) arma uno nuevo con
   los mismos torneos. Cada torneo se copia **campo por campo**, de una lista
-  (`COPIA_REPETIR` en `js/pareo/pagina.js`): ritmo, sistema, rondas, puntos,
+  (`COPIA_REPETIR` en `js/pareo/pagina-evento.js`): ritmo, sistema, rondas, puntos,
   desempates, si da Elo, la mesa de la sala, el plazo de los capitanes y la
   configuración de los JDE.
   - Nunca se copia el torneo entero: lo que pasó ese día (jugadores, rondas,
@@ -6100,7 +6181,7 @@ ya jugada, pero no para pegar en la pared antes de jugarla ni para mandar la
 Clasificación por correo.
 
 - **La plantilla para la pared** (`imprimirPlantillaMesas()` en
-  `js/pareo/pagina.js`, botón junto a «Imprimir» en cada ronda ya emparejada)
+  `js/pareo/pagina-impresion.js`, botón junto a «Imprimir» en cada ronda ya emparejada)
   es una hoja APARTE de la tabla de la ronda: mesa, blancas, negras y un
   espacio en blanco — **nunca el resultado que ya esté guardado**, aunque la
   ronda ya tenga todos sus resultados anotados; es justo lo contrario de la
@@ -6136,7 +6217,7 @@ Clasificación por correo.
 ### El atajo «No viene» antes de emparejar una ronda
 
 Marcar a alguien ausente antes de emparejar la ronda **ya existía**: el
-`<select>` de `pintarRondaNueva()` (`js/pareo/pagina.js`) tiene desde siempre
+`<select>` de `pintarRondaNueva()` (`js/pareo/pagina-rondas.js`) tiene desde siempre
 las opciones «Juega», «Bye pedido», «Ausente (0)» y «Bye de punto entero», y
 quien elige «Ausente» queda afuera del TRF que se le pasa al motor
 (`rondas[r].ausencias`, visto por `aTrf()` y `participantes()`), nunca se le
@@ -6227,7 +6308,7 @@ los armó, sin que pasen por ningún lado.
   volver a generarlo. Se dice así, sin rodeos, en la propia caja («Ver desde
   el celular»).
 - **Lo que viaja es lo que la pantalla ya pintó, no el torneo entero**:
-  `compartirLectura(r)` en `js/pareo/pagina.js` arma un objeto chico —el
+  `compartirLectura(r)` en `js/pareo/pagina-vivo.js` arma un objeto chico —el
   nombre, la ronda (mesa, blancas, negras, resultado) y la clasificación
   (puesto, nombre, puntos)—, reusando `filasFiltradas()` y `D.clasificacion()`,
   las MISMAS funciones que ya usan la pantalla y el PDF. `js/pareo/ver.js` no
@@ -6235,7 +6316,7 @@ los armó, sin que pasen por ningún lado.
   mostrarlo: es un dibujo de datos ya resueltos, no un segundo torneo.
 - **Modo lectura, adentro de la misma página**: en vez de una página nueva (con
   toda la plomería de cabeceras, migas de pan y verificadores que eso exige),
-  `arrancar()` en `pagina.js` mira `location.hash` ANTES de tocar
+  `arrancar()` en `pagina-arranque.js` mira `location.hash` ANTES de tocar
   `localStorage`: si empieza con `#ver=`, oculta `#pi-editor` (el `id` nuevo
   en el `<div class="max-w-6xl">` que envuelve todo lo editable) y llama a
   `PareoVer.iniciar()`, que pinta dentro de `#pi-ver`. **No lee ni escribe el
@@ -6314,7 +6395,7 @@ dueño del repo, no solo de código.
   pague el peso de Supabase. `_headers` ya traía `wss://…supabase.co` en
   `connect-src` para el resto del sitio: no hizo falta tocar la CSP.
 - **Quién manda y quién escucha, nunca al revés**: `estado.canalVivo` en
-  `js/pareo/pagina.js` solo llama `.send()`; nunca `.on()`. El organizador no
+  `js/pareo/pagina-vivo.js` solo llama `.send()`; nunca `.on()`. El organizador no
   necesita recibir nada (es el dueño de los datos), y esto evita que un
   mensaje ajeno al canal pueda, por accidente, pisarle su propia pantalla.
 - **Qué manda y cuándo**: `datosLecturaActual(r)` —la misma función que ya
@@ -9372,7 +9453,7 @@ el resultado se perdía: el adjunto veía «Enviando…» para siempre.
     código de 8 letras que Pareo ya generaba, su nombre y sus mesas), con
     `visto` (la última vez que entró o anotó). El principal los manda con la
     clave de su torneo: apenas crea o apaga uno (`sincronizarAdjuntos` en
-    `js/pareo/pagina.js`) y dentro de cada «crear» y «actualizar» de la
+    `js/pareo/pagina-adjuntos.js`) y dentro de cada «crear» y «actualizar» de la
     publicación (`adjuntos`, aparte del torneo: no son públicos). La lista queda
     **exactamente como llega** (los que no vienen se apagan), y un código que ya
     es de otro torneo no se toma. Un Pareo viejo que no manda `adjuntos` no
@@ -9513,7 +9594,7 @@ servicio (se despliegan solas al entrar a `main`).
 
 Pedido del dueño el 12/11/2026, después de ver las maquetas: una ficha nueva
 de Pareo, **«Centro del evento»** (entre Rondas y Clasificación;
-`pintarCentro` en `js/pareo/pagina.js`), con todo el torneo de un vistazo para
+`pintarCentro` en `js/pareo/pagina-centro.js`), con todo el torneo de un vistazo para
 el árbitro principal. **No guarda nada propio**: muestra lo que la pestaña ya
 sabe y cada botón es una acción que ya existía.
 
@@ -12844,7 +12925,7 @@ en construirse.
   adivina de chess-results (sus etiquetas vienen en el idioma y la forma que
   haya elegido quien armó el torneo, no en los códigos del C.07): quien usa
   la herramienta arma la lista con el mismo control de «subir / bajar /
-  quitar» de Pareo Integral (`js/pareo/pagina.js`), con «Buchholz sin el
+  quitar» de Pareo Integral (`js/pareo/pagina-torneo.js`), con «Buchholz sin el
   peor, Buchholz, Sonneborn-Berger, encuentro directo, partidas ganadas» de
   entrada —el orden más común en Costa Rica, el mismo que trae por omisión
   un torneo nuevo de Pareo Integral (`js/pareo/torneo.js`)—.
@@ -16858,7 +16939,7 @@ ventana solo volvía a leer al abrirla, y como mucho cada 2 minutos.
   lectura es entera igual, por si se publicó otro torneo. Al volver a la
   pestaña (el celular desbloqueado) revisa en el acto.
 - **Por qué no Realtime**: Pareo publica 30 s después de anotar el resultado
-  (`ESPERA_PUBLICAR` en `js/pareo/pagina.js`), así que un aviso al instante no
+  (`ESPERA_PUBLICAR` en `js/pareo/pagina-publicar.js`), así que un aviso al instante no
   gana casi nada; meter `pareo_publicados` a Realtime pedía migración, su
   política de dos pasos y que Realtime revise la RLS por cada familia
   conectada (ver «Realtime escucha solo lo que la pantalla muestra» en
@@ -19325,7 +19406,7 @@ las tablets de los árbitros también». Llegaba, pero tarde: el Pareo del princ
 así que un resultado podía tardar más de un minuto en verse, y el «⏳ Mandado» de un árbitro de mesa tardaba lo mismo
 en pasar a resultado.
 
-- **Pareo publica a los 4 s en un evento de la Mesa** (`ESPERA_PUBLICAR_MESA` en `js/pareo/pagina.js`): cuando la
+- **Pareo publica a los 4 s en un evento de la Mesa** (`ESPERA_PUBLICAR_MESA` en `js/pareo/pagina-publicar.js`): cuando la
   cola dice que el torneo está en un evento de la Mesa del árbitro (`estado.adjuntos.mesa`, la misma marca que ya
   apuraba la lectura de la cola). Sigue siendo una publicación por espera, no una por cambio: los resultados seguidos
   salen juntos, a lo sumo una publicación cada 4 s por torneo, muy por debajo del freno de `pareo_frenar`. Fuera de
