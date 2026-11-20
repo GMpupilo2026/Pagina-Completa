@@ -114,7 +114,7 @@
   .sq.light{background:var(--sq-light);}
   .sq.dark{background:var(--sq-dark);}
   .coords{display:flex; justify-content:space-between; max-width:380px; margin:4px auto 0; font-size:0.7rem; color:var(--text-muted); padding:0 2px;}
-  .position-readout{max-width:380px; margin:8px auto 0; font-size:0.78rem; color:var(--text-muted); text-align:center; line-height:1.5;}
+  .position-readout{max-width:380px; margin:0 auto 8px; font-size:0.78rem; color:var(--text-muted); text-align:center; line-height:1.5;}
 
   .turn-banner{max-width:520px; margin:14px auto 0; text-align:center; font-size:0.95rem; color:var(--text-muted);}
   .turn-banner b{color:var(--text);}
@@ -247,10 +247,10 @@
 
       <div id="play-area">
         <p class="turn-banner" id="turn-banner"></p>
+        <div class="position-readout" id="position-readout"></div>
         <div class="board-wrap" id="board-wrap">
           <div class="board8" id="board" role="group" aria-label="Posición inicial — se queda así durante todo el ejercicio"></div>
         </div>
-        <div class="position-readout" id="position-readout"></div>
         <p class="puzzle-meta" id="puzzle-meta"></p>
 
         <div class="movelog" id="movelog" role="region" aria-label="Jugadas encontradas hasta ahora"></div>

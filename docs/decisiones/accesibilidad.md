@@ -1360,6 +1360,27 @@ Lo mide `verificar-piezas-ciego.js`, entrando como alumna ciega a quince
 ejercicios. Probado que falla: sin la lectura sola del recuadro saltan tres, y
 sin `escribirPosicion()` con encabezado, cinco.
 
+## Las piezas, arriba del tablero
+
+Lo pidió la Academia (19/11/2026) para quien no ve: **primero se lee la
+posición y después se resuelve**. La lista de piezas (`#position-readout`, con
+su encabezado «Piezas») estaba debajo del tablero en Finales, Mates,
+Practicar, Desafíos, Aprender, Aprende a jugar, Visualización y Repasar
+clases: el lector de pantalla pasaba por las 64 casillas antes de llegar a
+ella, y quien juega sin ver llegaba al tablero sin saber qué había. Ahora va
+justo antes del `board-wrap`, después del título y de quién juega, en las
+diez páginas que tienen las dos cosas. Una página nueva con tablero y lista
+de piezas la pone arriba.
+
+Lo revisa `verificar-piezas-arriba.js`, sin navegador: en cada página con
+`id="position-readout"` e `id="board"`, la lista tiene que venir antes en el
+HTML. Probado que falla con la de Mates devuelta a su lugar viejo.
+
+El recuadro de comandos (`js/cuadro-comandos.js`) sigue con su propia lista
+encima del campo de escribir, debajo del tablero: es la que usan, con la
+cuenta ciega, las páginas sin lectura propia (Aperturas, Mis estudios, Sin
+internet, los cursos).
+
 ## Lo que no se puede hacer sin ver, no se ofrece
 
 Después de poner «Piezas» en todos los ejercicios quedaron algunos donde no

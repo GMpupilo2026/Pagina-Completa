@@ -96,7 +96,7 @@
   .mode-btn + .mode-btn{border-left:1px solid var(--line);}
   .mode-btn.active{background:var(--brass); color:#102a43;}
   .speech-btn{background:var(--bg-panel); border:1px solid var(--line); border-radius:6px; color:var(--text-muted); font-family:'Inter',sans-serif; font-size:.8rem; padding:6px 10px; cursor:pointer;}
-  .position-readout{background:var(--bg-panel); border:1px solid var(--line); padding:12px 16px; margin:14px auto 0; font-size:.85rem; color:var(--text-muted); line-height:1.6; max-width:560px;}
+  .position-readout{background:var(--bg-panel); border:1px solid var(--line); padding:12px 16px; margin:0 auto 14px; font-size:.85rem; color:var(--text-muted); line-height:1.6; max-width:560px;}
   @media (prefers-reduced-motion: reduce){ .sq .estrella{animation:none;} }
 
   /* Dentro de la clase en vivo (la ventana con ?en-clase=1, js/main.js): solo
@@ -148,6 +148,7 @@
     <nav class="aj-menu" id="aj-menu" aria-label="Etapas"></nav>
 
     <main id="main-content" class="aj-centro">
+      <div id="position-readout" class="position-readout" role="region" aria-label="Posición actual" style="display:none;"></div>
       <div class="board-wrap" id="board-wrap">
         <div class="board8" id="board" role="group" aria-label="Tablero de la lección"></div>
         <svg class="flechas" id="flechas" viewBox="0 0 8 8" aria-hidden="true"></svg>
@@ -161,7 +162,6 @@
           </div>
         </div>
       </div>
-      <div id="position-readout" class="position-readout" role="region" aria-label="Posición actual" style="display:none;"></div>
       <!-- Donde se escribe la jugada y se le pregunta a la posición
            (js/cuadro-comandos.js). Lo destapa el CSS en Modo Adaptado. -->
       <div id="q-comandos" class="max-w-xl mx-auto"></div>
