@@ -16466,6 +16466,19 @@ sus pts y su puesto actual».
   (`sinMargen` en `js/gafetes-dibujo.js`) se les quita el margen al
   cargarlos y los dos llenan su caja; el verificador mide el alto dibujado de
   cada uno en el píxel.
+- **Colores más fuertes** (20/11: impresos en una impresora de tinta salían
+  opacos): U12 azul rey `#0047cc` (7,6 : 1 con letra blanca), U16 celeste fuerte
+  `#0078b8` (4,8 : 1) y U20 azul marino `#0b1f70` (14,5 : 1); saturados y más
+  distintos entre sí. Lo demás es la impresora: calidad alta y papel mate o
+  cartulina satinada (en papel bond la tinta se absorbe y el color baja).
+- **Para cortar con guillotina** (pedido del dueño): con `salida.cortesCompletos`
+  (el diseño de la PZ lo trae), las líneas de corte van de lado a lado de la
+  hoja en las dos caras, una por cada borde de cada gafete (4 a lo ancho y 4 a
+  lo largo con 3 × 3), en gris fino y justo sobre el corte: lo que queda en el
+  borde casi no se ve. Las del dorso se corren con el ajuste del dorso. El
+  verificador las cuenta en el PDF y comprueba que ninguna pase por dentro de
+  un gafete. Sebastián lleva «Gracias por su colaboración» debajo del nombre
+  (el título de su renglón del personal).
 - **20/11, con los gafetes cortados en la mano: aprovechar todo el espacio.**
   En el frente, el título va **entre los dos logos** (`tituloEntreLogos`), la
   franja del club **justo en el borde de abajo** (`franjaAbajo`) y con eso la

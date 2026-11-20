@@ -209,7 +209,7 @@ async function aceptar(page, boton) {
   igual("los ID FIDE se pidieron a la función de los aceptados, por torneo", await page.evaluate(() => window.__pedidos.filter((p) => p.tabla === "rpc:pareo_fide_de_aceptados").length), 2);
   igual("la franja dice el club", g.map((x) => x.f), ["ESCUELA PEDREGOSO", "ADAPZ", "ADAPZ", "ADAPZ"]);
   igual("el horario va centrado en el dorso", await page.evaluate(() => window.Gafetes._estado().diseno.dorso.horarioCentro), true);
-  igual("un color por edad (U12, U16, U20)", g.map((x) => x.color), ["#1d64b0", "#1d64b0", "#1873b4", "#1b2a4a"]);
+  igual("un color por edad (U12, U16, U20)", g.map((x) => x.color), ["#0047cc", "#0047cc", "#0078b8", "#0b1f70"]);
   igual("abajo del dorso, la categoría sola (sin número)", g.map((x) => x.c), ["U12", "U12", "U16", "U20"]);
   // El nombre en negro (para el árbitro), aunque la franja vaya del color de la edad.
   const colores = await page.evaluate(async () => {
@@ -228,7 +228,7 @@ async function aceptar(page, boton) {
     const px = c.getContext("2d").getImageData(Math.round(c.width * 0.5), Math.round(c.height * 0.95), 1, 1).data;
     return "#" + [px[0], px[1], px[2]].map((v) => v.toString(16).padStart(2, "0")).join("");
   });
-  igual("la franja de la U16 se pinta de su color (celeste oscuro)", franja, "#1873b4");
+  igual("la franja de la U16 se pinta de su color (celeste fuerte)", franja, "#0078b8");
   // El frente aprovecha el espacio: la franja del club llega al borde de
   // abajo, el título va entre los logos y el lugar pasa al dorso.
   const espacio = await page.evaluate(() => {
@@ -237,14 +237,14 @@ async function aceptar(page, boton) {
     const x = window.Gafetes._estado().diseno;
     return ["#" + [d[0], d[1], d[2]].map((v) => v.toString(16).padStart(2, "0")).join(""), x.tituloEntreLogos, x.titulo.texto.split(/\n/).length, x.dorso.lineaArriba];
   });
-  igual("la franja llega abajo; el título, entre los logos, en dos renglones; el lugar, arriba del horario del dorso", espacio, ["#1873b4", true, 2, "HOTEL DEL SUR, PÉREZ ZELEDÓN"]);
+  igual("la franja llega abajo; el título, entre los logos, en dos renglones; el lugar, arriba del horario del dorso", espacio, ["#0078b8", true, 2, "HOTEL DEL SUR, PÉREZ ZELEDÓN"]);
   // Para imprimir en casa: la franja de guía arriba en las dos caras, y el
   // dorso con su franja hasta el borde de abajo (como el frente), en el píxel.
   const guia = await page.evaluate(() => {
     const px = (id, fx, fy) => { const c = document.getElementById(id); const d = c.getContext("2d").getImageData(Math.round(c.width * fx), Math.round(c.height * fy), 1, 1).data; return "#" + [d[0], d[1], d[2]].map((v) => v.toString(16).padStart(2, "0")).join(""); };
     return [px("g-lienzo-frente", 0.5, 0.005), px("g-lienzo-dorso", 0.5, 0.005), px("g-lienzo-dorso", 0.3, 0.992), px("g-lienzo-dorso", 0.3, 0.9)];
   });
-  igual("arriba, en las dos caras, la franja de guía del color; abajo del dorso, su franja llega al borde, como la del frente", guia, ["#1873b4", "#1873b4", "#1873b4", "#1873b4"]);
+  igual("arriba, en las dos caras, la franja de guía del color; abajo del dorso, su franja llega al borde, como la del frente", guia, ["#0078b8", "#0078b8", "#0078b8", "#0078b8"]);
   igual("la vista previa dice a quién muestra", await page.textContent("#g-fila"), "3 de 4: Mora Céspedes Ana Lucía");
   igual("sin avisos en la vista previa", await page.locator("#g-avisos li").allInnerTexts(), []);
 
@@ -371,10 +371,14 @@ async function aceptar(page, boton) {
   igual("cada dorso queda detrás de su frente al voltear por el borde largo", fr.every((f, k) => Math.abs(f[2] + ds[k][2] - (215.9 - 55)) < 0.05 && Math.abs(f[3] - ds[k][3]) < 0.05), true);
   // Tres columnas centradas: (215,9 − 3 × 55) / 2 = 25,45 mm de margen a cada lado.
   igual("los primeros tres, en la primera fila de izquierda a derecha", fr.slice(0, 3).every((f, k) => Math.abs(f[2] - (25.45 + 55 * k)) < 0.05), true);
-  igual("las marcas de corte, solo en la página de los frentes", [/ RG 0\.25 w/.test(cf), / RG 0\.25 w/.test(cd)], [true, false]);
+  // Para la guillotina: las líneas de corte de lado a lado, en gris fino, en
+  // las dos caras; una por cada borde de cada gafete (4 a lo ancho y 4 a lo
+  // largo con 3 × 3), siempre sobre un borde, nunca por dentro de un gafete.
+  igual("las líneas de corte, en gris fino, en las dos caras", [/0\.5 0\.5 0\.5 RG 0\.3 w/.test(cf), /0\.5 0\.5 0\.5 RG 0\.3 w/.test(cd)], [true, true]);
   const lineas = [...cf.matchAll(/([\d.]+) ([\d.]+) m ([\d.]+) ([\d.]+) l S/g)].map((m) => m.slice(1).map((v) => Number(v) * 25.4 / 72));
+  igual("de lado a lado de la hoja: 4 verticales y 4 horizontales", [lineas.filter(([x1, y1, x2, y2]) => x1 === x2 && Math.abs(y2 - y1) > 270).length, lineas.filter(([x1, y1, x2, y2]) => y1 === y2 && Math.abs(x2 - x1) > 205).length], [4, 4]);
   const enGafete = (x, y) => fr.some((f) => x > f[2] + 0.1 && x < f[2] + 54.9 && y > f[3] + 0.1 && y < f[3] + 84.9);
-  igual("ninguna marca pisa un gafete", lineas.some(([x1, y1, x2, y2]) => [0, 0.25, 0.5, 0.75, 1].some((t) => enGafete(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t))), false);
+  igual("ninguna línea pasa por dentro de un gafete", lineas.some(([x1, y1, x2, y2]) => [0, 0.1, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9, 1].some((t) => enGafete(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t))), false);
   // El corrimiento del dorso, por si la impresora no calza exacto.
   await page.click("#g-aprobar");
   await aceptar(page, "Cambiar el diseño");
