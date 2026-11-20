@@ -87,12 +87,25 @@ const PROTEGIDO = /^\/(cursos\/(protegido|recursos)|material)\//;
 // Un archivo puede ir con una LISTA de herramientas: basta con cualquiera de
 // sus licencias. Así va el cálculo de normas, que usan normas-titulo.html y el
 // Aula de Arbitraje (sus casos y su calculadora de normas).
+// Las herramientas estudiantiles se suman abajo: su código trabaja en el
+// navegador y el candado de js/candado-herramienta.js solo tapa la pantalla (se
+// quita desde la consola). Cada una tiene su archivo propio (una sola página lo
+// usa) y su licencia, sin nada público, así que el worker lo entrega solo con
+// la licencia. Pareo, Notara, los reclamos de tablas (los comparten las páginas
+// del árbitro del Centroamericano) y la lista de árbitros NO van: tienen partes
+// públicas o código compartido. (Sin comentarios DENTRO del objeto: verificar-
+// worker.js lo lee con JSON.parse.)
 const CODIGO_CON_LICENCIA = {
   "/js/bases-torneo.js": "bases-torneo",
   "/js/bases-torneo-pagina.js": "bases-torneo",
   "/js/inscripcion-jde.js": "inscripcion-jde",
   "/js/inscripcion-jde-reglas.js": "inscripcion-jde",
   "/js/normas-titulo.js": ["normas-titulo", "aula-arbitraje"],
+  "/js/ajedrez-estudiantil.js": "ajedrez-estudiantil",
+  "/js/estadisticas-colegios.js": "estadisticas-colegios",
+  "/js/historial-jugador.js": "historial-jugador",
+  "/js/ranking-estudiantil.js": "ranking-estudiantil",
+  "/js/ranking-estudiantil-pagina.js": "ranking-estudiantil",
 };
 
 // ---- Los archivos que se bajan con la licencia de una herramienta ----

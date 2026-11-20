@@ -543,12 +543,19 @@ window.PlanEntrenamiento = (function () {
     const areas = (detalle && detalle.areas) || {};
     const porArea = AREAS.map((a) => {
       const d = areas[a.id] || { peso: 0, logrado: 0, aciertos: 0, total: 0, nosabe: 0 };
-      const porcentaje = d.peso ? Math.round((d.logrado / d.peso) * 100) : 0;
+      // `detalle` lo escribe el navegador (un visitante sin cuenta en un
+      // diagnóstico público, un alumno en training_progress), así que estos
+      // campos pueden llegar como texto. Van a `innerHTML` en informes.js y en
+      // los PDF: se fuerzan a número acá, en el origen, para que ningún lector
+      // reciba HTML. Ver «La inyección guardada del diagnóstico» en
+      // docs/decisiones/entrenamiento.md.
+      const peso = Number(d.peso) || 0;
+      const porcentaje = peso ? Math.round((Number(d.logrado) / peso) * 100) || 0 : 0;
       return {
         id: a.id, nombre: a.nombre, emoji: a.emoji, mide: a.mide,
-        porcentaje, nota: porcentaje, aciertos: d.aciertos || 0, total: d.total || 0,
+        porcentaje, nota: porcentaje, aciertos: Number(d.aciertos) || 0, total: Number(d.total) || 0,
         // Cuántas dijo no saber: un hueco que enseñar, distinto de un error que corregir.
-        nosabe: d.nosabe || 0,
+        nosabe: Number(d.nosabe) || 0,
       };
     });
     const pesoTotal = porArea.reduce((s, a) => s + (areas[a.id] ? areas[a.id].peso : 0), 0);
@@ -559,6 +566,8 @@ window.PlanEntrenamiento = (function () {
        ella —resultados de antes, medidos con otra prueba— se sigue usando el
        porcentaje, que es lo único que hay y es como se calificaron entonces. */
     const medicion = detalle && detalle.medicion && typeof detalle.medicion.elo === 'number' ? detalle.medicion : null;
+    // El margen también va a `innerHTML` («± …»); se fuerza a número por lo mismo.
+    const errMed = medicion ? (Number(medicion.error) || 0) : 0;
     const perfil = (detalle && detalle.perfil) || {};
     const declarado = eloValido(perfil.elo);
     /* Versión 5 en adelante: el nivel sale de la fuerza medida en puntos
@@ -577,12 +586,12 @@ window.PlanEntrenamiento = (function () {
       const tope = topePorHuecos(porArea, medicion.esperado);
       const conTope = (e) => NIVELES[Math.min(NIVELES.indexOf(nivelDeElo(e)), tope)];
       const estimado = medicion.elo;
-      let elo = { declarado: null, tipo: null, estimado, error: medicion.error, combinado: estimado, errorCombinado: medicion.error, lectura: null };
+      let elo = { declarado: null, tipo: null, estimado, error: errMed, combinado: estimado, errorCombinado: errMed, lectura: null };
       if (declarado) {
         const tipo = ELO_TIPO_POR_ID[perfil.elo_tipo] ? perfil.elo_tipo : 'estimado';
-        const c = combinar(estimado, medicion.error, declarado, tipo);
-        elo = { declarado, tipo, tipoEtiqueta: ELO_TIPO_POR_ID[tipo].etiqueta, estimado, error: medicion.error,
-                combinado: c.elo, errorCombinado: c.error, lectura: lecturaElo(declarado, estimado, tipo, medicion.error) };
+        const c = combinar(estimado, errMed, declarado, tipo);
+        elo = { declarado, tipo, tipoEtiqueta: ELO_TIPO_POR_ID[tipo].etiqueta, estimado, error: errMed,
+                combinado: c.elo, errorCombinado: c.error, lectura: lecturaElo(declarado, estimado, tipo, errMed) };
       }
       /* «Hasta qué escalón llega»: el último cuyo centro queda por debajo de la
          fuerza medida (centros: 950, 1250, 1550, 1850 y 2150). */

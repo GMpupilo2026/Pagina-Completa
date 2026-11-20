@@ -123,10 +123,12 @@ Deno.serve(async (req) => {
   const modelo = String(config.modelo);
   const maxTokens = 700;
   const [pin, pout] = precioDe(modelo);
-  const { data: inicioMes } = await admin.rpc("ia_inicio_de_mes");
-  const { data: filas } = await admin.from("consultas_arbitraje")
-    .select("costo_usd").gte("created_at", inicioMes as string);
-  const gastado = (filas || []).reduce((s, f) => s + Number(f.costo_usd || 0), 0);
+  // El gasto del mes se suma EN LA BASE (ia_gastado_del_mes): bajar las filas
+  // y sumarlas acá se quedaba corto porque PostgREST corta a ~1000 filas, y
+  // pasado ese punto el tope dejaba de contar. Ver «El tope de la IA se cuenta
+  // en la base» en docs/decisiones.
+  const { data: gastadoRaw } = await admin.rpc("ia_gastado_del_mes");
+  const gastado = Number(gastadoRaw || 0);
 
   // Lo peor que puede costar esta llamada. Si no cabe en lo que queda del
   // mes, no se hace: el tope es un tope, no una sugerencia.
