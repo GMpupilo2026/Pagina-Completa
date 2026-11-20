@@ -179,6 +179,49 @@ y no contra Oscar. Es solo para esa academia.
   recorre el libro desde la posición inicial y juega cada entrada con
   chess.js (ninguna jugada inventada).
 
+## El profe Oscar como rival: el bot con cara y con lengua
+
+Pedido del dueño el 19/11/2026, después de ver «Jaque al perro guasón»
+(ChessBase, 2000: un bulldog animado que comenta la partida con burlas y
+muecas): **un rival propio con esa personalidad, con el avatar del profe
+Oscar, solo para Oscarov para probarlo**. No se copió nada del perro (ni
+dibujo, ni voz, ni frases): se tomó la receta.
+
+- **Es el mismo bot** (`js/bot-oscar.js`, todas las modalidades); lo nuevo es
+  `js/rival-profe.js` con `css/rival-profe.css`: un panel arriba del tablero
+  con un dibujo del avatar (`js/avatar-profe-oscar.js`, así que en CCDR POCOCI
+  sale la profe Pame; por eso las frases no llevan adjetivos con género) y un
+  globo con lo que dice (`aria-live="polite"`).
+- **Comenta lo que pasó, no frases al azar.** Sin saber las reglas de cada
+  modalidad: le pregunta al adaptador `material()` desde el lado del bot. Si
+  después de su respuesta tiene **2,5 peones** más que antes de tu jugada, le
+  regalaste algo (se burla); si tiene 2,5 menos, se lo ganaste (se queja, la
+  cara se sacude). Menos es ruido —`material()` suma también la posición— y
+  no se comenta. Además: se ríe de tu jaque, presume el suyo, saluda,
+  festeja o reniega al final, y si tardas 30 s «Estoy esperando…», a los 70
+  «¿Te dormiste?». A veces, sin motivo, una charla (18 %).
+- **El modo «sparring», solo en los niveles 1 y 2**: desde su sexta jugada y
+  con no menos de ocho jugadas entre uno y otro, con 30 % de probabilidad
+  cambia su jugada por una que deja **entre 2,5 y 6 peones** colgando (una
+  pieza o una torre, nunca la dama) y lo avisa con una pista. Si la comes, te
+  felicita; si no, te dice que había algo gratis. **El regalo se comprueba con
+  la recaptura**: la primera versión miraba una sola jugada adelante y
+  «regalaba» un alfil defendido (…Ae6 en una Italiana, que se come pero se
+  recaptura): la pista mentía. Ahora, para cada captura que gana algo, mira la
+  mejor respuesta del bot, con un tope de 300 ms (`probar()` es lo caro).
+- **Solo para las cuentas en `vistas_en_prueba` con «rival_profe»** (la misma
+  tabla que el panel jornada; se anotan desde SQL, cada quien lee solo las
+  suyas). Entre ellas, una casilla en la pantalla de elegir partida («Que el
+  profe me hable mientras juego», marcada; la elección queda en
+  `rival_profe_activo_v1` de este navegador). `bot.js` llama al rival solo a
+  través de `rival(...)`, que no hace nada si la cuenta no está en la prueba.
+- Las animaciones (respira, salta, se sacude, el globo entra) se apagan con
+  «reducir movimiento». Las caras se bajan al activarse, para que el cambio
+  de gesto sea al instante.
+- Lo revisa `verificar-rival-profe.js` (sin navegador): que cada cara exista,
+  los umbrales, que el regalo sea de verdad con chess.js aun con la recaptura,
+  que no regale la dama, y las conexiones con `bot.js` y `bot.html`.
+
 ## El bot siempre contesta, y su tiempo no se le cobra al alumno
 
 Contra el bot, el reloj del alumno baja **solo mientras le toca pensar a él**,
