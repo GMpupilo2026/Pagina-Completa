@@ -37,13 +37,12 @@ for (const f of ["herramientas/verificar-todo.js", "package.json", "package-lock
 }
 
 console.log("Un archivo que nadie nombra:");
-const nuevo = path.join(RAIZ, "js", "zz-prueba-que-nadie-nombra.js");
-try {
-  fs.writeFileSync(nuevo, "// prueba de verificar-verificadores-afectados.js\n");
-  const r = afectados(["js/zz-prueba-que-nadie-nombra.js"], verificadores);
+// En memoria, no en js/: escrito de verdad, aunque fuera un instante, otro verificador que recorre la carpeta en paralelo
+// lo encontraba y, al ir a leerlo, ya no estaba (verificar-vocabulario.py en el CI, 20/11/2026).
+{
+  const virtuales = new Map([["js/zz-prueba-que-nadie-nombra.js", "// prueba de verificar-verificadores-afectados.js\n"]]);
+  const r = afectados(["js/zz-prueba-que-nadie-nombra.js"], verificadores, { virtuales });
   comprobar(r.todos, "un .js nuevo que ningún verificador nombra hace correr todos");
-} finally {
-  fs.unlinkSync(nuevo);
 }
 
 console.log("La cadena verificador → página → módulo:");
@@ -90,15 +89,11 @@ console.log("Lo que no afecta a nadie:");
   const prueba = "js/zz-prueba-comentarios.js";
   const repo = archivosDelRepo();
   repo.add(prueba);
-  try {
-    fs.writeFileSync(path.join(RAIZ, prueba),
-      "/* ver js/hora-cr.js */\n// y js/avisos.js\nconst a = \"js/marca-agua.js\";\nconst b = `${base}/js/errores.js?v=2`;\n");
-    const n = crearLector(repo).nombrados(prueba, false);
-    comprobar(!n.has("js/hora-cr.js") && !n.has("js/avisos.js"), "lo que un comentario nombra no es dependencia");
-    comprobar(n.has("js/marca-agua.js") && n.has("js/errores.js"), "lo que una cadena nombra sí (también `${base}/js/errores.js?v=2`)");
-  } finally {
-    fs.unlinkSync(path.join(RAIZ, prueba));
-  }
+  // En memoria también (ver arriba).
+  const virtuales = new Map([[prueba, "/* ver js/hora-cr.js */\n// y js/avisos.js\nconst a = \"js/marca-agua.js\";\nconst b = `${base}/js/errores.js?v=2`;\n"]]);
+  const n = crearLector(repo, virtuales).nombrados(prueba, false);
+  comprobar(!n.has("js/hora-cr.js") && !n.has("js/avisos.js"), "lo que un comentario nombra no es dependencia");
+  comprobar(n.has("js/marca-agua.js") && n.has("js/errores.js"), "lo que una cadena nombra sí (también `${base}/js/errores.js?v=2`)");
 }
 
 console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron." : "\nTodo bien.");

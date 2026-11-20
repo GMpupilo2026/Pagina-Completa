@@ -78,7 +78,14 @@ function archivosDelRepo() {
   return new Set(salida.split("\0").filter(Boolean));
 }
 
-function crearLector(repo) {
+/* `virtuales`: archivos que solo existen en memoria (Map ruta → texto), para que
+   verificar-verificadores-afectados.js pruebe un archivo nuevo sin escribirlo en
+   js/: escrito de verdad, aunque fuera un instante, otro verificador que recorre
+   la carpeta en paralelo lo encontraba y, al ir a leerlo, ya no estaba (pasó con
+   verificar-vocabulario.py en el CI, 20/11/2026). */
+const leerTexto = (virtuales, archivo) => (virtuales && virtuales.has(archivo) ? virtuales.get(archivo) : fs.readFileSync(path.join(RAIZ, archivo), "utf8"));
+
+function crearLector(repo, virtuales) {
   const carpetas = new Set();
   for (const f of repo) {
     const partes = f.split("/");
@@ -105,7 +112,7 @@ function crearLector(repo) {
     const res = new Set();
     cache.set(clave, res);
     let texto;
-    try { texto = sinComentarios(archivo, fs.readFileSync(path.join(RAIZ, archivo), "utf8")); } catch (e) { return res; }
+    try { texto = sinComentarios(archivo, leerTexto(virtuales, archivo)); } catch (e) { return res; }
     const esHtml = archivo.endsWith(".html");
     const sirve = (r) => todo || (esHtml ? /\.(js|mjs|css|json|webmanifest)$/.test(r) : /\.(js|mjs|cjs|json|css|wasm)$/.test(r));
     for (const m of texto.matchAll(RUTA)) {
@@ -150,7 +157,7 @@ function crearLector(repo) {
     return vistos;
   }
 
-  return { dependencias, nombrados, barre:(archivo) => BARRE.test(fs.readFileSync(path.join(RAIZ, archivo), "utf8")) };
+  return { dependencias, nombrados, barre:(archivo) => BARRE.test(leerTexto(virtuales, archivo)) };
 }
 
 /* 2: lo nombra (el archivo, o la carpeta de dos niveles o más donde está:
@@ -171,12 +178,14 @@ function cubre(deps, archivo) {
 
 /* cambios: rutas del repo. verificadores: nombres de archivo dentro de
    herramientas/. Devuelve { todos: true, motivo } o { todos: false, elegidos: Set }. */
-function afectados(cambios, verificadores) {
+function afectados(cambios, verificadores, opciones) {
+  const virtuales = (opciones && opciones.virtuales) || null;
   const global = cambios.find((c) => GLOBALES.some((g) => g.test(c)));
   if (global) return { todos: true, motivo: global + " lo usan todos" };
   const repo = archivosDelRepo();
   for (const c of cambios) repo.add(c); // los nuevos del PR, aunque no estén en el índice
-  const lector = crearLector(repo);
+  if (virtuales) for (const v of virtuales.keys()) repo.add(v);
+  const lector = crearLector(repo, virtuales);
   const elegidos = new Set();
   const cubiertos = new Set();
   for (const v of verificadores) {
@@ -193,7 +202,7 @@ function afectados(cambios, verificadores) {
   }
   // Un cambio que solo «cubre» un barredor no dice nada: el barredor corre
   // siempre. Si nadie más lo nombra, no sabemos a quién afecta.
-  const huerfanos = cambios.filter((c) => !cubiertos.has(c) && !DOCUMENTACION.test(c) && fs.existsSync(path.join(RAIZ, c)));
+  const huerfanos = cambios.filter((c) => !cubiertos.has(c) && !DOCUMENTACION.test(c) && (virtuales && virtuales.has(c) || fs.existsSync(path.join(RAIZ, c))));
   if (huerfanos.length) return { todos: true, motivo: huerfanos.join(", ") + (huerfanos.length > 1 ? " no los nombra" : " no lo nombra") + " ningún verificador", huerfanos };
   return { todos: false, elegidos };
 }
