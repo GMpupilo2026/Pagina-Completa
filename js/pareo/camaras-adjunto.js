@@ -4,8 +4,8 @@
  * torneo publicado por el canal `tablero-vivo-<código>` (js/partida-en-vivo.js).
  * El árbitro principal le pasa ese código al adjunto con su estado
  * (`camaras` y `torneo` en enviarAdjunto, js/pareo/pagina.js), y aquí el
- * celular del adjunto (js/pareo/ver.js) y la Mesa del árbitro
- * (js/mesa-arbitro-pareo.js) escuchan el mismo canal: cada mesa suya con su
+ * celular del adjunto (js/pareo/ver.js) escucha ese canal (la Mesa del
+ * árbitro de «Dirijo solo» también lo hacía; se retiró el 19/11/2026): cada mesa suya con su
  * tablero en vivo y, si la cámara leyó un final (mate, ahogado o el resultado
  * que marcó quien cuida la cámara), «La cámara dice: 1-0» con «Confirmar».
  *

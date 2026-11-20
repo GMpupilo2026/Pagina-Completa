@@ -1878,6 +1878,28 @@ const CONTRASTE = `(sel) => {
     igual("cada fila de ese árbitro dice en qué otro torneo está", await q.$$eval("#asignaciones .cam-tambien", (l) => l.map((x) => x.textContent)), ["También en: Sub-10 Absoluto (mesas 1 a 12)", "También en: Sub-8 Absoluto (mesas 3 a 8)"]);
     igual("un aviso a «todos» le llega UNA vez al árbitro con dos enlaces (no una por enlace)", await q.$$eval("#av-para option", (l) => l[0].textContent), "Todos los árbitros (6)");
 
+    // «Soy el único árbitro»: quien dirige solo usa la misma tablet (desde el 19/11/2026 hay una sola Mesa del árbitro).
+    console.log("\n=== La organización: «Soy el único árbitro» ===");
+    await q.evaluate(() => { window.__abiertas = []; window.open = (u) => { window.__abiertas.push(String(u)); return null; }; });
+    const nAsig = await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_asignaciones").length);
+    await q.click("#soy-el-unico");
+    await q.waitForSelector('dialog[open] select[name="tnr"]');
+    await q.selectOption('dialog[open] select[name="tnr"]', "1529733");
+    await q.fill('dialog[open] input[name="arbitro"]', "");
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => /Escribe tu nombre/.test((document.querySelector("dialog[open]") || {}).textContent || ""));
+    igual("sin nombre no se crea nada: lo pide", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_asignaciones").length), nAsig);
+    await q.fill('dialog[open] input[name="arbitro"]', "Oscar Solo");
+    await q.fill('dialog[open] input[name="vence"]', "2027-01-15");
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => /Abrir mi tablet/.test((document.querySelector("dialog[open] [data-avisos-aceptar]") || {}).textContent || ""));
+    igual("crea UN enlace a su nombre, con todas las mesas del torneo y el vencimiento del día elegido (11:59 p. m. de Costa Rica)",
+        await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_asignaciones").slice(-1).map((l) => [l.valores.tnr, l.valores.arbitro, l.valores.nombrado, l.valores.mesa_desde, l.valores.mesa_hasta, l.valores.vence])),
+        [["1529733", "Oscar Solo", true, 1, 9999, "2027-01-16T05:59:59.000Z"]]);
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => window.__abiertas.length === 1);
+    igual("y abre SU tablet, la misma de los adjuntos, con el token del enlace nuevo", await q.evaluate(() => /\/centroamericano-arbitro\.html#[0-9]{64}$/.test(window.__abiertas[0])), true);
+
     console.log("\n=== La organización: el modo concentración ===");
     igual("arriba de la tabla están «Encender en todas» y «Apagarlo en todas», con la nota de que una página no bloquea el aparato", await q.evaluate(() => [document.getElementById("conc-todas-si").textContent, document.getElementById("conc-todas-no").textContent, /Fijar pantalla/.test(document.getElementById("concentracion-todas").textContent), /Acceso guiado/.test(document.getElementById("concentracion-todas").textContent)]), ["Encender en todas las tablets", "Apagarlo en todas", true, true]);
     await q.click('.cam-asignacion[data-id="asig-ana"] [data-accion="concentracion"]');
@@ -1944,7 +1966,7 @@ const CONTRASTE = `(sel) => {
     await q.selectOption("#ct-para", "todos");
     await q.click("#ct-pedir");
     await q.waitForFunction(() => window.__llamadas.some((l) => l.insert === "centroamericano_avisos" && l.valores.some((v) => v.control_tiempos)));
-    igual("«Pedir un control de tiempos» manda un aviso con la marca que le abre la ventana a cada árbitro, una vez por árbitro", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_avisos" && l.valores.some((v) => v.control_tiempos)).map((l) => l.valores.map((v) => [v.de, v.control_tiempos, v.texto.startsWith("Control de tiempos")]))), [[["organizacion", true, true], ["organizacion", true, true], ["organizacion", true, true], ["organizacion", true, true], ["organizacion", true, true], ["organizacion", true, true]].slice(0, 6)]);
+    igual("«Pedir un control de tiempos» manda un aviso con la marca que le abre la ventana a cada árbitro, una vez por árbitro", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_avisos" && l.valores.some((v) => v.control_tiempos)).map((l) => l.valores.map((v) => [v.de, v.control_tiempos, v.texto.startsWith("Control de tiempos")]))), [Array.from({ length: 7 }, () => ["organizacion", true, true])]); // 7: el de «Soy el único árbitro» también es un árbitro
     const [pdfT] = await Promise.all([q.waitForEvent("download"), q.click("#ct-pdf")]);
     const bytesT = fs.readFileSync(await pdfT.path());
     igual("el control de tiempos sale en PDF con la marca de agua", [pdfT.suggestedFilename(), bytesT.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(bytesT.toString("latin1"))], ["control-de-tiempos-centroamericano-2026.pdf", true, true]);
