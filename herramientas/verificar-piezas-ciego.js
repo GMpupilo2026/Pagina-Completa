@@ -85,8 +85,8 @@ async function abrir(browser, ruta, ciega) {
 /* Los encabezados de piezas que se ven, con lo que viene debajo y si están
    antes del tablero. Cada tablero a la vista tiene que tener antes al menos
    tantos encabezados como tableros van hasta él (sin pasar de los que hay):
-   con uno y uno, el encabezado va primero; en Siete diferencias, con un
-   tablero y las listas de A y de B, basta con la de A antes. */
+   con uno y uno, el encabezado va primero; con más listas que tableros,
+   alcanza con que cada tablero tenga una antes. */
 function leer() {
   const SEL = '[aria-roledescription="tablero de ajedrez"], #board';
   const tableros = Array.from(document.querySelectorAll(SEL))

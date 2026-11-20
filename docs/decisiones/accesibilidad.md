@@ -1404,11 +1404,26 @@ recuadro, como siempre.
   vuelve a él y se va con él; si el recuadro no se ve, el bloque tampoco.
 - Mis estudios no carga el recuadro, así que ahí no hay lista que subir.
 
+Dos páginas tenían su propia lectura, sin `#position-readout`, y también
+debajo del tablero (las encontró el verificador en el CI):
+
+- **Estudio** (`entreno/estudio.html`): «Toda la posición, pieza por pieza»
+  sube antes del diagrama, en su propio `.en-palabras.pos-arriba`. La jugada
+  contada (`#posicion-escrita`, la región viva) se queda pegada a los
+  controles, que es lo que mide `verificar-entreno-accesible.js`.
+- **Habilidades** (`entreno/tipos.html`): `#lectura` iba en la columna de la
+  derecha, después del enunciado y las opciones, para que «leer» no dejara el
+  enunciado al final. Con la regla nueva va justo antes de `#tablero`, y la de
+  Siete diferencias (`#lectura-a`) antes de `#tablero-a`.
+
 Esto no lo puede ver `verificar-piezas-arriba.js` (la lista se arma con
 JavaScript): lo mide `verificar-piezas-ciego.js`, que ya entraba a cada
 ejercicio con la cuenta ciega, y ahora además exige que cada tablero a la
-vista tenga antes su «Piezas» (en Siete diferencias, con un tablero y las
-listas de A y B, basta la de A). Sumó Sin internet y el visor de un curso.
+vista tenga antes su «Piezas» (si hay más listas que tableros, alcanza con
+que cada tablero tenga una antes). Sumó Sin internet y el visor de un curso.
+`verificar-cuadro-comandos.js` y `verificar-entreno-escribiendo.js` buscaban
+la lista dentro del recuadro (`#q-comandos .cc-pos`); ahora la buscan donde
+esté (`.cc-piezas`).
 Probado que salta con `colocar()` sin efecto en Ejercicios por tema.
 
 ## Lo que no se puede hacer sin ver, no se ofrece
