@@ -697,7 +697,8 @@
       el("h2", { texto: s.titulo }),
       el("p", { class: "pi-heroe-detalle", texto: s.detalle }),
       el("div", { class: "pi-heroe-botones" }, s.botones.map((b, i) =>
-        el("button", { type: "button", class: i === 0 ? "pi-boton-rosa" : "pi-boton-blanco", onclick: b.hacer }, b.texto))));
+        el("button", { type: "button", class: i === 0 ? "pi-boton-rosa" : "pi-boton-blanco", onclick: b.hacer }, b.texto)),
+        hay && !E.esDeEquipos(v) ? el("button", { type: "button", id: "pi-inicio-proyectar", class: "pi-boton-blanco", onclick: () => abrirProyector("ronda", "pi-inicio-proyectar") }, el("span", { "aria-hidden": "true", texto: "📽️ " }), tx("proyBoton")) : null));
 
     const ultima = hay ? v.rondas[hay - 1] : null;
     const m = ultima ? mesasDe(ultima) : null;
@@ -749,18 +750,29 @@
   // El modelo ya trae todo escrito (nombres, puntos antes de la ronda y el
   // resultado corto): proyectar.js solo lo pinta. La ronda que se abrió;
   // si era la última, sigue a la última (al emparejar la siguiente, pasa sola).
-  const proy = { ronda: null, seguirUltima: true };
-  function modeloProyector() {
-    const v = t();
+  //
+  // Pantalla dividida: un segundo torneo guardado en este navegador (otro de
+  // la misma categoría del evento, por ejemplo) en la otra mitad. Se elige en
+  // el proyector y se recuerda; cada mitad se arma por su id (el abierto sale
+  // de la memoria, el otro de lo guardado), así que cambiar de torneo en Pareo
+  // para anotar sus resultados no cambia lo que se proyecta.
+  const CLAVE_PROY_LADO = "pareo_proyectar_lado_v1";
+  const proy = { ronda: null, seguirUltima: true, id: null, lado: null };
+  const torneoPorId = (id) => (id === estado.id ? estado.t : (id ? leerJSON(PREFIJO + id, null) : null));
+  function modeloDe(v, rondaFija) {
     const hay = v.rondas.length;
-    const r = proy.seguirUltima || proy.ronda == null || proy.ronda >= hay ? hay - 1 : proy.ronda;
-    const k = rondasCompletas();
+    const r = rondaFija == null || rondaFija >= hay ? hay - 1 : rondaFija;
+    let k = 0;
+    while (k < hay && T.rondaCompleta(v.rondas[k])) k++;
+    const de = (id) => v.jugadores.find((j) => j.id === id) || {};
+    const nombre = (id) => de(id).nombre || "?";
     const base = { torneo: v.grupo || v.nombre || tx("estadoSinNombre"), mesas: [], totalMesas: 0, faltan: 0,
-      rondaTitulo: tx("fRondas"), clasTitulo: k ? tx("proyClasTras", { r: k }) : tx("fClasificacion"), clasificacion: [] };
+      rondaTitulo: tx("fRondas"), clasTitulo: k ? tx("proyClasTras", { r: k }) : tx("fClasificacion"), clasificacion: [],
+      bye: tx("proyBye", { p: puntosTexto((v.puntos || {}).bye == null ? 1 : v.puntos.bye) }) };
     if (k && v.jugadores.length) {
       try {
-        base.clasificacion = E.clasificacion(hasta(k), v.sistema === "eliminacion" ? [] : v.desempates).map((f) => {
-          const j = jugador(f.id) || {};
+        base.clasificacion = E.clasificacion(Object.assign({}, v, { rondas: v.rondas.slice(0, k) }), v.sistema === "eliminacion" ? [] : v.desempates).map((f) => {
+          const j = de(f.id);
           return { p: f.puesto, nombre: (j.nombre || "?") + (j.titulo ? " (" + j.titulo + ")" : ""), inst: j.institucion || "", pts: puntosTexto(f.puntos) };
         });
       } catch (e) { base.clasificacion = []; }
@@ -773,24 +785,55 @@
       rondaTitulo: tx("proyRonda", { r: r + 1 }) + (v.sistema === "eliminacion" ? " · " + Pagina.nombreRondaElim(v, r) : ""),
       totalMesas: m.total, faltan: m.faltan,
       mesas: R.mesas.map((x, i) => ({ mesa: V.mesaFisica(v, i), r: x.r || null, rTexto: x.r ? tx("corto_" + x.r) : "",
-        b: { nombre: nombreDe(x.b), pts: antes(x.b) }, n: x.n === null ? null : { nombre: nombreDe(x.n), pts: antes(x.n) } })),
+        b: { nombre: nombre(x.b), pts: antes(x.b) }, n: x.n === null ? null : { nombre: nombre(x.n), pts: antes(x.n) } })),
     });
+  }
+  // Los torneos que pueden ir en la otra mitad: los individuales guardados en
+  // este navegador, primero los del mismo evento.
+  function torneosParaElLado() {
+    const yo = torneoPorId(proy.id);
+    const ev = yo && yo.evento ? yo.evento.id : null;
+    return estado.lista.filter((x) => x.id !== proy.id).map((x) => ({ x, y: torneoPorId(x.id) }))
+      .filter(({ y }) => y && !E.esDeEquipos(y))
+      .sort((a, b) => ((b.y.evento && b.y.evento.id === ev) - (a.y.evento && a.y.evento.id === ev)) || (b.x.actualizado || 0) - (a.x.actualizado || 0))
+      .map(({ x, y }) => ({ id: x.id, nombre: y.grupo || y.nombre || tx("estadoSinNombre") }));
+  }
+  // Uno o dos modelos (el del lado, si se eligió y sigue guardado).
+  function modelosProyector() {
+    const yo = torneoPorId(proy.id) || t();
+    const lado = proy.lado ? torneoPorId(proy.lado) : null;
+    // Con dos torneos, cada mitad sigue su última ronda.
+    const lista = [modeloDe(yo, lado || proy.seguirUltima ? null : proy.ronda)];
+    if (lado && !E.esDeEquipos(lado)) lista.push(modeloDe(lado, null));
+    return lista;
   }
   function textosProyector() {
     const claves = ["proyTitulo", "proyResultados", "proyCompleta", "proyEnJuego", "proyPagina", "proyCambiaSola", "proyPausado", "proyPausar", "proySeguir",
-      "proyAnterior", "proySiguiente", "proyVerClas", "proyVerRonda", "proySalir", "proyClasSin", "proyAyuda"];
-    const o = Object.fromEntries(claves.map((c) => [c, X.t(idioma, c)]));
-    o.proyBye = tx("proyBye", { p: puntosTexto(t().puntos.bye) });
-    return o;
+      "proyAnterior", "proySiguiente", "proyVerClas", "proyVerRonda", "proySalir", "proyClasSin", "proyAyuda", "proyBlancas", "proyNegras", "proyMesa",
+      "proyResultado", "proyLado", "proyLadoNinguno", "proyMarca"];
+    return Object.fromEntries(claves.map((c) => [c, X.t(idioma, c)]));
+  }
+  function opcionesProyector(vista, volver) {
+    return { textos: textosProyector(), vista, volver, marca: "img/marca-agua-ajedrez-integral.png",
+      torneos: torneosParaElLado(), lado: proy.lado || "",
+      alElegirLado: (id) => {
+        proy.lado = id || null;
+        escribir(CLAVE_PROY_LADO, JSON.stringify(Object.assign(leerJSON(CLAVE_PROY_LADO, {}) || {}, { [proy.id]: proy.lado })));
+        PareoProyectar.actualizar(modelosProyector(), { torneos: torneosParaElLado(), lado: proy.lado || "" });
+      } };
   }
   function abrirProyector(vista, volver) {
     const v = t();
-    proy.seguirUltima = estado.ronda == null || estado.ronda >= v.rondas.length - 1;
+    // Desde la Portada, o con la ronda por emparejar abierta: la última emparejada.
+    proy.seguirUltima = volver === "pi-inicio-proyectar" || estado.ronda == null || estado.ronda >= v.rondas.length - 1;
     proy.ronda = estado.ronda;
-    PareoProyectar.abrir(modeloProyector(), { textos: textosProyector(), vista, volver });
+    proy.id = estado.id;
+    const recordado = (leerJSON(CLAVE_PROY_LADO, {}) || {})[proy.id];
+    proy.lado = recordado && torneosParaElLado().some((x) => x.id === recordado) ? recordado : null;
+    PareoProyectar.abrir(modelosProyector(), opcionesProyector(vista, volver));
   }
   function actualizarProyector() {
-    if (window.PareoProyectar && PareoProyectar.abierto() && estado.t) PareoProyectar.actualizar(modeloProyector());
+    if (window.PareoProyectar && PareoProyectar.abierto() && estado.t) PareoProyectar.actualizar(modelosProyector());
   }
 
   // Los menús de botones (<details class="pi-menu">): se cierran al elegir,

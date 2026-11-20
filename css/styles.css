@@ -2840,33 +2840,50 @@ body.pi-imprimiendo-plantilla.pi-imprimiendo-firmas .pi-plantilla { break-after:
    con el número en rosado, el resultado en una pastilla blanca y «en juego»
    en ámbar con el texto escrito (el color nunca va solo). Contrastes
    medidos: blanco sobre el fondo ≥ 14:1, los puntos (brand-200) ≥ 8:1,
-   la pastilla ámbar 7,2:1, el número sobre rosado 9:1. Ver «Proyectar la
+   la pastilla ámbar 7,2:1, el número sobre rosado 9:1. Cada jugador lleva
+   un cuadro blanco o negro, y las columnas dicen «Blancas» y «Negras». La
+   marca de agua va en blanco, arriba al centro. Ver «Proyectar la
    ronda y los resultados» en docs/decisiones/juegos-y-torneos.md. */
 .pi-proyectar { position: fixed; inset: 0; z-index: 60; overflow: hidden; color: #fff; background: radial-gradient(120% 90% at 85% 0%, #145c66 0%, #0b3a41 45%, #062026 100%); }
 .pi-proyectar[hidden] { display: none; }
 body.pi-proyectando { overflow: hidden; }
-.pi-py-marco { box-sizing: border-box; height: 100%; display: flex; flex-direction: column; gap: 1.6vh; padding: 3vh 3.5vw 2vh; }
-.pi-py-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 2vw; }
-.pi-py-torneo { margin: 0; font-size: clamp(0.9rem, 2.4vh, 1.6rem); font-weight: 700; color: rgb(173 208 215); }
-.pi-py-titulo { margin: 0.2vh 0 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.8rem, 6.4vh, 4.6rem); line-height: 1.05; font-weight: 800; }
-.pi-py-hora { margin: 0; font-size: clamp(1rem, 4vh, 2.8rem); font-weight: 800; font-variant-numeric: tabular-nums; color: rgb(173 208 215); }
+.pi-py-marco { box-sizing: border-box; height: 100%; display: flex; flex-direction: column; gap: 1.4vh; padding: 2.5vh 3vw 1.8vh; }
+/* Arriba: el torneo y la ronda, la marca de agua en grande al centro y la hora. */
+.pi-py-cab { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 2vw; }
+.pi-py-marca { height: clamp(3rem, 14vh, 9rem); width: auto; filter: brightness(0) invert(1); opacity: 0.92; justify-self: center; }
+.pi-py-torneo { margin: 0; font-size: clamp(0.9rem, min(2.4vh, 1.3vw), 1.6rem); font-weight: 700; color: rgb(173 208 215); }
+.pi-py-titulo { margin: 0.2vh 0 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.6rem, min(6.4vh, 3.6vw), 4.6rem); line-height: 1.05; font-weight: 800; }
+.pi-py-hora { margin: 0; justify-self: end; font-size: clamp(1rem, min(4vh, 2.4vw), 2.8rem); font-weight: 800; font-variant-numeric: tabular-nums; color: rgb(173 208 215); }
+/* Cada torneo: su título (en la pantalla dividida), su barra, las columnas y las mesas. */
+.pi-py-bloque { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 1.2vh; }
+.pi-py-mitades { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3vw; }
+.pi-py-dividido .pi-py-titulo { font-size: clamp(1.3rem, min(5vh, 2.6vw), 3.4rem); }
 .pi-py-avance { display: flex; align-items: center; gap: 1.5vw; }
-.pi-py-avance-texto { margin: 0; white-space: nowrap; font-size: clamp(0.9rem, 2.6vh, 1.7rem); font-weight: 700; }
+.pi-py-avance-texto { margin: 0; white-space: nowrap; font-size: clamp(0.9rem, min(2.6vh, 1.4vw), 1.7rem); font-weight: 700; }
 .pi-py-barra { flex: 1; height: 1.4vh; min-height: 8px; border-radius: 999px; background: rgb(255 255 255 / 0.16); overflow: hidden; }
 .pi-py-barra > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, rgb(243 170 187), #fff); transition: width 0.6s ease; }
-.pi-py-lista { flex: 1; min-height: 0; margin: 0; padding: 0; list-style: none; display: grid; gap: 1vh 2vw;
-  grid-template-rows: repeat(var(--pi-py-filas, 9), minmax(0, 1fr)); grid-auto-flow: column; grid-template-columns: minmax(0, 1fr); }
-.pi-py-lista.pi-py-dos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.pi-py-mesa { display: grid; grid-template-columns: 2.6em minmax(0, 1fr) 4.6em minmax(0, 1fr); align-items: center; gap: 0.6em; min-height: 0;
-  padding: 0 0.9em; border-radius: 1.6vh; font-size: clamp(0.8rem, min(2.5vh, 1.3vw), 1.7rem); background: rgb(255 255 255 / 0.07); border: 1px solid rgb(255 255 255 / 0.12); }
-.pi-py-num { justify-self: start; display: inline-grid; place-items: center; min-width: 2.2em; height: 2.2em; padding: 0 0.3em; border-radius: 999px; font-weight: 800; background: rgb(243 170 187); color: #072128; }
-.pi-py-jug { display: flex; align-items: center; gap: 0.4em; min-width: 0; }
-.pi-py-n { flex-direction: row-reverse; text-align: right; }
-.pi-py-ficha { flex: none; font-size: 1.1em; color: rgb(173 208 215); }
+/* Las mesas como una tabla: Mesa · Blancas (y sus puntos) · Resultado · Negras,
+   las dos columnas de nombres alineadas a la izquierda, con su encabezado escrito. */
+.pi-py-encabezados, .pi-py-lista { display: grid; gap: 1vh 2vw; grid-template-columns: minmax(0, 1fr); }
+.pi-py-encabezados.pi-py-dos, .pi-py-lista.pi-py-dos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pi-py-encabezado, .pi-py-mesa { display: grid; grid-template-columns: 2.6em minmax(0, 1fr) 4.8em minmax(0, 1fr); align-items: center; gap: 0.8em; padding: 0 0.9em;
+  font-size: clamp(0.8rem, min(2.5vh, 1.3vw), 1.7rem); }
+.pi-py-dividido .pi-py-encabezado, .pi-py-dividido .pi-py-mesa { font-size: clamp(0.75rem, min(2.4vh, 1.15vw), 1.5rem); }
+.pi-py-encabezado { font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: rgb(173 208 215); }
+.pi-py-encabezado > span { display: flex; align-items: center; gap: 0.5em; font-size: 0.75em; }
+.pi-py-encabezado > span:nth-child(3) { justify-content: center; }
+.pi-py-lista { flex: 1; min-height: 0; margin: 0; padding: 0; list-style: none; grid-template-rows: repeat(var(--pi-py-filas, 9), minmax(0, 1fr)); grid-auto-flow: column; max-height: calc(var(--pi-py-filas, 9) * 11vh); }
+.pi-py-mesa { min-height: 0; border-radius: 1.6vh; background: rgb(255 255 255 / 0.07); border: 1px solid rgb(255 255 255 / 0.12); }
+.pi-py-num { justify-self: start; display: inline-grid; place-items: center; min-width: 2.2em; height: 2.2em; padding: 0 0.3em; box-sizing: border-box; border-radius: 999px; font-weight: 800; background: rgb(243 170 187); color: #072128; }
+.pi-py-jug { display: flex; align-items: center; gap: 0.55em; min-width: 0; }
+/* El color de cada jugador: un cuadro blanco o negro (con borde claro, para que se vea en el fondo). */
+.pi-py-cuadro { flex: none; width: 0.95em; height: 0.95em; border-radius: 0.2em; box-sizing: border-box; border: 2px solid #fff; }
+.pi-py-cuadro-b { background: #fff; }
+.pi-py-cuadro-n { background: #000; }
 /* Un nombre largo baja a una segunda línea antes de cortarse. */
 .pi-py-nombre { min-width: 0; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.1; overflow-wrap: break-word; font-weight: 600; }
+.pi-py-holgada .pi-py-nombre { -webkit-line-clamp: 3; }
 .pi-py-gana .pi-py-nombre { font-weight: 800; }
-.pi-py-gana .pi-py-ficha { color: rgb(243 170 187); }
 .pi-py-pts { flex: none; font-size: 0.85em; font-weight: 700; color: rgb(173 208 215); font-variant-numeric: tabular-nums; }
 .pi-py-inst { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8em; color: rgb(173 208 215); }
 .pi-py-res { justify-self: center; min-width: 2.8em; text-align: center; box-sizing: border-box; padding: 0.25em 0.6em; border-radius: 999px; font-weight: 800; white-space: nowrap; background: #fff; color: #072128; font-variant-numeric: tabular-nums; }
@@ -2880,6 +2897,9 @@ body.pi-proyectando { overflow: hidden; }
 .pi-py-vacio { flex: 1; display: grid; place-items: center; margin: 0; font-size: clamp(1rem, 3.4vh, 2.2rem); color: rgb(173 208 215); text-align: center; }
 .pi-py-pie { display: flex; flex-wrap: wrap; align-items: center; gap: 1vh 1.5vw; }
 .pi-py-pagina { margin: 0; font-size: clamp(0.8rem, 2vh, 1.3rem); font-weight: 700; color: rgb(173 208 215); min-width: 12em; }
+.pi-py-elegir { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 700; color: rgb(173 208 215); }
+.pi-py-select { max-width: 22rem; padding: 0.35rem 0.6rem; border-radius: 999px; border: 1px solid rgb(255 255 255 / 0.45); background: #0b3a41; color: #fff; font-weight: 700; }
+.pi-py-select:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 .pi-py-botones { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-left: auto; }
 .pi-py-boton { padding: 0.45rem 1rem; border: 1px solid rgb(255 255 255 / 0.45); border-radius: 999px; background: rgb(255 255 255 / 0.08); color: #fff; font-weight: 700; font-size: 0.9rem; cursor: pointer; }
 .pi-py-boton:hover { background: rgb(255 255 255 / 0.18); }
@@ -2888,8 +2908,9 @@ body.pi-proyectando { overflow: hidden; }
 .pi-py-ayuda { flex-basis: 100%; margin: 0; font-size: 0.75rem; color: rgb(173 208 215); }
 @media (prefers-reduced-motion: reduce) { .pi-py-barra > span { transition: none; } }
 @media (max-width: 640px) {
-  .pi-py-mesa { grid-template-columns: 2.6em minmax(0, 1fr) 4.6em minmax(0, 1fr); gap: 0.4em; padding: 0 0.5em; }
-  .pi-py-pts, .pi-py-ficha { display: none; }
+  .pi-py-encabezado, .pi-py-mesa { grid-template-columns: 2.4em minmax(0, 1fr) 4.4em minmax(0, 1fr); gap: 0.4em; padding: 0 0.5em; }
+  .pi-py-pts { display: none; }
+  .pi-py-marca { display: none; }
 }
 @media print { .pi-proyectar { display: none !important; } }
 

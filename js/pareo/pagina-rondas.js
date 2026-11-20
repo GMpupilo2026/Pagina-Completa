@@ -36,6 +36,11 @@
         onclick: () => { estado.ronda = r; pintarRondas(); },
       }, tx("rondaN", { r: r + 1 }) + (r === hay ? " · " + tx("porEmparejar") : T.rondaCompleta(v.rondas[r]) ? "" : " · " + tx("enJuego"))));
     }
+    // «Proyectar» va al lado de las rondas, no adentro de la ronda elegida:
+    // así se ve también con «Ronda N · por emparejar» abierta (proyecta la
+    // última emparejada). En equipos no: el proyector es de mesas individuales.
+    $("pi-rondas-acciones").replaceChildren(hay && !E.esDeEquipos(v)
+      ? el("button", { type: "button", id: "pi-proyectar-ronda", class: C.boton, onclick: () => abrirProyector("ronda", "pi-proyectar-ronda") }, el("span", { "aria-hidden": "true", texto: "📽️ " }), tx("proyBoton")) : "");
     const caja = $("pi-ronda");
     caja.replaceChildren();
     if (!v.jugadores.length) { caja.append(el("p", { class: C.nota, texto: tx("primeroJugadores") })); return; }
@@ -74,7 +79,6 @@
     caja.append(el("div", { class: "flex flex-wrap items-baseline justify-between gap-3 mb-3" },
       el("h2", { class: "font-serif text-xl font-bold", texto: tx("emparejamientosRonda", { r: r + 1 }) + (v.sistema === "eliminacion" ? " · " + Pagina.nombreRondaElim(v, r) : "") + (v.nombre ? " — " + v.nombre : "") }),
       el("div", { class: "flex flex-wrap gap-2 no-imprimir" },
-        E.esDeEquipos(v) ? null : el("button", { type: "button", id: "pi-proyectar-ronda", class: C.boton, onclick: () => abrirProyector("ronda", "pi-proyectar-ronda") }, tx("proyBoton")),
         menuDeBotones("pi-menu-imprimir", tx("menuImprimir"), [
           el("button", { type: "button", onclick: () => window.print() }, tx("imprimir")),
           el("button", { type: "button", onclick: () => Pagina.imprimirPlantillaMesas(r) }, tx("plantillaMesas")),

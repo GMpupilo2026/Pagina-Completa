@@ -305,7 +305,11 @@
 
             <!-- ===== Rondas ===== -->
             <section id="pi-p-rondas" role="tabpanel" aria-labelledby="pi-f-rondas" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" hidden>
-                <div class="flex flex-wrap items-center gap-2 mb-4 no-imprimir" id="pi-rondas-nav" role="group" aria-label="Ronda" data-t-aria="ronda"></div>
+                <!-- Las rondas y, al lado, «Proyectar» (siempre a la vista, cualquiera sea la ronda elegida). -->
+                <div class="flex flex-wrap items-start justify-between gap-2 mb-4 no-imprimir">
+                    <div class="flex flex-wrap items-center gap-2" id="pi-rondas-nav" role="group" aria-label="Ronda" data-t-aria="ronda"></div>
+                    <div id="pi-rondas-acciones"></div>
+                </div>
                 <div id="pi-ronda"></div>
                 <div id="pi-ver-compartir" class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 no-imprimir" hidden>
                     <h3 class="font-semibold mb-2" data-t="verDesdeElCelular">Ver desde el celular</h3>

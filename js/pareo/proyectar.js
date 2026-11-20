@@ -1,17 +1,23 @@
 /* ===== Pareo Integral — la ronda y los resultados en el proyector =====
  *
- * Desde Rondas («Proyectar») o Clasificación («Proyectar la clasificación»)
- * se abre a pantalla completa, para la pantalla grande de la sala: el
- * nombre del torneo, la ronda, cuántos resultados van (con su barra) y las
- * mesas en tarjetas grandes; o la clasificación. Si no caben, pasa de página
- * sola cada 12 segundos. Se pone al día sola: cada resultado que se anota
- * (en esta computadora o desde el celular de un adjunto) llega al proyector
- * al guardarse (pagina.js llama a actualizar() desde guardar()).
+ * Desde Rondas o la Portada («Proyectar») o Clasificación («Proyectar la
+ * clasificación») se abre a pantalla completa, para la pantalla grande de la
+ * sala. Arriba: el nombre del torneo y la ronda a la izquierda, la marca de
+ * agua de Ajedrez Integral en grande al centro y la hora a la derecha.
+ * Abajo, cuántos resultados van (con su barra) y las mesas como una tabla:
+ * «Mesa · Blancas · Resultado · Negras», con un cuadro blanco o negro y los
+ * puntos de antes de la ronda junto a cada nombre (y el encabezado escrito: el color nunca va solo). O la
+ * clasificación. Si no caben, pasa de página sola cada 12 segundos.
  *
- * Este archivo solo pinta lo que le pasan: el modelo (las mesas y la
- * clasificación, ya con los nombres y los puntos escritos) y los textos los
- * arma js/pareo/pagina.js (modeloProyector), así que aquí no se calcula nada
- * del torneo. Todo lo que escribe una persona entra por textContent.
+ * Pantalla dividida: con un segundo torneo elegido abajo («Al lado»), cada
+ * mitad muestra el suyo, con su ronda y su barra, y la marca queda arriba al
+ * centro, para los dos.
+ *
+ * Se pone al día sola: pagina.js llama a actualizar() desde guardar(). Este
+ * archivo solo pinta lo que le pasan: los modelos (mesas y clasificación,
+ * con los nombres y los puntos ya escritos) y los textos los arma
+ * js/pareo/pagina.js (modelosProyector). Todo lo que escribe una persona
+ * entra por textContent.
  *
  * Teclado: flechas (página), Espacio (pausa), C (ronda / clasificación),
  * Escape (salir; el foco vuelve al botón que lo abrió). Ver «Proyectar la
@@ -21,10 +27,11 @@ window.PareoProyectar = (function () {
   "use strict";
 
   const SEGUNDOS = 12;
-  // Filas por columna: con la letra en vh, nueve filas llenan la pantalla
-  // de cualquier proyector sin cortar ninguna.
+  // Filas por columna como máximo: con la letra en vh y vw, nueve filas
+  // llenan la pantalla de cualquier proyector sin cortar ninguna.
   const FILAS = 9;
-  const est = { caja: null, modelo: null, textos: {}, vista: "ronda", pagina: 0, pausa: false, timer: null, reloj: null, volver: null, pedido: null };
+  const est = { caja: null, modelos: [], textos: {}, vista: "ronda", pagina: 0, pausa: false, timer: null, reloj: null,
+    volver: null, pedido: null, marca: null, torneos: [], lado: "", alElegirLado: null };
 
   function el(tag, attrs, ...hijos) {
     const n = document.createElement(tag);
@@ -41,36 +48,36 @@ window.PareoProyectar = (function () {
     return n;
   }
   const T = (k, vars) => {
-    let s = (est.textos && est.textos[k]) || k;
+    let s = est.textos[k] || k;
     for (const [a, b] of Object.entries(vars || {})) s = s.split("{" + a + "}").join(String(b));
     return s;
   };
 
-  const columnas = () => (window.innerWidth >= 1000 ? 2 : 1);
+  const dividida = () => est.modelos.length > 1;
+  // Columnas de cada torneo: una por mitad en la pantalla dividida.
+  const columnas = () => (dividida() || window.innerWidth < 1000 ? 1 : 2);
   const porPagina = () => columnas() * FILAS;
-  function elementos() {
-    const m = est.modelo;
-    if (est.vista === "clasificacion") return m.clasificacion || [];
-    return m.mesas || [];
-  }
-  const paginas = () => Math.max(1, Math.ceil(elementos().length / porPagina()));
+  const elementos = (m) => (est.vista === "clasificacion" ? m.clasificacion || [] : m.mesas || []);
+  const paginasDe = (m) => Math.max(1, Math.ceil(elementos(m).length / porPagina()));
+  const paginas = () => Math.max(...est.modelos.map(paginasDe));
 
   function horaCR() {
     return new Intl.DateTimeFormat("es-CR", { hour: "numeric", minute: "2-digit", timeZone: "America/Costa_Rica" }).format(new Date());
   }
 
-  function tarjetaMesa(x) {
+  // El cuadro del color: blanco con borde, o negro con borde claro (se ve en el fondo oscuro).
+  const cuadro = (lado) => el("span", { class: "pi-py-cuadro pi-py-cuadro-" + lado, "aria-hidden": "true" });
+  function tarjetaMesa(x, m) {
     if (!x.n) {
       return el("li", { class: "pi-py-mesa pi-py-bye" },
         el("span", { class: "pi-py-num", texto: String(x.mesa) }),
-        el("span", { class: "pi-py-jug" }, el("span", { class: "pi-py-nombre", texto: x.b.nombre }), el("span", { class: "pi-py-pts", texto: x.b.pts })),
-        el("span", { class: "pi-py-res pi-py-res-bye", texto: T("proyBye") }),
-        el("span", { class: "pi-py-jug" }));
+        el("span", { class: "pi-py-jug" }, cuadro("b"), el("span", { class: "pi-py-nombre", texto: x.b.nombre }), el("span", { class: "pi-py-pts", texto: x.b.pts })),
+        el("span", { class: "pi-py-res pi-py-res-bye", texto: m.bye }),
+        el("span", {}));
     }
     const gana = x.r === "1-0" || x.r === "+-" ? "b" : x.r === "0-1" || x.r === "-+" ? "n" : null;
-    const jug = (j, lado) => el("span", { class: "pi-py-jug pi-py-" + lado + (gana === lado ? " pi-py-gana" : "") },
-      el("span", { class: "pi-py-ficha", "aria-hidden": "true", texto: lado === "b" ? "♔" : "♚" }),
-      el("span", { class: "pi-py-nombre", texto: j.nombre }), el("span", { class: "pi-py-pts", texto: j.pts }));
+    const jug = (j, lado) => el("span", { class: "pi-py-jug" + (gana === lado ? " pi-py-gana" : "") },
+      cuadro(lado), el("span", { class: "pi-py-nombre", texto: j.nombre }), el("span", { class: "pi-py-pts", texto: j.pts }));
     return el("li", { class: "pi-py-mesa" + (x.r ? "" : " pi-py-pendiente") },
       el("span", { class: "pi-py-num", texto: String(x.mesa) }),
       jug(x.b, "b"),
@@ -84,19 +91,19 @@ window.PareoProyectar = (function () {
       el("span", { class: "pi-py-res", texto: f.pts }));
   }
 
-  function pintar() {
-    const m = est.modelo;
-    if (!est.caja || !m) return;
-    const total = paginas();
-    if (est.pagina >= total) est.pagina = 0;
-    const lista = elementos().slice(est.pagina * porPagina(), (est.pagina + 1) * porPagina());
+  // Un torneo: su título, su barra, el encabezado de las columnas y su página.
+  function bloque(m, k) {
     const esClas = est.vista === "clasificacion";
-
-    const cab = el("header", { class: "pi-py-cab" },
-      el("div", {},
-        el("p", { class: "pi-py-torneo", texto: m.torneo }),
-        el("h2", { id: "pi-py-titulo", class: "pi-py-titulo", texto: esClas ? m.clasTitulo : m.rondaTitulo })),
-      el("p", { class: "pi-py-hora", "aria-hidden": "true", texto: horaCR() }));
+    const todos = elementos(m);
+    const pag = est.pagina % paginasDe(m);
+    const lista = todos.slice(pag * porPagina(), (pag + 1) * porPagina());
+    const cols = columnas();
+    // Las filas se reparten parejo entre las columnas (12 mesas: 6 y 6).
+    const filas = Math.max(1, Math.min(FILAS, Math.ceil(lista.length / cols)));
+    const idTitulo = "pi-py-titulo" + (k ? "-" + k : "");
+    const titulo = el("div", { class: "pi-py-titulos" },
+      el("p", { class: "pi-py-torneo", texto: m.torneo }),
+      el("h2", { id: idTitulo, class: "pi-py-titulo", texto: esClas ? m.clasTitulo : m.rondaTitulo }));
     let avance = null;
     if (!esClas) {
       const pct = m.totalMesas ? Math.round(100 * (m.totalMesas - m.faltan) / m.totalMesas) : 100;
@@ -104,14 +111,50 @@ window.PareoProyectar = (function () {
         el("p", { class: "pi-py-avance-texto", texto: m.faltan ? T("proyResultados", { k: m.totalMesas - m.faltan, m: m.totalMesas }) : T("proyCompleta") }),
         el("div", { class: "pi-py-barra", "aria-hidden": "true" }, el("span", { style: "width:" + pct + "%" })));
     }
-    let cuerpo;
-    if (esClas && !lista.length) cuerpo = el("p", { class: "pi-py-vacio", texto: T("proyClasSin") });
-    else cuerpo = el("ol", { class: "pi-py-lista" + (columnas() === 2 ? " pi-py-dos" : ""), style: "--pi-py-filas:" + FILAS, "aria-label": esClas ? m.clasTitulo : m.rondaTitulo },
-      lista.map(esClas ? filaClas : tarjetaMesa));
+    if (esClas && !lista.length) return el("section", { class: "pi-py-bloque", "aria-labelledby": idTitulo }, titulo, el("p", { class: "pi-py-vacio", texto: T("proyClasSin") }));
+    // El encabezado de las columnas, una vez por columna de tarjetas.
+    const cab = esClas ? null : el("div", { class: "pi-py-encabezados" + (cols === 2 ? " pi-py-dos" : ""), "aria-hidden": "true" },
+      Array.from({ length: Math.min(cols, Math.max(1, Math.ceil(lista.length / filas))) }, () => el("div", { class: "pi-py-encabezado" },
+        el("span", { texto: T("proyMesa") }), el("span", {}, cuadro("b"), T("proyBlancas")),
+        el("span", { texto: T("proyResultado") }), el("span", {}, cuadro("n"), T("proyNegras")))));
+    return el("section", { class: "pi-py-bloque", "aria-labelledby": idTitulo }, titulo, avance, cab,
+      // Con pocas filas las tarjetas quedan altas: el nombre puede usar tres líneas.
+      el("ol", { class: "pi-py-lista" + (cols === 2 ? " pi-py-dos" : "") + (filas <= 7 ? " pi-py-holgada" : ""), style: "--pi-py-filas:" + filas, "aria-label": esClas ? m.clasTitulo : m.rondaTitulo },
+        lista.map((x) => (esClas ? filaClas(x) : tarjetaMesa(x, m)))));
+  }
+
+  function pintar() {
+    if (!est.caja || !est.modelos.length) return;
+    const total = paginas();
+    if (est.pagina >= total) est.pagina = 0;
+    const esClas = est.vista === "clasificacion";
+
+    // Arriba: la marca de agua al centro y la hora a la derecha (y, con un
+    // solo torneo, su nombre y la ronda a la izquierda).
+    const marca = est.marca ? el("img", { class: "pi-py-marca", src: est.marca, alt: T("proyMarca") }) : null;
+    const hora = el("p", { class: "pi-py-hora", "aria-hidden": "true", texto: horaCR() });
+    const cuerpo = dividida()
+      ? [el("header", { class: "pi-py-cab pi-py-cab-dividida" }, el("span", {}), marca, hora),
+        el("div", { class: "pi-py-mitades" }, est.modelos.map((m, k) => bloque(m, k)))]
+      : (() => {
+        const b = bloque(est.modelos[0], 0);
+        const titulos = b.querySelector(".pi-py-titulos");
+        return [el("header", { class: "pi-py-cab" }, titulos, marca, hora), b];
+      })();
 
     const boton = (id, texto, hacer, extra) => el("button", Object.assign({ type: "button", id, class: "pi-py-boton", onclick: hacer }, extra || {}), texto);
+    let elegir = null;
+    if (est.torneos.length && est.alElegirLado) {
+      const sel = el("select", { id: "pi-py-lado", class: "pi-py-select" },
+        el("option", { value: "", texto: T("proyLadoNinguno") }),
+        est.torneos.map((x) => el("option", { value: x.id, texto: x.nombre })));
+      sel.value = est.lado || "";
+      sel.addEventListener("change", () => est.alElegirLado(sel.value));
+      elegir = el("label", { class: "pi-py-elegir" }, el("span", { texto: T("proyLado") }), sel);
+    }
     const pie = el("footer", { class: "pi-py-pie" },
       el("p", { class: "pi-py-pagina", role: "status", texto: total > 1 ? T("proyPagina", { i: est.pagina + 1, n: total }) + " · " + (est.pausa ? T("proyPausado") : T("proyCambiaSola", { s: SEGUNDOS })) : "" }),
+      elegir,
       el("div", { class: "pi-py-botones" },
         total > 1 ? boton("pi-py-anterior", T("proyAnterior"), () => mover(-1)) : null,
         total > 1 ? boton("pi-py-pausa", est.pausa ? T("proySeguir") : T("proyPausar"), alternarPausa, { "aria-pressed": est.pausa ? "true" : "false" }) : null,
@@ -121,7 +164,7 @@ window.PareoProyectar = (function () {
       el("p", { class: "pi-py-ayuda", texto: T("proyAyuda") }));
 
     const foco = document.activeElement && est.caja.contains(document.activeElement) ? document.activeElement.id : null;
-    est.caja.replaceChildren(el("div", { class: "pi-py-marco" }, cab, avance, cuerpo, pie));
+    est.caja.replaceChildren(el("div", { class: "pi-py-marco" + (dividida() ? " pi-py-dividido" : "") }, cuerpo, pie));
     const f = foco && document.getElementById(foco);
     if (f) f.focus();
     programar();
@@ -137,29 +180,40 @@ window.PareoProyectar = (function () {
   function alternarVista() { est.vista = est.vista === "ronda" ? "clasificacion" : "ronda"; est.pagina = 0; pintar(); }
 
   function teclas(e) {
+    if (e.target && e.target.tagName === "SELECT" && e.key !== "Escape" && e.key !== "Tab") return;
     if (e.key === "Escape") { e.preventDefault(); cerrar(); return; }
     if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); mover(1); return; }
     if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); mover(-1); return; }
     if (e.key === " " && !(e.target && e.target.closest && e.target.closest("button"))) { e.preventDefault(); alternarPausa(); return; }
     if ((e.key === "c" || e.key === "C") && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); alternarVista(); return; }
     if (e.key !== "Tab") return;
-    const f = [...est.caja.querySelectorAll("button")];
+    const f = [...est.caja.querySelectorAll("button, select")];
     if (!f.length) return;
     if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
     else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
   }
   const alRedimensionar = () => pintar();
+  const comoLista = (x) => (Array.isArray(x) ? x : x ? [x] : []);
+  function opciones(o) {
+    if ("torneos" in o) est.torneos = o.torneos || [];
+    if ("lado" in o) est.lado = o.lado || "";
+  }
 
-  function abrir(modelo, opciones) {
-    const o = opciones || {};
+  // `modelos`: uno, o dos para la pantalla dividida.
+  function abrir(modelos, opcionesAbrir) {
+    const o = opcionesAbrir || {};
     est.caja = document.getElementById("pi-proyectar");
     if (!est.caja) return;
-    est.modelo = modelo;
+    est.modelos = comoLista(modelos);
     est.textos = o.textos || {};
     est.vista = o.vista === "clasificacion" ? "clasificacion" : "ronda";
     est.pagina = 0;
     est.pausa = false;
     est.volver = o.volver || null;
+    est.marca = o.marca || null;
+    est.alElegirLado = o.alElegirLado || null;
+    est.torneos = []; est.lado = "";
+    opciones(o);
     est.caja.setAttribute("aria-label", T("proyTitulo"));
     est.caja.hidden = false;
     document.body.classList.add("pi-proyectando");
@@ -172,10 +226,11 @@ window.PareoProyectar = (function () {
     const salir = document.getElementById("pi-py-salir");
     if (salir) salir.focus();
   }
-  // Lo nuevo (un resultado, una ronda emparejada): se queda en la misma página.
-  function actualizar(modelo) {
+  // Lo nuevo (un resultado, una ronda emparejada, el torneo de al lado): se queda en la misma página.
+  function actualizar(modelos, o) {
     if (!abierto()) return;
-    est.modelo = modelo;
+    est.modelos = comoLista(modelos);
+    if (o) opciones(o);
     pintar();
   }
   function cerrar() {
