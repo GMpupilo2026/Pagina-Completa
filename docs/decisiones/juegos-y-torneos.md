@@ -16327,6 +16327,18 @@ sus pts y su puesto actual».
   (`sinMargen` en `js/gafetes-dibujo.js`) se les quita el margen al
   cargarlos y los dos llenan su caja; el verificador mide el alto dibujado de
   cada uno en el píxel.
+- **20/11, con los primeros impresos en la mano:** el dorso salió corrido
+  unos 4 mm hacia abajo (la doble cara de una impresora de casa no calza
+  exacto) y al cortar por las marcas del frente se iba un pedazo de la franja
+  de abajo del dorso. Ahora lo de abajo del dorso (la franja, el QR) sube
+  (`dorso.subir`, 6 en la escala de 10 × 14: unos 3,6 mm en 5,5 × 8,5) y deja
+  blanco debajo; la ilustración se achica por abajo, sin tapar el horario.
+  Arriba, en las dos caras, una **franja delgada del color** del gafete, de
+  guía para cortar (`franjaArriba`, lo pidió el dueño). Y **la foto, más
+  grande** (de 30 × 38,5 a 40 × 48 en la escala de 10 × 14), con el nombre y
+  los detalles más abajo. El ajuste del dorso en milímetros sigue para
+  corregir lo que corra cada impresora; el verificador mide en el píxel la
+  franja de arriba en las dos caras y el blanco de abajo del dorso.
 - **El personal del torneo** (pedido del dueño): en el diseño, un renglón
   por persona, «Rol | Apellidos | Nombre | Título | Avatar» (`personal`, se
   edita en la página), que se suma al final al traer los jugadores. El rol va

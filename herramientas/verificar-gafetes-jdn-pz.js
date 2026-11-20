@@ -226,6 +226,13 @@ async function aceptar(page, boton) {
     return "#" + [px[0], px[1], px[2]].map((v) => v.toString(16).padStart(2, "0")).join("");
   });
   igual("la franja de la U16 se pinta de su color (celeste oscuro)", franja, "#1873b4");
+  // Para imprimir en casa: la franja de guía arriba en las dos caras, y el
+  // dorso con blanco abajo (su franja subió), medido en el píxel.
+  const guia = await page.evaluate(() => {
+    const px = (id, fx, fy) => { const c = document.getElementById(id); const d = c.getContext("2d").getImageData(Math.round(c.width * fx), Math.round(c.height * fy), 1, 1).data; return "#" + [d[0], d[1], d[2]].map((v) => v.toString(16).padStart(2, "0")).join(""); };
+    return [px("g-lienzo-frente", 0.5, 0.005), px("g-lienzo-dorso", 0.5, 0.005), px("g-lienzo-dorso", 0.3, 0.992), px("g-lienzo-dorso", 0.3, 0.9)];
+  });
+  igual("arriba, en las dos caras, la franja de guía del color; abajo del dorso, blanco; su franja, más arriba", guia, ["#1873b4", "#1873b4", "#ffffff", "#1873b4"]);
   igual("la vista previa dice a quién muestra", await page.textContent("#g-fila"), "3 de 4: Mora Céspedes Ana Lucía");
   igual("sin avisos en la vista previa", await page.locator("#g-avisos li").allInnerTexts(), []);
 
