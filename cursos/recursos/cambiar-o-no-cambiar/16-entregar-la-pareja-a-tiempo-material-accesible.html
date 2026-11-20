@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,21 +57,39 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Anatoly Karpov – Alexei Shirov, Biel 1992. Juegan las blancas, con los dos alfiles. El caballo negro de eva 5 domina el centro. ¿Lo cambias?</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Muchos jugadores se aferran a los dos alfiles como si fueran un premio. Pero la pareja vale por lo que hace; si un alfil puede eliminar el caballo que sostiene toda la defensa rival, cambiarlo es dar algo bueno por algo mejor.</p>
 <p>La clave está en lo que queda después: si el cambio deja al rey rival sin defensores o su estructura dañada, conviene mantener las damas en el tablero para aprovecharlo.</p>
-<p>Karpov, contra Shirov, dio su alfil de b2 por el caballo de e5, la pieza negra más fuerte. El flanco de rey negro quedó flojo y, con las damas todavía en el tablero, la primera fila negra no resistió la táctica.</p>
+<p>Karpov, contra Shirov, dio su alfil de bella 2 por el caballo de eva 5, la pieza negra más fuerte. El flanco de rey negro quedó flojo y, con las damas todavía en el tablero, la primera fila negra no resistió la táctica.</p>
 
 
 <h2>2. Conceptos clave</h2>
 <dl>
   <dt>El mate del pasillo</dt>
   <dd>El rey enrocado queda encerrado por sus propios peones y una torre o dama entra en la última fila a dar mate. Es la debilidad más común de todas las partidas de club.</dd>
-  <dd><strong>El error de siempre:</strong> No hacer el hueco. Una jugadita de peón —h6, h3, g3— cuesta un tiempo y quita de la partida una familia entera de tácticas. Hacerlo en el momento correcto es de las mejores costumbres que se pueden tomar.</dd>
-  <dd><strong>Para verlo:</strong> Torre blanca que llega a e8 con el rey negro en g8 y peones en f7, g7 y h7: mate. Si el peón estuviera en h6, el rey sale por h7 y no pasa nada.</dd>
+  <dd><strong>El error de siempre:</strong> No hacer el hueco. Una jugadita de peón —hector 6, hector 3, gustav 3— cuesta un tiempo y quita de la partida una familia entera de tácticas. Hacerlo en el momento correcto es de las mejores costumbres que se pueden tomar.</dd>
+  <dd><strong>Para verlo:</strong> Torre blanca que llega a eva 8 con el rey negro en gustav 8 y peones en felix 7, gustav 7 y hector 7: mate. Si el peón estuviera en hector 6, el rey sale por hector 7 y no pasa nada.</dd>
   <dt>Desarrollo y tiempo</dt>
   <dd>Sacar cada pieza a una casilla donde trabaje, y hacerlo rápido. Un tiempo es una jugada: moverse dos veces con la misma pieza en la apertura regala uno.</dd>
   <dd><strong>El error de siempre:</strong> Sacar la dama temprano. La dama es la pieza más valiosa y por eso la más fácil de echar: cada jaque que le dan al rival lo desarrolla a él y a ti te cuesta una jugada.</dd>
@@ -73,34 +97,78 @@
   <dt>La estructura de peones</dt>
   <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
-  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: eva 4-david 5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Anatoly Karpov – Alexei Shirov, Biel 1992. Juegan las blancas, con los dos alfiles. El caballo negro de e5 domina el centro. ¿Lo cambias?</h3>
+  <h3 id="posicion-1">Posición 1: Anatoly Karpov – Alexei Shirov, Biel 1992. Juegan las blancas, con los dos alfiles. El caballo negro de eva 5 domina el centro. ¿Lo cambias?</h3>
   
-  <p>Piezas blancas: rey en g1; dama en c2; torres en a1, d1; alfiles en b2, e2; caballo en g3; peones en a4, b3, e3, f2, g2, h3.</p>
-  <p>Piezas negras: rey en g8; dama en e7; torres en d8, e8; alfiles en b4, b7; caballo en e5; peones en a6, b5, c6, f6, g7, h7.</p>
+  <h4>Piezas blancas: 13</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en cesar 2.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en david 1.</li>
+    <li>Alfil en bella 2.</li>
+    <li>Alfil en eva 2.</li>
+    <li>Caballo en gustav 3.</li>
+    <li>Peón en anna 4.</li>
+    <li>Peón en bella 3.</li>
+    <li>Peón en eva 3.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 3.</li>
+  </ul>
+  <h4>Piezas negras: 13</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en eva 7.</li>
+    <li>Torre en david 8.</li>
+    <li>Torre en eva 8.</li>
+    <li>Alfil en bella 4.</li>
+    <li>Alfil en bella 7.</li>
+    <li>Caballo en eva 5.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 5.</li>
+    <li>Peón en cesar 6.</li>
+    <li>Peón en felix 6.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 21. alfil captura eva 5, dama captura eva 5, 22. alfil david 3, hector 6, 23. alfil gustav 6, torre felix 8, 24. caballo felix 5, cesar 5, 25. anna captura bella 5, anna captura bella 5, 26. torre anna 7, dama cesar 7</p>
+  <h4>La línea: 12 jugadas</h4>
+  <ul>
+    <li>21. Blancas: alfil captura eva 5.</li>
+    <li>21. Negras: dama captura eva 5.</li>
+    <li>22. Blancas: alfil david 3.</li>
+    <li>22. Negras: hector 6.</li>
+    <li>23. Blancas: alfil gustav 6.</li>
+    <li>23. Negras: torre felix 8.</li>
+    <li>24. Blancas: caballo felix 5.</li>
+    <li>24. Negras: cesar 5.</li>
+    <li>25. Blancas: anna captura bella 5.</li>
+    <li>25. Negras: anna captura bella 5.</li>
+    <li>26. Blancas: torre anna 7.</li>
+    <li>26. Negras: dama cesar 7.</li>
+  </ul>
   <p>Resultado: Posición para jugar</p>
-  <p>21. alfil captura eva 5, dama captura eva 5, 22. alfil david 3: Karpov entrega la pareja para eliminar el caballo de e5. Después de 23. alfil gustav 6 y 24. caballo felix 5 las blancas atacan las casillas débiles del rey negro, y mantienen las damas en el tablero para que esas debilidades pesen. (Stockfish 17 a profundidad 22: alfil captura eva 5 es la que elige el motor (+1,8).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 3rr1k1/1b2q1pp/p1p2p2/1p2n3/Pb6/1P2P1NP/1BQ1BPP1/R2R2K1 w - - 0 21</p>
+  <p>21. alfil captura eva 5, dama captura eva 5, 22. alfil david 3: Karpov entrega la pareja para eliminar el caballo de eva 5. Después de 23. alfil gustav 6 y 24. caballo felix 5 las blancas atacan las casillas débiles del rey negro, y mantienen las damas en el tablero para que esas debilidades pesen. (Stockfish 17 a profundidad 22: alfil captura eva 5 es la que elige el motor (+1,8).)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 3rr1k1/1b2q1pp/p1p2p2/1p2n3/Pb6/1P2P1NP/1BQ1BPP1/R2R2K1 w - - 0 21</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Revisa tus partidas perdidas y cuenta cuántas terminaron en la última fila. El número suele sorprender.</li>
   <li>Arma cinco posiciones con la última fila débil y busca en cada una la desviación que da mate.</li>
   <li>Juega tres partidas contándote los tiempos en voz alta: cada vez que muevas dos veces una pieza, anótalo.</li>
   <li>Toma diez partidas de grandes maestros y cuenta en qué jugada terminaron de desarrollar. El número es más bajo de lo que crees.</li>
   <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
-  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Arma en el tablero un peón aislado en david 4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -121,7 +189,7 @@
   </li>
   <li>
     <p>¿Por qué los caballos antes que los alfiles?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (f3 y c3, f6 y c6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (felix 3 y cesar 3, felix 6 y cesar 6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
   </li>
   <li>
     <p>¿Qué es una ventaja de desarrollo y cómo se aprovecha?</p>
@@ -153,7 +221,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Cambiar o no cambiar» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

@@ -290,6 +290,48 @@ function decoracion(id, tema) {
     return css;
 }
 
+/* Las FORMAS de un tema con `estilo` (hoy solo «jornada», el aspecto de
+ * Chessgora para la prueba del panel jornada). Un tema normal cambia colores,
+ * letra y decorado; este cambia también la forma de las cosas, sin tocar
+ * ninguna página: todo va por las utilidades que el sitio ya usa.
+ *  - Encabezado BLANCO con borde fino (solo en modo claro: en oscuro sigue
+ *    oscuro). El logo de siempre es crema, pensado para fondo oscuro: se
+ *    pinta de azul marino con una máscara que usa su misma forma
+ *    (`object-position` saca la imagen de la vista y la máscara recorta el
+ *    fondo). El logo de una academia se deja como viene. El texto blanco del
+ *    encabezado pasa a brand-800 (14,7:1 sobre blanco) e «Integral», de
+ *    accent-400 (1,9:1, ilegible sobre blanco) a accent-700 (5,1:1).
+ *  - Tarjetas con borde fino en vez de sombra: la sombra pasa a un anillo de
+ *    1 px (box-shadow, así no corre nada de lugar) y las esquinas, un poco
+ *    más redondas.
+ *  - Botones principales (los de fondo accent-500) en forma de píldora.
+ *  - Títulos en Inter, como el texto: todo en una sola letra, limpia. Una
+ *    letra elegida a mano (data-letra) le sigue ganando: va después.
+ * Lo comprueba verificar-panel-jornada.js (el aspecto) y
+ * verificar-temas-plataforma.js (los colores). */
+function estiloDeTema(id, tema) {
+    if (tema.estilo !== "jornada") return "";
+    const sel = `:root[data-tema="${id}"]`;
+    const claro = `${sel}:not(.dark)`;
+    return (
+        `${claro} #header{background:#fff;background-image:none;border-bottom:1px solid rgb(var(--c-brand-100));box-shadow:none}` +
+        `${claro} #header .text-white{color:rgb(var(--c-brand-800))}` +
+        `${claro} #header .text-accent-400{color:rgb(var(--c-accent-700))}` +
+        `${claro} #header .hover\\:bg-brand-700:hover{background-color:rgb(var(--c-brand-50))}` +
+        `${claro} #header .border-white\\/40{border-color:rgb(var(--c-brand-200))}` +
+        `${claro} #header img[src$="logo-marca.png"]{object-position:-9999px 0;background:rgb(var(--c-brand-800));` +
+        `-webkit-mask:url("/img/logo-marca.png") center/contain no-repeat;mask:url("/img/logo-marca.png") center/contain no-repeat}` +
+        `${sel} .shadow-md,${sel} .shadow-lg,${sel} .shadow-xl,${sel} .shadow,${sel} .hover\\:shadow-lg:hover` +
+        `{box-shadow:0 0 0 1px rgb(var(--c-brand-100))}` +
+        `${sel}.dark .shadow-md,${sel}.dark .shadow-lg,${sel}.dark .shadow-xl,${sel}.dark .shadow,${sel}.dark .hover\\:shadow-lg:hover` +
+        `{box-shadow:0 0 0 1px rgb(var(--c-brand-800))}` +
+        `${sel} .rounded-2xl{border-radius:1.25rem}` +
+        `${sel} .rounded-xl{border-radius:1rem}` +
+        `${sel} :is(button,a,input[type=submit]).bg-accent-500{border-radius:999px}` +
+        `${sel} .font-serif{font-family:Inter,"Inter respaldo",sans-serif;letter-spacing:-0.015em}`
+    );
+}
+
 /* La LETRA que eligió la persona (js/temas-plataforma.js, LETRAS). Va DESPUÉS
  * de los temas y con la misma especificidad que la letra de un tema
  * (:root[data-letra] .font-serif, 0,3,0): así la que se eligió a mano le gana
@@ -314,14 +356,20 @@ function cssDeTemas() {
     let css = `:root{${tonos(TEMAS.clasico)}}`;
     for (const [id, tema] of Object.entries(TEMAS)) {
         if (id === "clasico") continue;
-        css += `:root[data-tema="${id}"]{${tonos(tema)}}` + decoracion(id, tema);
+        css += `:root[data-tema="${id}"]{${tonos(tema)}}` + decoracion(id, tema) + estiloDeTema(id, tema);
     }
     css += cssDeLetras();
     return "\n" + css + "\n";
 }
 
+/* En Windows, node_modules/.bin/tailwindcss es un script de sh que
+   execFileSync no puede ejecutar: el que corre es tailwindcss.cmd, y un .cmd
+   solo se ejecuta con shell (Node lo exige desde la CVE-2024-27980). Sin esto,
+   `npm run css` reventaba con ENOENT en la computadora del dueño. */
+const EN_WINDOWS = process.platform === "win32";
 function binario() {
     const candidatos = [
+        ...(EN_WINDOWS ? [path.join(RAIZ, "node_modules/.bin/tailwindcss.cmd")] : []),
         path.join(RAIZ, "node_modules/.bin/tailwindcss"),
         ...(process.env.NODE_PATH || "").split(":").filter(Boolean)
             .map((p) => path.join(p, ".bin/tailwindcss")),
@@ -387,7 +435,7 @@ function compilar(nombre, paleta, archivos, extra) {
     }, null, 1) + ";\n");
     const salida = path.join(CSS, nombre + ".css");
     execFileSync(binario(), ["-c", cfg, "-i", path.join(__dirname, "css/entrada.css"),
-                             "-o", salida, "--minify"], { stdio: ["ignore", "ignore", "pipe"] });
+                             "-o", salida, "--minify"], { stdio: ["ignore", "ignore", "pipe"], shell: EN_WINDOWS });
     fs.unlinkSync(cfg);
     if (extra) fs.appendFileSync(salida, extra);
     const kb = (fs.statSync(salida).size / 1024).toFixed(1);

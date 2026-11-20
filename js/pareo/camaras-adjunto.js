@@ -16,7 +16,11 @@
  * pública: es para el árbitro. Ver «Pareo Integral: las cámaras en la mesa
  * del adjunto» en docs/decisiones/juegos-y-torneos.md.
  *
- *   PareoCamarasAdjunto.conectar({ codigo, torneo, ronda, alCambiar(mesa) }) → { mesa(n), cerrar() }
+ * Y una mesa de la que todavía no llega nada ofrece «Poner un teléfono en
+ * esta mesa»: el QR que deja a un celular transmitiéndola, sin cuenta (ver
+ * «Un teléfono para cada mesa, desde Pareo Integral»).
+ *
+ *   PareoCamarasAdjunto.conectar({ codigo, torneo, ronda, retraso, alCambiar(mesa) }) → { mesa(n), enlace(n), cerrar() }
  *   PareoCamarasAdjunto.pintar(contenedor, d, opciones)   (d: lo que dio mesa(n), o undefined)
  *   PareoCamarasAdjunto.cargar()                          (chess.js y partida-en-vivo.js, una vez)
  */
@@ -68,8 +72,10 @@
     });
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
     return {
-      codigo: o.codigo, torneo: o.torneo, ronda: o.ronda,
+      codigo: o.codigo, torneo: o.torneo, ronda: o.ronda, retraso: o.retraso || 0,
       mesa: (n) => partidas.get(Number(n)),
+      // El enlace (el del QR) que pone un celular a transmitir esa mesa.
+      enlace: (n) => P.enlaceCamara({ torneo: o.torneo, codigo: o.codigo, mesa: Number(n), retraso: o.retraso || 0 }),
       cerrar: () => { try { raiz.sb.removeChannel(canal); } catch (e) { /* ya cerrado */ } },
     };
   }
@@ -77,15 +83,43 @@
   // El tablero chico de una mesa (oculto para el lector de pantalla: lo dice
   // escrito al lado) y, si la cámara leyó un final y la mesa todavía no tiene
   // resultado, la propuesta con «Confirmar» y «No es así».
-  //   opciones: { tam (px), conResultado, descartada, textoResultado(r), confirmar(r), descartar(r), textos }
-  //   textos (para Pareo en inglés): { sinNoticias, enVivo(n), dice(t), confirmar(t), noEs }
+  //   opciones: { tam (px), mesa y enlace (el del QR de esa mesa: «Poner un teléfono»), conResultado, descartada, textoResultado(r), confirmar(r), descartar(r), textos }
+  //   textos (para Pareo en inglés): { sinNoticias, enVivo(n), dice(t), confirmar(t), noEs, poner, ponerAyuda, abrirAqui, qr(m) }
   const TEXTOS = {
     sinNoticias: "📷 Sin noticias de la cámara de esta mesa.",
     enVivo: (n) => "📷 En vivo · " + (n === 1 ? "1 jugada" : n + " jugadas"),
     dice: (t) => "📷 La cámara dice: " + t,
     confirmar: (t) => "Confirmar " + t,
     noEs: "No es así",
+    poner: "📱 Poner un teléfono en esta mesa",
+    ponerAyuda: "Lee este código con el celular que va encima de la mesa: Notara se abre en esta mesa y transmite, sin cuenta.",
+    abrirAqui: "O abrir la cámara en este aparato",
+    qr: (m) => "Código QR de la cámara de la mesa " + m,
   };
+  // Una mesa sin cámara: «Poner un teléfono en esta mesa» muestra el QR que
+  // deja a un celular transmitiéndola (el mismo de la hoja de QR de Notara y
+  // de Pareo Integral). El dibujo se pide recién al abrirlo.
+  function ponerTelefono(doc, el, X, op) {
+    const det = el("details", "mt-1");
+    det.setAttribute("data-camara-poner", String(op.mesa));
+    const sum = el("summary", "text-xs font-semibold cursor-pointer text-brand-700 dark:text-brand-200 underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", X.poner);
+    const caja = el("div", "mt-2");
+    det.append(sum, caja);
+    det.addEventListener("toggle", () => {
+      if (!det.open || caja.childNodes.length) return;
+      const a = el("a", "block mt-2 text-xs underline font-semibold text-brand-700 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", X.abrirAqui);
+      a.href = op.enlace;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.setAttribute("data-camara-enlace", "");
+      const qr = el("div", "w-40 bg-white p-2 rounded-lg");
+      caja.append(qr, el("p", "text-xs text-brand-600 dark:text-brand-300 mt-2", X.ponerAyuda), a);
+      (raiz.PareoQr ? Promise.resolve() : script("js/pareo/qr.js")).then(() => raiz.PareoQr.cargar())
+        .then(() => { qr.append(raiz.PareoQr.svg(op.enlace, X.qr(op.mesa))); })
+        .catch(() => { qr.remove(); });
+    });
+    return det;
+  }
   function pintar(cont, d, op) {
     const P = raiz.PartidaEnVivo;
     const X = Object.assign({}, TEXTOS, (op && op.textos) || {});
@@ -94,6 +128,7 @@
     cont.replaceChildren();
     if (!P || !d) {
       cont.append(el("p", "text-xs text-brand-600 dark:text-brand-300", X.sinNoticias));
+      if (P && op && op.enlace) cont.append(ponerTelefono(doc, el, X, op));
       return;
     }
     const tam = (op && op.tam) || 112;

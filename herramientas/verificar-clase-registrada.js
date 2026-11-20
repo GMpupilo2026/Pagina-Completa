@@ -169,6 +169,8 @@ window.__deletes = [];
   };
   for (const t of Object.keys(SEMILLA)) TABLAS[t] = SEMILLA[t].slice();
   TABLAS.preguntas_clave = TABLAS.preguntas_clave || [];
+  // La lista de cada clase (clase_asignados): quién puede entrar.
+  TABLAS.clase_asignados = TABLAS.clase_asignados || [];
   TABLAS.clase_elegidos = TABLAS.clase_elegidos || [];
   // Para que una prueba cambie la base «desde otra pantalla» (el profe muestra
   // los resultados) y después avise con __cambioEnBase, como haría Realtime.
@@ -490,10 +492,46 @@ window.__deletes = [];
         } else if (ya) ya.devuelto_at = new Date().toISOString();
         return constructor(n, []);
       }
+      /* Abrir la clase en vivo, como abrir_clase_en_vivo(): la clase y su
+         lista en una llamada. Queda anotada en __inserts como la clase que es
+         (las pruebas cuentan las clases abiertas por ahí), y si ya había una
+         abierta devuelve ESA sin tocar su lista, como la base. */
+      if (n === "abrir_clase_en_vivo") {
+        const ya = TABLAS.class_sessions.find((c) => c.created_by === QUIEN && !c.ended_at);
+        if (ya) return constructor(n, [ya.id]).maybeSingle();
+        const lista = [...new Set((args.p_alumnos || []).filter((x) => x && x !== QUIEN))];
+        if (!lista.length) return { then: (res) => Promise.resolve({ data: null, error: { message: "Elige al menos un alumno para la clase" } }).then(res) };
+        nuevas += 1;
+        const fila = { id: "sesion-" + nuevas, created_by: QUIEN, title: args.p_titulo || null, modalidad: "en_linea",
+          solo_asignados: true, started_at: new Date().toISOString(), created_at: new Date().toISOString(), ended_at: null };
+        window.__inserts.push({ tabla: "class_sessions", fila: fila });
+        TABLAS.class_sessions.push(fila);
+        lista.forEach((a) => TABLAS.clase_asignados.push({ class_session_id: fila.id, student_id: a }));
+        return constructor(n, [fila.id]).maybeSingle();
+      }
+      // cambiar_asignados_de_la_clase(): deja la lista EXACTAMENTE como llega.
+      if (n === "cambiar_asignados_de_la_clase") {
+        const lista = [...new Set((args.p_alumnos || []).filter(Boolean))];
+        TABLAS.clase_asignados = TABLAS.clase_asignados.filter((r) => r.class_session_id !== args.p_clase);
+        lista.forEach((a) => TABLAS.clase_asignados.push({ class_session_id: args.p_clase, student_id: a }));
+        return constructor(n, [lista.length]).maybeSingle();
+      }
       if (n === "mis_clases" && TABLAS.mis_clases) return constructor(n, TABLAS.mis_clases);
+      if (n === "alumnos_del_profesor" && TABLAS.alumnos_del_profesor) return constructor(n, TABLAS.alumnos_del_profesor);
+      if (n === "mis_subgrupos" && TABLAS.mis_subgrupos) return constructor(n, TABLAS.mis_subgrupos);
+      /* «abierta» quiere decir abierta PARA MÍ, como mis_clases(): la clase con
+         lista (solo_asignados) solo le toca a los de la lista. Una semilla de
+         clase abierta sin solo_asignados es de antes de las listas y le toca a
+         todos (la base las dejó asignadas a todos al aplicar la migración). */
+      // Una semilla puede reemplazar class_sessions: la clase abierta de la prueba sigue contando.
+      const todas = TABLAS.class_sessions === SESIONES ? SESIONES : SESIONES.concat(TABLAS.class_sessions);
+      const abiertaDe = (prof) => todas.find((c) => c.created_by === prof && !c.ended_at);
+      const meToca = (c) => !!c && (!c.solo_asignados
+        || TABLAS.clase_asignados.some((r) => r.class_session_id === c.id && r.student_id === QUIEN));
       return constructor(n, n === "mis_clases"
       ? [{ profesor_id: "u-profe", profesor: "Karina Rojas", es_principal: true,
-           clase_abierta: SESIONES.some((c) => c.created_by === "u-profe" && !c.ended_at) }]
+           clase_abierta: meToca(abiertaDe("u-profe")),
+           abierta_sin_mi: !!abiertaDe("u-profe") && !meToca(abiertaDe("u-profe")) }]
       : n === "alumnos_del_profesor"
       ? [{ id: "u-ana", full_name: "Ana Rojas", email: "ana@x.cr" }]
       : []);
@@ -644,10 +682,25 @@ async function pruebaLaAbreElProfesor(browser) {
   igual("…y la franja sigue diciendo que está cerrada",
     (await page.textContent("#clase-estado-texto")).includes("todavía no está abierta") ? "lo dice" : "no", "lo dice");
 
-  // La puerta que sí existe: el botón. Es un acto deliberado suyo.
+  /* La puerta que sí existe: el botón. Es un acto deliberado suyo, y desde
+     que cada clase tiene su lista abre primero «¿Quién entra?»: nadie entra
+     hasta que confirma a quiénes. */
   await page.click("#clase-abrir-btn");
+  await page.waitForSelector("#clase-asignar input[data-alumno]", { timeout: 8000 });
+  igual("el botón muestra a quién dejar entrar", await page.evaluate(() =>
+    document.getElementById("clase-asignar").checkVisibility() ? "sí" : "no"), "sí");
+  igual("…y todavía no abrió nada", await sesionesAbiertas(page), 0);
+  igual("sin nadie marcado no se puede abrir", await page.evaluate(() =>
+    document.querySelector("#clase-asignar [data-confirmar]").disabled ? "deshabilitado" : "habilitado"), "deshabilitado");
+  await page.check("#clase-asignar input[value='u-ana']");
+  igual("el botón dice para cuántos la abre", await page.textContent("#clase-asignar [data-confirmar]"), "Abrir la clase para 1 alumno");
+  await page.click("#clase-asignar [data-confirmar]");
   await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "class_sessions"), null, { timeout: 8000 });
-  igual("el botón sí la abre", await sesionesAbiertas(page), 1);
+  igual("confirmar sí la abre", await sesionesAbiertas(page), 1);
+  igual("con la lista que se marcó", await page.evaluate(() =>
+    (window.__rpcs.find((r) => r.n === "abrir_clase_en_vivo") || { args: {} }).args.p_alumnos), ["u-ana"]);
+  igual("y el selector se cierra", await page.evaluate(() =>
+    document.getElementById("clase-asignar").checkVisibility() ? "sí" : "no"), "no");
   igual("y queda a nombre de quien da la clase", await page.evaluate(() =>
     window.__inserts.find((i) => i.tabla === "class_sessions").fila.created_by), "u-profe");
 
@@ -674,18 +727,38 @@ async function pruebaMandaPosicion(browser) {
   await page.waitForSelector("#clase-estado:not(.hidden)", { timeout: 10000 });
   await page.waitForTimeout(400);
 
-  // Las tres puertas del sitio pasan por aplicarPosicionEnClase(): alcanza con
-  // mirar esa, que es justamente por lo que existe esa función única.
-  await page.evaluate(() => aplicarPosicionEnClase("8/8/8/4k3/8/4K3/4P3/8 w - - 0 1"));
-  await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "class_sessions"), null, { timeout: 8000 });
-  igual("mandar una posición abre la clase", await sesionesAbiertas(page), 1);
+  const selectorVisible = () => page.evaluate(() => document.getElementById("clase-asignar").checkVisibility() ? "sí" : "no");
 
-  // Y una posición que la clase en vivo RECHAZA no puede abrir una clase: sería
+  // Una posición que la clase en vivo RECHAZA no puede abrir una clase: sería
   // registrar una clase que no se dio por un intento que falló.
-  await page.evaluate(() => { window.__inserts.length = 0; });
   await page.evaluate(() => aplicarPosicionEnClase("8/8/8/8/8/8/8/KK6 w - - 0 1"));
   await page.waitForTimeout(500);
   igual("una posición rechazada no abre ninguna", await sesionesAbiertas(page), 0);
+  igual("…ni pregunta quién entra", await selectorVisible(), "no");
+
+  // Las tres puertas del sitio pasan por aplicarPosicionEnClase(): alcanza con
+  // mirar esa, que es justamente por lo que existe esa función única. Ahora
+  // no la abre sin más: pregunta quién entra.
+  await page.evaluate(() => aplicarPosicionEnClase("8/8/8/4k3/8/4K3/4P3/8 w - - 0 1"));
+  await page.waitForSelector("#clase-asignar input[data-alumno]", { timeout: 8000 });
+  igual("mandar una posición pregunta quién entra", await selectorVisible(), "sí");
+  igual("…sin abrir todavía ninguna clase", await sesionesAbiertas(page), 0);
+  igual("la franja dice que falta elegir", (await page.textContent("#clase-estado-texto")).includes("marca quién entra") ? "lo dice" : await page.textContent("#clase-estado-texto"), "lo dice");
+
+  // Si cancela, la próxima jugada no le vuelve a poner el selector encima.
+  await page.click("#clase-asignar button:has-text('Cancelar')");
+  igual("cancelar lo cierra", await selectorVisible(), "no");
+  await page.evaluate(() => aplicarPosicionEnClase("8/8/8/4k3/8/4K3/4P2P/8 w - - 0 1"));
+  await page.waitForTimeout(500);
+  igual("y otra posición no lo vuelve a abrir solo", await selectorVisible(), "no");
+  igual("…queda el botón para abrirla", await seVe(page, "clase-abrir-btn"), "sí");
+
+  await page.click("#clase-abrir-btn");
+  await page.waitForSelector("#clase-asignar input[data-alumno]", { timeout: 8000 });
+  await page.check("#clase-asignar input[value='u-ana']");
+  await page.click("#clase-asignar [data-confirmar]");
+  await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "class_sessions"), null, { timeout: 8000 });
+  igual("con la lista confirmada, la clase se abre", await sesionesAbiertas(page), 1);
 
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();

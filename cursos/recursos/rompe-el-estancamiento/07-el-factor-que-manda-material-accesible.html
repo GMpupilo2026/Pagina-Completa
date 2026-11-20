@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: De todo lo que hay en el tablero, una sola cosa importa: dónde está el rey rival. Juegan las blancas; el rival acaba de jugar … alfil captura hector 6.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Un jugador de club suele ver muchas cosas en una posición: el peón doblado, la columna abierta, el alfil malo, la ventaja de desarrollo, el rey un poco débil. El problema es que las ve todas con el mismo peso, y entonces no sabe por dónde empezar. Elige una jugada que mejora un poco cada cosa y no cambia nada de lo importante.</p>
 <p>En casi toda posición hay un factor que manda. Si un rey está expuesto, eso pesa más que cualquier peón doblado. Si un peón pasado está a dos casillas de coronar, nada más importa. Si un bando va muy adelantado en desarrollo, lo urgente es abrir antes de que el otro se ponga al día. Los factores dinámicos —rey, desarrollo, iniciativa— suelen mandar sobre los estáticos —estructura, alfiles—, porque se pierden si no se usan ya.</p>
@@ -65,32 +89,58 @@
   <dt>El par de alfiles y el alfil malo</dt>
   <dd>Tener los dos alfiles contra alfil y caballo, o contra dos caballos, es una pequeña ventaja duradera: entre los dos cubren las casillas de los dos colores. Un alfil es malo cuando sus propios peones están en casillas de su color.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar un alfil por un caballo sin motivo. El cambio es correcto muchas veces —contra un caballo en puesto avanzado, o en posiciones cerradas—, pero hay que poder decir por qué.</dd>
-  <dd><strong>Para verlo:</strong> En la Francesa, el alfil de c8 del negro queda detrás de la cadena e6-d5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.</dd>
+  <dd><strong>Para verlo:</strong> En la Francesa, el alfil de cesar 8 del negro queda detrás de la cadena eva 6-david 5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.</dd>
   <dt>La coronación y el peón pasado</dt>
   <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
   <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
-  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en gustav 7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
   <dt>Columnas abiertas y torres</dt>
   <dd>Una columna sin peones es el camino de las torres. Una columna semiabierta —sin peones propios pero con uno rival— es por donde se ataca ese peón.</dd>
   <dd><strong>El error de siempre:</strong> Poner la torre en la columna abierta y no hacer nada más. La columna es un medio: sirve para entrar a la séptima fila, para cambiar las torres rivales o para presionar un peón concreto.</dd>
   <dd><strong>Para verlo:</strong> Dos torres dobladas en la séptima fila se llaman 'los cerdos en la séptima' y suelen ganar solas: comen peones y el rey rival no puede salir.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: De todo lo que hay en el tablero, una sola cosa importa: dónde está el rey rival. Juegan las blancas; el rival acaba de jugar … alfil captura hector 6.</h3>
+  <h3 id="posicion-1">Posición 1: De todo lo que hay en el tablero, una sola cosa importa: dónde está el rey rival. Juegan las blancas; el rival acaba de jugar … alfil captura hector 6.</h3>
   
-  <p>Piezas blancas: rey en e1; dama en f4; torre en e6; alfil en b4; peones en a3, f2, h3.</p>
-  <p>Piezas negras: rey en h7; dama en f5; torres en a8, f7; alfil en h6; peones en b6, c7, d6.</p>
+  <h4>Piezas blancas: 7</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en felix 4.</li>
+    <li>Torre en eva 6.</li>
+    <li>Alfil en bella 4.</li>
+    <li>Peón en anna 3.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en hector 3.</li>
+  </ul>
+  <h4>Piezas negras: 8</h4>
+  <ul>
+    <li>Rey en hector 7.</li>
+    <li>Dama en felix 5.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en felix 7.</li>
+    <li>Alfil en hector 6.</li>
+    <li>Peón en bella 6.</li>
+    <li>Peón en cesar 7.</li>
+    <li>Peón en david 6.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 41. dama captura hector 6 jaque, rey gustav 8, 42. torre gustav 6 jaque, dama captura gustav 6, 43. dama captura gustav 6 jaque</p>
+  <h4>La línea: 5 jugadas</h4>
+  <ul>
+    <li>41. Blancas: dama captura hector 6 jaque.</li>
+    <li>41. Negras: rey gustav 8.</li>
+    <li>42. Blancas: torre gustav 6 jaque.</li>
+    <li>42. Negras: dama captura gustav 6.</li>
+    <li>43. Blancas: dama captura gustav 6 jaque.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>41. dama captura hector 6 jaque, rey gustav 8, 42. torre gustav 6 jaque, dama captura gustav 6, 43. dama captura gustav 6 jaque. Hay muchas cosas que mirar en la posición, pero el factor que manda es la seguridad del rey; por eso la jugada buena va directo a él. (Ejercicio 0N87n de la base abierta de Lichess (CC0), rating 1325. Stockfish 16 a profundidad 18: dama captura hector 6 jaque es la mejor (+4,9) y la segunda queda en -3,8.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r7/2p2r1k/1p1pR2b/5q2/1B3Q2/P6P/5P2/4K3 w - - 0 41</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r7/2p2r1k/1p1pR2b/5q2/1B3Q2/P6P/5P2/4K3 w - - 0 41</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Juega tres partidas propias hasta el final y anota en cada una si tu alfil era bueno o malo y por qué.</li>
   <li>Arma un final de alfil bueno contra alfil malo con el mismo material y juégalo desde los dos lados.</li>
@@ -100,7 +150,7 @@
   <li>Arma un final de dos torres contra dos torres con una columna abierta y juégalo: verás por qué la casilla de entrada decide.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +203,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Rompe el estancamiento» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: La línea es larga: hay que llegar hasta el final sin cortar antes de tiempo. Juegan las blancas; el rival acaba de jugar … dama hector 4 jaque.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>La precisión táctica baja notablemente cuando el reloj aprieta. Entrenar con un límite de tiempo estricto (por ejemplo, 30 segundos por problema) acostumbra a tu mente a confiar en los patrones ya entrenados en vez de intentar calcularlo todo desde cero.</p>
 
@@ -70,21 +94,46 @@
   <dd><strong>Para verlo:</strong> Tres principios que resuelven casi toda apertura: un peón al centro, las piezas menores antes que las mayores, y enrocar. Lo que sobre, para después.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: La línea es larga: hay que llegar hasta el final sin cortar antes de tiempo. Juegan las blancas; el rival acaba de jugar … dama hector 4 jaque.</h3>
+  <h3 id="posicion-1">Posición 1: La línea es larga: hay que llegar hasta el final sin cortar antes de tiempo. Juegan las blancas; el rival acaba de jugar … dama hector 4 jaque.</h3>
   <p>Esta posición viene del curso Rompe el estancamiento de la Academia.</p>
-  <p>Piezas blancas: rey en h2; dama en e6; peones en a3, d6, g2.</p>
-  <p>Piezas negras: rey en c3; dama en h4; peones en a6, b5, c4, f6, g5.</p>
+  <h4>Piezas blancas: 5</h4>
+  <ul>
+    <li>Rey en hector 2.</li>
+    <li>Dama en eva 6.</li>
+    <li>Peón en anna 3.</li>
+    <li>Peón en david 6.</li>
+    <li>Peón en gustav 2.</li>
+  </ul>
+  <h4>Piezas negras: 7</h4>
+  <ul>
+    <li>Rey en cesar 3.</li>
+    <li>Dama en hector 4.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 5.</li>
+    <li>Peón en cesar 4.</li>
+    <li>Peón en felix 6.</li>
+    <li>Peón en gustav 5.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 61. dama hector 3 jaque, rey bella 2, 62. dama captura hector 4, gustav captura hector 4, 63. david 7, cesar 3, 64. david 8 corona dama</p>
+  <h4>La línea: 7 jugadas</h4>
+  <ul>
+    <li>61. Blancas: dama hector 3 jaque.</li>
+    <li>61. Negras: rey bella 2.</li>
+    <li>62. Blancas: dama captura hector 4.</li>
+    <li>62. Negras: gustav captura hector 4.</li>
+    <li>63. Blancas: david 7.</li>
+    <li>63. Negras: cesar 3.</li>
+    <li>64. Blancas: david 8 corona dama.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>61. dama hector 3 jaque, rey bella 2, 62. dama captura hector 4, gustav captura hector 4, 63. david 7, cesar 3, 64. david 8 corona dama. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Quien corta la línea en la segunda o tercera jugada no ve por qué gana: la clave aparece al final de la variante. (Ejercicio 1Ome1 de la base abierta de Lichess (CC0), rating 1593. Stockfish 16 a profundidad 18: dama hector 3 jaque es la mejor (+3,4) y la segunda queda en -2,6.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/8/p2PQp2/1p4p1/2p4q/P1k5/6PK/8 w - - 1 61</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/8/p2PQp2/1p4p1/2p4q/P1k5/6PK/8 w - - 1 61</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>resuelve una tanda de 10 problemas de la Base de Problemas con un cronómetro de 30 segundos por posición.</li>
   <li>Juega tres partidas con reloj anotando cuánto tiempo gastaste en las primeras diez jugadas. El objetivo es bajar de diez minutos.</li>
@@ -93,7 +142,7 @@
   <li>Toma diez partidas de grandes maestros y cuenta en qué jugada terminaron de desarrollar. El número es más bajo de lo que crees.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -114,7 +163,7 @@
   </li>
   <li>
     <p>¿Por qué los caballos antes que los alfiles?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (f3 y c3, f6 y c6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (felix 3 y cesar 3, felix 6 y cesar 6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
   </li>
   <li>
     <p>¿Qué es una ventaja de desarrollo y cómo se aprovecha?</p>
@@ -130,7 +179,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Estrategia y Táctica» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

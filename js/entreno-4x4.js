@@ -1329,6 +1329,7 @@ const HELP_SECTIONS = [
     title: 'Cómo escribir una jugada',
     text:
       'Casilla de origen y de destino, por ejemplo "a1 b2" o "a1xb2" (columnas a-d, filas 1-4). ' +
+      'También con palabras, como se dice: "torre toma dama", "de anna 1 a bella 2", "caballo a b3". ' +
       'También en notación algebraica, solo con la casilla de destino: T=Torre, A=Alfil, C=Caballo, D=Dama, R=Rey ' +
       '(sin letra es Peón) — por ejemplo "Ta3" o "Txa3" (la "x" es opcional: toda jugada aquí es una captura). ' +
       'Si hay más de una pieza de ese tipo que puede capturar ahí, se pide la casilla de origen y destino en su lugar. ' +
@@ -1563,7 +1564,54 @@ function handleCmdFormSubmit(e){
     return;
   }
 
-  cmdAnnounce(`No entendí «${trimmed}». Escribe una captura (por ejemplo «a1 b2» o «Ta3»), «siguiente», «niveles» o «ayuda» para ver los comandos.`);
+  /* La captura escrita como se dice: «torre toma dama», «de anna 1 a bella 2»,
+     «caballo a b3», «caballo captura en bella 3». La entiende el intérprete de
+     todo el sitio (ComandosTablero.jugadaEscrita, js/comandos-tablero.js),
+     que solo necesita saber qué hay en cada casilla y qué capturas se pueden
+     hacer: eso es lo que le da `juegoParaPalabras()`. Va al final: lo que este
+     recuadro ya entendía sigue yendo por su camino de siempre. */
+  if(window.ComandosTablero && ComandosTablero.jugadaEscrita){
+    const mv = ComandosTablero.jugadaEscrita(juegoParaPalabras(), trimmed);
+    if(mv){
+      input.value = '';
+      const fromRC = squareToRC(mv.from), toRC = squareToRC(mv.to);
+      selectedCell = fromRC;
+      focusedCell = fromRC;
+      performCapture(toRC[0], toRC[1]);
+      return;
+    }
+    // Cabía en más de una captura: se dice cuáles, no «no entendí».
+    const frase = ComandosTablero.noSePudoJugar(trimmed);
+    if(/puede ser más de una jugada/.test(frase)){ cmdAnnounce(frase); return; }
+  }
+
+  cmdAnnounce(`No entendí «${trimmed}». Escribe una captura (por ejemplo «a1 b2», «Ta3» o «torre toma dama»), «siguiente», «niveles» o «ayuda» para ver los comandos.`);
+}
+
+/* El tablero de 4×4 visto como lo necesita ComandosTablero.jugadaEscrita():
+   qué hay en cada casilla y todas las capturas posibles (acá toda jugada es
+   una captura, y las piezas no tienen bando). */
+function juegoParaPalabras(){
+  return {
+    get(sq){
+      const rc = squareToRC(sq);
+      const p = rc ? boardState[boardKey(rc[0], rc[1])] : null;
+      return p ? { type: p.toLowerCase(), color: 'w' } : null;
+    },
+    moves(){
+      const out = [];
+      Object.keys(boardState).forEach((key) => {
+        const [r, c] = key.split(',').map(Number);
+        captureTargets(boardState[key], r, c, boardState).forEach(([tr, tc]) => {
+          out.push({
+            from: squareName(r, c), to: squareName(tr, tc), flags: 'c',
+            piece: boardState[key].toLowerCase(), captured: boardState[boardKey(tr, tc)].toLowerCase(),
+          });
+        });
+      });
+      return out;
+    },
+  };
 }
 
 /* «siguiente»: con el ejercicio resuelto, lo mismo que «Siguiente ›» del

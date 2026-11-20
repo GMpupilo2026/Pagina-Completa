@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Hay una pieza que no se puede mover sin dejar algo detrás. Juegan las blancas; el rival acaba de jugar … dama captura david 7.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Una clavada es un ataque a una pieza que tiene detrás otra más valiosa, o al rey. Si es al rey, la pieza clavada no se puede mover; si es a otra pieza, moverla cuesta material. En los dos casos queda paralizada, y una pieza paralizada no defiende nada.</p>
 <p>La regla para aprovecharla es atacar la pieza clavada con más fuerzas: un peón que la ataca, otra pieza que se suma. Como no puede escapar, el rival tiene que defenderla, y eso le cuesta tiempo y piezas. Muchas veces la clavada se gana con un simple avance de peón.</p>
@@ -65,32 +89,66 @@
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>La clavada</dt>
   <dd>Una pieza queda clavada cuando no puede moverse porque detrás de ella hay algo más valioso. Si detrás está el rey, la clavada es absoluta y la pieza legalmente no se puede mover; si detrás hay una dama o una torre, es relativa y moverse solo cuesta material.</dd>
   <dd><strong>El error de siempre:</strong> Creer que una pieza clavada defiende. No defiende nada: si la pieza que defiende está clavada contra su rey, no puede capturar. Ese es el motor de media táctica de club.</dd>
-  <dd><strong>Para verlo:</strong> En la Española, alfil bella 5 clava el caballo de c6 contra el rey solo mientras no haya nada en el medio. La respuesta a6 gana tiempo justamente para deshacerla.</dd>
+  <dd><strong>Para verlo:</strong> En la Española, alfil bella 5 clava el caballo de cesar 6 contra el rey solo mientras no haya nada en el medio. La respuesta anna 6 gana tiempo justamente para deshacerla.</dd>
   <dt>Desarrollo y tiempo</dt>
   <dd>Sacar cada pieza a una casilla donde trabaje, y hacerlo rápido. Un tiempo es una jugada: moverse dos veces con la misma pieza en la apertura regala uno.</dd>
   <dd><strong>El error de siempre:</strong> Sacar la dama temprano. La dama es la pieza más valiosa y por eso la más fácil de echar: cada jaque que le dan al rival lo desarrolla a él y a ti te cuesta una jugada.</dd>
   <dd><strong>Para verlo:</strong> Tres principios que resuelven casi toda apertura: un peón al centro, las piezas menores antes que las mayores, y enrocar. Lo que sobre, para después.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Hay una pieza que no se puede mover sin dejar algo detrás. Juegan las blancas; el rival acaba de jugar … dama captura david 7.</h3>
+  <h3 id="posicion-1">Posición 1: Hay una pieza que no se puede mover sin dejar algo detrás. Juegan las blancas; el rival acaba de jugar … dama captura david 7.</h3>
   
-  <p>Piezas blancas: rey en e1; dama en a4; torres en a1, h1; alfil en c1; caballo en b5; peones en a2, d5, f2, g2, h2.</p>
-  <p>Piezas negras: rey en e8; dama en d7; torres en a8, h8; alfil en f8; caballo en f6; peones en a6, b7, e7, f7, g6, h7.</p>
+  <h4>Piezas blancas: 11</h4>
+  <ul>
+    <li>Rey en eva 1.</li>
+    <li>Dama en anna 4.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en hector 1.</li>
+    <li>Alfil en cesar 1.</li>
+    <li>Caballo en bella 5.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en david 5.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 12</h4>
+  <ul>
+    <li>Rey en eva 8.</li>
+    <li>Dama en david 7.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en hector 8.</li>
+    <li>Alfil en felix 8.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 7.</li>
+    <li>Peón en eva 7.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 6.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 15. caballo cesar 7 jaque, rey david 8, 16. dama captura david 7 jaque, rey captura david 7, 17. caballo captura anna 8</p>
+  <h4>La línea: 5 jugadas</h4>
+  <ul>
+    <li>15. Blancas: caballo cesar 7 jaque.</li>
+    <li>15. Negras: rey david 8.</li>
+    <li>16. Blancas: dama captura david 7 jaque.</li>
+    <li>16. Negras: rey captura david 7.</li>
+    <li>17. Blancas: caballo captura anna 8.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
   <p>15. caballo cesar 7 jaque, rey david 8, 16. dama captura david 7 jaque, rey captura david 7, 17. caballo captura anna 8. Es un ataque a la descubierta: al moverse una pieza, se destapa otra. En la línea aparece una clavada: una pieza que no puede moverse sin dejar algo más valioso detrás. (Ejercicio 16rjh de la base abierta de Lichess (CC0), rating 1309. Stockfish 16 a profundidad 18: caballo cesar 7 jaque es la mejor (+4,6) y la segunda queda en -2,7.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r3kb1r/1p1qpp1p/p4np1/1N1P4/Q7/8/P4PPP/R1B1K2R w KQkq - 0 15</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r3kb1r/1p1qpp1p/p4np1/1N1P4/Q7/8/P4PPP/R1B1K2R w KQkq - 0 15</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
   <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
@@ -100,7 +158,7 @@
   <li>Toma diez partidas de grandes maestros y cuenta en qué jugada terminaron de desarrollar. El número es más bajo de lo que crees.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -137,7 +195,7 @@
   </li>
   <li>
     <p>¿Por qué los caballos antes que los alfiles?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (f3 y c3, f6 y c6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (felix 3 y cesar 3, felix 6 y cesar 6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
   </li>
   <li>
     <p>¿Qué es una ventaja de desarrollo y cómo se aprovecha?</p>
@@ -153,7 +211,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Ideas que ganan partidas» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

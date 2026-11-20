@@ -4,7 +4,154 @@ Notas de diseño para Claude, sacadas del CLAUDE.md de la raíz: mensualidades, 
 El índice de todos los temas y las reglas que valen para todo el sitio
 están en `CLAUDE.md`.
 
+## Cobros, versión 2: una fecha de «activa hasta» por cuenta
+
+**Desde el 18/11/2026 los cobros se llevan en `mensualidades.html`** (la
+tarjeta «💳 Cobros» de los tres paneles lleva ahí). `cobros.html` quedó como
+«Recibos y cobros anteriores»: los recibos de antes, corregir o anular un
+recibo y el CSV. El dueño pidió rehacerlo entero porque no era fácil de usar
+—seis fichas, y sobre todo dos sistemas que no se hablaban: `cobros.html`
+registraba quién pagaba y `accesos.html` decidía quién entraba, así que pagar
+no alargaba el acceso y no pagar no lo cortaba—, que se pudiera manejar desde
+el celular, que todo se hiciera a mano primero y quedara automático después,
+y que a quien no paga se le pudiera apagar el usuario con un aviso para pagar.
+
+**La idea es una sola: cada cuenta tiene una fecha de «activa hasta».** Una
+cuenta (`cuentas_cobro`) es un alumno o una familia: un monto mensual y uno o
+más alumnos (`cuenta_cobro_alumnos`; un alumno está en UNA cuenta, lo
+garantiza el índice). Igual que un paquete de 1 cupo es una cuenta individual,
+una cuenta de 1 alumno es la de siempre: no hay dos mecanismos.
+
+- **«Activa hasta» no se guarda: se calcula** (`interno.cuenta_cobro_estado()`).
+  Es lo mayor entre la fecha puesta a mano (`activo_hasta_base`) y el último
+  día cubierto por un cobro PAGADO de la cuenta. Anular el recibo deja su
+  cobro sin pagar y la fecha vuelve atrás sola. La fecha a mano sirve para
+  arrancar con lo que cada familia ya tiene pagado o regalar días; nunca puede
+  quedar antes de lo pagado (`cuenta_cobro_guardar()` lo rechaza: para acortar
+  eso se anula el recibo).
+- **El día de pago es el día de «activa hasta»**: no hay columna aparte. Activa
+  hasta el 5 → vence el 5 de cada mes.
+- **Registrar un pago es un paso** (`cuenta_cobro_pagar()`): emite el cobro de
+  esos días (con `cuenta_id`), lo paga con `interno.pagar()` y sale el recibo,
+  en la misma transacción y con las piezas de siempre. Por eso los recibos
+  nuevos siguen apareciendo en `cobros.html` y en `cobros_vista`. Si esos días
+  ya estaban pagados en la cuenta, se rechaza.
+- **«Cuenta desde» arranca el día después de «activa hasta»: se cuenta desde
+  que venció**, no desde que paga. Lo decidió el dueño: así cada familia
+  conserva su día de pago. Venció el 5/11 y paga el 17: queda activa hasta el
+  5/12. Se puede cambiar a mano en cada pago. El «hasta» de n meses es la
+  víspera del mismo día n meses después (desde el 6/11, un mes: el 5/12).
+- **El estado lo da UNA función** y lo usan la lista (`cuentas_cobro_vista`),
+  `mi_acceso()` y el candado (`acceso_vigente()`): lo que dice la lista y lo
+  que le pasa al alumno no pueden contradecirse. La página no recalcula:
+  pinta `estado`. Estados: `al_dia`, `vence_pronto` (dentro de los días de
+  aviso), `vencido` y `apagado`.
+- **Quién ve qué**: lo mismo que los cobros de antes. Administración todas;
+  quien coordina (con la función «cobros») las que tienen un alumno bajo su
+  coordinación (`interno.veo_cuenta_cobro()`). Una profesora no ve ninguna. Las
+  tablas no se escriben desde el navegador: las escriben funciones que
+  validan. Las cuatro tablas nuevas tienen su trigger de auditoría.
+- **«Registra y listo»**: el recibo de una cuenta no pasa por la revisión de
+  quien supervisa (lo decidió el dueño). Desde la pantalla de «Pago
+  registrado» se manda por WhatsApp y queda entregado (`entrega = 'whatsapp'`,
+  `recibo_por_whatsapp()`), así no se amontona en «Recibos por revisar y
+  entregar». Quien supervisa lo sigue pudiendo corregir o anular en
+  `cobros.html`. Los recibos de los planes viejos siguen con su revisión.
+
+### Apagar: a mano o solo
+
+- **A mano**: «Apagar ahora» en la ficha de la cuenta (`apagada`), con
+  confirmación. Vale aunque el acceso no se exija.
+- **Solo**: si quien administra enciende «Apagar solas las cuentas que no
+  paguen» (`cobros_ajustes.apagado_auto`), una cuenta vencida se apaga el día
+  «activa hasta» + días de gracia (venció el 5, gracia 5: se apaga el 10). No
+  hay ninguna tarea que «apague»: es una cuenta que hace la base cada vez que
+  se pregunta, así que registrar el pago la enciende en el mismo momento.
+  Encender el interruptor pide confirmar y dice cuántas cuentas quedan
+  apagadas ya.
+- **El candado**: en `acceso_vigente()`, un alumno con cuenta de cobro lo
+  decide la cuenta (apagada = fuera; si no, entra, aunque esté vencida dentro
+  de la gracia), ANTES que el paquete y que el interruptor «exigido». Sin
+  cuenta, todo sigue como antes (paquete, prueba, cuenta temporal). Los
+  alumnos de un paquete de academia sin cuenta no pasan por cobros.
+- **Al aplicarlo se pasaron 56 mensualidades activas** a su cuenta, con lo que
+  ya tenían pagado como «activa hasta». Todos estaban además en un paquete
+  vigente, y con el apagado automático apagado ninguna cuenta queda fuera, así
+  que nadie perdió el acceso. Comprobado impersonando roles en SQL (revertido):
+  el alumno ve 0 cuentas y no puede apagar; una profesora, 0; confirmar un
+  comprobante corre la fecha y saca el recibo; repetir los mismos días se
+  rechaza; apagada, `acceso_vigente()` da false; anular el recibo devuelve la
+  fecha; con el apagado automático encendido, la vencida pasada la gracia
+  queda fuera.
+- **Las tareas viejas (`cobros-generar`, `cobros-recordatorios` y los
+  programados) siguen apagadas y NO se vuelven a encender**: emitirían cobros
+  de los planes viejos a quien ya paga por su cuenta, y saldrían dos avisos.
+
+### El alumno apagado: el aviso y su comprobante
+
+`mi_acceso()` contesta `motivo: "cobro"` con el estado, el monto y el SINPE
+(`cobros_ajustes.sinpe_numero`/`sinpe_nombre`). `js/acceso-vigente.js`:
+
+- **Apagado**: en el panel, la tarjeta «Tu usuario está inactivo» arriba (el
+  panel se queda, es la puerta de salida); en cualquier otra página tapa el
+  contenido. Dice cuánto pagar y a qué SINPE.
+- **«Ya pagué: subir comprobante»**: la foto va al bucket privado
+  `comprobantes-pago`, en la carpeta del alumno, y `pago_reportar()` apunta el
+  reporte (`pagos_reportados`, uno pendiente por cuenta: lo garantiza el
+  índice). Lo ven quien lo subió y quien ve la cuenta. Llega a «Pagos por
+  confirmar» de `mensualidades.html` y a «Lo urgente» (`pagosPorConfirmar` de
+  `js/pendientes.js`). Confirmarlo es registrar el pago con ese reporte: se
+  enciende y sale el recibo. «No es válido» pide el motivo, que el alumno lee
+  en su aviso.
+- **Vencida sin apagar o por vencer: hoy no se le muestra nada.** Había una
+  franja en el panel con «Cómo pagar» y el mismo formulario, pero el
+  18/11/2026, recién pasadas las cuentas, 20 alumnos la veían en rojo y el
+  dueño pidió que a nadie le saliera nada mientras lleva los cobros a mano.
+  El código sigue (`avisoCobroVigente()`), pero solo se pinta si `mi_acceso()`
+  contesta `avisar_en_panel: true`, y hoy nunca lo hace: volver a mostrarla es
+  sumar ese dato (con su interruptor en «Automático»), no reescribir la
+  franja. El aviso de la cuenta APAGADA sí se queda: solo sale si alguien la
+  apaga, y sin él el alumno no sabría por qué no puede entrar.
+  `verificar-mensualidades.js` comprueba que la franja dependa de ese dato.
+- Si la consulta falla, no se tapa nada (la regla de siempre).
+
+### Los recordatorios solos
+
+Si quien administra enciende «Recordatorios por correo solos»
+(`cobros_ajustes.avisos_auto`), la tarea `cobros-cuentas-avisos` (7:30 a.m.
+CR) llama a `cobros-recordatorios` con `action: "tanda_cuentas"`. Qué aviso le
+toca a cada cuenta lo decide `cuentas_para_avisar()`: «antes» (dentro de los
+días de aviso), «vencio» (del día que vence a tres días después) y
+«antes_de_apagar» (el día antes de apagarse, si el apagado está encendido).
+Cada uno sale una vez por periodo y por correo (índice de `avisos_cuenta`),
+apuntado después de que Resend lo acepta. A quién: lo mismo que los avisos de
+antes (`destinatariosDe()`), por cada alumno de la cuenta, sin repetir. Con el
+interruptor apagado, `disparar_avisos_cuentas()` ni siquiera llama a la
+función. El recordatorio a mano es «Recordar por WhatsApp» en la ficha: el
+texto con el monto, la fecha y el SINPE, sin número (las familias no tienen
+teléfono guardado), para elegir el chat.
+
+**Los ajustes son de toda la Academia y solo los cambia quien administra**
+(`cobros_ajustes_guardar()`): los dos interruptores, los días de gracia y de
+aviso, y el SINPE. Un solo SINPE para todas las academias, por ahora.
+
+**Al tocar `mensualidades.html`, `js/mensualidades.js`, el aviso de cobro de
+`js/acceso-vigente.js` o estas funciones, correr `node
+herramientas/verificar-mensualidades.js`.** Comprueba en un navegador de
+celular que la lista pinte el estado de la base y no lo recalcule, el orden y
+los filtros, que «Registrar pago» mande el periodo que se ve (desde el día
+después de vencer) con el comprobante que confirma, que apagar y encender el
+apagado automático pidan confirmación, que una profesora no pida nada de
+cobros, y que el alumno apagado vea cuánto pagar y pueda mandar su foto. Está
+probado que falla: haciendo que «desde» arranque el mismo día de «activa
+hasta», saltan 4 comprobaciones.
+
 ## Cobros: lo que se guarda es lo que pasó, no el estado
+
+> Esto y lo que sigue hasta «Pasarela y factura electrónica» es el sistema de
+> antes (`cobros.html`, planes y suscripciones). Sus recibos y sus funciones
+> siguen en uso para corregir y anular, pero las mensualidades nuevas van por
+> las cuentas de arriba.
 
 `cobros.html` son las mensualidades de la Academia: planes, quién paga qué,
 cobros emitidos, pagos y morosidad. Es **una página para dos públicos**, como
@@ -97,6 +244,11 @@ salgan los avisos.
   complicó el mes.
 
 ### Cobros en pausa desde el 4/11/2026
+
+> **Desde el 18/11/2026 estas tareas no se vuelven a encender**: las
+> mensualidades pasaron a las cuentas de `mensualidades.html` (ver «Cobros,
+> versión 2»), y encenderlas emitiría cobros de los planes viejos a quien ya
+> paga por su cuenta. Lo de abajo queda como historia.
 
 **Hoy los cobros automáticos están apagados**, a pedido del dueño: quiere
 revisarlos antes de que a las familias les vuelva a llegar un correo de cobro.

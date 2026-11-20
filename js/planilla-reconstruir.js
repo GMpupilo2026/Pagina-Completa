@@ -21,6 +21,12 @@
      no se sigue buscando.
    - aPgn(Chess, resultado, cabecera): el PGN de lo que se pudo salvar; si se
      cortó, la partida termina en «*» y un comentario dice desde dónde.
+   - lectura(que, extra, datos): lo que baja «Descargar la lectura» (el
+     Centroamericano y el Lector de planilla): las palabras de Vision tal cual,
+     las celdas y la partida que salió, para revisar por qué se leyó mal.
+   - enHilo(hojas, alProgresar): reconstruir() en su propio hilo
+     (js/planilla-reconstruir-worker.js), solo en una página. Una sola copia
+     para el Centroamericano, el Lector de planilla y «Anota tu partida».
 
    Pura (sin navegador): la prueba herramientas/verificar-planilla-reconstruir.js. */
 (function (raiz) {
@@ -31,12 +37,16 @@
   // --------------------------------------------------------------- distancia
   // Las confusiones de la letra a mano (y del lector) cuestan menos que un
   // cambio cualquiera: un «5» por una «s» es casi la misma jugada.
-  const PARECIDAS = ["0O", "0o", "oO", "0D", "1l", "1I", "lI", "1i", "5s", "5S", "2z", "2Z", "6b", "8B", "9g", "gq", "4A", "ce", "ft", "hb", "nh", "7f", "38", "aA", "cC", "tT", "dD", "rR", "bB", "4a", "eC", "5f"];
+  const PARECIDAS = ["0O", "0o", "oO", "0D", "1l", "1I", "lI", "1i", "5s", "5S", "2z", "2Z", "6b", "8B", "9g", "gq", "4A", "ce", "ft", "hb", "nh", "7f", "38", "aA", "cC", "tT", "dD", "rR", "bB", "4a", "eC", "5f", "4u", "4y", "7z", "7t"];
   const CASI = new Set();
   PARECIDAS.forEach((p) => { CASI.add(p[0] + p[1]); CASI.add(p[1] + p[0]); });
   // La misma letra en mayúscula o minúscula casi no cuesta: hay planillas enteras con las piezas en minúscula
   // («bxe5» por el alfil, «rf1» por la torre; Centroamericano 2026). Si las dos lecturas son legales, gana la exacta.
-  const sustitucion = (a, b) => (a === b ? 0 : a.toLowerCase() === b.toLowerCase() ? 0.15 : CASI.has(a + b) ? 0.4 : 1);
+  // Al revés no: una pieza escrita en MAYÚSCULA («C6») leída como el peón de esa columna (c6) cuesta casi
+  // una letra entera. En español la C mayúscula es el caballo; con 0,15 la primera planilla de verdad de
+  // Pareo (17/11) leía 1… Cf6 como c6, nunca sacaba ese caballo y se cortaba en la jugada 12 (Cxe5).
+  const PIEZA_MAYUSCULA = new Set("CATDRNBQK");
+  const sustitucion = (a, b) => (a === b ? 0 : a.toLowerCase() === b.toLowerCase() ? (PIEZA_MAYUSCULA.has(a) && b === b.toLowerCase() ? 0.7 : 0.15) : CASI.has(a + b) ? 0.4 : 1);
 
   function distancia(a, b) {
     const m = a.length, n = b.length;
@@ -60,6 +70,11 @@
     let t = String(s || "").trim();
     t = t.replace(/^\d{1,2}\s*[.)]+\s*(\.\.)?/, "");
     t = t.replace(/e\.?p\.?$/i, "");
+    // Un «+» antes de un número no es un jaque (ese va al final): es una f de mano, con la raya
+    // cruzada. La segunda planilla de verdad de Pareo (18/11) traía «+4» por 1.f4, y sin la f
+    // empataba con «E4» de la otra hoja: salía 1.e4, y el «e3» de las dos planillas en la jugada 3
+    // se volvía c3.
+    t = t.replace(/\+(?=[1-8])/g, "f");
     t = t.replace(/[\s+#!?:=xX×*·.,'"\-–—]/g, "");
     if (/^[0oOD]{2,3}$/.test(t)) return t.length === 3 ? "OOO" : "OO";
     t = t.replace(/^P(?=[a-h])/, "");
@@ -291,6 +306,61 @@
   }
 
   // --------------------------------------------------------------- la foto
+  // Dónde empieza la celda de las Negras dentro del bloque (0: el número, 1: el bloque siguiente).
+  const NEGRAS_DESDE = 0.565;
+
+  /* Cuánto se parece un pedazo de texto a una jugada: 2 si es una jugada completa
+     (con las confusiones de siempre: «s» por 5 detrás de una columna, «o» por 0), 1 si
+     es el comienzo de una («Tfd», «Cx»), 0 si no. Solo sirve para decidir dónde partir
+     una palabra que Vision juntó entre dos celdas. */
+  function forma(s) {
+    const t = String(s).replace(/([a-h])[sS]/g, "$15").replace(/[oO]/g, "0").replace(/[+#!?.]+$/, "");
+    // la coronación solo en la fila 1 o la 8: si no, «CeSC» (Ce5 + la C de la jugada de al lado) pasaba por «e5=C»
+    if (/^(?:[KQRBNDTACP]?[a-h]?[1-8]?x?[a-h](?:[18]=?[QRBNDTAC]|[1-8])|0-?0(?:-?0)?)$/i.test(t)) return 2;
+    if (/^(?:[KQRBNDTAC][a-hx1-8]{1,3}|[a-h]x?[a-h1-8]{0,2}|0-0?-?)$/i.test(t)) return 1;
+    return 0;
+  }
+
+  /* Vision a veces junta en UNA palabra lo de varias celdas: el número impreso con la
+     jugada («1d4», «60-06»), la jugada de las Blancas con la de las Negras («CeSCxes»:
+     Ce5 y Cxe5) o la jugada con el número del bloque de al lado («Axde45»). Metida entera
+     en una celda, la planilla se corre un renglón (pasó con la primera planilla de verdad
+     de Pareo, 17/11: se saltó la fila 6, «0-0 Cc6»). Aquí se le quita el número del
+     renglón (o del renglón del bloque siguiente) que trae pegado y, si cruza de las
+     Blancas a las Negras, se parte donde las dos mitades parezcan jugadas. La x de cada
+     pedazo se reparte por letras: la letra a mano no tiene ancho fijo, por eso decide
+     la forma y no la x. */
+  function partirPalabra(w, u) {
+    let t = w.t, x0 = w.x0, x1 = w.x1;
+    const anchoLetra = () => (x1 - x0) / Math.max(1, t.length);
+    const rel = (x) => (x - u.xNum) / u.ancho;
+    const num = String(u.fila), sig = String(u.fila + 20);
+    // el número se quita solo si lo que queda (dos letras o más) se parece igual o más a una jugada:
+    // «24» en el renglón 2 era «c4» mal leído, no el 2 impreso con un «4»
+    const sinNumero = (resto) => resto.length >= 2 && forma(resto) >= forma(t);
+    if (rel(x0) < 0.1 && t.startsWith(num) && sinNumero(t.slice(num.length))) { const a = anchoLetra(); t = t.slice(num.length); x0 += a * num.length; }
+    if (u.fila + 20 <= 60 && rel(x1) > 0.95 && t.endsWith(sig) && sinNumero(t.slice(0, -sig.length))) { const a = anchoLetra(); t = t.slice(0, -sig.length); x1 -= a * sig.length; }
+    const pieza = (s, a, b) => ({ t: s, x0: a, x1: b, cx: (a + b) / 2, cy: w.cy, alto: w.alto });
+    const borde = u.xNum + NEGRAS_DESDE * u.ancho;
+    if (!u.negras && t.length >= 3 && x0 < borde - 0.05 * u.ancho && x1 > borde + 0.1 * u.ancho) {
+      const a = anchoLetra();
+      let mejor = null;
+      for (let k = 1; k < t.length; k++) {
+        const izq = forma(t.slice(0, k)), der = forma(t.slice(k));
+        const vale = (izq >= 1 && der >= 1 && izq + der >= 3) || (Math.max(izq, der) === 2 && izq + der >= 2);
+        if (!vale) continue;
+        const puntos = izq + der - Math.abs(x0 + a * k - borde) / u.ancho;
+        if (!mejor || puntos > mejor.puntos) mejor = { k, puntos };
+      }
+      if (mejor) {
+        const xs = x0 + a * mejor.k;
+        // cada pedazo se ubica por su centro: lo que cae del lado de las Negras va a las Negras
+        return [pieza(t.slice(0, mejor.k), x0, Math.min(xs, borde - 1)), pieza(t.slice(mejor.k), Math.max(xs, borde + 1), x1)];
+      }
+    }
+    return t === w.t ? [w] : t ? [pieza(t, x0, x1)] : [];
+  }
+
   /* De las palabras de Vision a las celdas de cada planilla. */
   function hojasDeLaFoto(palabras) {
     const ws = (palabras || []).filter((w) => w && w.text && w.bbox).map((w) => ({
@@ -323,36 +393,65 @@
       });
       return { columnas: g, celdas: [] };
     });
-    ws.forEach((w) => {
-      if (usadas.has(w)) return;
+    // En qué hoja, renglón y lado cae un punto (cx, cy); con la x del número de ese renglón y el
+    // ancho del bloque, para saber dónde empieza y termina cada celda.
+    const ubicar = (cx, cy) => {
       let mejor = null;
       hojas.forEach((h, hi) => h.columnas.forEach((c) => {
         // La foto torcida: la columna de números se corre en x al bajar (xPaso), y al ir a la
         // derecha la altura cambia en la misma proporción. Se endereza antes de ver el renglón.
         const inclinacion = c.xPaso / c.paso;
-        let n = (w.cy - c.a) / c.paso, xNum = c.xA + c.xPaso * n;
+        let n = (cy - c.a) / c.paso, xNum = c.xA + c.xPaso * n;
         for (let vuelta = 0; vuelta < 2; vuelta++) {
-          n = (w.cy + (w.cx - xNum) * inclinacion - c.a) / c.paso;   // renglón (con decimales)
-          xNum = c.xA + c.xPaso * n;                                  // dónde está el número en ese renglón
+          n = (cy + (cx - xNum) * inclinacion - c.a) / c.paso;   // renglón (con decimales)
+          xNum = c.xA + c.xPaso * n;                              // dónde está el número en ese renglón
         }
-        const rel = (w.cx - xNum) / c.ancho;                  // 0: el número, 1: la columna siguiente
+        const rel = (cx - xNum) / c.ancho;                  // 0: el número, 1: la columna siguiente
         const desde = c.bloque * 20 + 1, hasta = desde + 19;
         if (n < desde - 0.6 || n > hasta + 0.6 || rel < 0.08 || rel > 0.99) return;
         const fila = Math.round(n);
         const dist = Math.abs(n - fila);
         if (dist > 0.45) return;
-        if (!mejor || dist < mejor.dist) mejor = { hi, fila, negras: rel >= 0.565, dist };
+        if (!mejor || dist < mejor.dist) mejor = { hi, fila, negras: rel >= NEGRAS_DESDE, dist, xNum, ancho: c.ancho };
       }));
-      if (!mejor) return;
-      const i = (mejor.fila - 1) * 2 + (mejor.negras ? 1 : 0);
-      (hojas[mejor.hi].celdas[i] = hojas[mejor.hi].celdas[i] || []).push(w);
+      return mejor;
+    };
+    const poner = (w, u) => {
+      const i = (u.fila - 1) * 2 + (u.negras ? 1 : 0);
+      // dónde empieza y termina la palabra dentro del bloque (0: el número, 1: el bloque siguiente)
+      const p = Object.assign({}, w, { rx0: (w.x0 - u.xNum) / u.ancho, rx1: (w.x1 - u.xNum) / u.ancho });
+      (hojas[u.hi].celdas[i] = hojas[u.hi].celdas[i] || []).push(p);
+    };
+    ws.forEach((w) => {
+      if (usadas.has(w)) return;
+      const u = ubicar(w.cx, w.cy);
+      if (!u) return;
+      partirPalabra(w, u).forEach((p) => { const up = p === w ? u : ubicar(p.cx, p.cy); if (up) poner(p, up); });
     });
     return {
       metodo: "numeros",
       hojas: hojas.map((h) => {
         const out = [];
         const largo = h.celdas.length;
+        // Una jugada corta de las Negras escrita pegada a la raya («d5») tiene el centro antes de
+        // NEGRAS_DESDE y caía en las Blancas («Cf3d5»), con las Negras vacías. Si la casilla de las
+        // Negras quedó vacía y la última palabra de las Blancas va aparte y empieza pasada la mitad
+        // del bloque (donde ya están las Negras en cualquier planilla), es de las Negras. Pasó al
+        // hacer la planilla imprimible con Blancas y Negras del mismo ancho (19/11).
+        for (let i = 0; i + 1 < largo; i += 2) {
+          const bl = (h.celdas[i] || []).sort((a, b) => a.cx - b.cx);
+          if (bl.length < 2 || (h.celdas[i + 1] || []).length) continue;
+          const ult = bl[bl.length - 1], ant = bl[bl.length - 2];
+          if (ult.rx0 >= 0.48 && ult.rx0 - ant.rx1 >= 0.01) h.celdas[i + 1] = [bl.pop()];
+        }
         for (let i = 0; i < largo; i++) out.push((h.celdas[i] || []).sort((a, b) => a.cx - b.cx).map((w) => w.t).join(""));
+        // El número del final de las Blancas que Vision le pegó a las Negras: «De» | «20-0» era
+        // «De2» | «0-0» (segunda planilla de verdad de Pareo, 18/11). Se devuelve solo si las
+        // dos celdas quedan más parecidas a una jugada.
+        for (let i = 0; i + 1 < out.length; i += 2) {
+          const b = out[i], n = out[i + 1];
+          if (b && /^[1-8]./.test(n) && forma(b + n[0]) > forma(b) && forma(n.slice(1)) > forma(n)) { out[i] = b + n[0]; out[i + 1] = n.slice(1); }
+        }
         return out;
       }).filter((h) => h.some(Boolean)),
     };
@@ -410,7 +509,53 @@
     return columnas;
   }
 
-  const PlanillaReconstruir = { normalizar, distancia, formasDe, reconstruir, aPgn, hojasDeLaFoto };
+  // --------------------------------------------------------------- la lectura para revisar
+  /* Lo que leyó Google Vision de la foto (cada palabra con su caja) y lo que salió de eso (las
+     celdas de cada planilla y la partida), para revisar con datos de verdad por qué una partida se
+     leyó mal y afinar este archivo. Trae lo que está escrito en la planilla, también los nombres del
+     encabezado: es para quien lee la planilla y para revisar, nunca para el repositorio.
+     datos: { leida, metodo, hojas, resultado, palabras } (las palabras como las devuelve
+     ocr-scoresheet, o compactas: [texto, x0, y0, x1, y1]). extra: lo propio de quien la baja
+     (el torneo, la ronda, la mesa…). */
+  function lectura(que, extra, datos) {
+    const r = datos.resultado;
+    return Object.assign({ que, version: 1 }, extra || {}, {
+      leida: datos.leida,
+      metodo: datos.metodo,
+      hojas: datos.hojas,
+      partida: {
+        jugadas: r.jugadas.map((j) => ({ san: j.san, estado: j.estado, escrito: j.escrito || [], alternativa: j.alternativa || null })),
+        ilegibleDesde: r.ilegibleDesde, resto: r.resto || [], costo: r.costo,
+      },
+      // como las devuelve ocr-scoresheet: se pueden pasar tal cual a hojasDeLaFoto()
+      palabras: (datos.palabras || []).map((w) => (Array.isArray(w) ? { text: w[0], bbox: { x0: w[1], y0: w[2], x1: w[3], y1: w[4] } } : { text: w.text, bbox: w.bbox })),
+    });
+  }
+
+  // --------------------------------------------------------------- el hilo
+  /* reconstruir() prueba miles de continuaciones y tarda varios segundos: en el
+     hilo de la página, la página se congelaría. El hilo se busca al lado de este
+     archivo (document.currentScript, leído al cargar), así sirve igual desde
+     una página de la raíz que desde entreno/. */
+  const urlHilo = raiz.document && raiz.document.currentScript && raiz.document.currentScript.src
+    ? new URL("planilla-reconstruir-worker.js", raiz.document.currentScript.src).href : null;
+  let hilo = null, pedido = 0;
+  function enHilo(hojas, alProgresar) {
+    if (!hilo) hilo = new raiz.Worker(urlHilo || "js/planilla-reconstruir-worker.js");
+    const id = ++pedido;
+    return new Promise((resolve, reject) => {
+      const oir = (e) => {
+        if (e.data.id !== id) return;
+        if (e.data.progreso !== undefined) { if (alProgresar) alProgresar(e.data.progreso); return; }
+        hilo.removeEventListener("message", oir);
+        if (e.data.error) reject(new Error(e.data.error)); else resolve(e.data.resultado);
+      };
+      hilo.addEventListener("message", oir);
+      hilo.postMessage({ id, hojas });
+    });
+  }
+
+  const PlanillaReconstruir = { normalizar, distancia, formasDe, reconstruir, aPgn, hojasDeLaFoto, lectura, enHilo };
   if (typeof module !== "undefined" && module.exports) module.exports = PlanillaReconstruir;
   else raiz.PlanillaReconstruir = PlanillaReconstruir;
 })(typeof window !== "undefined" ? window : globalThis);

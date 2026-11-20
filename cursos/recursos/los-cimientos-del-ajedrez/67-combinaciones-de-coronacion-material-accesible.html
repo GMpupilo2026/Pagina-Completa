@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,27 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: ¿Qué pieza le impide coronar al peón, y cómo se puede quitar de en medio? Juegan las blancas; el rival acaba de jugar … rey bella 3.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Un peón en séptima, o incluso en sexta, vale mucho más que un peón: amenaza convertirse en dama y obliga al rival a vigilarlo con alguna pieza. Las combinaciones de coronación aprovechan eso. Se sacrifica material para desviar a la pieza que vigila la casilla de coronación, para interferir su línea o para atraer al rey lejos. Si al final el peón corona, el material entregado se recupera con creces.</p>
 <p>Las señales son un peón pasado avanzado y una sola pieza rival que lo frena. Pregúntate si esa pieza tiene otra tarea, si puedes cerrarle la línea interponiendo una pieza, o si un jaque la obliga a moverse. Mira también si el peón puede coronar dando jaque o capturando. En ocasiones conviene coronar en caballo en vez de dama, por ejemplo para dar jaque y ganar algo o para evitar un ahogado.</p>
@@ -65,32 +89,47 @@
   <dt>La coronación y el peón pasado</dt>
   <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
   <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
-  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en gustav 7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
   <dt>Jaque, mate y ahogado</dt>
   <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
   <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
-  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en anna 8 y pones la dama en bella 6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
   <dt>El sacrificio</dt>
   <dd>Entregar material a cambio de algo que no es material: tiempo, líneas abiertas, el rey rival expuesto o una casilla. Un sacrificio correcto se calcula hasta el final o se apoya en una ventaja que se puede explicar.</dd>
   <dd><strong>El error de siempre:</strong> Sacrificar por entusiasmo. Si no puedes decir con palabras qué recibes a cambio, y ver hasta dónde llega la secuencia, no es un sacrificio: es regalar una pieza.</dd>
-  <dd><strong>Para verlo:</strong> El clásico alfil captura hector 7 jaque existe porque después del jaque llega el caballo a g5 y la dama a h5. Sin esas dos piezas listas, es solo un alfil menos.</dd>
+  <dd><strong>Para verlo:</strong> El clásico alfil captura hector 7 jaque existe porque después del jaque llega el caballo a gustav 5 y la dama a hector 5. Sin esas dos piezas listas, es solo un alfil menos.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: ¿Qué pieza le impide coronar al peón, y cómo se puede quitar de en medio? Juegan las blancas; el rival acaba de jugar … rey bella 3.</h3>
+  <h3 id="posicion-1">Posición 1: ¿Qué pieza le impide coronar al peón, y cómo se puede quitar de en medio? Juegan las blancas; el rival acaba de jugar … rey bella 3.</h3>
   
-  <p>Piezas blancas: rey en f2; alfil en e4; peón en g6.</p>
-  <p>Piezas negras: rey en b3; torre en a1; peón en c3.</p>
+  <h4>Piezas blancas: 3</h4>
+  <ul>
+    <li>Rey en felix 2.</li>
+    <li>Alfil en eva 4.</li>
+    <li>Peón en gustav 6.</li>
+  </ul>
+  <h4>Piezas negras: 3</h4>
+  <ul>
+    <li>Rey en bella 3.</li>
+    <li>Torre en anna 1.</li>
+    <li>Peón en cesar 3.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 47. gustav 7, rey bella 4, 48. gustav 8 corona dama</p>
+  <h4>La línea: 3 jugadas</h4>
+  <ul>
+    <li>47. Blancas: gustav 7.</li>
+    <li>47. Negras: rey bella 4.</li>
+    <li>48. Blancas: gustav 8 corona dama.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
-  <p>47. gustav 7, rey bella 4, 48. gustav 8 corona dama. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La combinación tiene un solo objetivo, la casilla de coronación: todo lo demás sirve para dejarle el camino libre al peón. (Ejercicio 3TB9V de la base abierta de Lichess (CC0), rating 960. Stockfish 16 a profundidad 18: g7 es la mejor (+5,0) y la segunda queda en -0,0.)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/8/6P1/8/4B3/1kp5/5K2/r7 w - - 2 47</p>
+  <p>47. gustav 7, rey bella 4, 48. gustav 8 corona dama. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La combinación tiene un solo objetivo, la casilla de coronación: todo lo demás sirve para dejarle el camino libre al peón. (Ejercicio 3TB9V de la base abierta de Lichess (CC0), rating 960. Stockfish 16 a profundidad 18: gustav 7 es la mejor (+5,0) y la segunda queda en -0,0.)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 8/8/6P1/8/4B3/1kp5/5K2/r7 w - - 2 47</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Pon un peón blanco en cada columna, por turnos, con el rey negro a distintas distancias, y decide con la regla del cuadrado si corona. Después compruébalo jugando.</li>
   <li>Busca en tus partidas una posición donde tuviste peón pasado y no lo usaste. Casi siempre hay una.</li>
@@ -100,7 +139,7 @@
   <li>En tu próxima partida, si sientes ganas de sacrificar, escribe antes en la planilla qué recibes a cambio. Si no te sale la frase, no lo hagas.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +192,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

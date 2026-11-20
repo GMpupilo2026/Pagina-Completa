@@ -3755,6 +3755,57 @@ asignada al profe Oscar (su cuenta de profesor, no la de administración).
   sitio. Las fechas (sábados del 14 de noviembre al 5 de diciembre) son una
   propuesta: la guía lo dice.
 
+## Interesados: el seguimiento de quien preguntó por clases
+
+`prospectos.html` (tarjeta «🌱 Interesados» en el panel de quien administra y en
+el del supervisor): quien preguntó por clases —por WhatsApp, en un colegio, por
+recomendación, desde «Unirse», en un torneo— y en qué va cada uno, hasta que se
+inscribe o se descarta. La idea es la de los «prospectos» de Chessgora; el dueño
+decidió el 17/11/2026 que acá sea **solo seguimiento interno**: no hay
+directorio ni formulario público nuevo (las academias son de una sola empresa,
+y la entrada pública ya es `unirse.html`). Migración
+`20261118055652_prospectos`.
+
+- **Una fila por interesado** en `public.prospectos`: nombre, contacto, para
+  quién y su edad, de dónde vino, el paso (nuevo, contactado, clase de prueba,
+  inscrito, descartado), notas y **la fecha del próximo contacto**, que es lo
+  que la vuelve seguimiento: arriba sale «Hoy toca contactar a N personas»
+  (`proximo_contacto <= HoraCR.hoy()`). Pasar a inscrito o descartado borra la
+  fecha: ya no hay a quién llamar.
+- **Quién ve a quién lo decide la RLS**: quien administra, todos; el supervisor,
+  los de las academias que supervisa (con el conjunto armado una vez,
+  `academia_id in (select … where supervisor_id = (select auth.uid()))`). Uno
+  sin academia lo ve solo administración. Un supervisor con varias academias
+  ve los de todas, con el nombre de la academia en cada tarjeta: son personas
+  sin cuenta, no entran en la «academia activa» de la supervisión.
+- **Sin funciones**: se lee y escribe la tabla directo, porque no reparte
+  permisos ni dinero. Lo que el navegador no puede mandar lo sella un trigger
+  (`interno.prospectos_sellar`): quién lo creó, cuándo, y la hora del último
+  cambio.
+- **Son datos de personas sin cuenta**: van en la política de privacidad («Si
+  preguntas por clases», versión del 18/11/2026), y los descartados se borran
+  solos a los 12 meses de su último cambio (pg_cron
+  `prospectos-purga-descartados`, 3:20 de Costa Rica). Coincide con lo que la
+  política ya prometía para las solicitudes que no terminan en inscripción.
+- En la página: el embudo (cuántos hay en cada paso, y filtrar), la caja de
+  «hoy toca», agregar, y cada tarjeta con su paso, la fecha y las notas. El
+  contacto lleva a WhatsApp si es un celular (8 dígitos o con 506) y a un
+  correo si tiene @. Todo lo escrito por una persona va por `textContent`.
+
+Comprobado impersonando roles en SQL (revertido): el supervisor de ADAPZ agrega
+a su academia, y aunque mande otro `creado_por` y otra fecha, queda él y la de
+hoy; no puede agregar a otra academia ni sin academia, ni mudar uno a otra;
+quien administra ve los tres de prueba y el supervisor solo el suyo; el borrado
+de los ajenos no toca nada; el otro supervisor ve solo el de su academia y no
+cambia el ajeno; un profesor no ve ninguno ni puede agregar; `anon` no tiene
+permiso.
+
+**Al tocarlo, `node herramientas/verificar-todo.js prospectos`** (sin
+navegador): la RLS por conjunto y con `auth.uid()` envuelto, el sellado, la
+purga, la página en la cabecera con su guardia, sus migas y la hora de Costa
+Rica, las dos tarjetas y la política. Está probado que salta con una política
+que pregunta `auth.uid()` suelto.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario
@@ -4013,6 +4064,56 @@ agenda de cuatro semanas) con dos cosas encima: **lo que conviene saber** y
   (`verificar-proyectos.js` pide que el proyecto vaya primero); «Tu
   calendario» del panel lleva un enlace a la página.
 
+## Días sin clase y feriados
+
+Hasta el 18/11/2026 un feriado solo existía como aviso («Mañana no hay
+clase»): el calendario, «Tu próxima clase» y el `.ics` seguían mostrando la
+clase de ese día como si fuera a pasar. La idea de anotarlos salió de
+Chessgora («eventos y días sin clase» en su calendario). Migración
+`20261118060648_dias_sin_clase.sql`.
+
+- **Una tabla, `dias_sin_clase`**: una fila es un día, o del profe que la pone
+  (`profesor_id` = él) o un **feriado para todos** (`profesor_id` nulo), que
+  solo pone quien administra. El mismo día no se repite para el mismo profe ni
+  hay dos feriados el mismo día: lo garantiza el índice único
+  `dias_sin_clase_un_dia`, no un `if` (la página dice «Ese día ya estaba
+  marcado sin clase» con el 23505). No se edita: se quita y se vuelve a poner.
+- **Quién la ve (RLS)**: quien la puso, sus alumnos (`interno.profesores_de`),
+  quien administra y, los feriados, todo el mundo con cuenta. Un día sin clase
+  es una fecha y un motivo, no dice nada de nadie: el alumno de otra academia
+  no ve los días de un profe que no es el suyo. Escribe la propia persona con
+  políticas simples (no reparte permisos ni dinero: no va en la bitácora).
+- **Las clases que vienen los saltan en la base**: `mis_clases_proximas` y
+  `mi_proxima_clase` (esta mira ahora 14 días y no 7, para que una semana sin
+  clase no deje «Tu próxima clase» vacío). Así el calendario del alumno, «Tu
+  próxima clase» y su `.ics` dicen lo mismo sin una segunda regla.
+- **A propósito NO se tocó `ocurrencias_horario`**: la usan las horas de los
+  talleres, las de los asesores y las grabaciones. Un día marcado sin clase no
+  puede cambiar en silencio lo que se le paga a alguien ni esconder una
+  grabación ya subida. Tampoco cambia `clases_programadas` del informe mensual.
+- **En `calendario.html`**: cada día sin clase es un renglón «🚫 Sin clase:
+  motivo» o «🚫 Feriado: motivo» que dice quién lo marcó, sin enlace. Al profe,
+  `CalendarioInteligente.quitarClasesSinClase` le saca del horario las clases
+  de sus días y de los feriados (las de otros profes no, aunque quien
+  administra lea todos los días), y su `.ics` va igual. El plan y los avisos
+  reciben solo clases y entregas: tratan todo lo que no es clase como algo que
+  vence.
+- **La sección «🚫 Días sin clase»** (quien da clase y quien administra): día
+  (desde hoy), motivo (hasta 120 letras, lo ven los alumnos) y, quien
+  administra, «Feriado para todas las academias». Lista los que vienen; se
+  quita lo propio (y los feriados, quien administra) con `Avisos.confirmar`.
+  Después de marcar o quitar, el calendario se vuelve a leer y la clase de ese
+  día desaparece o vuelve.
+
+Lo prueban `verificar-calendario-inteligente.js` (las dos funciones puras: los
+días de otra profe no quitan nada, el día es el de Costa Rica) y
+`verificar-calendario-pagina.js` (con un doble que filtra como la RLS: la
+alumna ve el porqué y su `.ics` salta la clase; el profe marca, ve desaparecer
+la clase, choca con el índice único y quita con confirmación; quien administra
+pone un feriado para todos). La RLS y las funciones se probaron impersonando
+roles en SQL (alumno, su profe y un alumno de otro profe). Con el filtro roto,
+salta.
+
 **Al tocarlo, correr** `node herramientas/verificar-calendario-inteligente.js`
 (la cuenta: días de Costa Rica, el mes de lunes a domingo, el plan, los avisos,
 el horario y las entregas agrupadas) y
@@ -4239,7 +4340,9 @@ galería) la galería, con el tema y la duración:
 - Al tocar una, se abre en grande sobre la página, en un `<dialog>` modal (el
   mismo patrón de la vista previa de archivos): el título con la sesión y su
   tema, el reproductor (que arranca solo: la persona acaba de pedirlo), «✕
-  Cerrar» con el foco y «Abrir en YouTube» aparte, en otra pestaña. **El
+  Cerrar» con el foco. **No hay enlace para abrirla en YouTube** (se quitó
+  el 17/11/2026): lo que se mira allá no se mide, y quien la veía por fuera
+  creía que le contaba. La pantalla completa la da el mismo reproductor. **El
   reproductor no existe hasta ese momento** —YouTube no se carga en el panel
   de quien no pidió nada— y al cerrar (con el botón, con Esc o tocando
   afuera) se quita, para que no siga sonando escondido, y el foco vuelve a la
@@ -4579,7 +4682,19 @@ aparezca su fila en `grabaciones_vistas`.
   `grabacion_vista_anotar()` (`anotarLoVisto` de `js/clases.js`). Si no hubo
   red, lo que no se pudo mandar va en el envío siguiente; lo que la base
   rechazó (22023, 42501) no se vuelve a mandar. Lo que se mira en YouTube
-  aparte («Abrir en YouTube») no se cuenta.
+  aparte no se cuenta, y por eso la página ya no ofrece el enlace (el logo
+  de YouTube dentro del reproductor sí lleva allá: es de YouTube y no se
+  puede quitar desde la página).
+- **«La vi completa y no me sale»**: antes de buscar un error, mirar los
+  tramos (`vistos`) de esa persona contra las notas de la sesión
+  (`avisos` en `formacion-grabaciones.json`). El 17/11/2026 una asesora
+  reportó haber visto la Sesión III y tenía 89 %: sus huecos eran el
+  receso (0:59:30-1:08:37, saltado con el capítulo de las 1:08:37), los
+  primeros 3 minutos de espera y silencios largos donde solo hablaban los
+  participantes (0:36:55-0:38:48 y otros). Era el medidor haciendo lo que
+  debía (lo adelantado no cuenta), y de ahí salió que lo que no es clase no
+  se le exija a nadie (ver «Lo que no es clase no se le exige a nadie»). Hoy
+  la ventana del video le dice a cada uno lo que le falta.
 - **Si el reproductor no contesta, no se anota nada** y el video se ve igual.
   Si YouTube cambiara sus mensajes, se dejaría de medir sin romper nada.
 
@@ -4668,11 +4783,18 @@ grabación es de **(horario, fecha, parte)**:
   llamada sin parte no sabría a cuál ir, así que las viejas se apartaron como
   en la vez anterior («_apartada2», sin permiso para nadie): se pueden borrar
   en cualquier migración posterior.
-- **El panel**: una tarjeta por parte, en orden; si la sesión tiene más de
-  una, el título dice «Sesión IV · Parte 2» (también en el modo cine y en el
-  nombre del reproductor) y la miniatura lleva «PARTE 2» debajo del número, de
-  adorno. Lo visto, las respuestas y lo ya contestado se piden y se anotan con
-  la parte de esa tarjeta. Una sesión de un solo video no dice «Parte».
+- **El panel: una ficha por sesión** (desde el 17/11/2026; antes iba una
+  tarjeta por parte, y con la IV y la V en partes la galería quedaba
+  desordenada, como pidió el dueño). La ficha lleva la miniatura de la
+  sesión con lo que duran todas las partes, «en 2 partes» y cuánto lleva
+  visto entre todas (lo visto útil sumado entre lo que hay que ver sumado);
+  debajo, un botón por parte («▶ Parte 2 · 1 h 40 min», con su «50 %» o «✓
+  Completa»). Tocar la miniatura abre la parte que le toca: la primera que no
+  ha visto completa. En el modo cine el título dice «Sesión IV · Parte 2».
+  Lo visto, las respuestas y lo ya contestado se piden y se anotan con la
+  parte de ese botón, y al anotarse se repintan la parte y la sesión. «Ver la
+  presentación» va una vez por sesión. Una sesión de un solo video sigue con
+  su tarjeta de siempre y no dice «Parte».
 - **La ficha Asesores**: una columna por parte («▶ II·1», «▶ II·2», con «parte
   1» en el nombre para el lector de pantalla) y el resumen de arriba las
   cuenta por separado.
@@ -4685,10 +4807,90 @@ grabación es de **(horario, fecha, parte)**:
 
 `verificar-panel-taller.js` revisa la migración (la columna, las tres llaves,
 las seis apartadas, los permisos y que cada función busque SU parte) y abre
-una sesión en dos partes: dos tarjetas que dicen cuál es, la miniatura sin
-encimarse, el avance de cada una, el video correcto y lo visto anotado en la
-parte 2. Se rompió a propósito (anotar siempre en la parte 1) y saltó.
+una sesión en dos partes: una sola ficha con lo que duran y llevan entre
+las dos, un botón por parte con su avance (contraste medido en claro y en
+oscuro), el video correcto, lo visto anotado en la parte 2 y repintado, el
+foco que vuelve a la parte y la ficha que abre la parte que le toca. Se
+rompió a propósito (anotar siempre en la parte 1, una tarjeta por parte, la
+ficha abriendo siempre la última) y saltó cada vez.
 `verificar-admin.js` prueba las columnas por parte de la ficha.
+
+### Lo que no es clase no se le exige a nadie
+
+El dueño pidió el 17/11/2026 que **los tramos sin sonido o sin contenido de
+la clase no cuenten**, para que quien los salte no salga perjudicado. Venía
+de dos reportes: una asesora vio la Sesión III «completa» y tenía 89 % (se
+había saltado el receso y silencios largos), y un asesor contaba que el
+video le arrancaba siempre del principio y tenía que buscar a mano dónde
+iba.
+
+**La regla** (migración `20261117204234_grabaciones_sin_clase`): cada
+grabación guarda sus tramos sin clase (`grabaciones_clase.sin_clase`, un
+`int4multirange`). Lo visto ÚTIL es lo visto menos esos tramos, y lo que hay
+que ver es la duración menos esos tramos (`interno.segundos_utiles()`). El
+porcentaje, el «✓ La viste completa» (95 %), la ficha Asesores y las horas
+del taller salen de esas dos, **todas de la misma función**: si una pantalla
+contara por su lado, el asesor vería una cifra y administración otra.
+
+- **No se regalan**: lo que se vio de un receso no suma y saltarlo no resta,
+  pero quien no vio nada sigue en 0. Por eso no se suman los tramos sin clase
+  a lo visto: se sacan de los dos lados.
+- **`grabaciones_vistas` no cambia**: guarda lo que corrió de verdad y su
+  `visto_seg` sigue siendo lo visto en bruto. Lo útil se calcula al leer,
+  porque depende de otra tabla y cambia si se corrigen los tramos: no se
+  guarda. El tope de «más video del que da el tiempo» sigue contando lo
+  bruto.
+- **Lo pone quien administra o el profe de esa clase**, con
+  `grabacion_sin_clase_poner(horario, fecha, tramos, parte)`, que deja la
+  lista EXACTAMENTE como llega (vacía = todo es clase).
+- **`mis_grabaciones()` trae ahora lo visto útil de quien pregunta**
+  (`visto_seg`), lo que hay que ver (`util_seg`), los tramos sin clase y lo
+  que le **falta** (lo útil que no vio, en tramos de 20 s o más: lo más corto
+  es el redondeo de las puntas). Por eso el panel ya no le pide aparte
+  `grabaciones_vistas`: una sola consulta, contada en la base.
+- `asesores_grabaciones()` trae `util_seg` aparte y `visto_seg` útil.
+  Las dos funciones cambiaron lo que devuelven, así que se volvieron a crear
+  (sin parámetros nuevos: no hay dos con el mismo nombre que confundir).
+
+**En la ventana del video** (`js/calendario-taller.js`):
+
+- **Sigue donde le falta**: si ya vio algo, el reproductor arranca en el
+  primer tramo que le falta (`start=` en la dirección del reproductor).
+- **«Te falta ver 25 min (los recesos y silencios no cuentan):»** y un botón
+  por tramo («1:40 a 6:40») que lleva el video ahí, como los capítulos. Al
+  anotarse lo visto, la lista se acorta sin volver a abrir. A quien no ha
+  empezado no se le lista (le faltaría todo), y quien ya vio todo lee «✓ Ya
+  viste toda la clase de este video».
+- **«⏭ Saltar lo que no es clase (sigue en 1:08:37)»** aparece mientras el
+  video está en un tramo sin clase, y lo lleva al final del tramo.
+
+**Cómo se marcaron, parejo en todas**: con
+`herramientas/grabaciones-silencios.js`, que busca en el audio los silencios
+de 30 s o más bajo −30 dB (el `silencedetect` de ffmpeg) y junta los pedazos
+a menos de un minuto (un receso sale cortado por cada ruido de un segundo).
+Se corrió en la computadora del dueño: desde el contenedor, YouTube pide
+confirmar que no es un robot. Con −40 dB no salían los silencios en que solo
+hablaban los participantes (tienen el ruido de fondo del micrófono de quien
+expone); con −30 dB los recesos salieron donde las notas de los subtítulos
+dicen. A lo medido se le sumó lo que las notas marcan sin clase aunque tenga
+sonido (el problema técnico y la charla después del receso de la Sesión I).
+La Sesión IV parte 1 y las tres partes de la V no tienen silencios largos:
+la grabación se detuvo en los recesos, y por eso quedaron en partes.
+**Para una grabación nueva**: correr el script con su id, revisar la lista
+y ponerla con `grabacion_sin_clase_poner()`.
+
+Ninguno de los tramos pisa una pregunta dentro del video (si una cayera en
+un receso, «Saltar» la dejaría atrás). Con la regla nueva, la asesora del
+reporte pasó de 89 % a 93,5 % en la Sesión III: el resto son tramos con
+clase que adelantó, y la ventana se los lista.
+
+`verificar-panel-taller.js` lo prueba (el porcentaje de lo que hay que ver,
+el `start=`, la lista con sus botones, que se acorta al anotarse, «Saltar» y
+quien no ha empezado; y en la migración, el permiso de quien los pone y que
+todas cuenten con `segundos_utiles`), y `verificar-admin.js` el porcentaje
+de la ficha. Se rompió a propósito cada una (porcentaje sobre el video
+entero, sin `start=`, sin «Saltar», la lista sin acortarse, la ficha sobre
+la duración) y saltaron todas.
 
 ### Las horas del taller
 
@@ -4718,8 +4920,10 @@ pantalla contara por su lado, el asesor vería una cifra y administración otra.
   recortado a lo que la clase estuvo abierta y con los tramos que se pisan
   juntados por `minutos_por_tramos()`, la misma de los informes.
 - **La grabación** cuenta en proporción: lo visto (`grabaciones_vistas`, sin
-  lo repetido ni lo adelantado) entre lo que dura, sumando las partes si la
-  sesión quedó en varias, por la duración de la sesión.
+  lo repetido ni lo adelantado) entre lo que hay que ver, los dos sin los
+  tramos sin clase (ver «Lo que no es clase no se le exige a nadie»),
+  sumando las partes si la sesión quedó en varias, por la duración de la
+  sesión.
 - **Cada sesión cuenta, como mucho, lo que dura**: clase + grabación, con
   tope. Quien estuvo 3 h y ve una hora de la grabación queda en 4 h; no hay
   manera de pasar de las 30.
@@ -4911,6 +5115,16 @@ dirección del Centroamericano: 17 de 53 por lado), bien debajo del 30 % que
 aguanta. Módulos
 redondeados y unidos y marco negro, como el del Centroamericano.
 
+**La dirección del QR puede llevar una columna** (`{QR}`): entonces cada
+gafete lleva su propio QR (y su propio fondo de dorso), y sin el dato sale sin
+QR. Y arriba del QR puede ir una línea que diga para qué es
+(`dorso.qrTexto`), una ilustración junto al QR (`ilustracionDorso`), y la foto
+de cada persona («Subir las fotos», emparejadas por el nombre del archivo y
+recortadas a pasaporte; con `fotoCentro`, en el medio y el nombre debajo).
+Los usa «Partir de la Eliminatoria JDN PZ 2026», que trae los jugadores de
+Pareo Integral sin Excel: ver «Los gafetes de la
+Eliminatoria Cantonal JDN de Pérez Zeledón» en `juegos-y-torneos.md`.
+
 **El mismo dibujo hace el gafete de la inscripción del Metropolitano 2026**
 (`js/metropolitano-gafete.js`), que lleva además la foto de la persona: si la
 fila trae `g.foto`, va en un marco de pasaporte donde iba la ilustración, y su
@@ -4925,3 +5139,122 @@ una imagen JPEG de 1772 × 2480 por página, fondos compartidos, el .zip por
 país, y que el diseño aprobado sobreviva a recargar la página y viaje en su
 archivo. Se rompieron a propósito la cuenta del código y el tamaño de la
 placa del QR, y saltaron los dos.
+
+## El panel jornada: el del alumno, con pestañas (en prueba)
+
+Desde el 18/11/2026, **solo para las cuentas anotadas** en `vistas_en_prueba`
+(hoy una: Oscarov, alumno del grupo SJ). Es la forma del panel del alumno de
+Chessgora llevada a `clases.html`: lo de hoy primero y el resto repartido en
+pestañas, en vez de una sola página con seis grupos de tarjetas que en el
+celular mide varias pantallas aunque se plieguen. Antes se probó como
+maqueta (una simulación con un alumno inventado), y el dueño pidió verla en
+el sitio, con una sola cuenta.
+
+- **No es otro panel.** `js/panel-jornada.js` toma el panel de siempre, ya
+  pintado por `clases.js` con los datos reales, y lo reparte en cinco
+  pestañas: **Inicio** (la clase en vivo, «Lo que te toca hacer», seguir el
+  curso, «Hoy te toca», las favoritas y lo que más usas, «Clase en vivo» y
+  «Lo que te pone tu profesor»), **Clases** («Tus clases», el calendario del
+  taller y otra vez la clase en vivo), **Entrenar** (Estudiar, Aprender, los
+  tres escalones y las habilidades), **Jugar** («Jugar y competir», las
+  herramientas y el enlace a preparar a un rival) y
+  **Perfil** (los Puntos Ajedrez, los puntos del mes y «Tu cuenta»). Ninguna
+  consulta nueva, ningún dato copiado: lo que cambie en el panel le llega
+  solo.
+- **Cómo reparte.** Cada sección de primer nivel (por id) y cada grupo de
+  tarjetas (por su título, como los busca `clases.js`) lleva
+  `data-jornada="<pestaña>"`; lo que no es de la pestaña abierta lleva
+  `jornada-fuera` (display: none). Los grupos se vuelven a marcar cada vez
+  que `renderTiles()` repinta la grilla (un MutationObserver sobre
+  `#tile-grid`). **Lo que no está en el mapa no se marca y se ve en todas las
+  pestañas**: una sección nueva del panel nunca queda escondida por olvido.
+- **Lo de Entrenar, por separado** (pedido del dueño el 18/11/2026). Debajo
+  de la pestaña Entrenar del menú van sus secciones: Estudiar, Aprender, los
+  tres escalones y Habilidades (el grupo «Mejorar por habilidades»). Elegir una
+  deja a la vista solo ese grupo de tarjetas y lo abre si estaba plegado; la
+  pestaña Entrenar vuelve a mostrarlas todas. «Estudiar» (Cursos y Repasar mis
+  clases) pasó de Clases a Entrenar, junto a las demás. En el celular, donde la
+  barra de abajo no tiene lugar, las mismas secciones van en una fila de
+  botones arriba de la pestaña, con «Todo» primero. La sección elegida es la
+  página (`aria-current="page"`) y su pestaña queda en `"true"`.
+- **Preparar a un rival**, debajo de Jugar: lleva a «Prepárate tú»
+  (`plan-rival.html`), el plan contra el rival de la próxima partida, que
+  antes solo se encontraba desde Competir. Es un enlace, no una sección: va con
+  su flecha ↗.
+- **La sesión, también en Clases.** El estado de la clase en vivo y el grupo
+  «Clase en vivo» viven en dos pestañas (`data-jornada="inicio clases"`):
+  son lo de hoy y son de Clases. Con `#` en la dirección se abre la primera.
+- **Los puntos se mudan a Perfil.** `#puntos-ajedrez` y `#puntos-mes` vivían
+  dentro del `<details>` «Tus clases»; se mueven (el mismo nodo, con su id) a
+  `#jornada-perfil`. «Tus clases» se abre solo: en esta forma es lo que hay
+  en la pestaña Clases.
+- **En el celular y la tableta (hasta 1023 px)** las pestañas van en una
+  barra fija abajo, con el margen de la muesca del teléfono; la burbuja de
+  «en línea» sube por encima. **En la computadora**, en un menú a la
+  izquierda que se queda fijo al bajar.
+- **Mientras se busca se ve todo**, como en el panel de siempre: un
+  resultado en otra pestaña no se vería. `clases.html#entrenar` y compañía
+  abren la pestaña donde vive lo pedido. La pestaña abierta se recuerda en
+  la sesión del navegador (`sessionStorage`): al volver de un ejercicio se
+  vuelve a la misma; al abrir el sitio otro día, a Inicio.
+- **Lector de pantalla.** La barra es un `<nav>` con botones, y la pestaña
+  abierta lleva `aria-current="page"` además de su fondo. Al cambiar de
+  pestaña el foco va a un título escondido con el nombre de la pestaña.
+- **Dónde no se aplica**: a quien no es alumno (el panel docente tiene otros
+  grupos), al panel adaptado (alumno ciego: ese ya es corto y pensado para el
+  lector, y las pestañas le agregarían pasos) y en «Ver como» (quien
+  administra mira con su sesión, que no está anotada).
+- **La marca la pone la base, no la pantalla.** `vistas_en_prueba`
+  (migraciones `20261118214820` y `20261118231559`): sin política de
+  escritura y, desde afuera, solo `SELECT` para `authenticated` (Supabase
+  daba todos los permisos por omisión, TRUNCATE incluido, que no pasa por la
+  RLS). Cada quien lee solo sus filas. No reparte permisos ni datos —quien la
+  tiene ve sus mismos datos, acomodados de otra forma—, así que no lleva
+  auditoría. Para sumar a alguien:
+  `insert into public.vistas_en_prueba (profile_id, vista) values ('<id>', 'panel_jornada');`
+  y para sacarlo, borrar su fila.
+- **El aspecto de Chessgora, en todo el sitio** (pedido del dueño el
+  19/11/2026). Es un tema más de `js/temas-plataforma.js`, «jornada», con
+  `oculto: true` (Configuración no lo ofrece) y `estilo: "jornada"`:
+  - **Colores**: crema en brand-50 y 100 (el fondo y los bordes), azul marino
+    del 200 en adelante y dorado de acento. Cada tono tiene la misma
+    luminancia que el Clásico, así que los 49 pares del sitio dan el mismo
+    contraste (`verificar-temas-plataforma.js`). Por eso el dorado es
+    `#c69b38` y no el de Chessgora: el de ellos no da la luminancia.
+  - **Formas** (`estiloDeTema()` en `herramientas/css-construir.js`): el
+    encabezado blanco con borde fino (solo en modo claro), el logo crema
+    pintado de azul marino con una máscara de su misma forma, las sombras
+    cambiadas por un anillo de 1 px, las esquinas algo más redondas, los
+    botones de fondo dorado en píldora y los títulos en Inter, como el texto.
+    No se toca ninguna página: todo va por las utilidades que ya usan.
+  - **Cómo llega a todo el sitio**: los temas son una preferencia del
+    navegador que el `<head>` de cada página pone antes de pintar, sin
+    parpadeo. `js/panel-jornada.js` lo deja puesto al entrar al panel si la
+    cuenta está anotada (y es alumno, y no es el panel adaptado), guardando
+    el tema que había en `panel_jornada_tema_previo_v1`. Si entra una cuenta
+    que no está anotada y el tema es «jornada», devuelve el de antes (o el
+    Clásico). Si la base no contesta, no se toca nada: un error de red no le
+    cambia el tema a nadie. A quien tenía otro tema y no está en la prueba no
+    se le toca. Mientras dure la prueba, si Oscarov elige otro tema en
+    Configuración, el panel le vuelve a poner «jornada».
+- **El Inicio nuevo**, como el de Chessgora: arriba la clase en una tarjeta
+  azul («Tu clase está abierta» con «Entrar a la clase», o «Tu próxima
+  clase: mañana a las 5:00 p. m.»), debajo seis «salas» con un número grande
+  (hoy entrenaste, tareas por hacer, Puntos Ajedrez, tu rango, tu nivel y
+  clases de la semana) que llevan a su lugar, y «Lo que viene» (las próximas
+  clases y lo que vence, por fecha) a la derecha en la computadora y debajo
+  en el celular. Todo sale de funciones que el panel del alumno ya usa
+  (`mi_proxima_clase`, `mis_clases`, `mis_clases_proximas`,
+  `tareas_con_avance`, `entreno_mi_semana`, `mi_rango`,
+  `informes_diagnosticos_alumnos`, `saldo_de_puntos`): ninguna consulta
+  nueva a la base. Cada consulta va aparte, y una sala cuya consulta falla
+  queda en «—» con «No se pudo cargar»: un número inventado se creería.
+  «Hoy te toca» completo pasó a Entrenar, porque en Inicio ya lo resume su
+  sala.
+- Lo revisa `verificar-panel-jornada.js`: sin la fila, el panel no cambia;
+  con ella, cinco pestañas, cada sección en la suya, buscar destapa todo, los
+  puntos en Perfil y la barra abajo en el celular y a la izquierda en la
+  computadora. También que el tema se pone y se devuelve, el aspecto (el
+  encabezado blanco, el fondo crema, el borde fino, los títulos en Inter y
+  el logo con su máscara) y que cada sala diga exactamente lo que contesta
+  la base, también cuando una consulta falla.

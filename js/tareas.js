@@ -70,6 +70,9 @@ async function init() {
         await desdeLasCuentasTemporales();
         await desdeElInforme();
         await cargarEnviadas();
+        avisarSinTarea();   // sin await: es un aviso, no frena la página
+        montarCuando();
+        cargarProgramadas();
     } else {
         document.getElementById("vista-alumno").classList.remove("hidden");
         await cargarMisTareas();
@@ -252,6 +255,63 @@ async function desdeElInforme() {
     const n = parseInt(params.get("cantidad"), 10);
     if (n > 0 && selMeta.value === "cantidad") div.querySelector(".r-cantidad").value = String(n);
     await refrescarRenglon(div);
+}
+
+/* ---------- Nadie se queda sin tarea ----------
+
+   Arriba de «Asignar una tarea», cuántos de sus alumnos no tienen ninguna
+   tarea abierta, con sus nombres y un botón que los deja marcados en la
+   lista. Es la idea de Chessgora «0 alumnos sin rutina»: el profe con veinte
+   alumnos no se acuerda de a quién le falta, y el que se queda sin nada que
+   hacer deja de entrenar sin que nadie lo note.
+
+   «Abierta» quiere decir que todavía no vence (programada o no), de
+   CUALQUIER profe: la RLS de `tareas` ya le deja leer al profe las de sus
+   alumnos que mandó un colega, y a quien administra, todas. No se usa
+   tareas_con_avance(): para quien administra recorre todas las tareas del
+   sitio (8-9 s) y podría caerse por statement timeout. Por eso una tarea
+   terminada antes de su fecha todavía cuenta como abierta: el texto lo dice
+   así, sin prometer más de lo que mide.
+
+   Se pide de mil en mil (traerTodo): PostgREST corta a ~1000 filas sin
+   avisar, y con más tareas abiertas que eso la lista diría que alumnos con
+   tarea no tienen ninguna. Con un error no se muestra nada: un aviso a
+   medias sería peor que ninguno. */
+async function avisarSinTarea() {
+    const caja = document.getElementById("sin-tarea");
+    if (!caja || !alumnosDisponibles.length) return;
+    const ahora = new Date().toISOString();
+    const { data, error } = await traerTodo(() => sb.from("tareas").select("alumno_id")
+        .gt("vence_at", ahora).order("id"));
+    if (error) return;
+    const conTarea = new Set((data || []).map((t) => t.alumno_id));
+    const sin = alumnosDisponibles.filter((a) => a.id !== session.user.id && !conTarea.has(a.id));
+    caja.classList.toggle("hidden", !sin.length);
+    if (!sin.length) return;
+    const total = alumnosDisponibles.filter((a) => a.id !== session.user.id).length;
+    document.getElementById("sin-tarea-titulo").textContent = sin.length === 1
+        ? "1 alumno no tiene ninguna tarea abierta"
+        : `${sin.length} de ${profile && profile.is_admin ? "los" : "tus"} ${total} alumnos no tienen ninguna tarea abierta`;
+    const nombres = sin.map((a) => a.full_name || a.email || "—");
+    const muestra = nombres.slice(0, 12).join(", ") + (nombres.length > 12 ? ` y ${nombres.length - 12} más` : "");
+    document.getElementById("sin-tarea-texto").textContent =
+        `${muestra}. Todas las que tenían ya vencieron, o nunca les mandaron una.`;
+    const boton = document.getElementById("sin-tarea-marcar");
+    boton.onclick = () => {
+        let primera = null;
+        sin.forEach((a) => {
+            const check = document.querySelector('.alumno-check[value="' + CSS.escape(a.id) + '"]');
+            if (!check) return;
+            check.checked = true;
+            if (!primera) primera = check;
+        });
+        if (primera) {
+            primera.closest("label").scrollIntoView({ block: "nearest" });
+            primera.focus();
+        }
+        document.getElementById("form-status").textContent =
+            `${sin.length === 1 ? "Quedó marcado" : `Quedaron marcados los ${sin.length}`} en la lista de alumnos. Arma la tarea y mándala.`;
+    };
 }
 
 // ---------- Vista profesor: los renglones ----------
@@ -544,6 +604,8 @@ async function enviarTarea(ev) {
     }
     if (!items.length) { status.textContent = "Agrega al menos una cosa que hacer."; return; }
 
+    if (cuandoEsPorPuntos()) { await programarPorPuntos(seleccionados, items); return; }
+
     const venceVal = document.getElementById("t-vence").value;
     if (!venceVal) { status.textContent = "Ponle una fecha límite."; return; }
 
@@ -582,6 +644,177 @@ async function enviarTarea(ev) {
     tituloTocado = false;
     agregarRenglon();
     await cargarEnviadas();
+}
+
+/* ---------- Tareas que llegan solas ----------
+
+   «Cuándo le llega: sola, cuando junte N Puntos Ajedrez». No se manda una
+   tarea: se guarda la REGLA (crear_tarea_por_puntos) y la base le arma la
+   tarea de siempre a cada alumno el día que sus puntos GANADOS llegan a N
+   (el trigger de puntos_ajustes), una sola vez por alumno. A quien ya los
+   tiene le llega en el momento. La fecha límite son «días desde que le
+   llega». Ver «Tareas que llegan solas» en seguimiento-del-alumno.md. */
+function cuandoEsPorPuntos() {
+    const r = document.querySelector('input[name="cuando"]:checked');
+    return !!r && r.value === "puntos";
+}
+
+function montarCuando() {
+    const pintar = () => {
+        const porPuntos = cuandoEsPorPuntos();
+        document.getElementById("cuando-puntos").classList.toggle("hidden", !porPuntos);
+        document.getElementById("campo-desde").classList.toggle("hidden", porPuntos);
+        document.getElementById("campo-vence").classList.toggle("hidden", porPuntos);
+        // La fecha límite de siempre no aplica: la pone «días para hacerla».
+        document.getElementById("t-vence").required = !porPuntos;
+        document.getElementById("enviar-btn").textContent = porPuntos ? "Programar la tarea" : "Enviar tarea";
+    };
+    document.querySelectorAll('input[name="cuando"]').forEach((r) => r.addEventListener("change", pintar));
+    document.getElementById("form-tarea").addEventListener("reset", () => setTimeout(pintar, 0));
+    pintar();
+}
+
+async function programarPorPuntos(seleccionados, items) {
+    const status = document.getElementById("form-status");
+    const umbral = parseInt(document.getElementById("t-umbral").value, 10);
+    const dias = parseInt(document.getElementById("t-dias").value, 10);
+    if (!(umbral >= 1)) { status.textContent = "Pon cuántos puntos tiene que juntar."; document.getElementById("t-umbral").focus(); return; }
+    if (!(dias >= 1 && dias <= 90)) { status.textContent = "Los días para hacerla van de 1 a 90."; document.getElementById("t-dias").focus(); return; }
+    const titulo = document.getElementById("t-titulo").value.trim();
+    if (!titulo) { status.textContent = "Falta el título."; return; }
+
+    const boton = document.getElementById("enviar-btn");
+    boton.disabled = true;
+    status.textContent = "Programando…";
+    const { data, error } = await sb.rpc("crear_tarea_por_puntos", {
+        p_alumnos: seleccionados,
+        p_titulo: titulo,
+        p_instrucciones: document.getElementById("t-instrucciones").value.trim(),
+        p_dias: dias,
+        p_items: items,
+        p_umbral: umbral,
+    });
+    boton.disabled = false;
+    if (error) { status.textContent = "No se pudo programar: " + error.message; return; }
+
+    const ya = data && Number(data.entregadas) || 0;
+    const n = seleccionados.length;
+    status.textContent = (n === 1 ? `Programada: le llega al juntar ${umbral} puntos.` : `Programada para ${n} alumnos: le llega a cada uno al juntar ${umbral} puntos.`)
+        + (ya ? (n === 1 ? " Ya los tenía, así que le llegó ahora." : ` ${ya === 1 ? "A 1 que ya los tenía le llegó" : `A ${ya} que ya los tenían les llegó`} ahora.`) : "");
+    document.getElementById("form-tarea").reset();
+    document.querySelectorAll(".alumno-check").forEach((c) => { c.checked = false; });
+    document.getElementById("renglones").innerHTML = "";
+    tituloTocado = false;
+    agregarRenglon();
+    await cargarProgramadas();
+    if (ya) await cargarEnviadas();
+}
+
+async function cargarProgramadas() {
+    const caja = document.getElementById("programadas");
+    const lista = document.getElementById("programadas-lista");
+    // Solo las propias, también para quien administra: son las suyas las que viene a manejar.
+    const { data, error } = await sb.from("tareas_por_puntos")
+        .select("id, titulo, umbral, dias, activa, alumnos, created_at")
+        .eq("profesor_id", session.user.id).order("created_at", { ascending: false }).range(0, 199);
+    if (error) return;
+    const filas = data || [];
+    caja.classList.toggle("hidden", !filas.length);
+    lista.innerHTML = "";
+    filas.forEach((r) => lista.appendChild(tarjetaProgramada(r)));
+}
+
+const BOTON_CHICO = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+
+function tarjetaProgramada(r) {
+    const div = document.createElement("div");
+    div.className = "bg-white dark:bg-brand-900 rounded-xl shadow-sm p-4";
+    const arriba = document.createElement("div");
+    arriba.className = "flex flex-wrap items-start justify-between gap-3";
+    const texto = document.createElement("div");
+    texto.className = "min-w-0";
+    const t = document.createElement("p");
+    t.className = "font-semibold text-brand-800 dark:text-white text-sm";
+    t.textContent = r.titulo;   // lo escribió el profe: textContent
+    const d = document.createElement("p");
+    d.className = "text-xs text-brand-500 dark:text-brand-300";
+    const n = (r.alumnos || []).length;
+    d.textContent = `Le llega al juntar ${r.umbral} puntos · ${r.dias} ${r.dias === 1 ? "día" : "días"} para hacerla · ${n} ${n === 1 ? "alumno" : "alumnos"}`
+        + (r.activa ? "" : " · en pausa");
+    texto.append(t, d);
+
+    const botones = document.createElement("div");
+    botones.className = "flex flex-wrap gap-2 shrink-0";
+    const detalle = document.createElement("div");
+    detalle.className = "hidden mt-3";
+    detalle.id = "avance-" + r.id;
+
+    const ver = document.createElement("button");
+    ver.type = "button";
+    ver.className = BOTON_CHICO;
+    ver.textContent = "Quién va cerca";
+    ver.setAttribute("aria-expanded", "false");
+    ver.setAttribute("aria-controls", detalle.id);
+    ver.addEventListener("click", async () => {
+        const abrir = detalle.classList.contains("hidden");
+        ver.setAttribute("aria-expanded", abrir ? "true" : "false");
+        detalle.classList.toggle("hidden", !abrir);
+        if (abrir) await pintarAvance(r, detalle);
+    });
+
+    const pausa = document.createElement("button");
+    pausa.type = "button";
+    pausa.className = BOTON_CHICO;
+    pausa.textContent = r.activa ? "Pausar" : "Reanudar";
+    pausa.addEventListener("click", async () => {
+        const { error } = await sb.rpc("activar_tarea_por_puntos", { p_regla: r.id, p_activa: !r.activa });
+        if (error) { Avisos.avisar("No se pudo cambiar: " + error.message, { tipo: "error" }); return; }
+        await cargarProgramadas();
+        if (!r.activa) await cargarEnviadas();   // al reanudar, a quien ya llegó le llega
+    });
+
+    const borrar = document.createElement("button");
+    borrar.type = "button";
+    borrar.className = "text-xs text-red-600 dark:text-red-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded px-1";
+    borrar.textContent = "Eliminar";
+    borrar.addEventListener("click", async () => {
+        if (!(await Avisos.confirmar("Ya no le llegará a nadie más. Las tareas que ya les llegaron se quedan en su lista.",
+            { titulo: "¿Eliminar esta tarea programada?", aceptar: "Eliminar", peligro: true }))) return;
+        const { error } = await sb.from("tareas_por_puntos").delete().eq("id", r.id);
+        if (error) { Avisos.avisar("No se pudo eliminar: " + error.message, { tipo: "error" }); return; }
+        await cargarProgramadas();
+    });
+
+    botones.append(ver, pausa, borrar);
+    arriba.append(texto, botones);
+    div.append(arriba, detalle);
+    return div;
+}
+
+async function pintarAvance(r, caja) {
+    caja.textContent = "Cargando…";
+    const { data, error } = await sb.rpc("tareas_por_puntos_avance", { p_regla: r.id });
+    if (error) { caja.textContent = "No se pudo cargar: " + error.message; return; }
+    caja.textContent = "";
+    const ul = document.createElement("ul");
+    ul.className = "grid gap-1 text-sm";
+    (data || []).forEach((a) => {
+        const li = document.createElement("li");
+        li.className = "flex flex-wrap items-center justify-between gap-2 border-l-2 pl-3 "
+            + (a.entregada_at ? "border-green-500" : "border-brand-200 dark:border-brand-700");
+        const nombre = document.createElement("span");
+        nombre.className = "text-brand-700 dark:text-brand-100";
+        nombre.textContent = a.alumno_nombre || "—";
+        const estado = document.createElement("span");
+        estado.className = "text-xs tabular-nums " + (a.entregada_at ? "text-green-700 dark:text-green-400 font-semibold" : "text-brand-500 dark:text-brand-300");
+        // Escrito, no solo el color de la raya.
+        estado.textContent = a.entregada_at
+            ? "✔ Ya le llegó el " + new Date(a.entregada_at).toLocaleDateString("es-CR", { day: "numeric", month: "short", timeZone: "America/Costa_Rica" })
+            : `${a.ganados} de ${r.umbral} puntos (le faltan ${Math.max(0, r.umbral - a.ganados)})`;
+        li.append(nombre, estado);
+        ul.appendChild(li);
+    });
+    caja.appendChild(ul);
 }
 
 // ---------- Vista profesor: lo que ya mandó ----------

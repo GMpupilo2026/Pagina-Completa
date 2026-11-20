@@ -79,9 +79,14 @@ function announceBlind(text){
 function applyBlindModeUI(){
   document.getElementById('board').style.display = blindMode ? 'none' : 'grid';
   blindPanel.style.display = blindMode ? 'block' : 'none';
+  /* De qué lado se mira el tablero no cambia el color de ninguna casilla: en
+     Modo Adaptado el selector de orientación era una pregunta de más, con tres
+     botones que no hacían nada. */
+  const orientacion = document.getElementById('orientation-group');
+  if(orientacion) orientacion.hidden = blindMode;
   document.getElementById('target-label').textContent = blindMode ? 'Se anuncia:' : 'Haz clic en';
   document.getElementById('lead-text').textContent = blindMode
-    ? 'Se anuncia el nombre de una casilla (por ejemplo, "e4"). En vez de encontrarla en un tablero, di de qué color es: escribe "b" si es blanca o "n" si es negra, y presiona Enter, antes de que se acabe el tiempo.'
+    ? 'Se anuncia el nombre de una casilla (por ejemplo, "e4"). En vez de encontrarla en un tablero, di de qué color es: escribe «blanca» o «negra» (o solo «b» o «n») y presiona Enter, antes de que se acabe el tiempo.'
     : 'Se muestra el nombre de una casilla (por ejemplo, "e4"). Haz clic en esa casilla en el tablero antes de que se acabe el tiempo. Cuanto más rápido reconozcas las casillas, mejor puntuación.';
   if(modeNormalBtn){
     modeNormalBtn.setAttribute('aria-pressed', blindMode ? 'false' : 'true');
@@ -145,6 +150,24 @@ blindPanel.addEventListener('submit', (e) => {
     announceBlind(playing ? `La casilla es ${casillaDicha()}. ${tiempoQueQueda()}` : 'La ronda no está en curso: escribe «empezar» para jugar.');
     return;
   }
+  /* «empezar»: el aviso de «repetir» fuera de la ronda lo pedía, y el
+     recuadro contestaba «No entendí». Durante la ronda no reinicia nada: a
+     media ronda, una palabra mal escrita no puede tirar los puntos. */
+  if(/^(empezar|empieza|comenzar|jugar|jugar de nuevo|otra vez|de nuevo|otra ronda)$/.test(escrito)){
+    if(playing) announceBlind(`La ronda ya está en curso. La casilla es ${casillaDicha()}.`);
+    else startRound();
+    return;
+  }
+  if(/^(ayuda|comandos|que puedo escribir)$/.test(escrito)){
+    announceBlind(`Escribe «blanca» (o «b») si la casilla es blanca, o «negra» (o «n») si es negra. «repetir» vuelve a decir la casilla, «tiempo» dice cuánto queda, «puntos» dice cómo vas y «volver» sale de la ronda.`);
+    return;
+  }
+  if(/^(puntos|puntaje|puntuacion|como voy)$/.test(escrito)){
+    announceBlind(playing
+      ? `Llevas ${score} acierto${score === 1 ? '' : 's'} y ${misses} error${misses === 1 ? '' : 'es'}. ${tiempoQueQueda()}`
+      : 'La ronda no está en curso.');
+    return;
+  }
   // «volver»: deja la ronda y vuelve a donde se vino, diciendo adónde. Antes: «No entendí».
   if(/^(volver|salir|atras|volver a entrenar)$/.test(escrito)){
     clearInterval(timerId);
@@ -160,7 +183,7 @@ blindPanel.addEventListener('submit', (e) => {
   const answer = RESPUESTAS[escrito];
   if(!answer){
     // Lo que no es un color se dice no entendido (regla del sitio para los recuadros).
-    announceBlind(`No entendí «${blindInput.dataset.ultimo || ''}». Escribe «blanca» (o «b») si la casilla es blanca, o «negra» (o «n») si es negra. «repetir» vuelve a decir la casilla, «tiempo», cuánto queda, y «volver» sale de la ronda.`);
+    announceBlind(`No entendí «${blindInput.dataset.ultimo || ''}». Escribe «blanca» (o «b») si la casilla es blanca, o «negra» (o «n») si es negra. «ayuda» dice todo lo que se puede escribir.`);
     return;
   }
   const missedColor = isLightSquare(currentTarget) ? 'blanca' : 'negra'; // antes de newTarget(), que cambia currentTarget
@@ -206,18 +229,29 @@ let lastPromptAt = 0;
 let playing = false;
 applyBlindModeUI();
 
+/* Cuál está elegido lo decía solo la clase `active`, que es un color: con
+   lector de pantalla los tres botones de modo sonaban iguales y no había forma
+   de saber si se iba a jugar a 3 s o sin apuro. `aria-pressed` lo dice. */
+function marcarOpcion(grupo, elegido){
+  document.querySelectorAll(grupo + ' .option-btn').forEach((b) => {
+    b.classList.toggle('active', b === elegido);
+    b.setAttribute('aria-pressed', b === elegido ? 'true' : 'false');
+  });
+}
+['#orientation-switch', '#mode-switch'].forEach((grupo) => {
+  marcarOpcion(grupo, document.querySelector(grupo + ' .option-btn.active'));
+});
+
 document.querySelectorAll('#orientation-switch .option-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('#orientation-switch .option-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    marcarOpcion('#orientation-switch', btn);
     orientationSetting = btn.dataset.value;
   });
 });
 
 document.querySelectorAll('#mode-switch .option-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('#mode-switch .option-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    marcarOpcion('#mode-switch', btn);
     modeSetting = btn.dataset.value;
     pintarTiempos();
     renderBestLine();

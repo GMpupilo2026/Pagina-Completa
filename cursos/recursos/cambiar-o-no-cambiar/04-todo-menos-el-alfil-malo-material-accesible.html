@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,13 +57,31 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Anatoly Karpov – Joël Lautier, Biel 1992. Juegan las blancas. El alfil negro de bella 7 está encerrado por sus propios peones y las negras quieren liberarlo con …cesar 5. ¿Qué haces?</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>Hay posiciones donde la ventaja no es material ni de ataque: es que una pieza del rival no tiene futuro. Esa clase de ventaja no se esfuma con los cambios; al revés, se agranda. Con menos piezas en el tablero, el rival tiene menos formas de compensar su pieza mala.</p>
 <p>El cuidado está en el orden: hay que cambiar todo lo demás, pero no dejar que el rival libere su pieza mala con una ruptura de peones ni que la cambie por una de las tuyas. Por eso muchas jugadas del bando que tiene la ventaja son de prevención: impedir el avance que le daría aire.</p>
-<p>Anatoly Karpov contra Joël Lautier es un ejemplo perfecto. Con 18. alfil felix 3 impidió que las negras liberaran su alfil con …c5, y después cambió las torres, las damas y hasta entregó un peón: el final de alfiles quedó ganado porque el alfil negro siguió encerrado en a8.</p>
+<p>Anatoly Karpov contra Joël Lautier es un ejemplo perfecto. Con 18. alfil felix 3 impidió que las negras liberaran su alfil con …cesar 5, y después cambió las torres, las damas y hasta entregó un peón: el final de alfiles quedó ganado porque el alfil negro siguió encerrado en anna 8.</p>
 
 
 <h2>2. Conceptos clave</h2>
@@ -65,7 +89,7 @@
   <dt>El par de alfiles y el alfil malo</dt>
   <dd>Tener los dos alfiles contra alfil y caballo, o contra dos caballos, es una pequeña ventaja duradera: entre los dos cubren las casillas de los dos colores. Un alfil es malo cuando sus propios peones están en casillas de su color.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar un alfil por un caballo sin motivo. El cambio es correcto muchas veces —contra un caballo en puesto avanzado, o en posiciones cerradas—, pero hay que poder decir por qué.</dd>
-  <dd><strong>Para verlo:</strong> En la Francesa, el alfil de c8 del negro queda detrás de la cadena e6-d5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.</dd>
+  <dd><strong>Para verlo:</strong> En la Francesa, el alfil de cesar 8 del negro queda detrás de la cadena eva 6-david 5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.</dd>
   <dt>El valor de las piezas</dt>
   <dd>Peón 1, caballo y alfil 3, torre 5, dama 9. El rey no tiene valor de cambio porque no se puede entregar. Son números de referencia, no una verdad: sirven para decidir cambios rápido, no para juzgar una posición.</dd>
   <dd><strong>El error de siempre:</strong> Tratar los números como si fueran exactos. Un caballo clavado en el borde vale menos que un peón pasado a punto de coronar, y la calidad (torre por pieza menor) se entrega todos los días cuando la pieza menor domina una casilla fuerte.</dd>
@@ -73,34 +97,78 @@
   <dt>La estructura de peones</dt>
   <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
   <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
-  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: eva 4-david 5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Anatoly Karpov – Joël Lautier, Biel 1992. Juegan las blancas. El alfil negro de b7 está encerrado por sus propios peones y las negras quieren liberarlo con …c5. ¿Qué haces?</h3>
+  <h3 id="posicion-1">Posición 1: Anatoly Karpov – Joël Lautier, Biel 1992. Juegan las blancas. El alfil negro de bella 7 está encerrado por sus propios peones y las negras quieren liberarlo con …cesar 5. ¿Qué haces?</h3>
   
-  <p>Piezas blancas: rey en g1; dama en e4; torres en a1, d1; alfil en e2; peones en a2, b2, c4, e5, f2, g2, h3.</p>
-  <p>Piezas negras: rey en g8; dama en c7; torres en d8, e8; alfil en b7; peones en a7, b6, c6, e6, f7, g7, h7.</p>
+  <h4>Piezas blancas: 12</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en eva 4.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en david 1.</li>
+    <li>Alfil en eva 2.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en cesar 4.</li>
+    <li>Peón en eva 5.</li>
+    <li>Peón en felix 2.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 3.</li>
+  </ul>
+  <h4>Piezas negras: 12</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en cesar 7.</li>
+    <li>Torre en david 8.</li>
+    <li>Torre en eva 8.</li>
+    <li>Alfil en bella 7.</li>
+    <li>Peón en anna 7.</li>
+    <li>Peón en bella 6.</li>
+    <li>Peón en cesar 6.</li>
+    <li>Peón en eva 6.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 7.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 18. alfil felix 3, alfil anna 8, 19. torre captura david 8, torre captura david 8, 20. torre david 1, torre captura david 1 jaque, 21. alfil captura david 1, dama david 8, 22. alfil felix 3, dama david 2, 23. bella 3, dama captura anna 2, 24. bella 4, dama anna 1 jaque</p>
+  <h4>La línea: 14 jugadas</h4>
+  <ul>
+    <li>18. Blancas: alfil felix 3.</li>
+    <li>18. Negras: alfil anna 8.</li>
+    <li>19. Blancas: torre captura david 8.</li>
+    <li>19. Negras: torre captura david 8.</li>
+    <li>20. Blancas: torre david 1.</li>
+    <li>20. Negras: torre captura david 1 jaque.</li>
+    <li>21. Blancas: alfil captura david 1.</li>
+    <li>21. Negras: dama david 8.</li>
+    <li>22. Blancas: alfil felix 3.</li>
+    <li>22. Negras: dama david 2.</li>
+    <li>23. Blancas: bella 3.</li>
+    <li>23. Negras: dama captura anna 2.</li>
+    <li>24. Blancas: bella 4.</li>
+    <li>24. Negras: dama anna 1 jaque.</li>
+  </ul>
   <p>Resultado: Posición para jugar</p>
-  <p>18. alfil felix 3 ofrece cambiar los alfiles en la gran diagonal: si las negras lo aceptan, se quitan el problema pero las blancas quedan mejor; si no, su alfil se tiene que esconder en a8. Después llegan los cambios de torres (19. torre captura david 8 y 20… torre captura david 1 jaque) y Karpov no se preocupa por simplificar: lo único que importa es que el alfil de a8 siga sin jugar. (Stockfish 17 a profundidad 22: alfil felix 3 es la que elige el motor (+0,5).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 3rr1k1/pbq2ppp/1pp1p3/4P3/2P1Q3/7P/PP2BPP1/R2R2K1 w - - 1 18</p>
+  <p>18. alfil felix 3 ofrece cambiar los alfiles en la gran diagonal: si las negras lo aceptan, se quitan el problema pero las blancas quedan mejor; si no, su alfil se tiene que esconder en anna 8. Después llegan los cambios de torres (19. torre captura david 8 y 20… torre captura david 1 jaque) y Karpov no se preocupa por simplificar: lo único que importa es que el alfil de anna 8 siga sin jugar. (Stockfish 17 a profundidad 22: alfil felix 3 es la que elige el motor (+0,5).)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 3rr1k1/pbq2ppp/1pp1p3/4P3/2P1Q3/7P/PP2BPP1/R2R2K1 w - - 1 18</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Juega tres partidas propias hasta el final y anota en cada una si tu alfil era bueno o malo y por qué.</li>
   <li>Arma un final de alfil bueno contra alfil malo con el mismo material y juégalo desde los dos lados.</li>
   <li>Anota diez cambios de tu última partida y di, en cada uno, si ganaste o perdiste material y si la posición mejoró o empeoró. Vas a encontrar cambios parejos que fueron buenos y cambios parejos que fueron malos.</li>
   <li>Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos.</li>
   <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
-  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Arma en el tablero un peón aislado en david 4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -153,7 +221,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Cambiar o no cambiar» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

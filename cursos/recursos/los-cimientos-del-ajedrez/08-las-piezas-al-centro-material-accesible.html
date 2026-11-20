@@ -16,6 +16,12 @@
   h1 { font-size: 1.7rem; line-height: 1.3; }
   h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
   h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 .2rem; }
+  .posicion ul { margin: .2rem 0 .6rem; padding-left: 1.4rem; }
+  .indice { border: 2px solid #243b53; border-radius: .5rem; padding: .6rem 1rem; margin: 1.5rem 0; }
+  .indice h2 { font-size: 1.1rem; margin: .2rem 0; border: 0; padding: 0; }
+  .indice ol, .indice ul { margin: .2rem 0; padding-left: 1.4rem; }
+  .fen { font-size: .95rem; overflow-wrap: anywhere; }
   a { color: #8a4a00; }
   dt { font-weight: 700; margin-top: 1rem; }
   dd { margin: .3rem 0 0; }
@@ -34,7 +40,7 @@
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
     a { color: #f0b429; }
-    .posicion { border-color: #829ab1; }
+    .posicion, .indice { border-color: #829ab1; }
     .respuesta { background: #102a43; border-color: #f0b429; }
   }
 </style>
@@ -51,9 +57,28 @@
   <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
   <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
      posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+  <p>Para poner una posición en tu tablero: cada pieza va en su propio renglón de una lista, y cada
+     jugada de la línea también. Con las flechas del lector de pantalla avanzas de a una, a tu ritmo.</p>
 </header>
 
-<h2>1. De qué trata esta lección</h2>
+<nav class="indice" aria-labelledby="indice-titulo">
+  <h2 id="indice-titulo">Contenido</h2>
+  <ol>
+    <li><a href="#s1">De qué trata esta lección</a></li>
+    <li><a href="#s2">Conceptos clave</a></li>
+    <li><a href="#s3">Ejemplos del curso</a>
+      <ul>
+        <li><a href="#posicion-1">Posición 1: Hay una pieza que mira poco del tablero: busca adónde estaría mejor. Juegan las negras; el rival acaba de jugar caballo felix 2.</a></li>
+        <li><a href="#posicion-2">Posición 2: Hay una pieza que mira poco del tablero: busca adónde estaría mejor. Juegan las blancas; el rival acaba de jugar …bella 4.</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">Ejercicios</a></li>
+    <li><a href="#s5">Preguntas con su respuesta</a></li>
+    <li><a href="#s6">Fuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="s1">1. De qué trata esta lección</h2>
 
 <p>El centro es el cruce de caminos del tablero. Desde ahí una pieza llega rápido a cualquier flanco, ataca más casillas y puede cambiar de objetivo en una jugada. La diferencia es muy concreta con el caballo: en el centro controla ocho casillas y en una esquina solo dos. Por eso se dice que un caballo en el borde es un caballo pobre. Con la dama, el alfil y la torre pasa algo parecido: desde el centro ven más y hacen más.</p>
 <p>Cuando no sepas qué hacer, mira dónde está cada una de tus piezas y pregúntate cuál es la más alejada del centro o la que menos casillas controla. Esa es la candidata a mejorar. Las señales de una posición sana son piezas que miran hacia el centro, caballos en las casillas centrales o cerca de ellas y torres en las columnas centrales cuando se abren. Las señales de alarma son piezas en los bordes sin una tarea clara.</p>
@@ -63,46 +88,120 @@
 <h2>2. Conceptos clave</h2>
 <dl>
   <dt>El centro</dt>
-  <dd>Las cuatro casillas del medio —d4, e4, d5, e5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.</dd>
-  <dd><strong>El error de siempre:</strong> Confundir ocupar con controlar. Un peón en e4 ocupa; un alfil en g7 y un caballo en f6 controlan e4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.</dd>
-  <dd><strong>Para verlo:</strong> Un caballo en e5 ataca ocho casillas; el mismo caballo en a1 ataca dos. Es el mismo caballo y vale cuatro veces menos.</dd>
+  <dd>Las cuatro casillas del medio —david 4, eva 4, david 5, eva 5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.</dd>
+  <dd><strong>El error de siempre:</strong> Confundir ocupar con controlar. Un peón en eva 4 ocupa; un alfil en gustav 7 y un caballo en felix 6 controlan eva 4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.</dd>
+  <dd><strong>Para verlo:</strong> Un caballo en eva 5 ataca ocho casillas; el mismo caballo en anna 1 ataca dos. Es el mismo caballo y vale cuatro veces menos.</dd>
   <dt>Cómo hacer un plan</dt>
-  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a d5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
+  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a david 5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
   <dd><strong>El error de siempre:</strong> Jugar sin plan, mirando solo la jugada que sigue. El otro error es enamorarse del plan y no cambiarlo cuando la posición cambia.</dd>
   <dd><strong>Para verlo:</strong> El método corto: qué material hay, cómo están los reyes, cómo es la estructura, qué pieza mía es la peor. La respuesta a la última pregunta suele ser el plan.</dd>
   <dt>La coronación y el peón pasado</dt>
   <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
   <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
-  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en gustav 7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
 </dl>
 
-<h2>3. Ejemplos del curso</h2>
+<h2 id="s3">3. Ejemplos del curso</h2>
 <div class="posicion">
-  <h3>Posición 1: Hay una pieza que mira poco del tablero: busca adónde estaría mejor. Juegan las negras; el rival acaba de jugar caballo felix 2.</h3>
+  <h3 id="posicion-1">Posición 1 de 2: Hay una pieza que mira poco del tablero: busca adónde estaría mejor. Juegan las negras; el rival acaba de jugar caballo felix 2.</h3>
   
-  <p>Piezas blancas: rey en g2; torres en c2, d1; alfil en f3; caballo en f2; peones en a2, d3, f4, g3.</p>
-  <p>Piezas negras: rey en f7; torres en b7, d8; alfiles en a6, d4; peones en a5, d5, f6, g7.</p>
+  <h4>Piezas blancas: 9</h4>
+  <ul>
+    <li>Rey en gustav 2.</li>
+    <li>Torre en cesar 2.</li>
+    <li>Torre en david 1.</li>
+    <li>Alfil en felix 3.</li>
+    <li>Caballo en felix 2.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en david 3.</li>
+    <li>Peón en felix 4.</li>
+    <li>Peón en gustav 3.</li>
+  </ul>
+  <h4>Piezas negras: 9</h4>
+  <ul>
+    <li>Rey en felix 7.</li>
+    <li>Torre en bella 7.</li>
+    <li>Torre en david 8.</li>
+    <li>Alfil en anna 6.</li>
+    <li>Alfil en david 4.</li>
+    <li>Peón en anna 5.</li>
+    <li>Peón en david 5.</li>
+    <li>Peón en felix 6.</li>
+    <li>Peón en gustav 7.</li>
+  </ul>
   <p>Juegan las negras.</p>
   
-  <p>La línea, jugada por jugada: 33… torre bella 2, 34. torre captura bella 2, alfil captura bella 2, 35. torre david 2, alfil david 4, 36. caballo hector 3, rey eva 6</p>
+  <h4>La línea: 7 jugadas</h4>
+  <ul>
+    <li>33. Negras: torre bella 2.</li>
+    <li>34. Blancas: torre captura bella 2.</li>
+    <li>34. Negras: alfil captura bella 2.</li>
+    <li>35. Blancas: torre david 2.</li>
+    <li>35. Negras: alfil david 4.</li>
+    <li>36. Blancas: caballo hector 3.</li>
+    <li>36. Negras: rey eva 6.</li>
+  </ul>
   <p>Resultado: Tablas</p>
-  <p>Tarrasch–Rubinstein, San Sebastián 1912. 33… torre bella 2, 34. torre captura bella 2, alfil captura bella 2, 35. torre david 2, alfil david 4, 36. caballo hector 3, rey eva 6. Alfil fuerte en d4 y rey que entra por el centro tras cambiar torres. Fíjate en que la pieza centralizada controla más casillas y por eso amenaza en varias direcciones a la vez. (Partida Tarrasch–Rubinstein, San Sebastián 1912. Stockfish 16 a profundidad 18: torre bella 2 vale lo mismo que la mejor (+0,3 contra +0,8).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: 3r4/1r3kp1/b4p2/p2p4/3b1P2/3P1BP1/P1R2NK1/3R4 b - - 6 33</p>
+  <p>Tarrasch–Rubinstein, San Sebastián 1912. 33… torre bella 2, 34. torre captura bella 2, alfil captura bella 2, 35. torre david 2, alfil david 4, 36. caballo hector 3, rey eva 6. Alfil fuerte en david 4 y rey que entra por el centro tras cambiar torres. Fíjate en que la pieza centralizada controla más casillas y por eso amenaza en varias direcciones a la vez. (Partida Tarrasch–Rubinstein, San Sebastián 1912. Stockfish 16 a profundidad 18: torre bella 2 vale lo mismo que la mejor (+0,3 contra +0,8).)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: 3r4/1r3kp1/b4p2/p2p4/3b1P2/3P1BP1/P1R2NK1/3R4 b - - 6 33</p>
 </div>
 <div class="posicion">
-  <h3>Posición 2: Hay una pieza que mira poco del tablero: busca adónde estaría mejor. Juegan las blancas; el rival acaba de jugar …b4.</h3>
+  <h3 id="posicion-2">Posición 2 de 2: Hay una pieza que mira poco del tablero: busca adónde estaría mejor. Juegan las blancas; el rival acaba de jugar …bella 4.</h3>
   
-  <p>Piezas blancas: rey en g1; dama en h3; torres en a1, f1; alfiles en c2, g5; caballos en c3, e5; peones en a2, b2, d4, e3, f5, g2, h2.</p>
-  <p>Piezas negras: rey en g8; dama en d8; torres en a8, f8; alfiles en b7, e7; caballos en d7, f6; peones en a6, b4, c4, d5, f7, g6, h7.</p>
+  <h4>Piezas blancas: 15</h4>
+  <ul>
+    <li>Rey en gustav 1.</li>
+    <li>Dama en hector 3.</li>
+    <li>Torre en anna 1.</li>
+    <li>Torre en felix 1.</li>
+    <li>Alfil en cesar 2.</li>
+    <li>Alfil en gustav 5.</li>
+    <li>Caballo en cesar 3.</li>
+    <li>Caballo en eva 5.</li>
+    <li>Peón en anna 2.</li>
+    <li>Peón en bella 2.</li>
+    <li>Peón en david 4.</li>
+    <li>Peón en eva 3.</li>
+    <li>Peón en felix 5.</li>
+    <li>Peón en gustav 2.</li>
+    <li>Peón en hector 2.</li>
+  </ul>
+  <h4>Piezas negras: 15</h4>
+  <ul>
+    <li>Rey en gustav 8.</li>
+    <li>Dama en david 8.</li>
+    <li>Torre en anna 8.</li>
+    <li>Torre en felix 8.</li>
+    <li>Alfil en bella 7.</li>
+    <li>Alfil en eva 7.</li>
+    <li>Caballo en david 7.</li>
+    <li>Caballo en felix 6.</li>
+    <li>Peón en anna 6.</li>
+    <li>Peón en bella 4.</li>
+    <li>Peón en cesar 4.</li>
+    <li>Peón en david 5.</li>
+    <li>Peón en felix 7.</li>
+    <li>Peón en gustav 6.</li>
+    <li>Peón en hector 7.</li>
+  </ul>
   <p>Juegan las blancas.</p>
   
-  <p>La línea, jugada por jugada: 16. felix captura gustav 6, hector captura gustav 6, 17. dama hector 4, bella captura cesar 3, 18. caballo captura david 7, dama captura david 7, 19. torre captura felix 6</p>
+  <h4>La línea: 7 jugadas</h4>
+  <ul>
+    <li>16. Blancas: felix captura gustav 6.</li>
+    <li>16. Negras: hector captura gustav 6.</li>
+    <li>17. Blancas: dama hector 4.</li>
+    <li>17. Negras: bella captura cesar 3.</li>
+    <li>18. Blancas: caballo captura david 7.</li>
+    <li>18. Negras: dama captura david 7.</li>
+    <li>19. Blancas: torre captura felix 6.</li>
+  </ul>
   <p>Resultado: Ganan blancas</p>
-  <p>Pillsbury–Marco, París (12) 1900. 16. felix captura gustav 6, hector captura gustav 6, 17. dama hector 4, bella captura cesar 3, 18. caballo captura david 7, dama captura david 7, 19. torre captura felix 6. Caballo en e5 apoyado por peones como base del ataque al enroque. Fíjate en que la pieza centralizada controla más casillas y por eso amenaza en varias direcciones a la vez. (Partida Pillsbury–Marco, París (12) 1900. Stockfish 16 a profundidad 18: felix captura gustav 6 es la mejor (+3,5).)</p>
-  <p>Posición en notación FEN, por si la quieres cargar en un programa: r2q1rk1/1b1nbp1p/p4np1/3pNPB1/1ppP4/2N1P2Q/PPB3PP/R4RK1 w - - 0 16</p>
+  <p>Pillsbury–Marco, París (12) 1900. 16. felix captura gustav 6, hector captura gustav 6, 17. dama hector 4, bella captura cesar 3, 18. caballo captura david 7, dama captura david 7, 19. torre captura felix 6. Caballo en eva 5 apoyado por peones como base del ataque al enroque. Fíjate en que la pieza centralizada controla más casillas y por eso amenaza en varias direcciones a la vez. (Partida Pillsbury–Marco, París (12) 1900. Stockfish 16 a profundidad 18: felix captura gustav 6 es la mejor (+3,5).)</p>
+  <p class="fen">Posición en notación FEN, por si la quieres cargar en un programa: r2q1rk1/1b1nbp1p/p4np1/3pNPB1/1ppP4/2N1P2Q/PPB3PP/R4RK1 w - - 0 16</p>
 </div>
 
-<h2>4. Ejercicios</h2>
+<h2 id="s4">4. Ejercicios</h2>
 <ol>
   <li>Pon un caballo en el centro y otro en la esquina y cuenta las casillas que ataca cada uno. Hazlo con alfil, torre y dama.</li>
   <li>En tus tres últimas partidas, marca en qué jugada se resolvió el centro (se abrió, se cerró o se cambió) y qué hiciste después.</li>
@@ -112,7 +211,7 @@
   <li>Busca en tus partidas una posición donde tuviste peón pasado y no lo usaste. Casi siempre hay una.</li>
 </ol>
 
-<h2>5. Preguntas con su respuesta</h2>
+<h2 id="s5">5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -137,7 +236,7 @@
   </li>
   <li>
     <p>¿De qué depende dónde atacar?</p>
-    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena e4-d5 el juego es en el flanco de rey; con d4-e3, en el de dama.</p>
+    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena eva 4-david 5 el juego es en el flanco de rey; con david 4-eva 3, en el de dama.</p>
   </li>
   <li>
     <p>¿Cada cuánto se revisa un plan?</p>
@@ -165,7 +264,7 @@
   </li>
 </ol>
 
-<h2>6. Fuentes</h2>
+<h2 id="s6">6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>

@@ -35,6 +35,7 @@ const igual = (m, a, b) => {
 const CLAVE = "torneos-pareo.seguidos";
 const ID1 = "44444444-4444-4444-8444-444444444444";
 const ID2 = "77777777-7777-4777-8777-777777777777";
+const ID3 = "99999999-9999-4999-8999-999999999999";
 
 // Seis jugadores; ronda 1 jugada: en la mesa 2, PRUEBA E con blancas le gana a PRUEBA B.
 function torneo(nombre, ids) {
@@ -49,6 +50,8 @@ const FILAS = [
   fila(ID1, torneo("PRUEBA ABIERTO", ["a", "b", "c", "d", "e", "f"]), "2026-10-22T15:00:00Z"),
   // En el segundo, PRUEBA E es el «c» (otro id, el mismo nombre).
   fila(ID2, torneo("PRUEBA OTRO", ["g", "h", "e", "i", "j", "k"]), "2026-10-20T15:00:00Z"),
+  // Uno con los inscritos y sin pareo todavía (la mañana del torneo).
+  fila(ID3, Object.assign(torneo("PRUEBA SIN PAREO", ["p", "q", "r", "s"]), { rondas: [] }), "2026-10-19T15:00:00Z"),
 ];
 
 // El doble de la tabla pública: filtra de verdad por id y por `datos=cs.` (el nombre exacto).
@@ -206,11 +209,35 @@ async function pruebaFicha(browser) {
   await ctx.close();
 }
 
+// El QR del gafete (la Eliminatoria JDN de PZ, js/gafetes.js) trae a
+// torneos-pareo#t=<torneo>&j=<jugador>, sin vista: en el celular, arriba de
+// su ficha, «Ahora» con la ronda, la mesa en grande, el rival y el puesto; y
+// en la tabla, la mesa de cada ronda.
+async function pruebaQrGafete(browser) {
+  console.log("\n=== El QR del gafete: la ficha en el celular ===");
+  const { ctx, page, errores } = await abrir(browser, "#t=" + ID1 + "&j=e");
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.waitForSelector("#tp-ahora");
+  igual("«Ahora»: la ronda, la mesa, el rival, lo que sacó y el puesto", await page.$eval("#tp-ahora", (x) => [...x.children].map((p) => p.textContent)),
+    ["Ronda 1", "Mesa 2", "Con blancas contra PRUEBA B (1800)", "Resultado: 1 punto", "Puesto 1 de 6 · 1 punto tras la ronda 1"]);
+  ok(await page.$eval("#tp-ahora-mesa", (x) => x.checkVisibility() && parseFloat(getComputedStyle(x).fontSize) >= 40), "el número de la mesa se ve, en grande");
+  igual("la tabla dice la mesa de cada ronda", await page.$$eval("#tp-tabla-jugador tbody tr", (l) => l.map((tr) => [...tr.children].slice(0, 3).map((td) => td.textContent).join("|"))), ["1|2|PRUEBA B"]);
+  igual("sin scroll de costado en el celular", await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+  await page.goto("about:blank");
+  await page.goto(BASE + "/torneos-pareo.html#t=" + ID3 + "&j=q", { waitUntil: "networkidle" });
+  await page.waitForSelector("#tp-ahora");
+  igual("sin pareo todavía, lo dice y que la página se pone al día sola", await page.$eval("#tp-ahora", (x) => [...x.children].map((p) => p.textContent)),
+    ["Todavía no hay pareo", "La mesa de la ronda 1 sale aquí en cuanto el árbitro la publique: esta página se vuelve a leer sola cada minuto.", "Sin puesto todavía: sale al terminar la ronda 1."]);
+  ok(!errores.length, "sin errores en la consola", errores.join(" | "));
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaSeguir(browser);
     await pruebaFicha(browser);
+    await pruebaQrGafete(browser);
     await pruebaAlmacenamiento(browser);
   } finally {
     await browser.close();

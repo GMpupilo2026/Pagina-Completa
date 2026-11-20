@@ -64,6 +64,18 @@ const LIBRERIAS = [
     cdn: /https?:\/\/[^"']*opentype[^"']*\.js/,
   },
   {
+    // La voz de la llamada de la clase (js/clase-llamada.js la pide recién
+    // cuando alguien toca «Entrar a la llamada»: pesa 600 kB y la mayoría de
+    // las clases no la usa). Ver «La llamada de voz de la clase». Como
+    // qrcode-generator, su `exports` no deja pedir el archivo por la ruta: el
+    // nombre del paquete resuelve (`require`) justo al UMD.
+    nombre: "LiveKit",
+    paquete: "livekit-client",
+    npm: "livekit-client",
+    archivo: "js/vendor/livekit-client.js",
+    cdn: /https?:\/\/[^"']*livekit-client[^"']*\.js/,
+  },
+  {
     // Lo carga js/errores.js recién cuando hay un error que mandar (ver «Los
     // errores de la gente llegan a Sentry»): nadie más lo pide.
     nombre: "Sentry",

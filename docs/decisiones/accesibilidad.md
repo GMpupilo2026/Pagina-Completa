@@ -70,6 +70,56 @@ final.
   tiene otra forma de saber dónde está, y los tableros pintan las casillas con su
   propio color de fondo.
 
+### La jugada se entiende escrita como se dice
+
+Pedido del dueño: que el recuadro reconozca **de distintas formas** lo que
+escriben. Quien no ve el tablero casi nunca escribe «Cf3»: escribe la jugada
+como la piensa o como la acaba de oír. Todo esto contestaba «no es una jugada
+legal», y no era cierto — la jugada era legal, lo que no se entendía era la
+forma:
+
+    caballo f3 · caballo a felix 3 · caballo de g1 a f3 · de g1 a f3 · g1-f3
+    cf3 · juego cf3 · peón e4 · eva 4 · e 4 · muevo el peón a e4
+    peón toma d4 · e por d4 · caballo captura peón · dama toma dama
+    e8 corona torre · peón e8 dama · eva 8 y pide caballo
+    enroque corto · me enroco largo · torre a d1 · torre h d1
+
+Está en `ComandosTablero.jugadaEscrita()`, que es el intérprete de casi todos
+los recuadros; primero prueba la notación de siempre y, si no hay jugada, lo
+escrito con palabras (`enPalabras`): se arma con lo que **se reconoce** —la
+pieza, las casillas, una columna de pista, la coronación— y con eso se filtran
+las jugadas legales. `js/chess-move-parser.js` (Juegos, Niebla) y la copia de
+`js/tablero-board.js` caen en él cuando no entienden.
+
+- **Una palabra que no se conoce anula todo**: «hola e4» no es e4. Aflojar el
+  intérprete no puede terminar en una jugada que nadie escribió.
+- **Si cabe en más de una jugada, no elige: dice cuáles.** «torre d1» con dos
+  torres contesta «hay 2 torres que pueden ir a david 1, desde anna 1 y
+  hector 1. Di de cuál, por ejemplo «a1 d1»»; «enroque» con los dos posibles,
+  «escribe «enroque corto» o «enroque largo»». Antes era «no es una jugada
+  legal». Lo dice `noSePudoJugar()`, que ya llaman todos los recuadros: la
+  última ambigüedad queda anotada en el módulo, y así ninguno tuvo que cambiar.
+- **La «a» suelta casi siempre es la preposición** («caballo a f3»): solo
+  cuenta como columna si sin ella no alcanza («torre a d1» con dos torres).
+- **La inicial en minúscula** («cf3», «txa1») se lee primero como peón —«bxc3»
+  es una captura de peón de lo más normal— y solo si así no hay jugada, como
+  pieza. Y «rb1» sigue sin ser la torre: R es el rey.
+- Sin nombrar la pieza, una casilla sola es de peón («e4»); con «toma», de
+  cualquiera, si es una sola. Una coronación sin decir a qué, dama.
+
+- **Tipos y Visualización** interpretan con `ChessMoveParser.tryParseMove()`,
+  así que lo reciben por ahí. **Los 4×4** tienen su recuadro y su tablero
+  propios (4×4, sin bandos, toda jugada es una captura): después de lo que ya
+  entendían («a1 b2», «Ta3»), le pasan lo escrito al mismo intérprete con
+  `juegoParaPalabras()`, que le dice qué hay en cada casilla y qué capturas se
+  pueden hacer — «torre toma dama», «de anna 1 a bella 2». La página carga
+  ahora `js/comandos-tablero.js`.
+
+`verificar-entreno-accesible.js` prueba las treinta y tantas formas contra la
+jugada esperada, las que NO deben dar jugada, las dos frases de ambigüedad y
+que `ChessMoveParser` caiga en él; `verificar-cuadro-comandos.js`, una captura
+de los 4×4 escrita con palabras.
+
 ### Al tablero ahora se le puede PREGUNTAR
 
 El recuadro de los ejercicios solo aceptaba jugadas, y eso alcanza para
@@ -137,7 +187,8 @@ jugada. Hoy en todo Entrenamiento se escribe igual.
 - **Coordenadas es la excepción, a propósito**: su Modo Adaptado cambia el
   ejercicio entero —en vez de «toca e4» pregunta «¿e4 es blanca o negra?»— así
   que ahí no hay tablero que recorrer. Lo que sí se le arregló es lo de siempre:
-  sus 64 casillas decían «Casilla», todas igual.
+  sus 64 casillas decían «Casilla», todas igual. (Ver también «Coordenadas
+  volvió a las cuentas ciegas».)
 - **Visualización también**: su tablero se queda quieto en la posición de salida
   porque el ejercicio consiste en NO mirarlo moverse. Ahí las preguntas se
   contestan contra la posición **de salida** —la que el tablero enseña—, nunca
@@ -570,6 +621,69 @@ es la misma piedra que ya documentó `verificar-reportes.js`— y las páginas
 contrarreloj se miran **por la posición del tablero y no por el renglón de
 resultado**, que al acertar lo borra el ejercicio siguiente a los 350 ms.
 
+### El dictado: la posición pieza por pieza, y la voz más lenta
+
+La queja de los alumnos ciegos: **la posición se lee muy rápido, y si hay que
+ponerla en el tablero no da tiempo**. Muchos estudian con un tablero de verdad
+al lado, y «posición» la dice de corrido («Blancas: rey en eva 1; torres en
+anna 1 y hector 1…»): mientras se busca la torre ya van por los peones, y
+volver a pedirla la empieza de nuevo. No falla nada: se oye, y no alcanza.
+
+**«dictar»** (o «dictado», «pieza por pieza»), en cualquier recuadro común
+(`js/cuadro-comandos.js`), la dice de a UNA pieza: «Blancas, pieza 2 de 5:
+torre en anna 1.». Manda quien escucha. Con el recuadro vacío:
+
+    Intro o →   la pieza siguiente        ↑   la repite
+    ←           la anterior               Escape   termina
+
+- **Cada paso dice el color y cuántas faltan**, así se puede parar en
+  cualquiera y saber dónde se quedó; el último cierra con la cuenta y quién
+  juega («Fin del dictado: 5 piezas blancas y 3 negras. Juegan blancas.»), que
+  es la forma de comprobar que no faltó ninguna.
+- **«dictar solo»** las dice sola, con una pausa entre una y otra (5 segundos;
+  «dictar solo 8» deja ocho y se guarda en `oscarDictadoPausa_v1`), para quien
+  tiene las dos manos en el tablero. La pausa empieza cuando la voz termina de
+  decir la pieza; con lector de pantalla no se puede saber cuándo terminó, y se
+  le da lo que mide la frase. Lleva un plazo por si la voz no avisa nunca (sin
+  voces instaladas no avisa): el dictado no se queda esperando. Cualquier tecla
+  del dictado la detiene y se sigue a mano.
+- **Mientras se dicta, Intro es del dictado y no de `recorrer`**: no avanza la
+  partida a mitad de armar la posición. Y nadie queda encerrado: se termina
+  solo si la posición cambia o si se escribe otra cosa (una jugada,
+  «diagrama siguiente»), que sigue su camino. «siguiente», «repetir», «atrás»
+  y «salir» escritos también valen; **nunca una letra sola**: «a» es la opción
+  A de una pregunta.
+- **La capa de la cuenta ciega se aparta** (`js/vision-cuenta.js` mira
+  `data-dictando` en el recuadro): sin eso, «siguiente» apretaba el botón
+  «Siguiente ejercicio» de la página en vez de decir la pieza.
+- Los pasos los arma `BlindNotation.pasosDeDictado()`, con el mismo agrupado y
+  las mismas palabras que las otras lecturas; `ComandosTablero.interpretar()`
+  los devuelve (`tipo: "dictado"`) **sin guardar nada**: quien los recorre es
+  el recuadro. Un recuadro propio que no sepa dictar recibe en `respuesta` las
+  piezas seguidas, cada una en su frase.
+- **El recuadro lo dice**: debajo de la ayuda va «Para poner la posición en tu
+  tablero, escribe «dictar»…» (`.cc-dictar-pista`). Un comando que no se conoce
+  no se usa. Va debajo y no entre la posición y el recuadro, que siguen
+  pegados.
+
+**La velocidad de la voz del navegador** iba siempre a la de fábrica. Ahora se
+guarda en este navegador (`oscarSpeechRate_v1`, de 0,5 a 1,5;
+`BlindNotation.setSpeechRate()`), `speak()` la pone en cada frase y se cambia
+de dos formas: en Configuración («Velocidad de la voz», junto a la voz) o sin
+salir del ejercicio, escribiendo «voz más lenta», «voz más rápida» o «voz
+normal». La respuesta aclara que vale para la voz del navegador: la de un
+lector de pantalla se cambia en el lector. `interpretar()` acepta
+`sinEfecto: true` para quien solo pregunta si lo escrito es un comando del
+recuadro (la capa de la cuenta ciega): sin eso, cada «voz más lenta» bajaba
+dos escalones.
+
+`verificar-cuadro-comandos.js` («El dictado, pieza por pieza») lo recorre en
+Ejercicios por tema: que dicte TODAS las piezas del tablero dibujado, cada una
+en su casilla y una sola vez; que Intro no juegue ni cambie el ejercicio; ↑, ←
+y Escape; que «dictar solo» avance sin tocar nada y una tecla lo detenga; y que
+la voz salga a la velocidad pedida (se mira el `rate` de lo que se manda a
+decir). Probado que falla: sin los peones en `pasosDeDictado()` saltan dos.
+
 ## «Activar voz» en todo el sitio
 
 Quien ve poco muchas veces **no usa lector de pantalla**: agranda la letra y se
@@ -799,6 +913,16 @@ plataforma se acomoda sola en todas las páginas de esa persona.
   Sonar, 4×4, Visualización, Tipos y los cursos), primero el de un diálogo
   abierto. La nota del panel adaptado va en su propio párrafo
   (`#panel-adaptado-nota`): el subtítulo lo reescribe después la racha del día.
+- **El panel adaptado no lleva «Hoy te toca»** (17/11/2026, a pedido del
+  dueño). La tarjeta `#progreso-alumno` —la meta del día, la racha, los
+  repasos que vencen, «Entrenar 10 minutos» y «Tus números»— es un montón de
+  texto que el lector de pantalla lee de arriba abajo antes de llegar a lo que
+  se usa, y a quien no ve no le sirve. En el panel adaptado la tarjeta queda
+  escondida y ni se piden sus datos (`cargarHoyTeToca`, `loadEntrenoProgress`,
+  `loadTacticsRecord`): son diez scripts y tres consultas para nada. Lo que
+  vence (la franja de pendientes), «Continúa donde ibas» y «Tus clases» sí
+  siguen. `verificar-vision-cuenta.js` lo mide, y que sin la marca la tarjeta
+  vuelve.
 - **Competir** a quien no ve le ofrece retar solo en Estándar y Niebla (las que
   se juegan escribiendo); un reto que le llega en otra modalidad no trae
   «Aceptar»: dice que no está adaptada. Los retos que llegan están en una
@@ -902,6 +1026,26 @@ quedó:
   girar); cada paso dice la jugada contada, el comentario del profe y si hay
   pregunta. Las flechas globales del visor no roban las teclas con el foco en
   un tablero, un recuadro o un `[role=application]`.
+  **Volver a la lista de clases** (17/11/2026): con la cuenta ciega, abrir una
+  clase deja el foco en el recuadro, y la lista «Tus clases» queda ANTES en la
+  página, detrás de los botones y el tablero: los alumnos ciegos no llegaban a
+  ella para elegir otra clase. Ahora el recuadro entiende «clases» (y «lista»,
+  «otra clase», «volver a la lista»…): lleva el foco a la clase abierta en la
+  lista y dice cuántas hay; ahí flecha arriba y abajo pasan de clase en clase
+  (Inicio y Fin, a las puntas) y Enter abre la elegida, con el foco de vuelta
+  en el recuadro. El aviso al abrir una clase y la ayuda del recuadro lo dicen.
+  No se usa «volver» solo: es una acción conocida de `js/comandos-tablero.js`.
+  `verificar-repasar-clases.js` lo mide.
+  **Avanzar sin escribir** (17/11/2026): los alumnos ciegos tenían que
+  escribir «siguiente» en cada jugada, y los botones ⏮ ◀ ▶ ⏭ quedan ARRIBA
+  del recuadro, a varios Tab. Ahora `CuadroComandos.montar(…, { recorrer })`:
+  con el recuadro VACÍO, Enter o → avanzan, ← retrocede, Inicio y Fin van a
+  las puntas, y en la punta lo dice («Ya estás en…») en vez de callar. Solo
+  vacío: con texto escrito las flechas mueven el cursor, que es lo que espera
+  el lector de pantalla. El recuadro lleva `aria-keyshortcuts` y su ayuda como
+  `aria-describedby`, para que al llegar se oiga cómo se avanza. Lo usan
+  Repasar mis clases y `js/visor-linea.js` (Estudio, cursos, preparación de
+  rivales); `verificar-repasar-clases.js` lo mide.
 - **Los diagramas de los artículos**: el contenedor era `role="img"`, y los
   hijos de una imagen no llegan al lector: las 64 casillas rotuladas no se oían.
   Sin ese rol, con `TableroAccesible` para mirar, y el Modo Adaptado leído de la
@@ -1224,7 +1368,8 @@ ciegas en vez de dejarlos a medias:
 
 - **Memoria**, la **Fotografía** de Habilidades y la apertura **sin tablero**
   (nivel 3 de «¿Qué apertura es?»): la posición es justamente la respuesta.
-- **Coordenadas**: no hay piezas.
+- ~~**Coordenadas**: no hay piezas.~~ Volvió (ver «Coordenadas volvió a las
+  cuentas ciegas», abajo).
 - **El Sonar** y **la Batalla naval**: lo escondido es el juego. Estaban hechos
   para jugar sin ver, pero igual se esconden: lo pidió la Academia.
 - **El curso de Fundamentos**, que sigue en notación inglesa (ya estaba
@@ -1248,6 +1393,43 @@ Lo mide `verificar-piezas-ciego.js` (las páginas escondidas avisan, Habilidades
 sin la Fotografía ni el nivel 3, la guía sin esas secciones). Probado que
 falla: sin `escondido()` saltan tres comprobaciones, y sin Memoria en la lista
 o sin la regla de `data-oculto-ciego`, una cada una.
+
+### Coordenadas volvió a las cuentas ciegas
+
+Se había escondido con las demás porque «no hay piezas», pero eso no era un
+hueco: **para quien no ve, el juego ES decir de qué color es la casilla**
+(lo confirmó el dueño). No hay posición que poner bajo «Piezas» porque el
+ejercicio no la tiene, y no le falta nada. Salió de `NO_ADAPTADAS`, va primera
+en «Entrenar» de `PANEL_ADAPTADO` (con su descripción en `DESC_ADAPTADO`) y su
+sección de `ciegos.html` ya no lleva `data-oculto-ciego`.
+
+Lo que le faltaba para estar entera, y se le puso:
+
+- **El modo elegido no se oía.** Los botones de Clásico, 10 s y 3 s (y los de
+  orientación) marcaban el elegido solo con la clase `active`, un color: con
+  lector de pantalla sonaban los tres iguales. Ahora llevan `aria-pressed`
+  (`marcarOpcion()`).
+- **La orientación, en Modo Adaptado, se esconde**: de qué lado se mire el
+  tablero no cambia el color de ninguna casilla, así que eran tres botones que
+  no hacían nada.
+- **«empezar» se pedía y no se entendía**: fuera de la ronda, «repetir»
+  contestaba «escribe «empezar»» y el recuadro decía «No entendí». Ahora
+  arranca la ronda; durante la ronda no la reinicia (una palabra no puede tirar
+  los puntos), dice que ya está en curso y repite la casilla.
+- **«ayuda» y «puntos»**: «ayuda» dice todo lo que se puede escribir y
+  «puntos» (o «cómo voy») los aciertos, los errores y el tiempo. El «No
+  entendí» manda a «ayuda» en vez de recitar la lista entera.
+
+**Sigue con su propio recuadro y no con `js/cuadro-comandos.js`, a
+propósito**: ese recuadro está hecho para tableros con piezas (dice «escribe tu
+jugada», pone «Piezas», contesta preguntas sobre la posición) y acá no hay
+posición ni tablero a la vista. El tablero tampoco se deja en Modo Adaptado:
+con la casilla iluminada a la vista, el color se lee en vez de pensarse.
+
+Lo miden `verificar-entreno-escribiendo.js` (`aria-pressed`, la orientación
+escondida, «ayuda», «puntos» y «empezar» a media ronda),
+`verificar-piezas-ciego.js` (la página ya no avisa que no está adaptada y la
+guía la muestra) y `verificar-vision-cuenta.js` (está en el panel adaptado).
 
 ## Juega contra Oscar, como Entrenamiento
 

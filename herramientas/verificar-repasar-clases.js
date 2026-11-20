@@ -144,6 +144,27 @@ const texto = (page, sel) => page.evaluate((s) => { const e = document.querySele
     igual("«jugada 2» es la jugada 2 de las blancas", await texto(page, "#visor-estado"), "Jugada 2. caballo felix 3");
     await page.fill("#visor-cmd .cc-input", "caballos"); await page.press("#visor-cmd .cc-input", "Enter");
     igual("«caballos» se contesta sobre la posición que se ve", /caballos blancos en bella 1 y felix 3/.test(await texto(page, "#visor-cmd .cc-msg")), "true");
+    /* Con el recuadro VACÍO se recorre sin escribir: lo pidieron los alumnos
+       ciegos, que tenían que escribir «siguiente» en cada jugada. */
+    const vacio = "#visor-cmd .cc-input";
+    await page.fill(vacio, ""); await page.press(vacio, "Enter");
+    igual("recuadro vacío + Enter avanza una jugada", await texto(page, "#visor-estado"), "Jugada 2… caballo cesar 6");
+    await page.press(vacio, "ArrowLeft");
+    igual("recuadro vacío + ← retrocede", await texto(page, "#visor-estado"), "Jugada 2. caballo felix 3");
+    await page.press(vacio, "ArrowRight");
+    igual("recuadro vacío + → avanza", await texto(page, "#visor-estado"), "Jugada 2… caballo cesar 6");
+    await page.press(vacio, "Home");
+    igual("recuadro vacío + Inicio va al arranque", await texto(page, "#visor-estado"), "Posición de arranque");
+    await page.press(vacio, "ArrowLeft");
+    igual("en el arranque, ← lo dice en vez de callar", await texto(page, "#visor-cmd .cc-msg"), "Ya estás en la posición de arranque.");
+    await page.fill(vacio, "jugada"); await page.press(vacio, "ArrowLeft");
+    igual("con texto escrito, ← mueve el cursor y no la partida", await texto(page, "#visor-estado"), "Posición de arranque");
+    igual("el recuadro dice cómo se avanza", await page.evaluate(() => {
+      const i = document.querySelector("#visor-cmd .cc-input");
+      const d = document.getElementById(i.getAttribute("aria-describedby") || "");
+      return !!d && /Enter o flecha derecha/.test(d.textContent);
+    }), "true");
+    await page.fill(vacio, "jugada 2"); await page.press(vacio, "Enter");
     await page.focus('#board [data-square="e4"]');
     await page.keyboard.press("ArrowRight");
     igual("con el foco en el tablero, → mueve de casilla y no cambia de jugada",
@@ -156,12 +177,82 @@ const texto = (page, sel) => page.evaluate((s) => { const e = document.querySele
       await page.evaluate(() => !!document.activeElement && document.activeElement.matches("#visor-cmd .cc-input")), "true");
     igual("y el recuadro dice qué clase se abrió",
       /^La defensa de los dos caballos/.test(await texto(page, "#visor-cmd .cc-msg")), "true");
+    const cc = "#visor-cmd .cc-input";
+    igual("y dice cómo volver a la lista", /escribe «clases»/.test(await texto(page, "#visor-cmd .cc-msg")), "true");
+    /* Con el foco en el recuadro, la lista de clases quedaba atrás en la
+       página y quien no ve no sabía cómo volver a ella para elegir otra. */
+    await page.fill(cc, "clases"); await page.press(cc, "Enter");
+    igual("«clases» lleva el foco a la clase abierta en la lista",
+      await page.evaluate(() => document.activeElement && document.activeElement.closest("#lista-clases") && document.activeElement.dataset.id), "p1");
+    igual("y dice cuántas hay y cómo moverse",
+      /^Tus clases: \d+ clases?\. Flecha arriba y flecha abajo/.test(await texto(page, "#visor-cmd .cc-msg")), "true");
+    const estadoAntes = await texto(page, "#visor-estado");
+    await page.keyboard.press("ArrowDown");
+    const segunda = await page.evaluate(() => [...document.querySelectorAll("#lista-clases button")][1].dataset.id);
+    igual("en la lista, ↓ pasa a la clase siguiente y no cambia de jugada",
+      [await page.evaluate(() => document.activeElement.dataset.id), await texto(page, "#visor-estado")], [segunda, estadoAntes]);
+    await page.keyboard.press("ArrowUp");
+    igual("y ↑ vuelve a la anterior", await page.evaluate(() => document.activeElement.dataset.id), "p1");
+    await page.keyboard.press("Enter");
+    igual("Enter la abre y el foco vuelve al recuadro",
+      await page.evaluate(() => !!document.activeElement && document.activeElement.matches("#visor-cmd .cc-input")), "true");
+    await page.fill(cc, "volver a la lista"); await page.press(cc, "Enter");
+    igual("«volver a la lista» hace lo mismo", await page.evaluate(() => document.activeElement && document.activeElement.dataset.id), "p1");
     await page.evaluate(() => document.documentElement.classList.remove("modo-ciego"));
     await page.click('#lista-clases [data-id="p1"]');
     igual("sin la cuenta ciega, sigue yendo al título", await page.evaluate(() => document.activeElement && document.activeElement.id), "visor-titulo");
     await page.evaluate(() => { document.documentElement.classList.remove("adaptive-mode"); document.dispatchEvent(new CustomEvent("adaptivemode:change", { detail: { activo: false } })); });
 
     igual("una clase sin preguntas no muestra la sección", await page.evaluate(() => document.getElementById("visor-preguntas").checkVisibility()), "false");
+
+    console.log("\n=== Jugar contra el motor desde la clase ===");
+    /* El motor de mentira contesta la PRIMERA jugada legal: rápido, sin
+       Stockfish, y siempre la misma. Se anota cuántas veces lo llamaron. */
+    await page.evaluate(() => {
+      window.__llamadasMotor = 0;
+      PracticeEngine.preload = () => {};
+      PracticeEngine.responder = async (fen) => {
+        window.__llamadasMotor += 1;
+        const m = new Chess(fen).moves({ verbose: true })[0];
+        return { uci: m ? m.from + m.to + (m.promotion || "") : null, respaldo: false };
+      };
+    });
+    const seVe = (sel) => page.evaluate((s) => { const e = document.querySelector(s); return !!e && e.checkVisibility(); }, sel);
+    await page.click("#btn-inicio");
+    await page.click("#btn-practicar");
+    igual("al empezar, se ve el tablero de la práctica y no el de la partida",
+      [await seVe("#practica-board"), await seVe("#board"), await seVe("#btn-siguiente")], [true, false, false]);
+    igual("dice con qué color juega y desde dónde", await texto(page, "#practica-intro"),
+      "Juegas con blancas desde la posición de arranque; el motor responde con negras. Te toca.");
+    igual("el foco va al título de la práctica", await page.evaluate(() => document.activeElement && document.activeElement.id), "practica-titulo");
+    await page.click('#practica-board [data-square="e2"]');
+    await page.click('#practica-board [data-square="e4"]');
+    await page.waitForFunction(() => /El motor jugó/.test(document.getElementById("practica-estado").textContent), null, { timeout: 5000 });
+    igual("tocando: juega, el motor contesta y se dice contado",
+      [await page.evaluate(() => window.__llamadasMotor), /^Jugaste: el peón blanco va de .+\. El motor jugó: .+\. Te toca\.$/.test(await texto(page, "#practica-estado"))], [1, true]);
+    igual("las jugadas de la práctica quedan escritas", (await texto(page, "#practica-jugadas")).split(" ").length, 2);
+    await page.evaluate(() => { document.documentElement.classList.add("adaptive-mode"); document.dispatchEvent(new CustomEvent("adaptivemode:change", { detail: { activo: true } })); });
+    const pcmd = "#practica-cmd .cc-input";
+    igual("en Modo Adaptado, la práctica tiene su recuadro", await seVe(pcmd), "true");
+    await page.fill(pcmd, "Re5"); await page.press(pcmd, "Enter");
+    igual("una jugada imposible se dice y no se juega",
+      [/no es/.test(await texto(page, "#practica-cmd .cc-msg")), (await texto(page, "#practica-jugadas")).split(" ").length], [true, 2]);
+    await page.fill(pcmd, "Cf3"); await page.press(pcmd, "Enter");
+    await page.waitForFunction(() => document.getElementById("practica-jugadas").textContent.split(" ").length === 4, null, { timeout: 5000 });
+    igual("escribiendo también se juega", (await texto(page, "#practica-jugadas")).split(" ")[2], "Nf3");
+    await page.fill(pcmd, "otra vez"); await page.press(pcmd, "Enter");
+    igual("«otra vez» empieza de nuevo desde la misma posición", await texto(page, "#practica-jugadas"), "ninguna todavía");
+    await page.fill(pcmd, "terminar"); await page.press(pcmd, "Enter");
+    igual("«terminar» vuelve a la partida, en la misma jugada",
+      [await seVe("#board"), await seVe("#practica-board"), await texto(page, "#visor-estado")], [true, false, "Posición de arranque"]);
+    igual("y el foco vuelve al botón", await page.evaluate(() => document.activeElement && document.activeElement.id), "btn-practicar");
+    await page.click("#btn-siguiente");
+    await page.fill("#visor-cmd .cc-input", "jugar"); await page.press("#visor-cmd .cc-input", "Enter");
+    igual("«jugar» en el recuadro de la partida empieza la práctica desde ahí",
+      [await seVe("#practica-board"), await texto(page, "#practica-intro")],
+      [true, "Juegas con negras desde la jugada 1. eva 4; el motor responde con blancas. Te toca."]);
+    await page.click("#practica-terminar-btn");
+    await page.evaluate(() => { document.documentElement.classList.remove("adaptive-mode"); document.dispatchEvent(new CustomEvent("adaptivemode:change", { detail: { activo: false } })); });
 
     console.log("\n=== Las preguntas de la clase ===");
     await page.click('#lista-clases [data-id="p4"]');
@@ -187,6 +278,18 @@ const texto = (page, sel) => page.evaluate((s) => { const e = document.querySele
     igual("una posición aparte se muestra en el tablero", await texto(page, "#visor-estado"), "Posición de la pregunta 2");
     igual("con su aviso", /Mate en uno/.test(await texto(page, "#visor-pregunta")), "true");
     igual("y el tablero es el de esa posición", await page.evaluate(() => !!document.querySelector('#board [data-square="d1"] span') && !document.querySelector('#board [data-square="e1"] span')), "true");
+    // Jugar contra el motor desde esa posición aparte: arranca de lo que se ve.
+    await page.click("#btn-practicar");
+    igual("la práctica arranca de la posición de la pregunta", await texto(page, "#practica-intro"),
+      "Juegas con blancas desde la posición de la pregunta 2; el motor responde con negras. Te toca.");
+    const antes = await page.evaluate(() => window.__llamadasMotor);
+    await page.click('#practica-board [data-square="d1"]');
+    await page.click('#practica-board [data-square="d8"]');
+    await page.waitForFunction(() => /Fin de la partida/.test(document.getElementById("practica-estado").textContent), null, { timeout: 5000 });
+    igual("con mate termina, lo dice y el motor no juega más",
+      [/Fin de la partida\. Jaque mate: ganan las blancas\. ¡Bien jugado!$/.test(await texto(page, "#practica-estado")), await page.evaluate(() => window.__llamadasMotor) - antes], [true, 0]);
+    await page.click("#practica-terminar-btn");
+    igual("y al terminar vuelve a esa misma posición", await texto(page, "#visor-estado"), "Posición de la pregunta 2");
 
     console.log("\n=== Una partida de antes, sin `datos` ===");
     await page.click('#lista-clases [data-id="p2"]');

@@ -217,6 +217,47 @@
             }
         });
 
+        /* ---------------- La grabación de tu voz ----------------
+           El permiso (de la familia, si es menor) para grabar su voz en la
+           llamada de la clase. Lo guarda dar_permiso_grabar_voz() con la versión
+           de la privacidad; sin él, mientras se graba no puede hablar (lo hace
+           cumplir el servidor). Ver «La grabación de la llamada». */
+        function vozMensaje(texto, malo) {
+            const msg = document.getElementById("voz-msg");
+            msg.textContent = texto;
+            msg.className = "text-xs mt-1 " + (malo ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-green-400");
+        }
+        async function pintarPermisoVoz() {
+            const caja = document.getElementById("voz-permiso");
+            const casilla = document.getElementById("voz-acepto");
+            const { data, error } = await sb.from("permisos_grabar_voz").select("aceptado_en").eq("persona_id", profile.id).maybeSingle();
+            if (error) { console.error(error); return; }
+            casilla.checked = Boolean(data);
+            caja.hidden = false;
+            casilla.addEventListener("change", async () => {
+                casilla.disabled = true;
+                try {
+                    if (casilla.checked) {
+                        const { error: e } = await sb.rpc("dar_permiso_grabar_voz", { p_version_privacidad: window.LegalVersion.PRIVACIDAD });
+                        if (e) throw e;
+                        vozMensaje("Listo: diste permiso para grabar tu voz en las clases.", false);
+                    } else {
+                        const si = await Avisos.confirmar("Mientras se graba una clase ya no vas a poder encender el micrófono. Lo puedes volver a dar cuando quieras.",
+                            { titulo: "¿Quitar el permiso para grabar tu voz?", aceptar: "Quitar el permiso", peligro: true });
+                        if (!si) { casilla.checked = true; return; }
+                        const { error: e } = await sb.rpc("quitar_permiso_grabar_voz");
+                        if (e) throw e;
+                        vozMensaje("Listo: quitaste el permiso para grabar tu voz.", false);
+                    }
+                } catch (err) {
+                    casilla.checked = !casilla.checked;
+                    vozMensaje("No se pudo guardar: " + (err.message || err), true);
+                } finally {
+                    casilla.disabled = false;
+                }
+            });
+        }
+
         /* ---------------- Tu foto ----------------
            js/foto-perfil.js sube, guarda y borra; acá solo se pinta y se
            pregunta. La casilla se mira ANTES de subir: subir la foto ya es
@@ -527,6 +568,8 @@
             grid.innerHTML = "";
             Object.keys(window.TemasPlataforma.TEMAS).forEach((id) => {
                 const tema = window.TemasPlataforma.TEMAS[id];
+                // Un tema oculto (el de la prueba del panel jornada) no se ofrece.
+                if (tema.oculto) return;
                 const btn = document.createElement("button");
                 btn.type = "button";
                 btn.className = id === actual ? THEME_ACTIVE : THEME_INACTIVE;
@@ -1071,6 +1114,19 @@
             document.getElementById("speech-voice-select").addEventListener("change", (e) => {
                 window.BlindNotation.setSpeechVoiceURI(e.target.value);
             });
+            /* La velocidad (js/blind-notation.js, setSpeechRate). En el recuadro se
+               cambia de a pasos («voz más lenta»), así que lo guardado puede no ser
+               ninguna de las opciones: se marca la más cercana. */
+            const rateSelect = document.getElementById("speech-rate-select");
+            if (rateSelect && window.BlindNotation.getSpeechRate) {
+                const guardada = window.BlindNotation.getSpeechRate();
+                let cerca = null;
+                Array.from(rateSelect.options).forEach((o) => {
+                    if (!cerca || Math.abs(parseFloat(o.value) - guardada) < Math.abs(parseFloat(cerca.value) - guardada)) cerca = o;
+                });
+                if (cerca) rateSelect.value = cerca.value;
+                rateSelect.addEventListener("change", (e) => { window.BlindNotation.setSpeechRate(e.target.value); });
+            }
             document.getElementById("speech-voice-test-btn").addEventListener("click", () => {
                 // Habla directo con la Web Speech API, sin pasar por BlindNotation.speak():
                 // esa función solo habla si Modo Speech ya está activado, y "probar" debe
@@ -1080,6 +1136,7 @@
                 const uri = document.getElementById("speech-voice-select").value;
                 const voice = uri ? window.BlindNotation.getAvailableVoices().find((v) => v.voiceURI === uri) : null;
                 if (voice) { utterance.voice = voice; utterance.lang = voice.lang; } else { utterance.lang = "es-ES"; }
+                if (rateSelect) utterance.rate = parseFloat(rateSelect.value) || 1;
                 window.speechSynthesis.speak(utterance);
             });
         }
@@ -1116,6 +1173,7 @@
                 pintarDosPasos();
             }
             if (profile.role === "alumno" && !profile.is_admin) pintarPequenos();
+            if (profile.role === "alumno" && !profile.is_admin && !profile._persona) pintarPermisoVoz();
             if (profile.role === "alumno" && !profile.is_admin && !profile._persona) pintarCuentasJuego();
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");

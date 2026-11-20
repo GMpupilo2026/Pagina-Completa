@@ -450,6 +450,11 @@ function configJs(c) {
     lineas.push("    pareo: { nombre: " + JSON.stringify(t.pareo.nombre) + ", desde: " + JSON.stringify(t.pareo.desde) + " },");
   }
   if (t.ordenGrupos) lineas.push("    ordenGrupos: " + lista1(t.ordenGrupos) + ",");
+  // La clase del botón «Ver la partida en vivo» (js/torneo-en-vivo.js).
+  if (t.botonVivo) {
+    lineas.push("    // La clase del botón «Ver la partida en vivo» (js/torneo-en-vivo.js).");
+    lineas.push("    botonVivo: " + JSON.stringify(t.botonVivo) + ",");
+  }
   // Dónde está cada mesa en la foto de la sala (js/torneo-sala-foto.js).
   if (t.mesasSala) {
     lineas.push("    // Cada mesa sobre la foto de la sala (js/torneo-sala-foto.js): [número, x, y] en los píxeles de la foto.");

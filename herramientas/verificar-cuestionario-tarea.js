@@ -75,11 +75,13 @@ window.__llamadas = [];
       select() { return b; }, order() { return b; }, in() { return b; }, or() { return b; },
       is() { return b; }, limit() { return b; }, range() { return b; }, neq() { return b; }, gte() { return b; },
       eq(col, val) { cond.push([col, val]); return b; },
+      // Tareas lo usa para el aviso de alumnos sin tarea (vence_at > ahora).
+      gt(col, val) { cond.push([col, val, ">"]); return b; },
       maybeSingle() { unica = true; return b; },
       single() { unica = true; return b; },
       // El filtro se aplica en el RESOLVER: .eq() puede venir después de .select().
       then(res, rej) {
-        let d = filas.filter((f) => cond.every(([c, v]) => String(f[c]) === String(v)));
+        let d = filas.filter((f) => cond.every(([c, v, op]) => op === ">" ? String(f[c]) > String(v) : String(f[c]) === String(v)));
         if (unica) d = d.length ? d[0] : null;
         return Promise.resolve({ data: d, error: null }).then(res, rej);
       },

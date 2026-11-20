@@ -167,6 +167,7 @@
                             <label class="flex items-center gap-2"><input type="radio" name="sistema" value="todos" class="w-4 h-4 accent-brand-800"> <span data-t="todos">Todos contra todos (tablas de Berger)</span></label>
                             <label class="flex items-center gap-2"><input type="radio" name="sistema" value="scheveningen" class="w-4 h-4 accent-brand-800"> <span data-t="scheveningen">Scheveningen (dos equipos: cada uno contra todos los del otro)</span></label>
                             <label class="flex items-center gap-2"><input type="radio" name="sistema" value="eliminacion" class="w-4 h-4 accent-brand-800"> <span data-t="eliminacion">Eliminación directa (copa, con desempate en la mesa)</span></label>
+                            <label class="flex items-center gap-2"><input type="radio" name="sistema" value="keizer" class="w-4 h-4 accent-brand-800"> <span data-t="keizer">Keizer (torneo de club: juega quien vino)</span></label>
                         </div>
                         <p id="pi-sistema-fijo" class="text-xs text-brand-600 dark:text-brand-300 mt-2" hidden data-t="sistemaFijo">El sistema ya no se puede cambiar: hay rondas emparejadas.</p>
                         <div class="grid sm:grid-cols-3 gap-4 mt-4">
@@ -175,6 +176,8 @@
                                 <select name="colorInicial" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="w" data-t="blancas">Blancas</option><option value="b" data-t="negras">Negras</option></select></label>
                             <label id="pi-campo-baku" class="flex items-center gap-2 sm:mt-6"><input type="checkbox" name="baku" class="w-4 h-4 accent-brand-800"> <span data-t="baku">Aceleración Baku</span></label>
                             <label id="pi-campo-doble" class="flex items-center gap-2 sm:mt-6" hidden><input type="checkbox" name="dobleVuelta" class="w-4 h-4 accent-brand-800"> <span data-t="dobleVuelta">A doble vuelta</span></label>
+                            <label id="pi-campo-doble-elim" class="flex items-center gap-2 sm:mt-6" hidden><input type="checkbox" name="dobleEliminacion" class="w-4 h-4 accent-brand-800"> <span data-t="dobleEliminacion">Doble eliminación (queda fuera quien pierde dos veces)</span></label>
+                            <label id="pi-campo-tercer" class="flex items-center gap-2 sm:mt-6" hidden><input type="checkbox" name="tercerPuesto" class="w-4 h-4 accent-brand-800"> <span data-t="tercerPuesto">Partido por el tercer puesto</span></label>
                         </div>
                     </fieldset>
 
@@ -432,6 +435,7 @@
     <script src="js/ritmo-control.js"></script>
     <script src="js/pareo/publicar.js"></script>
     <script src="js/pareo/partida.js"></script>
+    <script src="js/pareo/planilla.js"></script>
     <script src="js/reporte-pdf.js"></script>
     <script src="js/marca-agua.js"></script>
     <script src="js/imagen-achicar.js"></script>
