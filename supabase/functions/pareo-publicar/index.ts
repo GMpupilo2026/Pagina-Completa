@@ -10,7 +10,7 @@
 //   { accion: "borrar", id, clave }           → { ok }
 //   { accion: "inscribir", id, inscripcion, consentimiento } → { ok }  (inscripcion: nombre, institucion, categoria, elo, fideId, sexo?, nacimiento?, responsable, contacto, nota)
 //   { accion: "inscripciones", id, clave }    → { ok, inscripciones }
-//   { accion: "marcar", id, clave, ids, estado, comentario? } → { ok, avisados, sinCorreo }
+//   { accion: "marcar", id, clave, ids, estado, comentario?, correo? } → { ok, avisados, sinCorreo, contacto?, nota? }
 //   { accion: "organizador", nombre, logo?, correo?, consentimiento?, id?, clave? } → { ok, id, clave?, correoPendiente? }
 //   { accion: "organizador_estado", id, clave } → { ok, verificado, correo, correoConfirmado, selloPendiente }
 //   { accion: "confirmar_correo", id, token } → { ok }
@@ -754,9 +754,24 @@ Deno.serve(async (req) => {
     // El comentario de quien organiza (el motivo, si la rechaza) queda con la
     // inscripción y va en el aviso. Volver a «pendiente» lo borra.
     const comentario = estado === "pendiente" ? "" : texto(body.comentario, 300);
+    // El correo que agrega quien organiza cuando la familia dejó un teléfono
+    // (o uno que no servía): de una inscripción a la vez. Pasa a ser el
+    // contacto, y el teléfono queda en la nota para no perderlo.
+    const correoNuevo = texto(body.correo, 120);
+    const cambios: Record<string, unknown> = { estado, comentario, avisado: null };
+    if (correoNuevo) {
+      if (!esCorreo(correoNuevo)) return json({ ok: false, error: "Ese correo no es válido." }, 400);
+      if (cuales.length !== 1 || estado === "pendiente") return json({ ok: false, error: "El correo se agrega de una inscripción a la vez." }, 400);
+      const { data: antes } = await admin.from("pareo_preinscripciones").select("contacto, nota").eq("publicado_id", pid).eq("id", cuales[0]).maybeSingle();
+      if (!antes) return json({ ok: false, error: "Esa inscripción ya no está." }, 404);
+      cambios.contacto = correoNuevo;
+      if (antes.contacto && !esCorreo(antes.contacto) && !String(antes.nota || "").includes(antes.contacto)) {
+        cambios.nota = [antes.nota, "Teléfono: " + antes.contacto].filter(Boolean).join(" · ").slice(0, 300);
+      }
+    }
     const { data: marcadas, error } = await admin.from("pareo_preinscripciones")
-      .update({ estado, comentario, avisado: null }).eq("publicado_id", pid).in("id", cuales)
-      .select("id, nombre, responsable, contacto, institucion, categoria, sexo, nacimiento, elo, fide_id");
+      .update(cambios).eq("publicado_id", pid).in("id", cuales)
+      .select("id, nombre, responsable, contacto, nota, institucion, categoria, sexo, nacimiento, elo, fide_id");
     if (error) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
     // El aviso a quien inscribió, si dejó un correo como contacto (con un
     // teléfono no se puede: Pareo le dice al árbitro que le avise él). Las
@@ -789,7 +804,10 @@ Deno.serve(async (req) => {
       }
       if (avisados.length) await admin.from("pareo_preinscripciones").update({ avisado: new Date().toISOString() }).in("id", avisados);
     }
-    return json({ ok: true, avisados, sinCorreo });
+    // Con un correo agregado, el contacto y la nota como quedaron, para que
+    // el panel los pinte sin volver a pedir la lista.
+    const una = correoNuevo ? (marcadas ?? [])[0] : null;
+    return json(una ? { ok: true, avisados, sinCorreo, contacto: una.contacto, nota: una.nota } : { ok: true, avisados, sinCorreo });
   }
 
   // ---------- Los árbitros adjuntos ----------
