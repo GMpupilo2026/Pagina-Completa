@@ -16494,6 +16494,27 @@ sus pts y su puesto actual».
   milímetros, probando antes una hoja. Y un mismo jugador aceptado dos veces
   (una inscripción repetida, «Zeledón» y «Zeledòn») sale **una sola vez**: los
   nombres se comparan sin tildes ni mayúsculas.
+- **El plano de la sala en el QR del gafete** (pedido del dueño: «que en el QR
+  le salga también la imagen de dónde le corresponde jugar»; eligió las dos
+  cosas, el dibujo y la foto). En Pareo, Publicar → «La sala» (`camposSala` en
+  `js/pareo/pagina-publicar.js`, solo torneos individuales): la primera mesa de
+  ese torneo (`t.mesaInicial`, para dos torneos en el mismo salón), filas,
+  mesas por fila, de qué lado está la más baja de cada fila (mirando hacia el
+  fondo), si van en zigzag, qué hay adelante y al fondo, y la foto o el croquis
+  del salón (se achica en el navegador a un JPEG de 1400 px y menos de 440 000
+  caracteres), con la vista previa de dónde queda su primera mesa. Viaja en
+  `t.sala` y la función `pareo-publicar` la limpia (`limpiarSala`). En la vista
+  corta del QR (`cajaSala` en `js/torneos-pareo-pagina.js`), debajo de «Ahora»:
+  «📍 Fila 2 · la 3.ª mesa desde la derecha», de dónde se cuentan las filas, el
+  plano con SU mesa marcada y la foto. El dibujo y la ubicación son los del
+  plano del Centroamericano (`js/centroamericano-plano.js`, una sola copia):
+  `js/pareo/sala.js` solo arma ese plano a partir de la configuración (una mesa
+  por número, y el dibujo aprendió a rotular una mesa de un solo tablero).
+  Sin sala o antes del pareo, no sale nada. Lo prueban
+  `verificar-pareo-seguir.js` (la frase, una sola mesa marcada, la foto),
+  `verificar-pareo-publicar.js` (que viaje y que la función la limpie) y
+  `verificar-pareo-anuncio.js` (la sección en Pareo, su vista previa, que se
+  guarde con la primera mesa y que se publique sola).
 - **El QR abre una vista corta** (20/11, el dueño lo leyó con el celular:
   «hay demasiada información que no interesa al jugador, él solo quiere saber
   su mesa y su rival y su color»). La dirección del QR, `#t=<torneo>&j=<jugador>`

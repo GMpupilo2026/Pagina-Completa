@@ -101,6 +101,8 @@
       fechaInicio: t.fechaInicio || "", fechaFin: t.fechaFin || "", arbitro: t.arbitro || "", arbitroAdjunto: t.arbitroAdjunto || "", ritmo: t.ritmo || "", ritmoTipo: ritmoTipo(t), validoElo: t.validoElo || "",
       sistema: t.sistema, dobleVuelta: !!t.dobleVuelta, dobleEliminacion: t.sistema === "eliminacion" && !!t.dobleEliminacion, tercerPuesto: t.sistema === "eliminacion" && !t.dobleEliminacion && !!t.tercerPuesto, rondasTotales: t.sistema === "scheveningen" || t.sistema === "eliminacion" ? modulo("PareoTorneo", "./torneo.js").rondasDelTorneo(t) : t.rondasTotales, tipo: t.tipo, tableros: t.tableros,
       puntos: t.puntos, desempates: (t.desempates || []).slice(), mesaInicial: t.mesaInicial,
+      // La sala (dónde está cada mesa, js/pareo/sala.js): para el plano del QR del gafete. La función la vuelve a limpiar.
+      sala: t.sala ? { filas: t.sala.filas, porFila: t.sala.porFila, derecha: t.sala.derecha, zigzag: t.sala.zigzag, frente: t.sala.frente, fondo: t.sala.fondo, foto: t.sala.foto } : undefined,
       evento: t.evento ? { nombre: t.evento.nombre || "" } : null,
       jugadores: (t.jugadores || []).map(persona),
       numeracion: t.numeracion ? t.numeracion.slice() : null,

@@ -223,6 +223,76 @@
       el("div", { class: "mt-3" }, campo("pi-anuncio-texto", tx("anuncioTexto"), texto)));
   }
 
+  // La sala: dónde está cada mesa (js/pareo/sala.js), para el plano del QR
+  // del gafete. Se guarda al cambiar y, publicado, se pone al día solo. La
+  // primera mesa es t.mesaInicial (V.mesaFisica): en un evento la pone «Las
+  // mesas de la sala»; en un torneo suelto, aquí. La foto se achica en el
+  // navegador (JPEG de 1400 px como mucho) para que quepa al publicar.
+  function camposSala(v) {
+    const s = v.sala || {};
+    const campo = (id, etiqueta, control) => el("div", {}, el("label", { for: id, class: "block text-sm font-semibold mb-1", texto: etiqueta }), control);
+    const primera = el("input", { id: "pi-sala-primera", type: "number", min: "1", max: "999", step: "1", class: C.campoChico + " w-24", value: String(V.mesaFisica(v, 0)) });
+    const filas = el("input", { id: "pi-sala-filas", type: "number", min: "0", max: "30", step: "1", class: C.campoChico + " w-24", value: s.filas ? String(s.filas) : "" });
+    const porFila = el("input", { id: "pi-sala-porfila", type: "number", min: "0", max: "30", step: "1", class: C.campoChico + " w-24", value: s.porFila ? String(s.porFila) : "" });
+    const derecha = el("select", { id: "pi-sala-derecha", class: C.campoChico },
+      el("option", { value: "si", selected: s.derecha !== false, texto: tx("salaDerechaSi") }), el("option", { value: "no", selected: s.derecha === false, texto: tx("salaDerechaNo") }));
+    const zigzag = el("input", { id: "pi-sala-zigzag", type: "checkbox", class: "mt-1" });
+    zigzag.checked = s.zigzag === true;
+    const frente = el("input", { id: "pi-sala-frente", type: "text", maxlength: "60", autocomplete: "off", class: C.campo, value: s.frente || "", placeholder: "la entrada" });
+    const fondo = el("input", { id: "pi-sala-fondo", type: "text", maxlength: "60", autocomplete: "off", class: C.campo, value: s.fondo || "", placeholder: "el fondo de la sala" });
+    const foto = el("input", { id: "pi-sala-foto", type: "file", accept: "image/jpeg,image/png,image/webp", class: "text-sm" });
+    const quitar = el("button", { type: "button", id: "pi-sala-foto-quitar", class: C.botonSec, hidden: !s.foto }, tx("salaFotoQuitar"));
+    const vista = el("div", { id: "pi-sala-vista", class: "mt-3" });
+    const pintarVista = () => {
+      const sala = window.PareoSala ? PareoSala.limpiar(v.sala) : null;
+      if (!sala) { vista.replaceChildren(el("p", { class: C.nota, texto: tx("salaSinMesas") })); return; }
+      const m = V.mesaFisica(v, 0), u = PareoSala.ubicar(sala, m), svg = PareoSala.dibujar(sala, m);
+      if (svg) svg.setAttribute("class", "w-full h-auto max-w-md");
+      vista.replaceChildren(...[u ? el("p", { class: "text-sm font-semibold mb-1", texto: tx("salaVistaPrevia", { m, f: u.fila, k: u.desdeDerecha }) }) : null, svg,
+        sala.foto ? el("img", { src: sala.foto, alt: tx("salaFoto"), class: "mt-2 max-w-md w-full rounded border border-brand-200" }) : null].filter(Boolean));
+    };
+    const cambio = () => {
+      const n = Math.max(1, Math.min(999, Math.floor(Number(primera.value) || 1)));
+      v.mesaInicial = n > 1 ? n : undefined;
+      v.sala = { filas: Math.floor(Number(filas.value) || 0), porFila: Math.floor(Number(porFila.value) || 0), derecha: derecha.value !== "no", zigzag: zigzag.checked,
+        frente: frente.value.trim().slice(0, 60), fondo: fondo.value.trim().slice(0, 60), foto: (v.sala && v.sala.foto) || "" };
+      guardar(); pintarVista();
+    };
+    for (const x of [primera, filas, porFila, derecha, zigzag, frente, fondo]) x.addEventListener("change", cambio);
+    foto.addEventListener("change", async () => {
+      const f = foto.files && foto.files[0];
+      foto.value = "";
+      if (!f) return;
+      try {
+        const url = URL.createObjectURL(f);
+        const img = await new Promise((ok, mal) => { const i = new Image(); i.onload = () => ok(i); i.onerror = mal; i.src = url; });
+        URL.revokeObjectURL(url);
+        const k = Math.min(1, 1400 / Math.max(img.naturalWidth, img.naturalHeight));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        let calidad = 0.85, datos = c.toDataURL("image/jpeg", calidad);
+        while (datos.length > 440000 && calidad > 0.35) { calidad -= 0.1; datos = c.toDataURL("image/jpeg", calidad); }
+        cambio();
+        v.sala.foto = datos.length <= 440000 ? datos : "";
+        quitar.hidden = !v.sala.foto;
+        guardar(); pintarVista();
+      } catch (e) { Avisos.avisar(tx("salaFotoMal"), { tipo: "error" }); }
+    });
+    quitar.addEventListener("click", () => { if (v.sala) v.sala.foto = ""; quitar.hidden = true; guardar(); pintarVista(); });
+    const caja = el("fieldset", { id: "pi-sala-plano", class: "pi-revisar mt-3" },
+      el("legend", { class: "pi-revisar-titulo px-1", texto: tx("salaTituloPlano") }),
+      el("p", { class: C.nota + " mb-2", texto: tx("salaAyudaPlano") }),
+      el("div", { class: "grid sm:grid-cols-3 gap-3" }, campo("pi-sala-primera", tx("salaPrimeraMesa"), primera), campo("pi-sala-filas", tx("salaFilas"), filas), campo("pi-sala-porfila", tx("salaPorFila"), porFila)),
+      el("div", { class: "grid sm:grid-cols-2 gap-3 mt-3" }, campo("pi-sala-derecha", tx("salaDerecha"), derecha),
+        el("div", { class: "flex items-start gap-2 text-sm sm:mt-6" }, zigzag, el("label", { for: "pi-sala-zigzag", texto: tx("salaZigzag") }))),
+      el("div", { class: "grid sm:grid-cols-2 gap-3 mt-3" }, campo("pi-sala-frente", tx("salaFrente"), frente), campo("pi-sala-fondo", tx("salaFondo"), fondo)),
+      el("div", { class: "mt-3 flex flex-wrap items-center gap-2" }, campo("pi-sala-foto", tx("salaFoto"), foto), quitar),
+      vista);
+    pintarVista();
+    return caja;
+  }
+
   // La inscripción previa: abrirla o cerrarla (con fecha límite) y leer lo
   // que llegó. Aceptar uno lo agrega a la lista de jugadores como cualquier
   // otro (agregarJugadores); rechazarlo solo lo marca. Ya decidida, se puede
@@ -642,6 +712,8 @@
       // Un torneo que ya empezó se publica siempre: no se quita.
       caja.append(el("div", { class: "mt-3 flex flex-wrap gap-2" }, ahora, v.rondas.length ? null : quitarB));
       if (!v.rondas.length) caja.append(camposAnuncio(v));
+      // La sala (el plano del QR del gafete), solo en torneos individuales.
+      if (!E.esDeEquipos(v)) caja.append(camposSala(v));
       caja.append(cajaInscripcion(v));
       return;
     }

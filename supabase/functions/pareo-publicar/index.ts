@@ -293,6 +293,18 @@ function ronda(v: unknown) {
   return { mesas: lista(v.mesas, 1000, mesa), ausencias, inicio: hora(v.inicio), fin: hora(v.fin), emparejada: hora(v.emparejada) };
 }
 
+// La sala de juego (js/pareo/sala.js): filas, mesas por fila, de qué lado
+// empieza la numeración, en zigzag o no, qué hay adelante y al fondo, y la
+// foto del salón (hasta 450 000 caracteres, PNG, JPG o WebP). Sin filas o sin
+// mesas, no hay sala.
+function limpiarSala(v: unknown) {
+  if (!esObj(v)) return undefined;
+  const filas = Math.round(numero(v.filas, 0, 30)), porFila = Math.round(numero(v.porFila, 0, 30));
+  if (!filas || !porFila) return undefined;
+  const foto = typeof v.foto === "string" && LOGO.test(v.foto) && v.foto.length <= 450000 ? v.foto : "";
+  return { filas, porFila, derecha: v.derecha !== false, zigzag: v.zigzag === true, frente: texto(v.frente, 60), fondo: texto(v.fondo, 60), foto };
+}
+
 function limpiar(v: unknown) {
   if (!esObj(v)) return null;
   const puntos = esObj(v.puntos) ? v.puntos : {};
@@ -314,6 +326,9 @@ function limpiar(v: unknown) {
     puntos: { victoria: numero(puntos.victoria, 0, 10), tablas: numero(puntos.tablas, 0, 10), derrota: numero(puntos.derrota, 0, 10), bye: numero(puntos.bye, 0, 10) },
     desempates: lista(v.desempates, 12, (x) => (typeof x === "string" && /^[A-Z0-9-]{1,12}$/.test(x) ? x : null)),
     mesaInicial: v.mesaInicial == null ? undefined : Math.round(numero(v.mesaInicial, 1, 999)),
+    // La sala: cómo están acomodadas las mesas (js/pareo/sala.js), para el
+    // plano del QR del gafete. La foto, una imagen chica como el logo.
+    sala: limpiarSala(v.sala),
     evento,
     jugadores: lista(v.jugadores, 1000, persona),
     numeracion: Array.isArray(v.numeracion) ? ids(v.numeracion, 1000) : null,

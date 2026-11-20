@@ -928,8 +928,31 @@
       el("p", { class: C.nota, texto: fila.nombre }),
       el("h1", { id: "tp-titulo", tabindex: "-1", class: "font-serif text-2xl font-bold mt-1 focus:outline-none", texto: j.nombre }),
       cajaAhora(t, jid, suFila, filas.length, k),
+      cajaSala(t, jid),
       el("p", { class: C.nota + " mt-3", texto: "Esta página se pone al día sola cada minuto." }),
       el("p", { class: "mt-3" }, el("a", { id: "tp-gafete-todo", href: "#" + new URLSearchParams({ t: leerRuta().t, v: "jugadores", j: jid }).toString(), class: C.enlace + " text-sm font-semibold", texto: "Ver todo el torneo →" })));
+  }
+
+  // Dónde está su mesa en el salón (lo pidió el dueño: «que en el QR le salga
+  // también la imagen de dónde le corresponde jugar»): si quien organiza dijo
+  // cómo está la sala en Pareo (t.sala, js/pareo/sala.js), la frase «Fila 2 ·
+  // la 3.ª mesa desde la derecha», el plano con su mesa marcada y la foto del
+  // salón si la subió. Sin sala o sin mesa todavía (antes del pareo), nada.
+  function cajaSala(t, jid) {
+    const r = t.rondas.length - 1;
+    if (r < 0 || !t.sala || !window.PareoSala) return null;
+    const sala = PareoSala.limpiar(t.sala);
+    const mesa = mesaDe(t, r, jid);
+    if (!sala || !mesa) return null;
+    const u = PareoSala.ubicar(sala, mesa);
+    const svg = PareoSala.dibujar(sala, mesa);
+    if (!u || !svg) return null;
+    svg.setAttribute("class", "w-full h-auto mt-2");
+    return el("section", { id: "tp-sala", class: "mt-3", "aria-label": "Dónde está tu mesa" },
+      el("p", { id: "tp-sala-donde", class: "font-semibold", texto: "📍 Fila " + u.fila + " · la " + u.desdeDerecha + ".ª mesa desde la derecha" }),
+      el("p", { class: C.nota, texto: "Las filas se cuentan desde " + sala.frente + ", mirando hacia " + sala.fondo + "." }),
+      svg,
+      sala.foto ? el("img", { id: "tp-sala-foto", src: sala.foto, alt: "Foto del salón de juego", class: "mt-2 w-full rounded-lg border border-brand-200 dark:border-brand-700" }) : null);
   }
 
   function vistaJugadores(t, jid, fila) {
