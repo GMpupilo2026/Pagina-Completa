@@ -64,6 +64,7 @@
     ],
     golpe: [
       { id: "golpe-esa-vara", cara: "esa-vara", texto: "¡Esa vara!" },                              // del profe
+      { id: "golpe-de-donde-salio", cara: "wow", texto: "¿Y esa jugada de dónde salió?" },          // del profe
       { id: "golpe-no-puede-ser", cara: "no-puede-ser", texto: "¡No puede ser! ¿Quién te enseñó eso?" },
       { id: "golpe-no-la-tenia", cara: "esa-vara", texto: "¿Y esa vara? No la tenía calculada." },
       { id: "golpe-no-te-acostumbres", cara: "wow", texto: "Ok, ok… esa estuvo buena. No te acostumbres." },

@@ -142,7 +142,7 @@ console.log("La voz y los cuadros");
 const ids = Object.values(R.FRASES).flat().map((f) => f.id);
 ok("cada frase tiene un nombre de archivo en minúsculas y guiones", ids.every((id) => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(id || "")), ids.filter((id) => !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(id || "")));
 ok("ningún nombre de archivo se repite", new Set(ids).size === ids.length);
-ok("las frases del profe están", ["¡Esa vara!", "Esa y no otra.", "Huelo que hay algo en la posición…"].every((t) => todas.includes(t)));
+ok("las frases del profe están", ["¡Esa vara!", "Esa y no otra.", "Huelo que hay algo en la posición…", "¿Y esa jugada de dónde salió?"].every((t) => todas.includes(t)));
 const m = {};
 new Function("window", leer("js/rival-profe-medios.js"))(m);
 const medios = m.RivalProfeMedios;
