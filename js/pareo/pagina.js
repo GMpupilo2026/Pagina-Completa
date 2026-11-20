@@ -130,6 +130,7 @@
       Avisos.avisar(tx("noGuarda"), { tipo: "error" });
     } else estado.guardadoEn = Date.now();
     pintarEstado();
+    actualizarProyector();
     const item = estado.lista.find((x) => x.id === estado.id);
     const nombre = estado.t.nombre || "";
     // El evento va también en la lista, para separar los torneos de cada uno.
@@ -730,6 +731,54 @@
     if (!a || !mes || !d) return iso;
     // Un día de calendario: se arma a mediodía UTC y se muestra en hora de Costa Rica.
     return new Intl.DateTimeFormat(idioma === "en" ? "en-US" : "es-CR", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Costa_Rica" }).format(new Date(Date.UTC(a, mes - 1, d, 12)));
+  }
+
+  // ---------- La ronda y los resultados en el proyector (js/pareo/proyectar.js) ----------
+  // El modelo ya trae todo escrito (nombres, puntos antes de la ronda y el
+  // resultado corto): proyectar.js solo lo pinta. La ronda que se abrió;
+  // si era la última, sigue a la última (al emparejar la siguiente, pasa sola).
+  const proy = { ronda: null, seguirUltima: true };
+  function modeloProyector() {
+    const v = t();
+    const hay = v.rondas.length;
+    const r = proy.seguirUltima || proy.ronda == null || proy.ronda >= hay ? hay - 1 : proy.ronda;
+    const k = rondasCompletas();
+    const base = { torneo: v.grupo || v.nombre || tx("estadoSinNombre"), mesas: [], totalMesas: 0, faltan: 0,
+      rondaTitulo: tx("fRondas"), clasTitulo: k ? tx("proyClasTras", { r: k }) : tx("fClasificacion"), clasificacion: [] };
+    if (k && v.jugadores.length) {
+      try {
+        base.clasificacion = E.clasificacion(hasta(k), v.sistema === "eliminacion" ? [] : v.desempates).map((f) => {
+          const j = jugador(f.id) || {};
+          return { p: f.puesto, nombre: (j.nombre || "?") + (j.titulo ? " (" + j.titulo + ")" : ""), inst: j.institucion || "", pts: puntosTexto(f.puntos) };
+        });
+      } catch (e) { base.clasificacion = []; }
+    }
+    if (r < 0) return base;
+    const R = v.rondas[r];
+    const antes = (id) => puntosTexto(T.puntosHasta(v, id, r));
+    const m = mesasDe(R);
+    return Object.assign(base, {
+      rondaTitulo: tx("proyRonda", { r: r + 1 }) + (v.sistema === "eliminacion" ? " · " + nombreRondaElim(v, r) : ""),
+      totalMesas: m.total, faltan: m.faltan,
+      mesas: R.mesas.map((x, i) => ({ mesa: V.mesaFisica(v, i), r: x.r || null, rTexto: x.r ? tx("corto_" + x.r) : "",
+        b: { nombre: nombreDe(x.b), pts: antes(x.b) }, n: x.n === null ? null : { nombre: nombreDe(x.n), pts: antes(x.n) } })),
+    });
+  }
+  function textosProyector() {
+    const claves = ["proyTitulo", "proyResultados", "proyCompleta", "proyEnJuego", "proyPagina", "proyCambiaSola", "proyPausado", "proyPausar", "proySeguir",
+      "proyAnterior", "proySiguiente", "proyVerClas", "proyVerRonda", "proySalir", "proyClasSin", "proyAyuda"];
+    const o = Object.fromEntries(claves.map((c) => [c, X.t(idioma, c)]));
+    o.proyBye = tx("proyBye", { p: puntosTexto(t().puntos.bye) });
+    return o;
+  }
+  function abrirProyector(vista, volver) {
+    const v = t();
+    proy.seguirUltima = estado.ronda == null || estado.ronda >= v.rondas.length - 1;
+    proy.ronda = estado.ronda;
+    PareoProyectar.abrir(modeloProyector(), { textos: textosProyector(), vista, volver });
+  }
+  function actualizarProyector() {
+    if (window.PareoProyectar && PareoProyectar.abierto() && estado.t) PareoProyectar.actualizar(modeloProyector());
   }
 
   // Los menús de botones (<details class="pi-menu">): se cierran al elegir,
@@ -3524,6 +3573,7 @@
     caja.append(el("div", { class: "flex flex-wrap items-baseline justify-between gap-3 mb-3" },
       el("h2", { class: "font-serif text-xl font-bold", texto: tx("emparejamientosRonda", { r: r + 1 }) + (v.sistema === "eliminacion" ? " · " + nombreRondaElim(v, r) : "") + (v.nombre ? " — " + v.nombre : "") }),
       el("div", { class: "flex flex-wrap gap-2 no-imprimir" },
+        E.esDeEquipos(v) ? null : el("button", { type: "button", id: "pi-proyectar-ronda", class: C.boton, onclick: () => abrirProyector("ronda", "pi-proyectar-ronda") }, tx("proyBoton")),
         menuDeBotones("pi-menu-imprimir", tx("menuImprimir"), [
           el("button", { type: "button", onclick: () => window.print() }, tx("imprimir")),
           el("button", { type: "button", onclick: () => imprimirPlantillaMesas(r) }, tx("plantillaMesas")),
@@ -7000,6 +7050,7 @@
     $("pi-clas-nota").textContent = (k < v.rondas.length ? tx("clasSoloCompletas", { r: k }) : (v.nombre || ""))
       + (estado.filtroInstitucion ? tx("clasFiltroNota", { n: filas.length, total: todasFilas.length, inst: estado.filtroInstitucion }) : "");
     pintarSelectInstitucion($("pi-clas-institucion"));
+    $("pi-clas-proyectar").hidden = E.esDeEquipos(v) || !v.jugadores.length;
     pintarMarcadorSchev(v);
     pintarCuadroElim(v);
     const tabla = $("pi-tabla-clas");
@@ -8099,6 +8150,7 @@
       irA(visibles[(i + k + visibles.length) % visibles.length], true);
     });
     engancharMenus();
+    $("pi-clas-proyectar").addEventListener("click", () => abrirProyector("clasificacion", "pi-clas-proyectar"));
     $("pi-ir-agregar").addEventListener("click", () => { $("pi-jug-agregar").scrollIntoView({ block: "start" }); $("pi-form-jugador").elements.nombre.focus(); });
 
     // «Solo lo de los JDE»: esconde el comprobador, el generador y los créditos.
