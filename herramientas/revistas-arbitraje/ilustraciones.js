@@ -517,6 +517,22 @@ Object.assign(ILUSTRACIONES, {
             return svg(s + leyenda(276, "La sala entera, mesa por mesa, en la tableta del árbitro"), 440, 290);
         },
     },
+    /* N.º 21 · El Seminario de Árbitro FIDE completo: un tablero del curso (el
+       caballo clavado: Cg2xe3 es ilegal), el sello AF y los tres días. */
+    21: {
+        fen: "6k1/1b3ppp/8/8/8/4r3/3Q1PNP/7K w - - 0 1",
+        dibujo() {
+            let s = tablero(this.fen, 40, 22, 200);
+            s += sello(338, 104, 66, "AF", "ÁRBITRO FIDE");
+            [["Viernes", "Leyes"], ["Sábado", "Reglamentos"], ["Domingo", "Rating y títulos"]].forEach(([d, t], i) => {
+                const y = 196 + i * 30;
+                s += `<rect x="268" y="${y - 17}" width="150" height="24" rx="5" fill="${i === 0 ? ORO : "rgba(255,255,255,.12)"}" stroke="${ORO}"/>`;
+                s += `<text x="278" y="${y}" font-size="11.5" font-weight="700" fill="${i === 0 ? NAVY : BLANCO}" ${FUENTE}>${d}</text>`;
+                s += `<text x="410" y="${y}" font-size="10.5" fill="${i === 0 ? NAVY : CELESTE}" text-anchor="end" ${FUENTE}>${t}</text>`;
+            });
+            return svg(s + leyenda(278, "El curso completo, con su práctica y el examen simulado"), 440, 292);
+        },
+    },
 });
 
 module.exports = { ILUSTRACIONES };

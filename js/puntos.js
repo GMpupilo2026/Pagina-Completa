@@ -391,6 +391,9 @@ window.Puntos = (function () {
   // Lo que se le puede comprar a otro además de a uno mismo.
   const SE_REGALA = { cosmetico: true, entrenamiento: true };
 
+  // La página de cada premio «herramienta» (premios_catalogo.parametros.herramienta).
+  const HERRAMIENTAS = { preparacion_rivales: "preparacion-rivales.html" };
+
   function seccion(titulo, ayuda) {
     const sec = document.createElement("section");
     const h = document.createElement("h3");
@@ -444,42 +447,61 @@ window.Puntos = (function () {
 
   /* El marcador del salón: lo GANADO en la semana o el mes (lo gastado no
      resta). Solo sale gente que el alumno ya conoce: sus compañeros (mismo
-     profe y misma academia); el profe ve a sus alumnos. Lo decide la base. */
+     profe y misma academia); el profe ve a sus alumnos. Lo decide la base.
+     Se pinta solo el podio (los tres primeros que sumaron algo) y, si uno
+     no está en él, una línea con su propio puesto: la lista entera del
+     salón era larga y no le decía nada a quien iba en el 13.º. */
   function pintarMarcador(ol, filas, periodo) {
     ol.replaceChildren();
+    const yoAparte = ol.nextElementSibling;
+    if (yoAparte) { yoAparte.textContent = ""; yoAparte.hidden = true; }
     if (!filas) {
       const li = document.createElement("li");
-      li.className = "text-sm text-brand-500 dark:text-brand-300";
+      li.className = "sm:col-span-3 text-sm text-brand-500 dark:text-brand-300";
       li.textContent = "No se pudo cargar el marcador.";
       ol.appendChild(li);
       return;
     }
-    if (!filas.some((f) => f.puntos > 0)) {
+    const podio = filas.filter((f) => f.puntos > 0).slice(0, 3);
+    if (!podio.length) {
       const li = document.createElement("li");
-      li.className = "text-sm text-brand-500 dark:text-brand-300";
+      li.className = "sm:col-span-3 text-sm text-brand-500 dark:text-brand-300";
       li.textContent = periodo === "mes" ? "Nadie de tu salón ha sumado puntos este mes. ¡Sé el primero!" : "Nadie de tu salón ha sumado puntos esta semana. ¡Sé el primero!";
       ol.appendChild(li);
       return;
     }
     const MEDALLA = { 1: "🥇", 2: "🥈", 3: "🥉" };
-    filas.forEach((f) => {
+    podio.forEach((f) => {
       const li = document.createElement("li");
-      li.className = "flex items-center gap-3 rounded-lg px-3 py-2 text-sm " +
-        (f.soy_yo ? "bg-accent-100 dark:bg-accent-900/40 font-semibold" : "bg-brand-50 dark:bg-brand-800");
+      li.className = "flex flex-col items-center gap-0.5 rounded-xl border-2 px-3 py-3 text-center " +
+        (f.puesto === 1 ? "border-accent-500 " : "border-transparent ") +
+        (f.soy_yo ? "bg-accent-100 dark:bg-accent-900/40" : "bg-brand-50 dark:bg-brand-800");
       li.setAttribute("data-marcador-fila", "");
       if (f.soy_yo) li.setAttribute("aria-current", "true");
+      const medalla = document.createElement("span");
+      medalla.className = "text-3xl leading-none";
+      medalla.setAttribute("aria-hidden", "true");
+      medalla.textContent = MEDALLA[f.puesto] || "🏅";
       const puesto = document.createElement("span");
-      puesto.className = "w-16 shrink-0 whitespace-nowrap font-mono text-brand-700 dark:text-brand-200";
-      puesto.textContent = (MEDALLA[f.puesto] ? MEDALLA[f.puesto] + " " : "") + f.puesto + ".º";
+      puesto.className = "text-xs font-semibold text-brand-700 dark:text-brand-200";
+      puesto.textContent = f.puesto + ".º lugar";
       const nombre = document.createElement("span");
-      nombre.className = "flex-1 min-w-0 truncate text-brand-800 dark:text-white";
+      nombre.className = "w-full truncate font-semibold text-brand-800 dark:text-white";
       nombre.textContent = (f.nombre || "Sin nombre") + (f.soy_yo ? " (tú)" : "");
+      nombre.title = f.nombre || "";
       const pts = document.createElement("span");
-      pts.className = "shrink-0 font-mono text-brand-700 dark:text-brand-200";
+      pts.className = "text-sm tabular-nums text-brand-700 dark:text-brand-200";
       pts.textContent = texto(f.puntos);
-      li.append(puesto, nombre, pts);
+      li.append(medalla, puesto, nombre, pts);
       ol.appendChild(li);
     });
+    const yo = filas.find((f) => f.soy_yo);
+    if (yoAparte && yo && !podio.includes(yo)) {
+      yoAparte.textContent = yo.puntos > 0
+        ? "Tú vas en el " + yo.puesto + ".º lugar, con " + texto(yo.puntos) + "."
+        : (periodo === "mes" ? "Todavía no has sumado puntos este mes." : "Todavía no has sumado puntos esta semana.");
+      yoAparte.hidden = false;
+    }
   }
 
   /* La tienda completa: el saldo, los retos de la semana, el marcador del
@@ -527,14 +549,14 @@ window.Puntos = (function () {
     retosLista.id = "puntos-retos";
     retosSec.appendChild(retosLista);
 
-    const marcSec = seccion("🏆 Marcador del salón", "Los puntos que ganó cada quien de tu salón (lo que gastan en la tienda no resta).");
+    const marcSec = seccion("🏆 Marcador del salón", "Los tres que más puntos ganaron en tu salón (lo que gastan en la tienda no resta).");
     marcSec.className = "mb-8";
     const tabs = document.createElement("div");
     tabs.className = "mt-3 flex gap-2";
     tabs.setAttribute("role", "group");
     tabs.setAttribute("aria-label", "Periodo del marcador");
     const marcLista = document.createElement("ol");
-    marcLista.className = "mt-3 space-y-1.5";
+    marcLista.className = "mt-3 grid gap-3 sm:grid-cols-3";
     marcLista.id = "puntos-marcador";
     let periodo = "semana";
     const botonesPeriodo = [["semana", "Esta semana"], ["mes", "Este mes"]].map(([clave, txt]) => {
@@ -551,7 +573,11 @@ window.Puntos = (function () {
       return b;
     });
     tabs.append(...botonesPeriodo);
-    marcSec.append(tabs, marcLista);
+    const marcYo = document.createElement("p");
+    marcYo.className = "mt-3 text-sm font-semibold text-brand-700 dark:text-brand-200";
+    marcYo.setAttribute("data-marcador-yo", "");
+    marcYo.hidden = true;
+    marcSec.append(tabs, marcLista, marcYo);
 
     const secciones = document.createElement("div");
     secciones.className = "space-y-8";
@@ -754,6 +780,22 @@ window.Puntos = (function () {
           });
           info.appendChild(enlaces);
         }
+      }
+      // Una herramienta desbloqueada (la preparación de rivales, con 15 000
+      // puntos): la puerta para abrirla, como el material de arriba.
+      const paginaHerramienta = p.tipo_efecto === "herramienta" && p.parametros
+        ? HERRAMIENTAS[p.parametros.herramienta] : null;
+      if (paginaHerramienta) {
+        const enlaces = document.createElement("p");
+        enlaces.className = "text-xs mt-0.5";
+        const a = document.createElement("a");
+        a.href = paginaHerramienta;
+        a.setAttribute("data-herramienta", p.parametros.herramienta);
+        a.className = "font-semibold underline text-accent-700 dark:text-accent-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+        a.textContent = "Abrir la herramienta";
+        a.setAttribute("aria-label", "Abrir " + p.nombre);
+        enlaces.appendChild(a);
+        info.appendChild(enlaces);
       }
       if (p.tipo_efecto === "titulo" || p.tipo_efecto === "marco_perfil" || p.tipo_efecto === "accesorio_avatar") {
         const btn = boton(p.activo ? "Quitar" : "Mostrar", (p.activo ? "Quitar" : "Mostrar") + " " + p.nombre);

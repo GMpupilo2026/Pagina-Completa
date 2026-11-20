@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261119061009
+# al-dia-con: 20261120051810
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -3463,6 +3463,7 @@ funcion  interno.academia_activa()  definer  anon=false  auth=true
 funcion  interno.academia_para_recibo(p_alumno uuid)  definer  anon=false  auth=false
 funcion  interno.academias_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  interno.academias_de_niveles()  definer  anon=false  auth=true
+funcion  interno.al_desbloquear_herramienta()  definer  anon=false  auth=false
 funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.analisis_partidas_al_guardar()  definer  anon=false  auth=false
 funcion  interno.anotar_recorte(p_room_id uuid, p_color text, p_de_mas numeric, p_es_jugada boolean)  definer  anon=false  auth=true
@@ -4702,6 +4703,7 @@ trigger  practice_games  practica_intentos_al_crear
 trigger  practice_games  practica_ventaja_maxima
 trigger  practice_sessions  practice_sessions_ligar_a_la_clase
 trigger  premios_academia_canjes  auditar
+trigger  premios_canjeados  al_desbloquear_herramienta
 trigger  premios_canjeados  auditar
 trigger  preparacion_rivales_profesores  auditar
 trigger  preparacion_sesiones  sello

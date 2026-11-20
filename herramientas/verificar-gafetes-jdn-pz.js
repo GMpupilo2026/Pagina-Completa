@@ -173,7 +173,16 @@ async function aceptar(page, boton) {
   igual("el logo de la ADAPZ y el del CCDR, del mismo alto (±3 %)", Math.abs(altos[0] - altos[1]) <= 0.03 * Math.max(...altos), true);
   igual("el horario de las bases: cinco rondas, el almuerzo y la clausura", d.filas, 7);
   igual("el QR es de cada persona", [d.qr, d.campo], ["{QR}", "{QR}"]);
-  igual("y dice para qué es", d.texto, "Escanéalo: | tu mesa en cada ronda, | tus puntos y tu puesto");
+  igual("y dice para qué es, de cada fila", d.texto, "{Texto QR}");
+  const personal = await page.inputValue("#g-personal");
+  igual("el personal del torneo viene en el diseño: la organizadora, dos árbitros principales y el asistente",
+    personal.split(/\r?\n/).map((l) => l.split("|")[0].trim()), ["Organizadora", "Árbitro principal", "Árbitro principal", "Asistente"]);
+  igual("Karina y Oscar con su avatar de árbitro; las imágenes del dorso, cargadas",
+    [personal.split(/\r?\n/).map((l) => l.split("|")[4].trim()),
+      await page.evaluate(() => ["karina-arbitro", "oscar-arbitro", "oscar-presentando", "oscar-te-toca"].every((k) => (window.Gafetes._estado().diseno.imagenes[k] || {}).datos))],
+    [["karina-arbitro", "oscar-presentando", "oscar-arbitro", "oscar-te-toca"], true]);
+  // Las pruebas de los jugadores, sin el personal; el personal se prueba al final.
+  await page.fill("#g-personal", "");
 
   console.log("\nLos jugadores, de Pareo Integral");
   await page.click("#g-pareo-pz");
@@ -192,13 +201,21 @@ async function aceptar(page, boton) {
     return window.GafetesDibujo.gafetes(diseno, datos.filas).map((x) => ({ n: x.nombre, d: x.detalles, f: x.franja, c: x.codigo, color: x.color, qr: x.qr }));
   });
   igual("el nombre en MAYÚSCULAS pasa a Nombre Propio", g[1].n, ["Zúñiga Rojas", "Mateo"]);
-  igual("debajo del nombre, el ID FIDE de la inscripción (sin él, la línea no sale) y el torneo; ni categoría ni Elo", [g[0].d, g[2].d, g[3].d],
-    [["ID FIDE: 6512345", "Juega el torneo U12"], ["Juega el torneo U20"], ["ID FIDE: 6599999", "Juega el torneo U20"]]);
+  igual("debajo del nombre, la categoría y el ID FIDE de la inscripción (sin él, la línea no sale); sin Elo ni «Juega el torneo»", [g[0].d, g[2].d, g[3].d],
+    [["U12 Femenino", "ID FIDE: 6512345"], ["U16 Femenino"], ["U20 Absoluto", "ID FIDE: 6599999"]]);
   igual("los ID FIDE se pidieron a la función de los aceptados, por torneo", await page.evaluate(() => window.__pedidos.filter((p) => p.tabla === "rpc:pareo_fide_de_aceptados").length), 2);
   igual("la franja dice el club", g.map((x) => x.f), ["ESCUELA PEDREGOSO", "ADAPZ", "ADAPZ", "ADAPZ"]);
   igual("el horario va centrado en el dorso", await page.evaluate(() => window.Gafetes._estado().diseno.dorso.horarioCentro), true);
-  igual("un color por edad (U12, U16, U20)", g.map((x) => x.color), ["#1d64b0", "#1d64b0", "#0e7490", "#1b2a4a"]);
-  igual("el código cuenta por edad", g.map((x) => x.c), ["U12 01", "U12 02", "U16 01", "U20 01"]);
+  igual("un color por edad (U12, U16, U20)", g.map((x) => x.color), ["#1d64b0", "#1d64b0", "#1873b4", "#1b2a4a"]);
+  igual("abajo del dorso, la categoría sola (sin número)", g.map((x) => x.c), ["U12", "U12", "U16", "U20"]);
+  // El nombre en negro (para el árbitro), aunque la franja vaya del color de la edad.
+  const colores = await page.evaluate(async () => {
+    const { diseno, datos } = window.Gafetes._estado();
+    const D = window.GafetesDibujo, r = await D.preparar(diseno);
+    const g = D.gafetes(diseno, datos.filas)[2];
+    return (await D.cara(diseno, r, g, "frente")).textos.map((t) => t.color);
+  });
+  igual("el nombre va en negro", colores.includes("#000000"), true);
 
   // La franja del frente, medida en el píxel (no la clase): la de la U16.
   await page.click("#g-siguiente"); await page.click("#g-siguiente");
@@ -208,7 +225,14 @@ async function aceptar(page, boton) {
     const px = c.getContext("2d").getImageData(Math.round(c.width * 0.5), Math.round(c.height * 0.83), 1, 1).data;
     return "#" + [px[0], px[1], px[2]].map((v) => v.toString(16).padStart(2, "0")).join("");
   });
-  igual("la franja de la U16 se pinta de su color", franja, "#0e7490");
+  igual("la franja de la U16 se pinta de su color (celeste oscuro)", franja, "#1873b4");
+  // Para imprimir en casa: la franja de guía arriba en las dos caras, y el
+  // dorso con blanco abajo (su franja subió), medido en el píxel.
+  const guia = await page.evaluate(() => {
+    const px = (id, fx, fy) => { const c = document.getElementById(id); const d = c.getContext("2d").getImageData(Math.round(c.width * fx), Math.round(c.height * fy), 1, 1).data; return "#" + [d[0], d[1], d[2]].map((v) => v.toString(16).padStart(2, "0")).join(""); };
+    return [px("g-lienzo-frente", 0.5, 0.005), px("g-lienzo-dorso", 0.5, 0.005), px("g-lienzo-dorso", 0.3, 0.992), px("g-lienzo-dorso", 0.3, 0.9)];
+  });
+  igual("arriba, en las dos caras, la franja de guía del color; abajo del dorso, blanco; su franja, más arriba", guia, ["#1873b4", "#1873b4", "#ffffff", "#1873b4"]);
   igual("la vista previa dice a quién muestra", await page.textContent("#g-fila"), "3 de 4: Mora Céspedes Ana Lucía");
   igual("sin avisos en la vista previa", await page.locator("#g-avisos li").allInnerTexts(), []);
 
@@ -281,7 +305,7 @@ async function aceptar(page, boton) {
     const r = await D.preparar(diseno);
     const todos = D.gafetes(diseno, datos.filas);
     return Promise.all(todos.map(async (g) => {
-      const i = fotoDe.get(g.fila.QR);
+      const i = fotoDe.get([g.fila.QR, g.fila.Apellidos, g.fila.Nombre].join(" | "));
       if (i >= 0) { g.foto = fotos[i].lienzo; g.fotoClave = "foto-" + i; }
       return (await D.cara(diseno, r, g, "frente")).clave;
     }));
@@ -364,6 +388,28 @@ async function aceptar(page, boton) {
   const dentro = [...z.matchAll(/PK\x01\x02[\s\S]{42}([^\x00]*?\.pdf)/g)].map((m) => Buffer.from(m[1], "latin1").toString("utf8")).sort();
   igual("un .zip con un PDF por torneo", [zip.suggestedFilename(), dentro], ["Gafetes 5,5x8,5 - Eliminatoria JDN PZ 2026.zip", ["Gafetes 5,5x8,5 - U12.pdf", "Gafetes 5,5x8,5 - U20.pdf"]]);
   igual("ocho páginas en total (frente y dorso de cuatro)", (z.match(/\/Type \/Page\b/g) || []).length, 8);
+
+  console.log("\nEl personal del torneo");
+  await page.fill("#g-personal", "Árbitro principal | Quesada Arauz | Jean | Árbitro FIDE (AF) | oscar-arbitro");
+  await page.click("#g-pareo-pz");
+  await page.waitForFunction(() => window.Gafetes._estado().datos && window.Gafetes._estado().datos.filas.length === 5);
+  const st = await page.evaluate(() => {
+    const { diseno, datos } = window.Gafetes._estado();
+    const x = window.GafetesDibujo.gafetes(diseno, datos.filas).pop();
+    return { n: x.nombre, d: x.detalles, f: x.franja, v: x.vertical, c: x.codigo, color: x.color, qr: x.qr, t: x.qrTexto, pose: x.ilustracionDorso };
+  });
+  igual("se suma al final, con su rol en la franja, su título debajo y en negro",
+    [st.n, st.d, st.f, st.v, st.c, st.color], [["Quesada Arauz", "Jean"], ["Árbitro FIDE (AF)"], "ÁRBITRO PRINCIPAL", "PRINCIPAL", "ARBITRAJE", "#000000"]);
+  igual("su QR lleva a la página del torneo y lo dice; en el dorso, el profe Oscar árbitro",
+    [st.qr, st.t, st.pose], ["https://ajedrez-integral.com/jdn-pz-2026", "Escanéalo: | la página | del torneo", "oscar-arbitro"]);
+  // Dos del personal comparten el QR (la página del torneo): cada uno con SU foto.
+  await page.fill("#g-personal", "Árbitro principal | Quesada Arauz | Jean | Árbitro FIDE (AF) | oscar-arbitro\nAsistente | Mora Chavarría | Sebastián |  | oscar-te-toca");
+  await page.click("#g-pareo-pz");
+  await page.waitForFunction(() => window.Gafetes._estado().datos && window.Gafetes._estado().datos.filas.length === 6);
+  await page.setInputFiles("#g-fotos", [archivo("Jean Quesada.jpg"), archivo("Sebastian Mora.jpg")]);
+  await page.waitForFunction(() => /con foto/.test(document.getElementById("g-fotos-estado").textContent));
+  igual("dos del personal con el mismo QR, cada uno con su foto", (await emparejadas()).slice(-2),
+    ["Quesada Arauz, Jean → Jean Quesada.jpg", "Mora Chavarría, Sebastián → Sebastian Mora.jpg"]);
 
   igual("sin errores en la consola", errores, []);
   await ctx.close();

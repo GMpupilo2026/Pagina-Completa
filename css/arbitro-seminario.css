@@ -44,21 +44,128 @@
 .dark .sem-persona { border-color: rgb(var(--c-brand-800)); }
 .sem-persona-nombre { flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; }
 
-/* La diapositiva: el mismo cuadro en la consola y en la pantalla del árbitro. */
+/* La diapositiva: el mismo cuadro en la consola y en la pantalla del árbitro.
+   Se ve como las láminas del seminario de asesores (herramientas/formacion-laminas.js):
+   16:9, franja azul #1d5c99 con la sección y el título, fondo #f4f7fb y tarjetas
+   blancas. Todo va en cqw sobre una lámina de 1600 px (1cqw = 16 px de la
+   original), así que escala entera con el ancho. Es una lámina proyectada: no
+   cambia con el modo oscuro, igual que las imágenes de asesores. Contraste
+   medido: blanco sobre #1d5c99 6,5:1; #14233a sobre #fff 15:1; #3b4a5e sobre
+   #f4f7fb 8,4:1. --esc lo baja ajustar() si un texto largo no cabe. */
 .sem-vista { margin-top: 1rem; }
-.sem-diapositiva { background: rgb(var(--c-brand-800)); color: #fff; border-radius: 1rem; padding: 1.75rem; display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; min-height: 16rem; }
-.sem-diap-texto { flex: 1 1 18rem; min-width: 0; display: flex; flex-direction: column; gap: .7rem; }
-.sem-diap-tema { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: rgb(var(--c-accent-300, 252 211 77)); }
-.sem-diap-titulo { font-family: Merriweather, "Merriweather respaldo", serif; font-size: clamp(1.4rem, 3vw, 2.1rem); font-weight: 700; line-height: 1.2; }
+.sem-lamina { --azul: #1d5c99; --tinta: #14233a; --gris: #3b4a5e; --fondo: #f4f7fb; --esc: 1;
+  container-type: inline-size; width: 100%; border-radius: .9rem; overflow: hidden;
+  box-shadow: 0 4px 18px rgba(16, 42, 67, .22); background: var(--fondo); color: var(--tinta);
+  font-family: "Atkinson Hyperlegible", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; }
+.sem-lamina:not(.sem-l-libre) .sem-l-marco { aspect-ratio: 16 / 9; }
+.sem-l-marco { display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.sem-l-cab { flex: none; background: var(--azul); color: #fff; padding: 1.9cqw 4.4cqw 1.6cqw; display: flex; align-items: flex-end; justify-content: space-between; gap: 2cqw; }
+.sem-l-cab-txt { min-width: 0; }
+.sem-l-seccion { font-size: 1.9cqw; letter-spacing: .02em; opacity: .95; }
+.sem-l-titulo { font-size: calc(4.4cqw * var(--esc)); font-weight: 700; line-height: 1.08; text-wrap: balance; }
+.sem-l-titulo.sem-l-largo { font-size: calc(3.7cqw * var(--esc)); }
+.sem-l-cab-der { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: .7cqw; }
+.sem-l-cuenta { font-size: 1.8cqw; font-weight: 700; font-variant-numeric: tabular-nums; opacity: .95; }
+.sem-l-art { font-size: 1.9cqw; font-weight: 700; color: var(--tinta); background: #e3edf8; border-radius: .5cqw; padding: .15cqw .8cqw; white-space: nowrap; }
+.sem-l-cuerpo { flex: 1; min-height: 0; padding: 2.6cqw 4.4cqw 2.4cqw; display: flex; flex-direction: column; overflow: hidden; }
+.sem-l-caja { background: #fff; border-radius: 1.3cqw; box-shadow: 0 .2cqw .9cqw rgba(29, 58, 90, .14); }
+.sem-l-filas { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 1.6cqw; }
+.sem-l-fila { display: flex; align-items: center; gap: 2cqw; padding: 1.6cqw 2.2cqw; }
+.sem-l-ic { flex: none; width: 5.5cqw; font-size: calc(4.6cqw * var(--esc)); line-height: 1; text-align: center; }
+.sem-l-sigue .sem-l-ic { font-size: calc(3cqw * var(--esc)); color: var(--azul); }
+.sem-l-texto { font-size: calc(2.9cqw * var(--esc)); line-height: 1.25; }
+.sem-l-fila:first-child .sem-l-texto { font-weight: 700; }
+.sem-l-clave { background: #e3edf8; border-left: .75cqw solid var(--azul); border-radius: .75cqw; padding: 1.2cqw 2.2cqw; font-size: calc(2.8cqw * var(--esc)); font-weight: 700; line-height: 1.25; }
+.sem-l-lista { list-style: none; display: grid; gap: 1.4cqw; }
+.sem-l-lista.sem-l-dos { grid-template-columns: 1fr 1fr; gap: 1.2cqw 1.6cqw; }
+.sem-l-lista li { display: flex; align-items: center; gap: 1.6cqw; padding: 1.2cqw 1.9cqw; }
+.sem-l-lista .sem-l-texto { font-weight: 700; font-size: calc(2.7cqw * var(--esc)); }
+.sem-l-num { flex: none; width: 3.6cqw; height: 3.6cqw; border-radius: 50%; background: var(--azul); color: #fff; font-size: 2cqw; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+/* Con tablero: el tablero en su caja a la izquierda y las filas a la derecha. */
+.sem-l-lado { flex: 1; min-height: 0; display: flex; gap: 2.8cqw; align-items: center; }
+.sem-l-tabcaja { flex: none; width: calc(31cqw * var(--esc)); margin: 0; padding: 1.1cqw; display: flex; flex-direction: column; gap: .6cqw; }
+.sem-l-tabcaja .sem-tablero { width: 100%; max-width: none; }
+.sem-l-tabcaja .sem-pie { font-size: calc(1.7cqw * var(--esc)); color: var(--gris); line-height: 1.25; margin: 0; }
+.sem-l-con-tablero .sem-l-fila { padding: 1.2cqw 1.8cqw; gap: 1.6cqw; }
+.sem-l-con-tablero .sem-l-ic { width: 4.4cqw; font-size: calc(3.6cqw * var(--esc)); }
+.sem-l-con-tablero .sem-l-texto { font-size: calc(2.5cqw * var(--esc)); }
+/* El tablero de la lámina: la pieza se mide contra el propio tablero (cqw),
+   no con el mínimo de 14 px de article-example-board.js, que en un tablero
+   chico ensanchaba las casillas y lo rompía. */
+.sem-l-tabcaja .example-board { container-type: inline-size; grid-template-columns: repeat(8, minmax(0, 1fr)); grid-template-rows: repeat(8, minmax(0, 1fr)); }
+.sem-l-tabcaja .example-sq { min-width: 0; min-height: 0; overflow: hidden; font-size: 7.6cqw !important; }
+/* Portada: la lámina azul con que empieza cada sesión de asesores. */
+.sem-l-portada { background: var(--azul); color: #fff; }
+.sem-l-portada .sem-l-marco { justify-content: center; padding: 0 6.9cqw; gap: 1.6cqw; }
+.sem-l-portada-titulo { font-size: 6.4cqw; font-weight: 700; line-height: 1.02; max-width: 62cqw; text-wrap: balance; }
+.sem-l-portada-sub { font-size: 2.6cqw; font-weight: 700; line-height: 1.2; max-width: 56cqw; }
+.sem-l-portada .sem-l-seccion { font-size: 2.1cqw; }
+.sem-l-deco { position: absolute; right: 2cqw; top: 50%; transform: translateY(-50%) rotate(-12deg); font-size: 34cqw; line-height: 1; opacity: .14; pointer-events: none; }
+/* En el celular la lámina 16:9 quedaría con letra de 7 px: se apila y la
+   letra tiene un tamaño mínimo que se lee. */
+@container (max-width: 600px) {
+  .sem-l-marco { aspect-ratio: auto !important; }
+  .sem-l-cab { padding: .8rem 1rem; }
+  .sem-l-seccion { font-size: .75rem; }
+  .sem-l-titulo, .sem-l-titulo.sem-l-largo { font-size: 1.3rem; }
+  .sem-l-cuenta, .sem-l-art { font-size: .75rem; }
+  .sem-l-cuerpo { overflow: visible; padding: 1rem; }
+  .sem-l-filas { gap: .6rem; }
+  .sem-l-lado { flex-direction: column; align-items: stretch; gap: .8rem; }
+  .sem-l-tabcaja { width: 100%; max-width: 17rem; align-self: center; padding: .5rem; }
+  .sem-l-tabcaja .sem-pie { font-size: .8rem; }
+  .sem-l-fila, .sem-l-con-tablero .sem-l-fila { padding: .7rem .9rem; gap: .7rem; }
+  .sem-l-ic, .sem-l-con-tablero .sem-l-ic { width: 1.9rem; font-size: 1.5rem; }
+  .sem-l-sigue .sem-l-ic { font-size: 1rem; }
+  .sem-l-texto, .sem-l-con-tablero .sem-l-texto, .sem-l-lista .sem-l-texto, .sem-l-clave { font-size: 1rem; }
+  .sem-l-clave { padding: .6rem .9rem; border-left-width: 6px; }
+  .sem-l-lista, .sem-l-lista.sem-l-dos { grid-template-columns: 1fr; gap: .6rem; }
+  .sem-l-lista li { padding: .6rem .9rem; gap: .7rem; }
+  .sem-l-num { width: 1.6rem; height: 1.6rem; font-size: .85rem; }
+  .sem-l-portada .sem-l-marco { padding: 2rem 1.25rem; gap: .7rem; min-height: 14rem; }
+  .sem-l-portada .sem-l-seccion { font-size: .8rem; }
+  .sem-l-portada-titulo { font-size: 1.9rem; max-width: none; }
+  .sem-l-portada-sub { font-size: 1rem; max-width: 80%; }
+}
+/* El avatar de «IA Oscar Angulo Cubero» (js/avatar-profe-oscar.js): cambia de
+   pose cada 6 s con un fundido; con «reducir movimiento», ni cambia ni funde. */
+.sem-avatar { display: block; width: auto; object-fit: contain; transition: opacity .35s ease; }
+.sem-avatar-sale { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .sem-avatar { transition: none; } }
+.sem-con-avatar { display: flex; align-items: center; gap: .9rem; }
+.sem-con-avatar-txt { min-width: 0; }
+.sem-avatar-chico { height: 5.5rem; flex: none; }
+.sem-instructor { font-weight: 600; }
+.sem-l-portada-instructor { font-size: 2.1cqw; font-weight: 700; opacity: .95; }
+.sem-l-con-avatar .sem-l-marco > :not(.sem-l-portada-avatar) { max-width: 58cqw; position: relative; }
+.sem-l-portada-avatar { position: absolute; right: 4cqw; bottom: 0; height: 92%; width: 31cqw; object-fit: contain; object-position: right bottom; pointer-events: none; filter: drop-shadow(0 .6cqw 1.2cqw rgba(0, 0, 0, .25)); }
+@container (max-width: 600px) {
+  .sem-l-portada-instructor { font-size: .85rem; }
+  .sem-l-con-avatar .sem-l-marco { padding-right: 38%; }
+  .sem-l-con-avatar .sem-l-marco > :not(.sem-l-portada-avatar) { max-width: none; }
+  .sem-l-portada-avatar { right: 3%; height: 80%; width: 34%; }
+  .sem-l-con-avatar .sem-l-portada-sub { max-width: none; }
+}
+/* Pregunta: la misma franja, sin el 16:9 (crece con sus opciones). Tiene
+   tamaño mínimo para que se lea en el celular. */
+.sem-l-libre { margin-top: 1rem; }
+.sem-l-libre .sem-l-titulo { font-size: max(1.15rem, 2.6cqw); line-height: 1.2; }
+.sem-l-libre .sem-l-titulo.sem-l-largo { font-size: max(1.1rem, 2.3cqw); }
+.sem-l-libre .sem-l-seccion { font-size: max(.85rem, 1.5cqw); }
+.sem-l-libre .sem-tiempo { background: #fff; color: var(--tinta); font-size: max(.95rem, 1.7cqw); }
+.sem-l-cuerpo-libre { padding: max(1rem, 2.2cqw) max(1rem, 4.4cqw); display: flex; flex-direction: column; gap: .8rem; }
+.sem-l-libre .sem-opcion { background: #fff; color: var(--tinta); border: 2px solid transparent; box-shadow: 0 .2cqw .9cqw rgba(29, 58, 90, .14); border-radius: .8rem; font-size: max(1rem, 1.9cqw); font-weight: 700; padding: max(.7rem, 1.1cqw) max(.9rem, 1.8cqw); }
+.sem-l-libre .sem-opcion:hover:not(:disabled) { border-color: var(--azul); }
+.sem-l-libre .sem-opcion[aria-pressed="true"] { border: 3px solid var(--azul); background: #e3edf8; }
+.sem-l-libre .sem-estado, .sem-l-libre .sem-nota { color: var(--gris); }
+.sem-l-libre .sem-conteo li { background: #fff; font-size: max(.95rem, 1.6cqw); }
+.sem-l-libre .sem-btn-sec { background: #e3edf8; color: var(--tinta); border-color: #c5d6ea; }
 .sem-diap-p { font-size: 1.05rem; line-height: 1.5; }
-.sem-diapositiva .sem-diap-p { font-size: clamp(1.05rem, 1.8vw, 1.3rem); }
-.sem-diap-lista { list-style: disc; padding-left: 1.4rem; display: flex; flex-direction: column; gap: .35rem; font-size: clamp(1rem, 1.7vw, 1.2rem); }
-.sem-diap-art { font-size: .9rem; font-weight: 700; color: rgb(var(--c-accent-300, 252 211 77)); }
-.sem-diap-vacia { font-size: 1.1rem; }
-.sem-diagrama { flex: 0 1 18rem; min-width: 0; margin: 0; }
+/* Fuera de la lámina (la tarjeta del conteo): el tablero chico. */
+.sem-diagrama { min-width: 0; margin: 0; }
 .sem-tablero { width: 100%; max-width: 18rem; }
 .sem-pie { font-size: .85rem; margin-top: .4rem; }
-.sem-tarjeta .sem-diagrama { max-width: 16rem; }
+.sem-l-libre .sem-diagrama { max-width: 16rem; }
 
 .sem-opciones { display: flex; flex-direction: column; gap: .5rem; }
 .sem-opcion { text-align: left; border: 1px solid rgb(var(--c-brand-200)); background: #fff; color: inherit; border-radius: .6rem; padding: .7rem .9rem; cursor: pointer; font-size: 1rem; }

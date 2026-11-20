@@ -328,7 +328,11 @@ Deno.serve(async (req) => {
     }
     if (accion === "livechess_guardar") {
       // «SUB-18 ABS  1-5  https://view.livechesscloud.com/#<id>»: la categoría, la rama, los tableros y el enlace.
-      const { data: torneos } = await servicio.from("centroamericano_torneos").select("tnr, categoria, rama, prueba");
+      // Solo entre los torneos del evento que la organización tiene elegido (si lo manda): un «SUB-12 ABS» de otro evento no se toca.
+      const soloEstos = Array.isArray(cuerpo.tnrs) ? (cuerpo.tnrs as unknown[]).filter((x): x is string => typeof x === "string").slice(0, 200) : null;
+      let consulta = servicio.from("centroamericano_torneos").select("tnr, categoria, rama, prueba");
+      if (soloEstos) consulta = consulta.in("tnr", soloEstos);
+      const { data: torneos } = await consulta;
       const filas: { tnr: string; torneo_id: string; tableros: string; por: string }[] = [];
       const errores: string[] = [];
       for (const renglon of String(cuerpo.texto ?? "").split(/\r?\n/).map((x) => x.trim()).filter(Boolean).slice(0, 40)) {

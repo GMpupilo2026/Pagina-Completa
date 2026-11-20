@@ -197,6 +197,21 @@ const inserts = (page) => page.evaluate(() => window.__inserts.filter((i) => i.t
         await page.evaluate(() => document.getElementById("titulo-pagina").textContent.trim()), await page.evaluate(() => document.title)],
         [real.length, "Posiciones de las clases 🏁", "Posiciones de las clases · Ajedrez Integral"]);
       igual("el progreso habla de posiciones", (await page.evaluate(() => document.getElementById("progress-label").textContent)).replace(/^\d+/, "N"), "N de " + real.length + " posiciones logradas");
+      // Con más de 60 pestañas el tablero queda muy abajo: al elegir una, la
+      // página baja hasta el título de la posición (debajo del encabezado
+      // fijo) y el foco pasa ahí. Se mide en la pantalla, no en el DOM.
+      await page.setViewportSize({ width: 1200, height: 800 });
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+      await page.locator("#tabs .tab").nth(real.length - 1).click();
+      const bajo = () => {
+        const t = document.getElementById("final-titulo").getBoundingClientRect().top;
+        return t >= document.getElementById("header").getBoundingClientRect().bottom && t < innerHeight / 2;
+      };
+      await page.waitForFunction(bajo, null, { timeout: 5000 }).catch(() => {});
+      igual("al elegir la última, la página baja hasta su título y el foco va ahí",
+        [await page.evaluate(() => document.getElementById("final-titulo").textContent), await page.evaluate(bajo),
+          await page.evaluate(() => document.activeElement === document.getElementById("final-titulo"))],
+        [real[real.length - 1].titulo, true, true]);
       igual("sin errores en la página", errores.join(" | ") || "ninguno", "ninguno");
       await ctx.close();
     }

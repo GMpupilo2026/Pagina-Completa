@@ -195,13 +195,29 @@ function buildTabs(){
     const toca = repasar.includes(f.id);
     btn.textContent = `${META[f.meta].icono} ${f.titulo}${s[f.id] ? ' ✓' : ''}${toca ? ' 🔁' : ''}`;
     btn.setAttribute('aria-label', `${f.titulo}: ${META[f.meta].etiqueta.toLowerCase()}${s[f.id] ? ', ya lo lograste' : ''}${toca ? ', toca repasarlo hoy' : ''}`);
-    btn.addEventListener('click', () => { actual = i; loadFinal(); });
+    btn.addEventListener('click', () => { actual = i; loadFinal(); irAlTablero(); });
     tabs.appendChild(btn);
   });
   const hechos = FINALES.filter((f) => s[f.id]).length;
   document.getElementById('progress-fill').style.width = (FINALES.length ? Math.round(100 * hechos / FINALES.length) : 0) + '%';
   document.getElementById('progress-label').textContent = `${hechos} de ${FINALES.length} ${QUE}` +
     (repasar.length ? ` · ${repasar.length} para repasar hoy (🔁)` : '');
+}
+
+/* Con muchas posiciones (las de las clases pasan de 60) el tablero queda
+   muy abajo de la lista, y el clic parecía no hacer nada. Al elegir una, la
+   página baja hasta el título de la posición —descontando el encabezado fijo—
+   y el foco pasa ahí, para que el lector de pantalla diga cuál se cargó. */
+function irAlTablero(){
+  const titulo = document.getElementById('final-titulo');
+  if(!titulo) return;
+  const header = document.getElementById('header');
+  const alto = header ? header.getBoundingClientRect().height : 0;
+  const y = titulo.getBoundingClientRect().top + window.scrollY - alto - 8;
+  const quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({ top: Math.max(0, y), behavior: quieto ? 'instant' : 'smooth' });
+  if(!titulo.hasAttribute('tabindex')) titulo.setAttribute('tabindex', '-1');
+  titulo.focus({ preventScroll: true });
 }
 
 /* ---------------- Tablero ---------------- */

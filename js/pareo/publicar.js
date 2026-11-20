@@ -162,7 +162,7 @@
   // comentario que le llega por correo a quien inscribió si dejó un correo.
   const inscribir = (id, inscripcion) => llamar({ accion: "inscribir", id, inscripcion, consentimiento: true });
   const inscripciones = (p) => llamar({ accion: "inscripciones", id: p.id, clave: p.clave });
-  const marcar = (p, ids, estado, comentario) => llamar({ accion: "marcar", id: p.id, clave: p.clave, ids, estado, comentario: comentario || "" });
+  const marcar = (p, ids, estado, comentario, correo) => llamar(Object.assign({ accion: "marcar", id: p.id, clave: p.clave, ids, estado, comentario: comentario || "" }, correo ? { correo } : {}));
   // Seguir a un jugador por correo (la página pública, sin cuenta): pedirlo,
   // confirmarlo y darse de baja con los enlaces que llegan por correo.
   const seguirCorreo = (nombre, ident, correo) => llamar({ accion: "seguir_correo", nombre, ident: ident || "", correo, consentimiento: true });
@@ -177,8 +177,11 @@
   // queda en la base»). El principal, con la clave: su lista de enlaces, lo
   // que mandaron y borrar lo que ya pasó a su torneo.
   const adjuntos = (t) => llamar({ accion: "adjuntos", id: t.publicado.id, clave: t.publicado.clave, adjuntos: listaAdjuntos(t) });
-  const cola = (p) => llamar({ accion: "cola", id: p.id, clave: p.clave });
-  const colaBorrar = (p, hasta) => llamar({ accion: "cola_borrar", id: p.id, clave: p.clave, hasta });
+  // `mesa: true`: este Pareo entiende las filas de la Mesa del árbitro (sin
+  // código, con asignacion_id). Sin eso, la función ni las da ni las deja
+  // borrar: un Pareo viejo las borraba sin anotarlas.
+  const cola = (p) => llamar({ accion: "cola", id: p.id, clave: p.clave, mesa: true });
+  const colaBorrar = (p, hasta) => llamar({ accion: "cola_borrar", id: p.id, clave: p.clave, hasta, mesa: true });
   // El adjunto, con el código de su enlace: entrar y anotar.
   const entrarAdjunto = (codigo) => llamar({ accion: "adjunto_entrar", codigo });
   const anotarAdjunto = (codigo, evento, ronda, datos) => llamar({ accion: "adjunto_anotar", codigo, evento, ronda, datos });

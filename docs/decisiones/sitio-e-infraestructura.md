@@ -2525,6 +2525,67 @@ muestra. Antes de dar por bueno cada arreglo se rompió a propósito lo que
 comprueba (la página sin `pedidoCamara`, los relojes sin congelar con una
 espera de 1,5 s, el doble con horas distintas) y saltó.
 
+## En un PR corren los verificadores que toca el cambio
+
+Hasta el 19/11/2026 cada PR corría los casi 480 verificadores, aunque
+cambiara una sola página: unos 113 minutos de navegador repartidos en cuatro
+tandas. Desde entonces el CI pasa `--cambios-desde=<base del PR>` a
+`verificar-todo.js`, y `herramientas/lib/verificadores-afectados.js` elige
+**los que leen algo de lo que cambió**. Simulado sobre los 60 PR anteriores:
+113 → 76 minutos de promedio (la mitad, en menos de 50), y 11 de 60 seguían
+corriendo todo.
+
+Cómo decide, y por qué así:
+
+- **Lo que nombra cada verificador, y en cadena lo que eso carga.** Del
+  verificador, todo lo que nombra (páginas, módulos, migraciones, datos,
+  `path.join(RAIZ, "js", "x.js")`, los `require` de otros verificadores y de
+  `lib/`); de una página, sus `<script src>` y `<link href>`; de un JS, los
+  `.js`/`.json`/`.css` que nombra. **De una página no se siguen los enlaces a
+  otras**: desde el inicio se llega a todo el sitio y todos dependerían de
+  todo. La ruta no tiene que ir entre comillas (`${BASE}/torneos-pareo.html`
+  viene después de una llave); lo que no es un archivo del repositorio se
+  descarta al resolver.
+- **Los comentarios no cuentan.** «Ver js/x.js» o «una sola copia:
+  js/y.js» no es cargarlo; contados, un cambio en una sola página elegía 459
+  de 478. Se borran antes de leer (las cadenas quedan).
+- **Ante la duda, todos.** Un archivo cambiado que ningún verificador nombra
+  (un generador de `herramientas/`, un `.json` que se lee con la ruta armada,
+  `supabase/esquema/`) no se sabe a quién afecta: corren todos. También si
+  cambia lo que usan todos: el corredor, este módulo, los dos que el corredor
+  carga en todos (`navegador-local.js`, `candado-de-prueba.js`),
+  `package*.json` y el flujo del CI.
+- **Los que recorren carpetas corren siempre** (`readdirSync`, `glob`,
+  `ls-files`…; unos 114): revisan todo el sitio sin nombrarlo (el voseo, la
+  CSP, el sello, la hora de Costa Rica).
+- **Una carpeta de primer nivel no «cubre».** `path.join(RAIZ, "js", nombre)`
+  hace que el verificador corra con cualquier cambio en `js/`, pero no cuenta
+  como que alguien nombre ESE archivo: si contara, un `.js` nuevo que nadie
+  carga quedaría cubierto y no correrían todos. Una carpeta más honda
+  (`supabase/migraciones`) sí cubre.
+- **La documentación y lo que no es código** (fotos, PDF, descargas) que nadie
+  nombra no hacen correr a nadie.
+- **Un verificador que cambió corre**, aunque sea de los que barren.
+
+Lo que esta lectura no puede ver (una ruta armada con variables, un `fetch`
+calculado) lo atrapa **la corrida completa de los domingos** (`schedule` en
+`verificar.yml`, 3 a. m. de Costa Rica), y a mano con `workflow_dispatch`.
+Si un domingo salta algo que el PR no corrió, lo que falta es que el
+verificador nombre el archivo (o que el archivo nombre lo que carga), no
+volver a correr todo en cada PR.
+
+`verificar-verificadores-afectados.js` lo comprueba con el repositorio real:
+lo global y el archivo sin dueño hacen correr todos, la cadena
+verificador → página → módulo elige a quien no nombra el módulo, los que abren
+`torneos-pareo.html` corren al cambiar su JS, los que barren corren siempre,
+un comentario no es dependencia y un cambio de una página elige menos de la
+mitad. Se rompió a propósito cada regla (sin la del archivo sin dueño, sin
+quitar comentarios, sin los que barren) y saltó.
+
+Además, el corredor dice al terminar **los diez más lentos**, y
+`--tiempos=t.json` deja cuánto tardó cada uno: con eso se pone al día
+`DURACION`, que reparte las tandas parejas.
+
 ## Las Edge Functions se despliegan solas desde GitHub
 
 Hasta el 10/11/2026 cada Edge Function se desplegaba a mano: a veces desde el

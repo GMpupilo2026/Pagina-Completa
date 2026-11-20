@@ -1323,6 +1323,51 @@ Está probado que fallan: una FEN inventada en el banco hace saltar 2
 comprobaciones; dejar la lectura escrita al reconstruir, o guardar el récord
 de una con errores, las que corresponden.
 
+## De oído
+
+`entreno/oido.html` (tarjeta **«👂 De oído»** en Entreno y en el panel,
+Entrenamiento básico), pedida el 19/11 para los alumnos ciegos: es la
+visualización que más necesita quien no ve el tablero, y le sirve a todos.
+No hay tablero a la vista, porque eso es lo que se entrena. Todo se contesta
+escribiendo («e4», «eva 4», «efe tres», «sí», «3»). La pregunta se escribe, se
+dice en una región viva (`#oido-voz`) y, con «Activar voz», también en voz
+alta. Tres ejercicios, cada uno con nivel fácil, medio y difícil:
+
+- **¿A dónde llega?** Una pieza sola en el tablero vacío. En fácil se dicen
+  todas las casillas a las que llega un rey o un caballo del centro; en medio,
+  un caballo de cualquier lado o «¿llega a…?» con alfil o torre; en difícil,
+  sobre todo «¿llega?» con dama, caballo y alfil. En el «¿llega?» la mitad de
+  las veces sí llega: si no, casi siempre sería «no». Si a la lista le falta
+  una casilla o le sobra otra, se dice cuál.
+- **El camino del caballo:** de una casilla a otra, ¿en cuántas jugadas como
+  mínimo? Se calcula con una búsqueda a lo ancho, así que la respuesta es
+  exacta. Fácil 1-2, medio 3-4, difícil 5-6. La corrección da además un camino.
+- **La partida dictada:** se dictan las primeras jugadas de una apertura REAL
+  del banco de Aperturas (`js/aperturas-lineas.js`): 4 en fácil, 8 en medio,
+  12 en difícil. Después se pregunta dónde quedó una pieza que se movió («el
+  caballo negro que empezó en g8»). La posición la arma chess.js jugando esas
+  jugadas: «ninguna posición se inventa». `seguirPiezas` sigue cada pieza
+  desde su casilla de salida, con capturas, enroques (la torre también se
+  mueve) y capturas al paso. El dictado nombra al peón («peón eva 4»), porque
+  `sanSpoken` lo dice solo con la casilla y para seguir la partida de oído hay
+  que saber qué se movió.
+
+La lógica es pura y está aparte (`js/oido-ejercicios.js`, con el azar que le
+pasan): la prueba `verificar-oido.js` sin navegador, con el alcance de cada
+pieza contado a mano, los caminos, la lectura de lo escrito o dicho, el
+seguimiento con enroque y captura al paso, 180 dictados de los tres niveles
+contra el banco y 600 preguntas de alcance y camino. Con navegador prueba los
+tres ejercicios de punta a punta. Lo que no se entiende («ni idea») no cuenta
+como respuesta: se dice cómo escribirla.
+
+**Cada respuesta cuenta en Entrenamiento**: `training_progress` con la
+actividad `oido` (meta del día, racha, tareas). La base solo acepta las
+actividades de su lista, así que va con su migración
+(`training_progress_oido`); sin ella las filas se rechazarían sin avisar.
+Está en las tareas (`material-plataforma.js`, «preguntas»), en el plan
+(`plan-entrenamiento.js`) y cuenta como entrenamiento de visión
+(`direcciones-entrenamiento.js`).
+
 ## Aperturas y celadas: memorizar jugando, con repaso espaciado
 
 `entreno/aperturas.html` es un banco de 40 líneas —12 celadas y 28 aperturas—
@@ -4928,6 +4973,13 @@ editar a mano una medida y la calibración sin el paso de gradiente.
 las clases de ADAES, con su propia actividad (`finales_clases`) y la posición
 en `detail.theme` para mandarla de tarea una por una. Ver «Y para jugarlas en
 casa, de tarea» en `docs/decisiones/accesibilidad.md`.
+
+Con más de 60 posiciones, el tablero queda muy abajo de la lista y el clic
+parecía no hacer nada: al elegir una pestaña, la página baja hasta el título
+de la posición (descontando el encabezado fijo; sin animación si la persona
+pidió menos movimiento) y el foco pasa a ese título, para que el lector de
+pantalla diga cuál se cargó (`irAlTablero()` en `js/entreno-finales.js`;
+lo mide `verificar-finales-pagina.js`).
 
 ## El entrenador de IA
 

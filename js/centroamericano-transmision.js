@@ -336,6 +336,8 @@
             try {
                 const d = await llamar("leer");
                 if (!d || !Array.isArray(d.categorias)) throw new Error("la respuesta no trae los tableros");
+                // La organización ve solo los torneos del evento que eligió (ver «Cada evento de la Mesa, por separado»).
+                if (ctx.dentro) d.categorias = d.categorias.filter((c) => ctx.dentro(c.tnr));
                 datos = d;
                 leidaMs = Date.now();
                 atendidas.clear();

@@ -178,6 +178,17 @@ const SERVIDOR_ARBITRO = `
     if (b.action === "nombre") {
       if (window.__avisos.nombrado) return falla(409, "Este enlace ya tiene nombre. Si hay que cambiarlo, díselo a la organización.");
       window.__avisos.nombrado = true; window.__avisos.arbitro = b.nombre.replace(/\\s+/g, " ").trim(); return { data: { ok: true, arbitro: window.__avisos.arbitro }, error: null }; }
+    // Como la función: «leer» trae su firma y, si la tablet manda la misma, contesta solo «igual» (ahorro de datos).
+    // window.__sinFirma = true imita a la función de antes, que no la mandaba.
+    if (b.action === "leer" && !b.__entera) {
+      const x = window.__servidor(Object.assign({}, b, { __entera: true }));
+      if (x.error || window.__sinFirma) return x;
+      const t = JSON.stringify(Object.assign({}, x.data, { leido_en: null, datos: null }));
+      let h = 5381; for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
+      const firma = "d" + h.toString(16);
+      if (b.firma === firma) { window.__iguales = (window.__iguales || 0) + 1; return { data: { igual: true, firma, leido_en: x.data.leido_en, datos: x.data.datos }, error: null }; }
+      return { data: Object.assign({}, x.data, { firma }), error: null };
+    }
     if (b.action === "leer") return { data: Object.assign({}, window.__avisos, { concluyo: window.__concluyo || null, arbitro: window.__avisos.arbitro, tnr: "1529737", torneo: "Sub-10 Femenino", categoria: "Sub-10", rama: "Femenino", ronda: 3, desde: 1, hasta: 3, vence: "2026-11-10T05:59:59Z",
       mesas: MESAS.map((m) => conFed(Object.assign({}, m))), marcas: marcasDe(), anotaciones: ((an) => window.__recortar == null ? an : window.__recortar === 0 ? [] : an.slice(-window.__recortar))(filas.filter((f) => f.tipo !== "anulacion")), anuladas: filas.filter((f) => f.tipo === "anulacion").map((f) => f.anula), lista: window.__lista.slice(), planillas: window.__planillas.slice(), finalizada: window.__finalizada, presencia: window.__presencia.slice(), tiempos: window.__tiempos.slice(), hermanas: window.__hermanas.slice(), inicio_ronda: window.__inicioRonda || null, leido_en: "2026-11-02T15:30:00Z" }), error: null };
     if (b.action === "guardar") {

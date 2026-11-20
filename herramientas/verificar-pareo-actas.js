@@ -181,7 +181,7 @@ async function pruebaEvento(browser) {
   console.log("\n=== La nota de un adjunto ===");
   await page.click('[data-ficha="rondas"]');
   await P.anotar(page, "1-0");
-  await page.click("#pi-adjunto");
+  await P.clicEnMenu(page, "#pi-adjunto");
   await page.waitForSelector(dialogo);
   await page.fill(dialogo + ' [name="arbitro"]', "PRUEBA ADJUNTA");
   await page.click(dialogo + " [data-avisos-aceptar]");

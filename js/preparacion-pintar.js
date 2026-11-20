@@ -29,7 +29,8 @@
 
   function tarjeta(titulo, id) {
     const s = el("section", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6");
-    const h = el("h3", "font-serif text-xl font-bold text-brand-800 dark:text-white mb-3", titulo);
+    // scroll-mt: el índice de arriba salta acá, y el encabezado fijo no lo tapa.
+    const h = el("h3", "scroll-mt-28 font-serif text-xl font-bold text-brand-800 dark:text-white mb-3", titulo);
     if (id) { h.id = id; s.setAttribute("aria-labelledby", id); }
     s.appendChild(h);
     return s;
@@ -69,13 +70,46 @@
 
   function jugada(texto) { return el("span", "font-mono whitespace-nowrap", texto); }
 
+  /* «Él saca» con su barrita: el porcentaje va escrito y la barra es solo a la
+     vista (aria-hidden), para comparar de un vistazo una columna entera. La
+     marca del medio es el 50 %. */
+  function saca(p) {
+    const d = el("span", "inline-flex items-center justify-end gap-2");
+    if (p != null && Number.isFinite(p)) {
+      const b = el("span", "saca-barra");
+      b.setAttribute("aria-hidden", "true");
+      const lleno = el("span", "saca-lleno");
+      lleno.style.width = Math.round(100 * Math.max(0, Math.min(1, p))) + "%";
+      b.appendChild(lleno);
+      d.appendChild(b);
+    }
+    d.appendChild(el("span", "tabular-nums", A.pct(p)));
+    return d;
+  }
+
+  /* Ganadas, tablas y perdidas en una barra: los tres tonos de la del árbol
+     (se separan por luminancia, ver css/styles.css). Solo a la vista: las
+     cifras van escritas debajo. */
+  function barraResultados(c) {
+    const b = el("span", "arbol-barra ficha-barra");
+    b.setAttribute("aria-hidden", "true");
+    [["arbol-gana", c.g], ["arbol-tablas", c.t], ["arbol-pierde", c.p]].forEach(([clase, x]) => {
+      if (!x) return;
+      const s = el("span", clase);
+      s.style.width = (100 * x / Math.max(c.n, 1)) + "%";
+      b.appendChild(s);
+    });
+    return b;
+  }
+
+  const RES_LETRA = { G: "G", T: "T", P: "P" };
+  const RES_PALABRA = { G: "ganó", T: "tablas", P: "perdió" };
+
   function fecha(iso) {
     if (!iso) return "";
     const [a, m, d] = iso.slice(0, 10).split("-");
     return d + "/" + m + "/" + a;
   }
-
-  function porcentajeDe(r) { return A.pct(r.puntos); }
 
   // Todo el análisis, en `c` (el contenedor de la página). `opciones.alBajarPgn`
   // recibe el lado ("conBlancas" / "conNegras") cuando se pide el plan en PGN.
@@ -85,7 +119,12 @@
     c.textContent = "";
     if (R()) c.appendChild(pintarResumen(r));
     if (R() && r.certeza) c.appendChild(pintarCerteza(r));
-    c.appendChild(pintarCifras(r));
+    // La ficha va arriba de todo, en su propio lugar (`fichaEn`) si la página
+    // se lo da; sin él, adentro, donde iban las cifras.
+    if (opcionesActuales.fichaEn) {
+      opcionesActuales.fichaEn.textContent = "";
+      opcionesActuales.fichaEn.appendChild(pintarFicha(r));
+    } else c.appendChild(pintarFicha(r));
     c.appendChild(pintarPlanes(r));
     if (R() && (opcionesActuales.alAFondo || r.lineaFondo)) c.appendChild(pintarAFondo(r));
     if (r.cruce) c.appendChild(pintarCruce(r));
@@ -511,19 +550,133 @@
     return caja;
   }
 
-  function pintarCifras(r) {
-    const s = el("div", "grid grid-cols-2 lg:grid-cols-4 gap-3");
-    const cifra = (valor, texto) => {
-      const d = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md px-4 py-3");
-      d.appendChild(el("p", "text-2xl font-bold text-brand-800 dark:text-white tabular-nums", valor));
-      d.appendChild(el("p", "text-xs text-brand-500 dark:text-brand-300", texto));
-      return d;
-    };
-    s.appendChild(cifra(porcentajeDe(r.global), "puntuación global (" + r.global.g + " ganadas, " + r.global.t + " tablas, " + r.global.p + " perdidas)"));
-    s.appendChild(cifra(porcentajeDe(r.porColor.w), "con blancas, en " + r.porColor.w.n + " partidas"));
-    s.appendChild(cifra(porcentajeDe(r.porColor.b), "con negras, en " + r.porColor.b.n + " partidas"));
-    s.appendChild(cifra(r.elo.reciente ? String(r.elo.reciente) : "—", "Elo reciente (mediana de sus últimas 50)"));
+  /* Su ficha: lo primero que se mira de un rival, arriba de todo. Cuánto
+     saca (en total y con cada color, con la barra de ganadas, tablas y
+     perdidas), su Elo y su rendimiento en cada ritmo, y sus últimas partidas
+     con la racha en que viene. Un análisis guardado antes de la ficha no trae
+     `r.ficha`: se ven solo las cifras, que siempre estuvieron. */
+  function pintarFicha(r) {
+    const s = tarjeta("Su ficha", "ficha-titulo");
+    s.dataset.ficha = "";
+    const f = r.ficha;
+    const cifras = el("div", "grid sm:grid-cols-3 gap-3");
+    [["En total", r.global], ["Con blancas", r.porColor.w], ["Con negras", r.porColor.b]].forEach(([titulo, c]) => {
+      const d = el("div", "rounded-xl bg-brand-50 dark:bg-brand-950 px-4 py-3 min-w-0");
+      d.dataset.cifra = titulo;
+      d.appendChild(el("p", "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide", titulo));
+      if (!c || !c.n) {
+        d.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300 mt-1", "Sin partidas."));
+        cifras.appendChild(d);
+        return;
+      }
+      const fila = el("p", "flex items-baseline gap-2 mt-1");
+      fila.appendChild(el("span", "text-3xl font-bold text-brand-800 dark:text-white tabular-nums", A.pct(c.puntos)));
+      if (R()) fila.appendChild(el("span", "text-sm text-brand-600 dark:text-brand-200", R().comoLeVa(c.puntos)));
+      d.appendChild(fila);
+      d.appendChild(barraResultados(c));
+      d.appendChild(el("p", "text-xs text-brand-600 dark:text-brand-200 mt-1 tabular-nums",
+        c.g + " ganadas · " + c.t + " tablas · " + c.p + " perdidas, en " + c.n.toLocaleString("es-CR") + (c.n === 1 ? " partida" : " partidas")));
+      cifras.appendChild(d);
+    });
+    s.appendChild(cifras);
+
+    if (!f) {
+      s.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-3", "Este análisis es de antes de la ficha completa: vuelve a analizar sus partidas para ver su Elo por ritmo y sus últimas partidas." + (r.elo && r.elo.reciente ? " Elo reciente: " + r.elo.reciente + "." : "")));
+      return s;
+    }
+
+    // Su Elo y su rendimiento, ritmo por ritmo.
+    if (f.ritmos.length) {
+      s.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mt-5 mb-1", "Su Elo en cada ritmo"));
+      const principal = f.ritmos.filter((x) => x.rendimiento != null && x.actual).sort((a, b) => b.n - a.n)[0];
+      if (principal) {
+        const dif = principal.rendimiento - principal.actual;
+        const juicio = Math.abs(dif) < 30 ? ["juega a su nivel", ""]
+          : dif > 0 ? ["rinde por encima de su Elo", ": viene jugando bien"]
+          : ["rinde por debajo de su Elo", ": no viene en su mejor momento"];
+        const p = el("p", "text-sm text-brand-700 dark:text-brand-100 mb-2");
+        p.dataset.rendimiento = principal.ritmo;
+        p.appendChild(document.createTextNode("En " + principal.ritmo + ", donde más juega, "));
+        p.appendChild(el("strong", "text-brand-800 dark:text-white", juicio[0]));
+        p.appendChild(document.createTextNode(" (rendimiento " + principal.rendimiento + ", Elo " + principal.actual + ")" + juicio[1] + "."));
+        s.appendChild(p);
+      }
+      const signo = (n) => (n > 0 ? "+" : n < 0 ? "−" : "±") + Math.abs(n);
+      s.appendChild(tabla("Su Elo y su rendimiento en cada ritmo", [
+        { titulo: "Ritmo" }, { titulo: "Partidas", num: true }, { titulo: "Elo ahora", num: true },
+        { titulo: "Máximo", num: true }, { titulo: "Hace 3 meses", num: true }, { titulo: "Rendimiento", num: true }, { titulo: "Saca", num: true },
+      ], f.ritmos.map((x) => [
+        x.ritmo, x.n.toLocaleString("es-CR"), x.actual || "—", x.maximo || "—",
+        x.antes && x.actual ? x.antes.elo + " (" + signo(x.actual - x.antes.elo) + ")" : "—",
+        x.rendimiento != null ? x.rendimiento + (x.actual ? " (" + signo(x.rendimiento - x.actual) + ")" : "") : "—",
+        saca(x.puntos),
+      ])));
+      s.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-2", "Cada ritmo con su propio Elo: el de bullet y el de blitz son escalas distintas. «Elo ahora» es el de su última partida a ese ritmo; el rendimiento, el Elo que corresponde a sus resultados contra esos rivales (con 5 partidas o más que traigan los dos Elo). Entre paréntesis, la diferencia con su Elo de ahora."));
+    }
+
+    // Sus últimas partidas, la más nueva primero.
+    if (f.ultimas.length) {
+      s.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mt-5 mb-1", "Sus últimas partidas"));
+      const rc = f.racha;
+      if (rc && rc.n >= 2) {
+        const que = rc.res === "G" ? rc.n + " victorias seguidas: llega con confianza."
+          : rc.res === "P" ? rc.n + " derrotas seguidas: puede llegar tocado."
+          : rc.n + " tablas seguidas.";
+        const p = el("p", "text-sm font-semibold text-brand-700 dark:text-brand-100 mb-2", "Viene de " + que);
+        p.dataset.racha = rc.res + rc.n;
+        s.appendChild(p);
+      }
+      const ol = el("ol", "flex flex-wrap gap-1.5");
+      ol.setAttribute("aria-label", "Resultado de sus últimas " + f.ultimas.length + " partidas, la más nueva primero");
+      f.ultimas.forEach((x) => {
+        const detalle = fecha(x.fecha) + " · " + (x.ritmo || "") + " · con " + (x.color === "w" ? "blancas" : "negras") + " contra " + (x.oponente || "—") + (x.eloRival ? " (" + x.eloRival + ")" : "") + ": " + RES_PALABRA[x.res];
+        const li = el("li", "ficha-res ficha-res-" + x.res);
+        li.title = detalle;
+        li.appendChild(el("span", "", RES_LETRA[x.res]));
+        li.appendChild(el("span", "sr-only", " — " + detalle));
+        ol.appendChild(li);
+      });
+      s.appendChild(ol);
+      s.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-1", "G ganó · T tablas · P perdió. La más nueva va a la izquierda."));
+      const det = el("details", "mt-2");
+      det.appendChild(el("summary", "cursor-pointer text-sm font-semibold text-brand-600 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Ver el detalle de cada una"));
+      det.appendChild(tabla("Sus últimas partidas", [
+        { titulo: "Fecha" }, { titulo: "Ritmo" }, { titulo: "Color" }, { titulo: "Contra" }, { titulo: "Su Elo", num: true }, { titulo: "Resultado" },
+      ], f.ultimas.map((x) => {
+        let res = RES_PALABRA[x.res][0].toUpperCase() + RES_PALABRA[x.res].slice(1);
+        let celda = res;
+        if (x.enlace && /^https:\/\//.test(x.enlace)) {
+          celda = el("a", "underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", res);
+          celda.href = x.enlace;
+          celda.target = "_blank";
+          celda.rel = "noopener noreferrer";
+          celda.setAttribute("aria-label", res + ": ver la partida (se abre en otra pestaña)");
+        }
+        return [fecha(x.fecha), x.ritmo || "—", x.color === "w" ? "Blancas" : "Negras", x.oponente || "—", x.eloRival || "—", celda];
+      })));
+      s.appendChild(det);
+    }
     return s;
+  }
+
+  /* El índice de arriba: un enlace a cada tarjeta que se ve en `raiz`, para
+     no recorrer la página entera buscando una. Se vuelve a armar cada vez que
+     el análisis se pinta (Stockfish o la teoría suman tarjetas). */
+  function pintarIndice(nav, raiz) {
+    nav.textContent = "";
+    const titulos = [...raiz.querySelectorAll("section > h3[id]")].filter((h) => h.id !== "ficha-titulo" && (h.checkVisibility ? h.checkVisibility() : h.offsetParent !== null));
+    if (titulos.length < 3) { nav.hidden = true; return; }
+    nav.hidden = false;
+    nav.appendChild(el("p", "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-2", "Ir a"));
+    const ul = el("ul", "flex flex-wrap gap-2");
+    titulos.forEach((h) => {
+      const li = el("li");
+      const a = el("a", "inline-block px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", h.textContent);
+      a.href = "#" + h.id;
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+    nav.appendChild(ul);
   }
 
   function pintarFoda(r) {
@@ -726,7 +879,7 @@
     b.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mb-2", "Con blancas (él lleva negras)"));
     if (r.conBlancas.primeras.length) {
       b.appendChild(tabla("Tu primera jugada con blancas y cuánto saca él", [{ titulo: "Tu primera jugada" }, { titulo: "Partidas", num: true }, { titulo: "Él saca", num: true }],
-        r.conBlancas.primeras.map((x) => [jugada("1." + A.sanEs(x.san)), x.n, A.pct(x.puntos)])));
+        r.conBlancas.primeras.map((x) => [jugada("1." + A.sanEs(x.san)), x.n, saca(x.puntos)])));
     }
     if (A.planDe(r, "conBlancas").length) {
       b.appendChild(bloquePlan(r, "conBlancas"));
@@ -837,7 +990,7 @@
     derecha.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mb-2", "Llega a un final en el " + pc(m.llegaFinal) + " de sus partidas. Su promedio general es " + A.pct(m.base) + "."));
     if (m.finales.length) {
       derecha.appendChild(tabla("Cuánto saca en cada tipo de final", [{ titulo: "Final" }, { titulo: "Partidas", num: true }, { titulo: "Saca", num: true }],
-        m.finales.map((f) => ["Final " + f.tipo, f.n, A.pct(f.puntos)])));
+        m.finales.map((f) => ["Final " + f.tipo, f.n, saca(f.puntos)])));
       const v = m.conversion.ventaja, d = m.conversion.desventaja;
       const partes = [];
       if (v.n) partes.push("Con ventaja de material (2 puntos o más) llegó a " + v.n + (v.n === 1 ? " final" : " finales") + " y ganó " + v.ganadas + ".");
@@ -855,14 +1008,14 @@
     const b = el("div", "min-w-0");
     b.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mb-2", "Con blancas, abre con…"));
     b.appendChild(tabla("Primeras jugadas del rival con blancas", [{ titulo: "Jugada" }, { titulo: "Lo juega", num: true }, { titulo: "Partidas", num: true }, { titulo: "Saca", num: true }],
-      r.repertorio.blancas.map((x) => [jugada("1." + A.sanEs(x.san)), Math.round(100 * x.reparto) + " %", x.n, A.pct(x.puntos)])));
+      r.repertorio.blancas.map((x) => [jugada("1." + A.sanEs(x.san)), Math.round(100 * x.reparto) + " %", x.n, saca(x.puntos)])));
     if (r.principal.w.sec.length >= 2) b.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mt-3", "Su línea más repetida: " + A.lineaEs(r.principal.w.sec) + " (" + r.principal.w.n + " partidas)."));
     grilla.appendChild(b);
     const n = el("div", "min-w-0");
     n.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mb-2", "Con negras, contesta…"));
     const filas = [];
     r.repertorio.negras.forEach((x) => x.respuestas.forEach((y, i) => {
-      filas.push([i === 0 ? jugada("1." + A.sanEs(x.contra)) : "", jugada("1…" + A.sanEs(y.san)), Math.round(100 * y.reparto) + " %", y.n, A.pct(y.puntos)]);
+      filas.push([i === 0 ? jugada("1." + A.sanEs(x.contra)) : "", jugada("1…" + A.sanEs(y.san)), Math.round(100 * y.reparto) + " %", y.n, saca(y.puntos)]);
     }));
     n.appendChild(tabla("Respuestas del rival con negras a cada primera jugada", [{ titulo: "Contra" }, { titulo: "Responde" }, { titulo: "Lo juega", num: true }, { titulo: "Partidas", num: true }, { titulo: "Saca", num: true }], filas));
     if (r.principal.b.sec.length >= 2) n.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mt-3", "Su línea más repetida: " + A.lineaEs(r.principal.b.sec) + " (" + r.principal.b.n + " partidas)."));
@@ -874,7 +1027,7 @@
   function pintarLineas(r) {
     const s = tarjeta("Dónde rinde menos y dónde más", "lineas-titulo");
     const cols = [{ titulo: "Color" }, { titulo: "Línea" }, { titulo: "Partidas", num: true }, { titulo: "Saca", num: true }, { titulo: "Su promedio", num: true }];
-    const fila = (x) => [x.color === "w" ? "Blancas" : "Negras", jugada(A.lineaEs(x.sec)), x.n, A.pct(x.puntos), A.pct(x.base)];
+    const fila = (x) => [x.color === "w" ? "Blancas" : "Negras", jugada(A.lineaEs(x.sec)), x.n, saca(x.puntos), A.pct(x.base)];
     s.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mb-2", "Donde rinde menos"));
     s.appendChild(r.debiles.length ? tabla("Líneas donde el rival rinde menos que su promedio", cols, r.debiles.map(fila))
       : el("p", "text-sm text-brand-500 dark:text-brand-300", "Ninguna línea queda claramente por debajo de su promedio."));
@@ -894,9 +1047,9 @@
       d.appendChild(filas.length ? tabla(titulo, [{ titulo: primera }].concat(col), filas) : el("p", "text-sm text-brand-500 dark:text-brand-300", "Sin datos en el archivo."));
       return d;
     };
-    grilla.appendChild(bloque("Por ritmo", r.porRitmo.map((x) => [x.ritmo, x.n, A.pct(x.puntos)]), "Ritmo"));
-    grilla.appendChild(bloque("Por año", r.porAnio.map((x) => [x.anio, x.n, A.pct(x.puntos)]), "Año"));
-    grilla.appendChild(bloque("Según el Elo del oponente", r.porElo.map((x) => [x.tramo, x.n, A.pct(x.puntos)]), "Oponente"));
+    grilla.appendChild(bloque("Por ritmo", r.porRitmo.map((x) => [x.ritmo, x.n, saca(x.puntos)]), "Ritmo"));
+    grilla.appendChild(bloque("Por año", r.porAnio.map((x) => [x.anio, x.n, saca(x.puntos)]), "Año"));
+    grilla.appendChild(bloque("Según el Elo del oponente", r.porElo.map((x) => [x.tramo, x.n, saca(x.puntos)]), "Oponente"));
     s.appendChild(grilla);
     const d = r.duracion;
     if (d.ganadas || d.perdidas) {
@@ -912,8 +1065,11 @@
      tablas, por el celular (lo mismo que «Dónde deja la teoría»). */
   function pintarCruce(r) {
     const c = r.cruce;
-    const s = tarjeta("Tu alumno contra él: " + c.alumno, "cruce-titulo");
-    s.appendChild(nota("Con " + c.total.toLocaleString("es-CR") + (c.total === 1 ? " partida" : " partidas") + " de " + c.alumno + " (una jugada cuenta desde " + c.minimo + "). «Él saca» es lo que consigue el rival; «tu alumno saca», lo que consigue el alumno en sus propias partidas."));
+    // Un alumno que desbloqueó la herramienta con puntos se cruza a sí mismo:
+    // «tú», no «tu alumno» (ver «Desbloquearla con 15 000 puntos»).
+    const yo = !!opcionesActuales.paraElAlumno;
+    const s = tarjeta(yo ? "Tú contra él" : "Tu alumno contra él: " + c.alumno, "cruce-titulo");
+    s.appendChild(nota("Con " + c.total.toLocaleString("es-CR") + (c.total === 1 ? " partida" : " partidas") + " de " + c.alumno + " (una jugada cuenta desde " + c.minimo + "). «Él saca» es lo que consigue el rival; " + (yo ? "«tú sacas», lo que consigues tú en tus propias partidas." : "«tu alumno saca», lo que consigue el alumno en sus propias partidas.")));
     const renglon = (sec, textos, ver) => {
       const li = el("li", "py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-2");
       li.dataset.cruce = sec.join(" ");
@@ -926,36 +1082,38 @@
     };
     const lista = (items) => { const ul = el("ul", "divide-y divide-brand-100 dark:divide-brand-800"); items.forEach((x) => ul.appendChild(x)); return ul; };
     const partidas = (n) => n + (n === 1 ? " partida" : " partidas");
-    [["conBlancas", "Con blancas (tu alumno lleva blancas)"], ["conNegras", "Con negras (tu alumno lleva negras)"]].forEach(([clave, titulo]) => {
+    [["conBlancas", yo ? "Con blancas (llevas blancas)" : "Con blancas (tu alumno lleva blancas)"], ["conNegras", yo ? "Con negras (llevas negras)" : "Con negras (tu alumno lleva negras)"]].forEach(([clave, titulo]) => {
       const l = c.lados[clave];
       s.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mt-5 mb-1", titulo));
       if (!l.partidas) {
-        s.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", "No trae partidas suyas con " + (clave === "conBlancas" ? "blancas." : "negras.")));
+        s.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", (yo ? "No trae partidas tuyas con " : "No trae partidas suyas con ") + (clave === "conBlancas" ? "blancas." : "negras.")));
         return;
       }
       const rp = l.resumenPlan;
       const totalPlan = rp.laJuega + rp.otra + rp.nunca;
       if (totalPlan) {
         // Solo lo que no es cero: «en 0 juega otra cosa» no dice nada.
-        const partes = [rp.laJuega ? "ya juega " + rp.laJuega : "todavía no juega ninguna"];
-        if (rp.otra) partes.push("en " + rp.otra + " juega otra cosa");
-        if (rp.nunca) partes.push("a " + rp.nunca + " no llegó en sus partidas");
-        s.appendChild(el("p", "text-sm text-brand-700 dark:text-brand-100", "El plan: de " + totalPlan + (totalPlan === 1 ? " jugada que le toca, " : " jugadas que le tocan, ") + partes.join("; ") + "."));
+        const partes = yo
+          ? [rp.laJuega ? "ya juegas " + rp.laJuega : "todavía no juegas ninguna"]
+          : [rp.laJuega ? "ya juega " + rp.laJuega : "todavía no juega ninguna"];
+        if (rp.otra) partes.push(yo ? "en " + rp.otra + " juegas otra cosa" : "en " + rp.otra + " juega otra cosa");
+        if (rp.nunca) partes.push(yo ? "a " + rp.nunca + " no llegaste en tus partidas" : "a " + rp.nunca + " no llegó en sus partidas");
+        s.appendChild(el("p", "text-sm text-brand-700 dark:text-brand-100", "El plan: de " + totalPlan + (yo ? (totalPlan === 1 ? " jugada que te toca, " : " jugadas que te tocan, ") : (totalPlan === 1 ? " jugada que le toca, " : " jugadas que le tocan, ")) + partes.join("; ") + "."));
         const otras = l.plan.filter((x) => x.estado === "otra");
         if (otras.length) {
           s.appendChild(lista(otras.map((x) => {
             const num = Math.floor(x.sec.length / 2) + 1;
             const jug = (x.sec.length % 2 === 0 ? num + "." : num + "…");
             return renglon(x.sec.concat(x.recomendada), [
-              "El plan dice " + jug + A.sanEs(x.recomendada) + "; tu alumno juega " + jug + A.sanEs(x.suya.san) + " (" + x.suya.n + " de " + x.total + ")."],
-              "El plan: " + A.sanEs(x.recomendada) + ". Tu alumno suele jugar " + A.sanEs(x.suya.san) + " (" + x.suya.n + " de " + x.total + ").");
+              "El plan dice " + jug + A.sanEs(x.recomendada) + (yo ? "; tú juegas " : "; tu alumno juega ") + jug + A.sanEs(x.suya.san) + " (" + x.suya.n + " de " + x.total + ")."],
+              "El plan: " + A.sanEs(x.recomendada) + (yo ? ". Tú sueles jugar " : ". Tu alumno suele jugar ") + A.sanEs(x.suya.san) + " (" + x.suya.n + " de " + x.total + ").");
           })));
         }
       }
-      const texto = (x) => ["Tu alumno saca " + A.pct(x.alumno.puntos) + " en " + partidas(x.alumno.n) + "; él saca " + A.pct(x.rival.puntos) + " en " + partidas(x.rival.n) + " (su promedio con ese color: " + A.pct(l.base) + ")."];
+      const texto = (x) => [(yo ? "Tú sacas " : "Tu alumno saca ") + A.pct(x.alumno.puntos) + " en " + partidas(x.alumno.n) + "; él saca " + A.pct(x.rival.puntos) + " en " + partidas(x.rival.n) + " (su promedio con ese color: " + A.pct(l.base) + ")."];
       if (l.aFavor.length) {
         s.appendChild(el("h5", "text-sm font-semibold text-brand-800 dark:text-white mt-3", "Juega lo suyo: ahí él rinde menos"));
-        s.appendChild(lista(l.aFavor.map((x) => renglon(x.sec.concat(x.jugada), texto(x), "Aquí él saca " + A.pct(x.rival.puntos) + " y tu alumno ya la conoce: " + A.pct(x.alumno.puntos) + " en " + partidas(x.alumno.n) + "."))));
+        s.appendChild(lista(l.aFavor.map((x) => renglon(x.sec.concat(x.jugada), texto(x), "Aquí él saca " + A.pct(x.rival.puntos) + (yo ? " y tú ya la conoces: " : " y tu alumno ya la conoce: ") + A.pct(x.alumno.puntos) + " en " + partidas(x.alumno.n) + "."))));
       }
       if (l.enContra.length) {
         s.appendChild(el("h5", "text-sm font-semibold text-brand-800 dark:text-white mt-3", "Ojo: ahí él rinde más"));
@@ -1064,7 +1222,7 @@
     return listaPlan(nodos, 0);
   }
 
-  window.PreparacionPintar = { cuerpo: pintarCuerpo, plan: pintarSoloPlan, pendiente, hoja: pintarHoja, el, tabla, jugada, fecha };
+  window.PreparacionPintar = { cuerpo: pintarCuerpo, plan: pintarSoloPlan, pendiente, hoja: pintarHoja, indice: pintarIndice, el, tabla, jugada, fecha, saca };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

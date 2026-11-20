@@ -11,9 +11,14 @@ function dobleSupabase() {
   window.__enviados = [];
   const handlers = {};
   window.__llega = (canal, evento, payload) => (handlers[canal + "|" + evento] || []).forEach((f) => f({ payload }));
+  // Los canales que la página abrió (para esperar a que escuche antes de tocarlo).
+  window.__canales = new Set();
   window.sb = {
+    removeChannel(c) { if (c && c.__nombre) window.__canales.delete(c.__nombre); return Promise.resolve("ok"); },
     channel(nombre) {
+      window.__canales.add(nombre);
       return {
+        __nombre: nombre,
         on(tipo, filtro, f) { (handlers[nombre + "|" + filtro.event] = handlers[nombre + "|" + filtro.event] || []).push(f); return this; },
         subscribe(cb) { if (cb) setTimeout(() => cb("SUBSCRIBED"), 0); return this; },
         send(m) { window.__enviados.push({ canal: nombre, evento: m.event, payload: m.payload }); return Promise.resolve("ok"); },
@@ -60,6 +65,21 @@ async function abrirPagina(browser, BASE, hash, antes) {
 
 const leerTodos = (page) => page.evaluate(() => JSON.parse(localStorage.getItem("pareo_lista_v1")).map((x) => Object.assign({ idLista: x.id }, JSON.parse(localStorage.getItem("pareo_torneo_v1_" + x.id)))));
 const vis = (page, sel) => page.$eval(sel, (n) => n.checkVisibility()).catch(() => false);
+
+// Los botones que van en un menú (<details class="pi-menu">: Imprimir,
+// Compartir y Árbitros y cámaras en Rondas, «Más opciones» arriba): como
+// una persona, primero se abre el menú y después se toca el botón. Si el
+// menú ya está abierto no se vuelve a tocar (se cerraría).
+async function abrirMenuDe(page, sel) {
+  // El botón puede tardar en pintarse (después de cambiar de parte): se espera a que esté.
+  await page.waitForSelector(sel, { state: "attached" });
+  const menu = page.locator(sel).first().locator("xpath=ancestor::details[contains(concat(' ', normalize-space(@class), ' '), ' pi-menu ')][1]");
+  if (await menu.count() && !(await menu.evaluate((d) => d.open))) await menu.locator(":scope > summary").click();
+}
+async function clicEnMenu(page, sel, opciones) {
+  await abrirMenuDe(page, sel);
+  await page.click(sel, opciones);
+}
 
 // La ronda en pantalla se vuelve a pintar con cada resultado (en equipos,
 // entera), y también cuando llega algo de afuera (un adjunto, el respaldo):
@@ -182,6 +202,6 @@ async function dobleListaPareo(page, filas, opciones) {
   return pedidos;
 }
 
-module.exports = { dobleListaPareo, respuestaLista, columnasPedidas, autoConfirmarCambios, XLSX, dobleSupabase, abrirPagina, leerTodos, vis, anotar, jugarRondas, esperarGuardado };
+module.exports = { dobleListaPareo, respuestaLista, columnasPedidas, autoConfirmarCambios, XLSX, dobleSupabase, abrirPagina, leerTodos, vis, abrirMenuDe, clicEnMenu, anotar, jugarRondas, esperarGuardado };
 
 /*! rev bfb5bbb0d2d82f9f */

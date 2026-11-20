@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 916,
+  "total": 917,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -8268,6 +8268,12 @@
     "titulo": "Revista 20",
     "tipo": "otro",
     "kb": 5716
+   },
+   {
+    "ruta": "descargas/aula-arbitraje/revista-21.pdf",
+    "titulo": "Revista 21",
+    "tipo": "otro",
+    "kb": 6000
    },
    {
     "ruta": "documentos/centroamericano-2026/bases-cac-2026.pdf",
@@ -19239,7 +19245,7 @@
   ]
  },
  "imagenes": {
-  "total": 1327,
+  "total": 1330,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26646,6 +26652,12 @@
       "titulo": "Portada 20",
       "tipo": "otro",
       "kb": 30
+     },
+     {
+      "ruta": "img/aula-arbitraje/portada-21.jpg",
+      "titulo": "Portada 21",
+      "tipo": "otro",
+      "kb": 30
      }
     ]
    },
@@ -27134,6 +27146,12 @@
       "kb": 16
      },
      {
+      "ruta": "img/jdn-pz-2026/jugadores/aguilar-flores-bairon-matias.jpg",
+      "titulo": "Aguilar flores bairon matias",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
       "ruta": "img/jdn-pz-2026/jugadores/alpizar-hernandez-ethan-bary.jpg",
       "titulo": "Alpizar hernandez ethan bary",
       "tipo": "otro",
@@ -27252,6 +27270,12 @@
       "titulo": "Rodriguez quesada keithy",
       "tipo": "otro",
       "kb": 20
+     },
+     {
+      "ruta": "img/jdn-pz-2026/jugadores/salas-rojas-jose-pablo.jpg",
+      "titulo": "Salas rojas jose pablo",
+      "tipo": "otro",
+      "kb": 15
      },
      {
       "ruta": "img/jdn-pz-2026/jugadores/segura-cespedes-santiago.jpg",

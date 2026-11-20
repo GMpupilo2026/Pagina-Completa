@@ -39,7 +39,11 @@
       const d = await llamar("livechess");
       const lista = $("livechess-lista");
       lista.replaceChildren();
-      for (const t of (d.torneos || []).filter((x) => !x.prueba)) {
+      // Solo los torneos del evento elegido arriba (ver «Cada evento de la Mesa, por separado»).
+      const ev = window.MesaEvento;
+      const delEvento = (d.torneos || []).filter((x) => (ev ? ev.dentro(x.tnr) : !x.prueba));
+      if (!delEvento.length) lista.append(Object.assign(document.createElement("li"), { textContent: "Este evento todavía no tiene torneos." }));
+      for (const t of delEvento) {
         const li = document.createElement("li");
         li.textContent = (t.conectado ? "✓ " : "— ") + t.nombre + ": " + (t.conectado ? "tableros " + (t.tableros || "todos") + (t.actualizado ? " (desde el " + window.HoraCR.fechaHora(t.actualizado) + ")" : "") : "sin enlace de LiveChess");
         lista.append(li);
@@ -52,7 +56,7 @@
     $("livechess-guardar").disabled = true;
     $("livechess-estado").textContent = "Probando cada enlace con LiveChess…";
     try {
-      const d = await llamar("livechess_guardar", { texto });
+      const d = await llamar("livechess_guardar", Object.assign({ texto }, window.MesaEvento ? { tnrs: window.MesaEvento.tnrs() } : {}));
       $("livechess-texto").value = "";
       $("livechess-estado").textContent = (d.guardados === 1 ? "Se guardó 1 categoría." : "Se guardaron " + d.guardados + " categorías.") + (d.errores.length ? " Revisa: " + d.errores.join(" ") : "");
       await livechess();
@@ -95,6 +99,8 @@
   const panel = $("panel-claves");
   const alMostrarse = () => { if (!panel.hidden && !$("vivo-estado").textContent) { estado(); livechess(); } };
   new MutationObserver(alMostrarse).observe(panel, { attributes: true, attributeFilter: ["hidden"] });
+  // Otro evento elegido arriba: la lista de LiveChess se vuelve a armar (si ya se había leído).
+  document.addEventListener("mesa-evento", () => { if ($("vivo-estado").textContent) livechess(); });
   alMostrarse();
 })();
 

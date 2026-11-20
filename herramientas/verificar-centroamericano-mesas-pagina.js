@@ -1074,6 +1074,29 @@ const CONTRASTE = `(sel) => {
     const [bitacora] = await Promise.all([pc.waitForEvent("download"), pc.click("#bajar-bitacora")]);
     const bytesB = fs.readFileSync(await bitacora.path());
     igual("«Descargar mi bitácora» baja un PDF con el nombre del árbitro y la MARCA DE AGUA de Ajedrez Integral", [bitacora.suggestedFilename(), bytesB.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(bytesB.toString("latin1"))], ["bitacora-arbitro-ana-arbitra-centroamericano-2026.pdf", true, true]);
+    // En Word también (lo traía la bitácora de la mesa de «Dirijo solo», retirada el 19/11/2026): un .docx (un ZIP) con la
+    // marca de agua en el encabezado y el espacio para la firma.
+    const [bitWord] = await Promise.all([pc.waitForEvent("download"), pc.click("#bajar-bitacora-word")]);
+    const bytesW = fs.readFileSync(await bitWord.path()).toString("latin1");
+    igual("«En Word» baja la misma bitácora en .docx, con la marca de agua y el espacio para firmar",
+        [bitWord.suggestedFilename(), bytesW.startsWith("PK"), /word\/header\d*\.xml/.test(bytesW), /Firma/.test(bytesW)],
+        ["bitacora-arbitro-ana-arbitra-centroamericano-2026.docx", true, true, true]);
+    // «📖 Consultar»: el reglamento y el reloj, sin anotar (ya concluyó: el reloj no ofrece mesas).
+    await pc.click("#consultar");
+    await pc.waitForSelector('dialog[open] select[name="que"]');
+    await pc.selectOption('dialog[open] select[name="que"]', "reglamento");
+    await pc.click("dialog[open] [data-avisos-aceptar]");
+    await pc.waitForSelector('dialog[open] select[name="tipo"]');
+    await pc.click("dialog[open] [data-avisos-aceptar]");
+    await pc.waitForFunction(() => /Lo que se suele aplicar/.test((document.querySelector("dialog[open]") || {}).textContent || ""));
+    await pc.click("dialog[open] [data-avisos-aceptar]");
+    await pc.click("#consultar");
+    await pc.waitForSelector('dialog[open] select[name="que"]');
+    await pc.click("dialog[open] [data-avisos-aceptar]");
+    await pc.waitForSelector('dialog[open] select[name="caso"]');
+    const sinMesa = await pc.evaluate(() => !document.querySelector('dialog[open] select[name="mesa"]'));
+    await pc.click("dialog[open] [data-avisos-cancelar]");
+    igual("«Consultar» dice el reglamento y abre el corrector del reloj (con la ronda terminada, sin ofrecer anotarlo en una mesa)", sinMesa, true);
     // La tabla del PDF: sin `envolver` recorta con «...» (como siempre, para los demás informes); con `envolver` parte el texto y no pierde nada.
     const tablaLarga = await pc.evaluate(async () => {
       const largo = "palabra ".repeat(40) + "FINAL";
@@ -1878,6 +1901,28 @@ const CONTRASTE = `(sel) => {
     igual("cada fila de ese árbitro dice en qué otro torneo está", await q.$$eval("#asignaciones .cam-tambien", (l) => l.map((x) => x.textContent)), ["También en: Sub-10 Absoluto (mesas 1 a 12)", "También en: Sub-8 Absoluto (mesas 3 a 8)"]);
     igual("un aviso a «todos» le llega UNA vez al árbitro con dos enlaces (no una por enlace)", await q.$$eval("#av-para option", (l) => l[0].textContent), "Todos los árbitros (6)");
 
+    // «Soy el único árbitro»: quien dirige solo usa la misma tablet (desde el 19/11/2026 hay una sola Mesa del árbitro).
+    console.log("\n=== La organización: «Soy el único árbitro» ===");
+    await q.evaluate(() => { window.__abiertas = []; window.open = (u) => { window.__abiertas.push(String(u)); return null; }; });
+    const nAsig = await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_asignaciones").length);
+    await q.click("#soy-el-unico");
+    await q.waitForSelector('dialog[open] select[name="tnr"]');
+    await q.selectOption('dialog[open] select[name="tnr"]', "1529733");
+    await q.fill('dialog[open] input[name="arbitro"]', "");
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => /Escribe tu nombre/.test((document.querySelector("dialog[open]") || {}).textContent || ""));
+    igual("sin nombre no se crea nada: lo pide", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_asignaciones").length), nAsig);
+    await q.fill('dialog[open] input[name="arbitro"]', "Oscar Solo");
+    await q.fill('dialog[open] input[name="vence"]', "2027-01-15");
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => /Abrir mi tablet/.test((document.querySelector("dialog[open] [data-avisos-aceptar]") || {}).textContent || ""));
+    igual("crea UN enlace a su nombre, con todas las mesas del torneo y el vencimiento del día elegido (11:59 p. m. de Costa Rica)",
+        await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_asignaciones").slice(-1).map((l) => [l.valores.tnr, l.valores.arbitro, l.valores.nombrado, l.valores.mesa_desde, l.valores.mesa_hasta, l.valores.vence])),
+        [["1529733", "Oscar Solo", true, 1, 9999, "2027-01-16T05:59:59.000Z"]]);
+    await q.click("dialog[open] [data-avisos-aceptar]");
+    await q.waitForFunction(() => window.__abiertas.length === 1);
+    igual("y abre SU tablet, la misma de los adjuntos, con el token del enlace nuevo", await q.evaluate(() => /\/centroamericano-arbitro\.html#[0-9]{64}$/.test(window.__abiertas[0])), true);
+
     console.log("\n=== La organización: el modo concentración ===");
     igual("arriba de la tabla están «Encender en todas» y «Apagarlo en todas», con la nota de que una página no bloquea el aparato", await q.evaluate(() => [document.getElementById("conc-todas-si").textContent, document.getElementById("conc-todas-no").textContent, /Fijar pantalla/.test(document.getElementById("concentracion-todas").textContent), /Acceso guiado/.test(document.getElementById("concentracion-todas").textContent)]), ["Encender en todas las tablets", "Apagarlo en todas", true, true]);
     await q.click('.cam-asignacion[data-id="asig-ana"] [data-accion="concentracion"]');
@@ -1944,7 +1989,7 @@ const CONTRASTE = `(sel) => {
     await q.selectOption("#ct-para", "todos");
     await q.click("#ct-pedir");
     await q.waitForFunction(() => window.__llamadas.some((l) => l.insert === "centroamericano_avisos" && l.valores.some((v) => v.control_tiempos)));
-    igual("«Pedir un control de tiempos» manda un aviso con la marca que le abre la ventana a cada árbitro, una vez por árbitro", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_avisos" && l.valores.some((v) => v.control_tiempos)).map((l) => l.valores.map((v) => [v.de, v.control_tiempos, v.texto.startsWith("Control de tiempos")]))), [[["organizacion", true, true], ["organizacion", true, true], ["organizacion", true, true], ["organizacion", true, true], ["organizacion", true, true], ["organizacion", true, true]].slice(0, 6)]);
+    igual("«Pedir un control de tiempos» manda un aviso con la marca que le abre la ventana a cada árbitro, una vez por árbitro", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_avisos" && l.valores.some((v) => v.control_tiempos)).map((l) => l.valores.map((v) => [v.de, v.control_tiempos, v.texto.startsWith("Control de tiempos")]))), [Array.from({ length: 7 }, () => ["organizacion", true, true])]); // 7: el de «Soy el único árbitro» también es un árbitro
     const [pdfT] = await Promise.all([q.waitForEvent("download"), q.click("#ct-pdf")]);
     const bytesT = fs.readFileSync(await pdfT.path());
     igual("el control de tiempos sale en PDF con la marca de agua", [pdfT.suggestedFilename(), bytesT.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(bytesT.toString("latin1"))], ["control-de-tiempos-centroamericano-2026.pdf", true, true]);
@@ -2140,6 +2185,8 @@ const CONTRASTE = `(sel) => {
         [[{ p_evento: "Nacional Juvenil 2027", p_torneos: [{ tnr: "1600001", nombre: "Nacional Juvenil Sub-14", categoria: "Sub-14", rama: "Absoluto", ritmo: "clasico", menores: true }, { tnr: "1600002", nombre: "Rápido Abierto Femenino", categoria: "Abierto", rama: "Femenino", ritmo: "blitz", menores: false }] }],
          "✓ Guardada: esta clave abre 2 torneos ligados (Nacional Juvenil Sub-14, Rápido Abierto Femenino). Ronda 1 con 21 mesas en el primero.", 2, true]);
     igual("cada evento con su «Archivar» y sus torneos en la lista", [await q.$$eval("#eventos > p[data-evento]", (l) => l.map((x) => x.dataset.evento)), await q.evaluate(() => !!document.querySelector('.cam-estado-torneo[data-tnr="1600001"]'))], [["Sin evento", "Nacional Juvenil 2027"], true]);
+    // Al agregarlos, la ventana pasó al evento nuevo (ver «Cada evento de la Mesa, por separado»); al archivarlo, vuelve sola al Centroamericano.
+    igual("la ventana pasa al evento donde quedaron los torneos, y arriba se puede volver al otro", await q.evaluate(() => [document.getElementById("evento-elegido").value, document.getElementById("evento-barra").checkVisibility()]), ["Nacional Juvenil 2027", true]);
     await q.click('#eventos p[data-evento="Nacional Juvenil 2027"] [data-accion="archivar-evento"]');
     await q.waitForSelector("dialog[open] [data-avisos-aceptar]");
     igual("archivar pregunta antes, con el botón que dice lo que hace", await q.textContent("dialog[open] [data-avisos-aceptar]"), "Archivar el evento");

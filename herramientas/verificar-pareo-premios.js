@@ -162,7 +162,7 @@ async function pruebaClasificacion(browser) {
   ok(!(await P.vis(page, "#pi-clas-compartir-texto")), "tocarlo otra vez lo cierra");
   await page.click('[data-ficha="rondas"]');
   await page.click("#pi-rondas-nav button >> nth=0");
-  await page.click("#pi-ronda-whatsapp");
+  await P.clicEnMenu(page, "#pi-ronda-whatsapp");
   ok(/\*Mesa 11\* · \*1-0\*\n⚪ Prueba Ana\n⚫ Prueba Eva/.test(await page.inputValue("#pi-ronda-compartir-texto")), "y desde la ronda, el pareo con la mesa de la sala");
 
   console.log("\n=== La clasificación para la pared ===");

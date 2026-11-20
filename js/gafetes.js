@@ -45,6 +45,8 @@
       salida: { separarPor: "", formato: "imprenta", dorsoX: 0, dorsoY: 0 },
       fotoRecorte: null,     // { arriba, alto, cabeza }: qué parte de cada foto va al marco
       fotoCentro: false,     // con foto: la foto en el medio y el nombre debajo
+      franjaArriba: 0,       // una franja delgada arriba, del color, de guía para cortar
+      personal: "",          // «Rol | Apellidos | Nombre | Título | Avatar», uno por renglón
       logosSinMargen: false, // los logos sin el blanco de alrededor (del mismo alto)
     };
   }
@@ -86,33 +88,65 @@
      (traerJdnPz) y las fotos de «Subir las fotos» (subirFotos). */
   // Presentando (muestra el QR) primero; las demás, de cuerpo entero y sin
   // nada ancho al lado (el tablero grande, la mesa, el confeti, la mochila).
+  // El profe Oscar, para el dorso del personal de arbitraje.
+  const POSES_OSCAR = ["arbitro", "presentando", "te-toca"];
+  /* El personal del torneo (pedido del dueño): uno por renglón,
+     «Rol | Apellidos | Nombre | Título | Avatar». El rol va en la franja, el
+     título debajo del nombre, y el avatar en el dorso: karina (presentando),
+     karina-arbitro u oscar-<pose>. Karina y Oscar, cada uno con su avatar de
+     árbitro (lo pidió el dueño); Jean, el profe Oscar presentando. */
+  const PERSONAL_PZ = [
+    "Organizadora | Rojas | Itzel Karina |  | karina-arbitro",
+    "Árbitro principal | Quesada Arauz | Jean | Árbitro FIDE (AF) | oscar-presentando",
+    "Árbitro principal | Angulo Cubero | Oscar | Árbitro Internacional (IA) | oscar-arbitro",
+    "Asistente | Mora Chavarría | Sebastián |  | oscar-te-toca",
+  ].join("\n");
   const POSES_KARINA = ["presentando", "te-toca", "reloj-de-ajedrez", "caballo", "muy-bien", "tu-puedes", "campeones", "hola"];
   async function disenoJdnPz() {
     const d = disenoNuevo();
     d.nombreDiseno = "Eliminatoria JDN PZ 2026";
     // 5,5 × 8,5 cm: la medida que pidió el dueño para estos (no la de 10 × 14).
     d.tamano = { ancho: 55, alto: 85 };
+    // Para imprimir en casa por ambos lados (20/11, con los primeros impresos
+    // en la mano): una franja delgada arriba, del color del gafete, de guía
+    // para cortar, y lo de abajo del dorso más arriba, con blanco debajo: el
+    // dorso salió corrido y al cortar se iba un pedazo de su franja.
+    d.franjaArriba = 3;
+    d.dorso.subir = 6;
     // Los logos de la ADAPZ y del CCDR, del mismo alto (traen márgenes distintos).
     d.logosSinMargen = true;
     d.titulo.texto = "ELIMINATORIA CANTONAL JDN\nCCDRPZ – ADAPZ 2026\nHOTEL DEL SUR, PÉREZ ZELEDÓN";
     d.titulo.color = "#1b2a4a";
-    d.nombre = { linea1: "{Apellidos}", linea2: "{Nombre}", propio: true };
-    // El club va en la franja; la categoría y el Elo no van en el frente, y
-    // en lugar del Elo va el ID FIDE (lo pidió el dueño); sin ID, esa línea
-    // no sale. La categoría sigue de lado en el dorso.
-    d.detalles = ["ID FIDE: {FIDE ID}", "Juega el torneo {Torneo}", ""];
+    // El nombre en negro, no del color de la edad: se lee mejor de lejos y
+    // es lo que busca el árbitro (lo pidió el dueño).
+    d.nombre = { linea1: "{Apellidos}", linea2: "{Nombre}", propio: true, color: "#000000" };
+    // El club va en la franja; debajo del nombre, la categoría a la que
+    // pertenece y el ID FIDE (en lugar del Elo; sin ID, esa línea no sale).
+    // «Juega el torneo U…» no va (lo pidió el dueño).
+    d.detalles = ["{Categoría}", "ID FIDE: {FIDE ID}", ""];
     d.bandera = { plantilla: "", texto: true };
-    d.franja = { plantilla: "{Club}" };
-    // Contraste con la letra blanca: U12 6,0:1, U16 5,4:1 y U20 14,2:1. La
-    // categoría va también escrita en la franja: el color nunca va solo.
-    d.colores = { columna: "Edad", valores: { u12: "#1d64b0", u16: "#0e7490", u20: "#1b2a4a" }, etiquetas: { u12: "U12", u16: "U16", u20: "U20" }, omision: "#1b2a4a" };
-    d.dorso.vertical = "{Categoría}";
+    // La franja: el club del jugador o el rol del personal.
+    d.franja = { plantilla: "{Franja}" };
+    // Contraste con la letra blanca: U12 6,0:1, U16 5,1:1 (el celeste oscuro
+    // que pidió el dueño en lugar del turquesa; el celeste de la bandera del
+    // cantón no aguanta letra blanca) y U20 14,2:1. La categoría va también
+    // escrita: el color nunca va solo.
+    // El personal (organización, arbitraje y asistente), en negro (21:1):
+    // lo pidió el dueño.
+    d.colores = { columna: "Grupo", valores: { u12: "#1d64b0", u16: "#1873b4", u20: "#1b2a4a", organizacion: "#000000", arbitraje: "#000000", asistente: "#000000" },
+      etiquetas: { u12: "U12", u16: "U16", u20: "U20", organizacion: "Organización", arbitraje: "Arbitraje", asistente: "Asistente" }, omision: "#1b2a4a" };
+    d.dorso.vertical = "{Lado}";
     d.dorso.horarioCentro = true;
     // En el dorso, la profe Karina en una pose distinta en cada gafete, por
     // turno (lo pidió el dueño): las de cuerpo entero que caben junto al QR.
     d.dorso.ilustraciones = ["ilustracionDorso", ...POSES_KARINA.slice(1).map((n, i) => "karina" + (i + 2))];
+    // El personal lleva la suya (la columna «Pose»), no la del turno.
+    d.dorso.poseColumna = "Pose";
+    d.personal = PERSONAL_PZ;
     d.dorso.qr = "{QR}";
-    d.dorso.qrTexto = "Escanéalo: | tu mesa en cada ronda, | tus puntos y tu puesto";
+    // Lo que dice arriba del QR es de cada fila: al jugador, su mesa; al
+    // personal, la página del torneo.
+    d.dorso.qrTexto = "{Texto QR}";
     // Las fotos del fotógrafo son de medio cuerpo, frente al tablero: se
     // recortan a tamaño pasaporte desde la cabeza (el pelo, la cara y la camisa).
     d.fotoRecorte = { arriba: 0.12, alto: 0.44, cabeza: true };
@@ -125,10 +159,11 @@
       ["Ronda 3", "22/11/2026", "1:00 p.m."], ["Ronda 4", "22/11/2026", "3:00 p.m."], ["Ronda 5", "22/11/2026", "5:00 p.m."],
       ["Clausura", "22/11/2026", "7:30 p.m."],
     ];
-    d.codigo.plantilla = "{Edad} {n}";
+    // Abajo del dorso, la categoría sola: el número (U12 01…) no hace falta.
+    d.codigo.plantilla = "{Grupo}";
     // Para la Brother T530 del dueño: hojas carta, frente y dorso, listas para cortar.
     d.salida = { separarPor: "", formato: "carta", dorsoX: 0, dorsoY: 0 };
-    for (const [id, ruta] of [["logoIzq", "img/adapz/logo.jpg"], ["logoDer", "img/adapz/ccdr-pz.jpg"], ["ilustracion", "img/avatar-profe-karina/bienvenidos.webp"], ["ilustracionDorso", "img/avatar-profe-karina/presentando.webp"], ...POSES_KARINA.slice(1).map((n, i) => ["karina" + (i + 2), "img/avatar-profe-karina/" + n + ".webp"])]) {
+    for (const [id, ruta] of [["logoIzq", "img/adapz/logo.jpg"], ["logoDer", "img/adapz/ccdr-pz.jpg"], ["ilustracion", "img/avatar-profe-karina/bienvenidos.webp"], ["ilustracionDorso", "img/avatar-profe-karina/presentando.webp"], ...POSES_KARINA.slice(1).map((n, i) => ["karina" + (i + 2), "img/avatar-profe-karina/" + n + ".webp"]), ...POSES_OSCAR.map((n) => ["oscar-" + n, "img/avatar-profe-oscar/" + n + ".webp"]), ["karina-arbitro", "img/avatar-profe-karina/arbitro.webp"]]) {
       try { d.imagenes[id] = { nombre: ruta.split("/").pop(), datos: await aDatos(await (await fetch(ruta)).blob()) }; } catch (e) { /* sin esa imagen */ }
     }
     return d;
@@ -150,7 +185,7 @@
     if (!ids.length) throw new Error("todavía no hay torneos de la eliminatoria publicados en Pareo Integral");
     const { data, error } = await sb.from("pareo_publicados").select("id, nombre, datos").in("id", ids);
     if (error) throw error;
-    const filas = [["Apellidos", "Nombre", "Categoría", "Edad", "Torneo", "Club", "Elo", "FIDE ID", "QR"]];
+    const filas = [["Apellidos", "Nombre", "Categoría", "Edad", "Torneo", "Club", "Elo", "FIDE ID", "QR", "Grupo", "Franja", "Lado", "Texto QR", "Pose"]];
     const orden = (x) => ["U12", "U20"].indexOf(Object.keys(t).find((k) => t[k] && t[k].id === x.id));
     for (const x of (data || []).sort((a, b) => orden(a) - orden(b))) {
       const torneo = Object.keys(t).find((k) => t[k] && t[k].id === x.id);
@@ -161,11 +196,23 @@
         const cat = String(j.categoria || "").trim();
         const edad = (cat.match(/\bU\s?\d{2}\b/i) || [torneo])[0].replace(/\s/g, "").toUpperCase();
         filas.push([apellidos, nombre, cat || torneo, edad, torneo, j.institucion || "", Number(j.elo) > 0 ? String(j.elo) : "", "",
-          SITIO + "torneos-pareo#t=" + x.id + "&j=" + encodeURIComponent(j.id)]);
+          SITIO + "torneos-pareo#t=" + x.id + "&j=" + encodeURIComponent(j.id), edad, j.institucion || "", cat || torneo,
+          "Escanéalo: | tu mesa en cada ronda, | tus puntos y tu puesto", ""]);
       }
     }
     if (filas.length < 2) throw new Error("los torneos todavía no tienen jugadores aceptados");
     await ponerFide(filas, ids);
+    // El personal del torneo, al final (del diseño: se edita en la página).
+    for (const linea of String(diseno.personal || "").split(/\r?\n/)) {
+      const [rol, apellidos, nombre, titulo, avatar] = linea.split("|").map((c) => (c || "").trim());
+      if (!rol || !(apellidos || nombre)) continue;
+      const grupo = /organiz/i.test(rol) ? "Organización" : /asist/i.test(rol) ? "Asistente" : "Arbitraje";
+      // De lado, sin la Á de «Árbitro» (escrita de lado, la tilde queda suelta).
+      const lado = /organiz/i.test(rol) ? "Organización" : /asist/i.test(rol) ? "Asistente" : "Principal";
+      const pose = /^karina$/i.test(avatar) ? "ilustracionDorso" : (avatar || "");
+      filas.push([apellidos, nombre, titulo, "", "", "", "", "", SITIO + "jdn-pz-2026", grupo, rol, lado,
+        "Escanéalo: | la página | del torneo", pose]);
+    }
     return filas;
   }
 
@@ -399,7 +446,9 @@
      achican en el navegador y se pierden al cerrar la página. */
   let fotos = [];                 // [{ nombre, lienzo }]
   const fotoDe = new Map();       // clave de la fila → índice en `fotos` (-1: sin foto)
-  const claveFila = (f) => String(D().valor(f, "QR") || [D().valor(f, "Apellidos"), D().valor(f, "Nombre")].join(", "));
+  // El QR y el nombre: el personal comparte el QR (la página del torneo), y
+  // con el QR solo, los tres árbitros quedaban con la misma foto.
+  const claveFila = (f) => [D().valor(f, "QR"), D().valor(f, "Apellidos"), D().valor(f, "Nombre")].join(" | ");
   const palabras = (t) => plano(t).split(/[^a-z0-9ñ]+/).filter(Boolean);
   function plano(t) { return String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
   // Lo que dice el archivo, sin el número, la extensión, «v2» ni «MEDIOS DIGITALES».
@@ -488,6 +537,12 @@
     c.width = 200; c.height = Math.round(H * k);
     const ctx = c.getContext("2d", { willReadFrequently: true });
     ctx.drawImage(im, 0, 0, c.width, c.height);
+    // Solo con fondo claro (el del fotógrafo): en una foto con fondo (una
+    // sala, un techo) lo oscuro no es el pelo, y se recorta sin buscarla.
+    const arriba = ctx.getImageData(0, 0, c.width, Math.max(1, Math.round(c.height * 0.03))).data;
+    let luz = 0;
+    for (let i = 0; i < arriba.length; i += 4) luz += 0.299 * arriba[i] + 0.587 * arriba[i + 1] + 0.114 * arriba[i + 2];
+    if (luz / (arriba.length / 4) < 215) return null;
     const x0 = Math.round(sx * k), ancho = Math.max(1, Math.round(sw * k));
     const px = ctx.getImageData(x0, 0, ancho, c.height).data;
     for (let y = 0; y < c.height * 0.8; y++) {

@@ -33,9 +33,12 @@
   const CARPETA = "img/jdn-pz-2026/jugadores/";
   const PEQUENAS = new Set(["de", "del", "la", "las", "los", "y"]);
   const estado = { grupo: "", orden: "nombre", texto: "" };
-  // Las fotos que hay (lista.json): sin la lista, nadie lleva foto.
+  // Las fotos que hay (lista.json): sin la lista, nadie lleva foto. Se pide con
+  // «no-cache» (pregunta al servidor si cambió): lo de img/ se guarda un día
+  // en el navegador, y el 19/11/2026 la lista vieja dejó sin foto a los que
+  // se agregaron después.
   let fotos = new Set();
-  const lista = fetch(CARPETA + "lista.json").then((r) => (r.ok ? r.json() : [])).then((xs) => { fotos = new Set(xs); }, () => {});
+  const lista = fetch(CARPETA + "lista.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : [])).then((xs) => { fotos = new Set(xs); }, () => {});
 
   // El mismo nombre de archivo que arma herramientas/jdn-pz-fotos.py.
   const archivoDe = (nombre) => String(nombre || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()

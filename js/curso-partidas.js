@@ -509,6 +509,7 @@
     const mostrarCuadro = montarCuadro(cmdHost, {
       etiqueta: "Escribe tu jugada, recorre la partida o pregunta por la posición",
       juego: juegoVisto,
+      tableroEl: boardEl, // con la cuenta ciega, «Piezas» va antes de él
       posicionViva: false,
       onEnviar: alEscribir,
       recorrer: {
@@ -755,6 +756,7 @@
     montarCuadro(cmdHost, {
       etiqueta: "Escribe tu jugada o pregunta por la posición",
       juego: () => (state.solved ? chessDe(vista, fenAt(state.ply)) : game),
+      tableroEl: boardEl, // con la cuenta ciega, «Piezas» va antes de él
       posicionViva: false,
       onEnviar: alEscribir,
       recorrer: {

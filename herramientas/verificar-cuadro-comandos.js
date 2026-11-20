@@ -446,10 +446,14 @@ async function pruebaDiagnostico(browser) {
   else {
     igual("la posición va contada en palabras, encima del cuadro",
       await page.evaluate(() => /Blancas:.*Negras:/.test(document.querySelector("#q-comandos .cc-pos").textContent)), "true");
+    /* La lectura y el campo van en bloques hermanos: «Piezas» y la lista
+       juntos en .cc-piezas (con la cuenta ciega, ese bloque se muda antes del
+       tablero; ver «Las piezas, arriba del tablero»). */
     igual("y el cuadro va justo después de esa lectura",
       await page.evaluate(() => {
         const pos = document.querySelector("#q-comandos .cc-pos");
-        return !!pos && pos.nextElementSibling && pos.nextElementSibling.classList.contains("cc-form");
+        const b = pos && pos.closest(".cc-piezas");
+        return !!b && !!b.nextElementSibling && b.nextElementSibling.classList.contains("cc-form");
       }), "true");
     const fen = await fenDeLaPantalla(page, "#q-board", "#q-comandos .cc-pos");
     const { Chess } = require("chess.js");
@@ -914,10 +918,12 @@ async function pruebaContrarreloj(browser, ruta, nombre) {
   igual("el cuadro de comandos se ve",
     await page.evaluate(() => { const c = document.querySelector(".cc-caja"); return c ? getComputedStyle(c).display : "no se montó"; }), "block");
   /* Acá la posición va en dos listas, cada una bajo su encabezado: «Piezas»
-     (h2) y debajo «Blancas» y «Negras» (h3), para llegar con la tecla H. */
+     (h2) y debajo «Blancas» y «Negras» (h3), para llegar con la tecla H. Con
+     la cuenta ciega ese bloque (.cc-piezas) ya no está en el recuadro: va
+     antes del tablero (ver «Las piezas, arriba del tablero»). */
   igual("con la posición en dos listas, «Blancas» y «Negras», bajo «Piezas»",
     await page.evaluate(() => {
-      const caja = document.querySelector("#q-comandos .cc-caja");
+      const caja = document.querySelector(".cc-piezas");
       const hs = Array.from(caja.querySelectorAll(":scope > h2, .cc-pos h3")).map((h) => h.tagName + ":" + h.textContent);
       const listas = Array.from(caja.querySelectorAll(".cc-pos h3 + ul")).map((u) => u.children.length > 0);
       return hs.join("|") + " " + listas.join(",");
