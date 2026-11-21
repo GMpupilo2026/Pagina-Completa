@@ -60,11 +60,19 @@ async function loadDataThenStart(){
         id: c.id + '-' + k, cat: c.id, emoji: c.emoji,
         title: c.title + ' ' + k,
         desc: 'Desafíos ' + rounds.map((r) => '#' + r.n).join(', ') + '. ' + c.desc,
-        rounds: rounds.map((r) => ({ n: r.n, fen: r.fen, text: r.text, hint: r.hint, moves: r.solution.moves, san: r.solution.san, explain: r.solution.explain, source: 'Desafío #' + r.n })),
+        rounds: rounds.map(rondaDe),
       });
     }
   });
   initApp();
+}
+
+/* Un desafío del banco como lo usa la página. `lineas`: por cada primera
+   jugada aceptada, la variante entera (alumno, rival, alumno…) en formato
+   origen-destino; la genera herramientas/desafios-variantes.js. */
+function rondaDe(r){
+  return { n: r.n, fen: r.fen, text: r.text, hint: r.hint, moves: r.solution.moves, san: r.solution.san,
+    lineas: r.solution.lineas || {}, explain: r.solution.explain, source: 'Desafío #' + r.n };
 }
 
 /* MiniChess (movimientos legales sin exigir reyes) vive en js/mini-chess.js:
@@ -224,6 +232,22 @@ let roundStartTime = 0;
 let setStarsEarned = [];
 let setStartTime = 0;
 let saltados = 0;   // desafíos de la serie que se pasaron sin resolver
+/* La variante: el desafío no termina en la primera jugada buena. El rival
+   contesta y el alumno sigue hasta que la idea se cumple (el peón cae, la
+   pieza corona, se gana el material, el mate). */
+let lineaActual = null;  // la variante elegida (según la primera jugada)
+let paso = 0;            // índice en la variante de la próxima jugada
+let fenTurno = null;     // la posición donde le toca al alumno (para deshacer un error)
+let ultimaJugada = null; // para marcar en el tablero la jugada del rival
+let jugadasHechas = [];  // las jugadas de la variante, para decirla al final
+let hintsBase = 0;       // pistas pedidas en jugadas anteriores de la variante
+let usoSolucion = false; // alguna jugada la hizo «Ver solución»
+/* Cada desafío cargado (o la vuelta a la lista) es una vuelta nueva: lo que
+   quedó esperando en un setTimeout (la jugada del rival, deshacer un error)
+   mira que siga siendo la misma vuelta. Si no, «Reiniciar» o «Saltar»
+   mientras el rival pensaba dejaba caer su jugada en el desafío siguiente. */
+let vuelta = 0;
+function enEstaVuelta(fn){ const v = vuelta; return () => { if(v === vuelta) fn(); }; }
 
 function setsFor(cat){ return SETS.filter(s => s.cat === cat); }
 
@@ -255,6 +279,7 @@ function starString(n){
    que lo tenía desaparece y el foco caía al <body>; con la cuenta ciega,
    también al llegar a la página. */
 function showList(enfocar){
+  vuelta++;
   document.getElementById('set-view').style.display = 'none';
   document.getElementById('list-view').style.display = 'block';
   buildTabs();
@@ -283,11 +308,12 @@ function showList(enfocar){
 /* ---------------- Tablero ---------------- */
 
 function drawBoard(){
-  // El tablero lo pinta el módulo común (js/ejercicio-tablero.js), desde el
-  // bando que juega y con las marcas de la pista. Lo que dice cada casilla lo
+  // El tablero lo pinta el módulo común (js/ejercicio-tablero.js), con las
+  // marcas de la pista y la última jugada del rival. Lo que dice cada casilla lo
   // escribe js/tablero-accesible.js (antes esta página ponía el suyo aparte).
   EjercicioTablero.dibujar(document.getElementById('board'), {
-    juego: game, orientacion: game.turn(), seleccionada: selectedSquare,
+    // Siempre desde las blancas: girarlo cuando juegan las negras enredaba.
+    juego: game, orientacion: 'w', seleccionada: selectedSquare, ultima: ultimaJugada,
     marcas: pistas.marcas(), alTocar: onSquareClick,
   });
   montarTeclado();
@@ -331,6 +357,9 @@ function loadRound(){
   roundLocked = false;
   hintsUsedThisRound = 0;
   errorsThisRound = 0;
+  vuelta++;
+  lineaActual = null; paso = 0; fenTurno = round.fen; ultimaJugada = null;
+  jugadasHechas = []; hintsBase = 0; usoSolucion = false;
   roundStartTime = Date.now();
   document.getElementById('hint-btn').disabled = false;
   pistas.reiniciar();
@@ -396,16 +425,74 @@ if(typeof enableBoardDrag !== 'undefined'){
 function handleMoveResult(moveResult){
   const round = currentRound();
   const uci = game.uci(moveResult);
-  const correct = round.moves.includes(uci);
+  const mate = /#$/.test(moveResult.san || '');
+  // La primera: cualquiera de las aceptadas (y elige la variante). Después, la
+  // de la variante; un mate siempre vale, aunque no sea el guardado.
+  const correct = paso === 0 ? round.moves.includes(uci) : (uci === lineaActual[paso] || mate);
   if(correct){
-    finishRound(moveResult);
+    if(paso === 0) lineaActual = (round.lineas && round.lineas[uci]) || [uci];
+    aceptarJugada(moveResult);
   } else {
     errorsThisRound++;
     resetStreak();
     // «Respuesta incorrecta» y no «no es legal»: la jugada se pudo hacer.
     setStatus(ComandosTablero.incorrecta(jugadaDicha(moveResult.san)), 'bad');
-    setTimeout(() => { game = new MiniChess(round.fen); drawBoard(); setStatus('Inténtalo de nuevo.'); }, 900);
+    roundLocked = true;
+    setTimeout(enEstaVuelta(() => {
+      game = new MiniChess(fenTurno); roundLocked = false; drawBoard();
+      setStatus(paso === 0 ? 'Inténtalo de nuevo.' : 'Inténtalo de nuevo: la variante sigue desde aquí.');
+    }), 900);
   }
+}
+
+/* Una jugada buena del alumno: si la variante sigue, contesta el rival; si
+   no (se cumplió la idea, o dio mate), el desafío está resuelto. */
+function aceptarJugada(moveResult){
+  paso++;
+  jugadasHechas.push(moveResult.san);
+  ultimaJugada = null;
+  hintsBase = hintsUsedThisRound;
+  pistas.reiniciar();   // las marcas de la pista eran de esta jugada: se van
+  drawBoard();
+  if(/#$/.test(moveResult.san || '') || paso >= lineaActual.length){ finishRound(moveResult); return; }
+  roundLocked = true;
+  document.getElementById('hint-btn').disabled = true;
+  setStatus(usoSolucion
+    ? `Solución (no cuenta como resuelto): ${jugadaDicha(moveResult.san)}. Ahora juega el rival…`
+    : `✅ ${jugadaDicha(moveResult.san)}. Bien. Ahora juega el rival…`, usoSolucion ? '' : 'ok');
+  setTimeout(enEstaVuelta(responderRival), 800);
+}
+
+/* Con «Ver solución» la variante se juega sola hasta el final, para verla
+   entera: pedir la solución jugada por jugada era pedirla cinco veces. */
+function jugarSolucionSiguiente(){
+  if(!lineaActual || !game || paso >= lineaActual.length) return;
+  const u = lineaActual[paso];
+  const r = game.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] || 'q' });
+  if(!r){ finishRound(null); return; }
+  aceptarJugada(r);
+}
+
+function responderRival(){
+  if(!lineaActual || !game) return;
+  const u = lineaActual[paso];
+  const r = game.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] || 'q' });
+  if(!r){ finishRound(null); return; }   // no pasa: la variante sale del mismo motor
+  paso++;
+  jugadasHechas.push(r.san);
+  ultimaJugada = r;
+  selectedSquare = null;
+  drawBoard();
+  if(paso >= lineaActual.length){ finishRound(r); return; }
+  fenTurno = game.fen();
+  if(usoSolucion){
+    setStatus(`El rival jugó ${jugadaDicha(r.san)}. La variante sigue…`);
+    setTimeout(enEstaVuelta(jugarSolucionSiguiente), 800);
+    return;
+  }
+  roundLocked = false;
+  document.getElementById('hint-btn').disabled = false;
+  setStatus(`El rival jugó ${jugadaDicha(r.san)}. Te toca: sigue la variante hasta el final.`);
 }
 
 function finishRound(moveResult){
@@ -417,11 +504,14 @@ function finishRound(moveResult){
   setStarsEarned.push(stars);
   // Con "Ver solución" (tercera pista) la jugada la hizo el botón: no suma a la
   // racha ni se festeja, pero la explicación se muestra igual.
-  const conSolucion = hintsUsedThisRound >= 3;
+  const conSolucion = usoSolucion;
   if(!conSolucion) bumpStreak();
   const fast = !conSolucion && seconds < 4 && hintsUsedThisRound === 0 && errorsThisRound === 0;
-  const san = jugadaDicha(moveResult ? moveResult.san : round.san[0]);
-  const inicio = conSolucion ? 'Solución (no cuenta como resuelto):' : '✅ ¡Correcto!';
+  // La variante entera, como se jugó («Ac5 a7 Axa7»); si fue una sola jugada, esa.
+  const san = jugadasHechas.length
+    ? jugadasHechas.map(jugadaDicha).join(', ')
+    : jugadaDicha(moveResult ? moveResult.san : round.san[0]);
+  const inicio = conSolucion ? 'Solución (no cuenta como resuelto):' : (jugadasHechas.length > 1 ? '✅ ¡Variante completa!' : '✅ ¡Correcto!');
   const explicacion = textoDicho(round.explain || '');
   setStatus(`${inicio} ${san}${explicacion ? ' — ' + explicacion : ''}${fast ? ' ⚡' : ''}`, conSolucion ? '' : 'ok');
   if(window.BlindNotation && window.BlindNotation.speak){
@@ -508,23 +598,31 @@ function finishSet(){
    Después, la solución. Cada una cuenta para las estrellas. */
 function jugadaDelDesafio(){
   const r = currentRound();
-  const m = r && r.moves && r.moves[0];
+  // Dentro de la variante, la que toca ahora; al empezar, la primera aceptada.
+  const m = paso > 0 && lineaActual ? lineaActual[paso] : (r && r.moves && r.moves[0]);
   return m ? { from: m.slice(0, 2), to: m.slice(2, 4), promotion: m[4] } : null;
 }
 const pistas = EjercicioTablero.pistas({
   boton: '#hint-btn',
-  etapas: () => (currentRound() && currentRound().hint ? ['texto', 'origen', 'solucion'] : ['origen', 'destino', 'solucion']),
+  // La pista escrita es de la idea del desafío: solo para la primera jugada.
+  etapas: () => (paso === 0 && currentRound() && currentRound().hint ? ['texto', 'origen', 'solucion'] : ['origen', 'destino', 'solucion']),
   texto: () => textoDicho(currentRound().hint),
   jugada: jugadaDelDesafio,
   repintar: () => { drawBoard(); },
   decir: setStatus,
   enPalabras: () => blindMode,
-  alDar: (n) => { hintsUsedThisRound = n; },
+  alDar: (n) => { hintsUsedThisRound = hintsBase + n; },
   alResolver: (j) => {
     resetStreak();
+    usoSolucion = true;
     const moveResult = game.move({ from: j.from, to: j.to, promotion: j.promotion || 'q' });
-    drawBoard();
-    finishRound(moveResult);
+    if(!moveResult){ drawBoard(); finishRound(null); return; }
+    if(paso === 0){
+      const u = game.uci(moveResult);
+      lineaActual = (currentRound().lineas && currentRound().lineas[u]) || [u];
+    }
+    // La jugada la hizo el botón, pero la variante sigue: el rival contesta.
+    aceptarJugada(moveResult);
   },
 });
 function giveHint(){
@@ -628,7 +726,7 @@ function abrirElPedido(){
     // coincidiría con el que vio el profe.
     title: cat.title,
     desc: 'Te lo abrió tu profe. ' + cat.desc,
-    rounds: [{ n: ch.n, fen: ch.fen, text: ch.text, hint: ch.hint, moves: ch.solution.moves, san: ch.solution.san, explain: ch.solution.explain, source: 'Desafío #' + ch.n }],
+    rounds: [rondaDe(ch)],
   });
 }
 
