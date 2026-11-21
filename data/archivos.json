@@ -19245,7 +19245,7 @@
   ]
  },
  "imagenes": {
-  "total": 1330,
+  "total": 1369,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26929,6 +26929,247 @@
       "titulo": "Wow",
       "tipo": "otro",
       "kb": 19
+     }
+    ]
+   },
+   {
+    "carpeta": "img/avatar-profe-oscar/cuadros",
+    "titulo": "Cuadros",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/atencion-ojos.webp",
+      "titulo": "Atencion ojos",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/bien-hecho-boca.webp",
+      "titulo": "Bien hecho boca",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/bien-hecho-ojos.webp",
+      "titulo": "Bien hecho ojos",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/brazos-cruzados-boca.webp",
+      "titulo": "Brazos cruzados boca",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/brazos-cruzados-ojos.webp",
+      "titulo": "Brazos cruzados ojos",
+      "tipo": "otro",
+      "kb": 17
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/burlon-boca.webp",
+      "titulo": "Burlon boca",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/burlon-ojos.webp",
+      "titulo": "Burlon ojos",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/campeones-boca.webp",
+      "titulo": "Campeones boca",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/campeones-ojos.webp",
+      "titulo": "Campeones ojos",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/casi-boca.webp",
+      "titulo": "Casi boca",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/casi-ojos.webp",
+      "titulo": "Casi ojos",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/dormidos-ojos.webp",
+      "titulo": "Dormidos ojos",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/esa-no-es-boca.webp",
+      "titulo": "Esa no es boca",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/esa-no-es-ojos.webp",
+      "titulo": "Esa no es ojos",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/esa-vara-boca.webp",
+      "titulo": "Esa vara boca",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/esa-vara-ojos.webp",
+      "titulo": "Esa vara ojos",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/excelente-boca.webp",
+      "titulo": "Excelente boca",
+      "tipo": "otro",
+      "kb": 32
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/excelente-ojos.webp",
+      "titulo": "Excelente ojos",
+      "tipo": "otro",
+      "kb": 32
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/felicidades-boca.webp",
+      "titulo": "Felicidades boca",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/felicidades-ojos.webp",
+      "titulo": "Felicidades ojos",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/hola-boca.webp",
+      "titulo": "Hola boca",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/hola-ojos.webp",
+      "titulo": "Hola ojos",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/idea-boca.webp",
+      "titulo": "Idea boca",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/idea-ojos.webp",
+      "titulo": "Idea ojos",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/mmm-boca.webp",
+      "titulo": "Mmm boca",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/mmm-ojos.webp",
+      "titulo": "Mmm ojos",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/muy-bien-boca.webp",
+      "titulo": "Muy bien boca",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/muy-bien-ojos.webp",
+      "titulo": "Muy bien ojos",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/pobrecillo-boca.webp",
+      "titulo": "Pobrecillo boca",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/pobrecillo-ojos.webp",
+      "titulo": "Pobrecillo ojos",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/que-jugadon-ojos.webp",
+      "titulo": "Que jugadon ojos",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/te-toca-boca.webp",
+      "titulo": "Te toca boca",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/te-toca-ojos.webp",
+      "titulo": "Te toca ojos",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/tiempo-ojos.webp",
+      "titulo": "Tiempo ojos",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/tu-puedes-boca.webp",
+      "titulo": "Tu puedes boca",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/tu-puedes-ojos.webp",
+      "titulo": "Tu puedes ojos",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/vagabundo-boca.webp",
+      "titulo": "Vagabundo boca",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/vagabundo-ojos.webp",
+      "titulo": "Vagabundo ojos",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/cuadros/wow-ojos.webp",
+      "titulo": "Wow ojos",
+      "tipo": "otro",
+      "kb": 20
      }
     ]
    },
