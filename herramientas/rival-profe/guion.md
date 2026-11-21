@@ -1,6 +1,6 @@
 # Guion del profe rival
 
-55 frases · 0 grabadas. Lo arma `herramientas/rival-profe-guion.js`; no se edita a mano.
+55 frases · 4 grabadas. Lo arma `herramientas/rival-profe-guion.js`; no se edita a mano.
 
 ## Cómo grabar
 
@@ -13,10 +13,10 @@
 
 | # | Archivo | Frase | ✓ |
 |---|---|---|---|
-| 1 | `saludo-perder` | ¿Vienes a perder otra vez? Tranqui, voy suave… al principio. |  |
-| 2 | `saludo-que-traes` | A ver qué me traes hoy. |  |
-| 3 | `saludo-ya-se` | Mueve cuando quieras. Yo ya sé cómo termina esto. |  |
-| 4 | `saludo-valentia` | ¡Jajaja! Qué valentía, retarme a mí. |  |
+| 1 | `saludo-perder` | ¿Vienes a perder otra vez? Tranqui, voy suave… pero solo al principio. | ✓ |
+| 2 | `saludo-que-traes` | A ver qué me traes hoy. | ✓ |
+| 3 | `saludo-ya-se` | Mueve cuando quieras. Yo ya sé cómo termina esto. | ✓ |
+| 4 | `saludo-valentia` | ¡Jajaja! Qué valentía, retarme a mí. | ✓ |
 
 ## Le regalaron una pieza (se la comió)
 

@@ -49,7 +49,7 @@
      academia (con la voz del navegador: las grabaciones son del profe Oscar). */
   const FRASES = {
     saludo: [
-      { id: "saludo-perder", cara: "hola", texto: "¿Vienes a perder otra vez? Tranqui, voy suave… al principio." },
+      { id: "saludo-perder", cara: "hola", texto: "¿Vienes a perder otra vez? Tranqui, voy suave… pero solo al principio." },
       { id: "saludo-que-traes", cara: "burlon", texto: "A ver qué me traes hoy." },
       { id: "saludo-ya-se", cara: "brazos-cruzados", texto: "Mueve cuando quieras. Yo ya sé cómo termina esto." },
       { id: "saludo-valentia", cara: "risa", texto: "¡Jajaja! Qué valentía, retarme a mí." },

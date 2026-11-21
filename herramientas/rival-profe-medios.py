@@ -5,7 +5,9 @@ a lo que se publica, y la lista de lo que hay.
 1. Las grabaciones del profe: herramientas/rival-profe/grabaciones/<id>.<ext>
    (cualquier formato que lea ffmpeg: .m4a del celular, .mp3, .wav, .ogg,
    .opus…), una por frase, con el `id` de la frase en js/rival-profe.js.
-   Salen en audio/rival-profe/<id>.mp3: mono, sin el silencio del principio y
+   Salen en audio/rival-profe/<id>.mp3: mono, sin el ruido de fondo del cuarto
+   (afftdn: las notas de voz del celular traen un zumbido a -37 dB), sin el
+   silencio del principio y
    del final, con el volumen parejo entre una y otra (loudnorm, -16 LUFS) y a
    64 kbps. Necesita ffmpeg en el PATH.
 2. Los cuadros para animar la cara: herramientas/avatar-profe-<profe>/cuadros/
@@ -38,7 +40,7 @@ AUDIO = RAIZ / "audio" / "rival-profe"
 PROFES = ["oscar", "pame", "karina"]
 ALTO = 480
 SILENCIO = "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05"
-FILTRO = f"{SILENCIO},areverse,{SILENCIO},areverse,loudnorm=I=-16:TP=-1.5:LRA=11"
+FILTRO = f"afftdn=nr=12:nf=-35,{SILENCIO},areverse,{SILENCIO},areverse,loudnorm=I=-16:TP=-1.5:LRA=11"
 
 ids_frases = set(re.findall(r'\{ id: "([a-z0-9-]+)"', (RAIZ / "js" / "rival-profe.js").read_text(encoding="utf-8")))
 caras = set(re.findall(r'\{ id: "([a-z0-9-]+)", frase:', (RAIZ / "js" / "avatar-profe-oscar.js").read_text(encoding="utf-8")))
