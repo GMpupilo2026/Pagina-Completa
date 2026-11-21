@@ -5359,7 +5359,9 @@ el sitio, con una sola cuenta.
   nueva a la base. Cada consulta va aparte, y una sala cuya consulta falla
   queda en «—» con «No se pudo cargar»: un número inventado se creería.
   «Hoy te toca» completo pasó a Entrenar, porque en Inicio ya lo resume su
-  sala.
+  sala. **Volvió a Inicio, y solo ahí, el 20/11/2026**: en Entrenar salía en
+  la portada y encima de cada sección, y al dueño le estorbaba («que solo
+  al inicio del perfil»).
 - **Las animaciones** (pedido del dueño el 19/11/2026). Son cuatro, todas
   en `css/panel-jornada.css` («Las animaciones») y `js/panel-jornada.js`
   (`animarEntrada`, `contar`):
@@ -5426,11 +5428,11 @@ el sitio, con una sola cuenta.
   elegida, las salas de la cabecera se apartan: se busca una tarjeta.
 - **Entrenar abre con una portada, no con todo** (mismo día: «en vez de
   salirle todo»). Eran más de treinta tarjetas de golpe. Ahora la pestaña
-  entera muestra el plan de hoy («Hoy te toca»), una carta por sección (con
-  cuántas herramientas trae y las primeras tres, leídas de la grilla real
+  entera muestra una carta por sección (con cuántas herramientas trae y las primeras tres, leídas de la grilla real
   por `llenarPortada`, así que nunca promete una que no está; un grupo que
   la cuenta no tiene no lleva carta) y los gráficos de la semana y de los
-  meses. Una carta abre su sección, igual que el menú; en el celular el
+  meses (el plan de hoy, «Hoy te toca», no: va solo en Inicio). Una carta
+  abre su sección, igual que el menú; en el celular el
   primer botón de la fila dice «Resumen» en vez de «Todo». Buscar sigue
   destapando todas las tarjetas, y `clases.html#<grupo>` abre ese grupo
   como sección (si no, la portada lo dejaría tapado).
