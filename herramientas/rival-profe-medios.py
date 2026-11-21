@@ -11,6 +11,7 @@ a lo que se publica, y la lista de lo que hay.
    del final, con el volumen parejo entre una y otra (loudnorm, -16 LUFS) y a
    64 kbps. Necesita ffmpeg en el PATH.
 2. Los cuadros para animar la cara: herramientas/avatar-profe-<profe>/cuadros/
+   (los de Oscar los dibuja primero herramientas/rival-profe-cuadros.py)
    <cara>-ojos.png (ojos cerrados: parpadea) y <cara>-boca.png (boca abierta:
    habla), dibujados IGUAL al original de esa cara salvo los ojos o la boca y
    del mismo tamaño. Salen en img/avatar-profe-<profe>/cuadros/*.webp a 480 px
@@ -66,7 +67,11 @@ for viejo in AUDIO.glob("*.mp3"):
         viejo.unlink()
 print(f"{len(voces)} de {len(ids_frases)} frases con grabación en {AUDIO.relative_to(RAIZ)}")
 
-# 2. Los cuadros
+# 2. Los cuadros. Los del profe Oscar los dibuja herramientas/rival-profe-cuadros.py
+#    sobre sus originales (no se guardan en git: pesan 32 MB y salen iguales).
+import importlib.util
+_spec = importlib.util.spec_from_file_location("rival_profe_cuadros", RAIZ / "herramientas" / "rival-profe-cuadros.py")
+_mod = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(_mod); _mod.main()
 cuadros = {}
 for profe in PROFES:
     origen = RAIZ / "herramientas" / f"avatar-profe-{profe}" / "cuadros"

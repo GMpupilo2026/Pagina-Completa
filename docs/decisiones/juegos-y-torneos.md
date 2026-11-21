@@ -238,6 +238,19 @@ dibujo, ni voz, ni frases): se tomó la receta.
   2,5 a 6 s. Sin el cuadro de boca, la cara se mece mientras habla; sin el de
   ojos, no parpadea. `js/rival-profe-medios.js` (lo escribe el script) dice
   qué grabaciones y cuadros existen, para no pedir archivos que no están.
+- **Los cuadros del profe Oscar los dibuja un programa**,
+  `herramientas/rival-profe-cuadros.py`, sobre los originales: tapa el ojo
+  con la piel de debajo y le traza la raya de las pestañas; abre un óvalo
+  oscuro entre los labios, o baja la mandíbula debajo de los dientes en las
+  sonrisas con dientes. Cada cara lleva el centro de cada ojo y de la boca
+  medido a mano, y el programa ajusta el ojo a la mancha de blanco, iris y
+  pestañas que toca ese centro (con un rectángulo fijo, la ceja quedaba
+  adentro y el parche se la comía; por eso la ceja además se vuelve a pintar
+  encima). Las caras que ya tienen los ojos cerrados o la boca abierta (risa,
+  wow, no-puede-ser…) no llevan ese cuadro. Los PNG que salen no van a git
+  (32 MB que salen iguales): `rival-profe-medios.py` corre el programa antes
+  de convertir. Si un dibujo del profe reemplaza un original, hay que volver a
+  medir esa cara.
 - Lo revisa `verificar-rival-profe.js` (sin navegador): que cada cara exista,
   los umbrales, que el regalo sea de verdad con chess.js aun con la recaptura,
   que no regale la dama, y las conexiones con `bot.js` y `bot.html`.
