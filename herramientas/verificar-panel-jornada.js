@@ -94,7 +94,7 @@ async function pruebaPestanas(browser) {
   igual("abre en Inicio", await page.$eval(".jornada-nav button[aria-current='page']", (b) => b.textContent.trim()), "Inicio");
 
   let v = await page.evaluate(QUE_SE_VE);
-  igual("«Hoy te toca» es de Entrenar (en Inicio lo resume su sala)", v.ids["progreso-alumno"].split(":")[0], "entrenar");
+  igual("«Hoy te toca» es solo de Inicio, y se ve", v.ids["progreso-alumno"], "inicio:ve");
   igual("«Tus clases» es de Clases y no se ve en Inicio", v.ids["tus-clases"].startsWith("clases:") && v.ids["tus-clases"].endsWith(":no"), true);
   igual("«Jugar y competir» no se ve en Inicio", v.grupos["Jugar y competir"], "jugar:no");
   igual("el buscador (sin pestaña) se ve", v.ids["buscar-panel"], "-:ve");
@@ -176,11 +176,13 @@ async function pruebaSecciones(browser) {
     return { ve: !!p && p.checkVisibility(), cartas: Array.from(document.querySelectorAll(".jornada-portada-carta")).filter((b) => b.checkVisibility()).map((b) => [b.dataset.portadaGrupo, b.querySelector(".jornada-portada-trae").textContent]) };
   });
   cierto("la portada se ve", portada.ve);
+  igual("en la portada de Entrenar no sale «Hoy te toca» (va solo en Inicio)", await page.$eval("#progreso-alumno", (x) => x.checkVisibility()), false);
   const grupos = portada.cartas.map((x) => x[0]);
   cierto("con una carta por sección, Estudiar y Aprender incluidas (" + grupos.join(", ") + ")", grupos.includes("Estudiar") && grupos.includes("Aprender") && grupos.length >= 5);
   cierto("cada carta dice cuántas herramientas trae y cuáles", portada.cartas.every((x) => /^\d+ herramientas?: \S/.test(x[1])), JSON.stringify(portada.cartas));
   await page.click(".jornada-portada-carta[data-portada-grupo='Aprender']");
   igual("la carta abre su sección", await page.evaluate(GRUPOS_VISIBLES_DE, "entrenar"), ["Aprender"]);
+  igual("ni encima de una sección", await page.$eval("#progreso-alumno", (x) => x.checkVisibility()), false);
   igual("y la portada y las salas se apartan", await page.evaluate(() => [document.getElementById("jornada-entrenar-portada").checkVisibility(), document.querySelector("#jornada-cabecera-entrenar .jornada-salas").checkVisibility()]), [false, false]);
   await page.click(".jornada-nav button[data-pestana='entrenar']");
 
@@ -334,7 +336,7 @@ async function pruebaInicio(browser) {
   igual("cada gráfico dibuja su SVG, que es adorno", await page.$$eval("#jornada-inicio .jornada-grafico-dibujo svg", (s) => s.map((x) => x.getAttribute("aria-hidden"))), ["true", "true", "true", "true"]);
   igual("las barras: una por día, y la de hoy distinta", await page.$$eval('#jornada-inicio .jornada-grafico[data-grafico="semana"] svg rect', (r) => r.length), 7);
 
-  igual("«Hoy te toca» completo pasó a Entrenar", await page.$eval("#progreso-alumno", (s) => s.dataset.jornada), "entrenar");
+  igual("«Hoy te toca» es solo de Inicio", await page.$eval("#progreso-alumno", (s) => s.dataset.jornada), "inicio");
   await page.click('#jornada-inicio .jornada-sala[data-sala="hoy"]');
   igual("la sala de hoy lleva a Entrenar", await page.$eval(".jornada-nav button[aria-current='page']", (b) => b.dataset.pestana), "entrenar");
 

@@ -45,8 +45,10 @@
         "session-status-card": "inicio clases",
         "pendientes-aviso": "inicio",
         "seguir-curso": "inicio",
-        // «Hoy te toca» completo va en Entrenar: en Inicio lo resume su sala.
-        "progreso-alumno": "entrenar",
+        /* «Hoy te toca» va SOLO en Inicio (20/11/2026, a pedido del dueño):
+           cuando iba en Entrenar salía en la portada y encima de cada sección,
+           y estorbaba. */
+        "progreso-alumno": "inicio",
         "jornada-inicio": "inicio",
         "favoritas": "inicio",
         "mas-usado": "inicio",
@@ -610,8 +612,8 @@
        Al tocar Entrenar no salen todas las tarjetas de golpe (eran más de
        treinta): salen sus seis secciones como cartas, cada una con cuántas
        herramientas trae y cuáles, y sus dos gráficos. Una carta abre su
-       sección, igual que el menú. El plan de hoy («Hoy te toca») queda
-       arriba de las cartas. Lo que trae cada carta se lee de la grilla real
+       sección, igual que el menú. El plan de hoy («Hoy te toca») no está
+       acá: va solo en Inicio. Lo que trae cada carta se lee de la grilla real
        (llenarPortada), así que nunca promete una tarjeta que no está. */
     const PORTADA = {
         "Estudiar": { icono: "📖", color: "#1f56b8" },
@@ -623,7 +625,7 @@
     };
 
     function armarPortada() {
-        const ancla = document.getElementById("progreso-alumno") || document.getElementById("jornada-cabecera-entrenar");
+        const ancla = document.getElementById("jornada-cabecera-entrenar");
         if (!ancla) return;
         const p = el("section", "jornada-portada");
         p.id = "jornada-entrenar-portada";
