@@ -55,40 +55,40 @@
       { id: "saludo-valentia", cara: "risa", texto: "¡Jajaja! Qué valentía, retarme a mí." },
     ],
     regalo: [
-      { id: "regalo-gracias", cara: "risa", texto: "¡Jajaja! Gracias por el regalo." },
-      { id: "regalo-detalle", cara: "burlon", texto: "¿Esa pieza era para mí? Qué detalle." },
-      { id: "regalo-vagabundo", cara: "vagabundo", texto: "Tan vagabundo… la dejaste solita." },
+      { id: "regalo-gracias", cara: "risa", texto: "¡Uh! Gracias por el regalito." },
+      { id: "regalo-detalle", cara: "burlon", texto: "¿Esa pieza era para mí? Uf, qué detalle." },
+      { id: "regalo-vagabundo", cara: "vagabundo", texto: "Tan vagabundo… la dejó solita." },
       { id: "regalo-pobrecillo", cara: "pobrecillo", texto: "Pobrecillo, ni la vio venir." },
       { id: "regalo-esa-no-era", cara: "esa-no-es", texto: "Esa no era. Te lo digo por si acaso." },
-      { id: "regalo-nam", cara: "risa", texto: "¡Ñam! Pieza gratis, la más rica." },
+      { id: "regalo-nam", cara: "risa", texto: "Mmm… ¡ñam! Pieza gratis, lo mejor." },
     ],
     golpe: [
       { id: "golpe-esa-vara", cara: "esa-vara", texto: "¡Esa vara!" },                              // del profe
       { id: "golpe-de-donde-salio", cara: "wow", texto: "¿Y esa jugada de dónde salió?" },          // del profe
       { id: "golpe-no-puede-ser", cara: "no-puede-ser", texto: "¡No puede ser! ¿Quién te enseñó eso?" },
       { id: "golpe-no-la-tenia", cara: "esa-vara", texto: "¿Y esa vara? No la tenía calculada." },
-      { id: "golpe-no-te-acostumbres", cara: "wow", texto: "Ok, ok… esa estuvo buena. No te acostumbres." },
-      { id: "golpe-un-descuido", cara: "mmm", texto: "Mmm… fue un descuido. Uno solo, ¿eh?" },
+      { id: "golpe-no-te-acostumbres", cara: "wow", texto: "Ok, ok… esa estuvo buena. Pero no te acostumbres." },
+      { id: "golpe-un-descuido", cara: "mmm", texto: "Mmm… fue un descuido. Uno solo." },
       { id: "golpe-jugadon", cara: "que-jugadon", texto: "¡Qué jugadón! …pero no lo voy a repetir en voz alta." },
     ],
     jaqueTuyo: [
-      { id: "jaque-tuyo-miedo", cara: "atencion", texto: "¿Jaque? Uy, qué miedo… (no)." },
+      { id: "jaque-tuyo-miedo", cara: "atencion", texto: "¿Jaque? Uy, qué miedo… ¿no?" },
       { id: "jaque-tuyo-plan", cara: "brazos-cruzados", texto: "Un jaque no es un plan, ¿eh?" },
-      { id: "jaque-tuyo-despues", cara: "burlon", texto: "¿Y después del jaque, qué?" },
+      { id: "jaque-tuyo-despues", cara: "burlon", texto: "Bueno, ¿qué? ¿Y después del jaque? ¿Qué va a hacer?" },
     ],
     jaqueMio: [
-      { id: "jaque-mio-esa-y-no-otra", cara: "atencion", texto: "Esa y no otra." },                    // del profe
+      { id: "jaque-mio-esa-y-no-otra", cara: "atencion", texto: "Mmm… esa y no otra." },                    // del profe
       { id: "jaque-mio-sufrir", cara: "te-toca", texto: "Jaque. Te toca a ti… sufrir un poquito." },
-      { id: "jaque-mio-ojo", cara: "atencion", texto: "¡Jaque! Ojo con ese rey." },
+      { id: "jaque-mio-ojo", cara: "atencion", texto: "¡Jaque! Ojo con ese rey, ¿ah?" },
       { id: "jaque-mio-viste", cara: "burlon", texto: "Jaque. ¿Lo viste venir?" },
     ],
     charla: [
-      { id: "charla-huelo", cara: "mmm", texto: "Huelo que hay algo en la posición…" },                // del profe
+      { id: "charla-huelo", cara: "mmm", texto: "Mmm… huelo, huelo, huelo peligro." },                // del profe
       { id: "charla-interesante", cara: "mmm", texto: "Mmmm… interesante. Mal, pero interesante." },
-      { id: "charla-asuste", cara: "brazos-cruzados", texto: "Sigo esperando una jugada que me asuste." },
-      { id: "charla-facil", cara: "vagabundo", texto: "Esto va a estar fácil." },
-      { id: "charla-plan", cara: "idea", texto: "Ya tengo un plan. No te lo voy a contar." },
-      { id: "charla-mas-despacio", cara: "tu-puedes", texto: "¡Tú puedes! …perder más despacio." },
+      { id: "charla-asuste", cara: "brazos-cruzados", texto: "Bueno, ¿qué? Sigo esperando una jugada que me asuste." },
+      { id: "charla-facil", cara: "vagabundo", texto: "Bueno, creo que esto va a ser fácil." },
+      { id: "charla-plan", cara: "idea", texto: "Tengo un plan… tengo un plan." },
+      { id: "charla-mas-despacio", cara: "tu-puedes", texto: "¡Hágale, hágale, vamos! Usted puede perder un poquito más despacio… pero puede." },
     ],
     esperando: [
       { id: "espera-sin-prisa", cara: "brazos-cruzados", texto: "Estoy esperando… sin prisa. Bueno, con un poquito." },

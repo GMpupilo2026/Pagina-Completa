@@ -1,6 +1,6 @@
 # Guion del profe rival
 
-55 frases · 4 grabadas. Lo arma `herramientas/rival-profe-guion.js`; no se edita a mano.
+55 frases · 30 grabadas. Lo arma `herramientas/rival-profe-guion.js`; no se edita a mano.
 
 ## Cómo grabar
 
@@ -22,52 +22,52 @@
 
 | # | Archivo | Frase | ✓ |
 |---|---|---|---|
-| 5 | `regalo-gracias` | ¡Jajaja! Gracias por el regalo. |  |
-| 6 | `regalo-detalle` | ¿Esa pieza era para mí? Qué detalle. |  |
-| 7 | `regalo-vagabundo` | Tan vagabundo… la dejaste solita. |  |
-| 8 | `regalo-pobrecillo` | Pobrecillo, ni la vio venir. |  |
-| 9 | `regalo-esa-no-era` | Esa no era. Te lo digo por si acaso. |  |
-| 10 | `regalo-nam` | ¡Ñam! Pieza gratis, la más rica. |  |
+| 5 | `regalo-gracias` | ¡Uh! Gracias por el regalito. | ✓ |
+| 6 | `regalo-detalle` | ¿Esa pieza era para mí? Uf, qué detalle. | ✓ |
+| 7 | `regalo-vagabundo` | Tan vagabundo… la dejó solita. | ✓ |
+| 8 | `regalo-pobrecillo` | Pobrecillo, ni la vio venir. | ✓ |
+| 9 | `regalo-esa-no-era` | Esa no era. Te lo digo por si acaso. | ✓ |
+| 10 | `regalo-nam` | Mmm… ¡ñam! Pieza gratis, lo mejor. | ✓ |
 
 ## Le ganaron material (se queja)
 
 | # | Archivo | Frase | ✓ |
 |---|---|---|---|
-| 11 | `golpe-esa-vara` | ¡Esa vara! |  |
-| 12 | `golpe-de-donde-salio` | ¿Y esa jugada de dónde salió? |  |
-| 13 | `golpe-no-puede-ser` | ¡No puede ser! ¿Quién te enseñó eso? |  |
-| 14 | `golpe-no-la-tenia` | ¿Y esa vara? No la tenía calculada. |  |
-| 15 | `golpe-no-te-acostumbres` | Ok, ok… esa estuvo buena. No te acostumbres. |  |
-| 16 | `golpe-un-descuido` | Mmm… fue un descuido. Uno solo, ¿eh? |  |
-| 17 | `golpe-jugadon` | ¡Qué jugadón! …pero no lo voy a repetir en voz alta. |  |
+| 11 | `golpe-esa-vara` | ¡Esa vara! | ✓ |
+| 12 | `golpe-de-donde-salio` | ¿Y esa jugada de dónde salió? | ✓ |
+| 13 | `golpe-no-puede-ser` | ¡No puede ser! ¿Quién te enseñó eso? | ✓ |
+| 14 | `golpe-no-la-tenia` | ¿Y esa vara? No la tenía calculada. | ✓ |
+| 15 | `golpe-no-te-acostumbres` | Ok, ok… esa estuvo buena. Pero no te acostumbres. | ✓ |
+| 16 | `golpe-un-descuido` | Mmm… fue un descuido. Uno solo. | ✓ |
+| 17 | `golpe-jugadon` | ¡Qué jugadón! …pero no lo voy a repetir en voz alta. | ✓ |
 
 ## El alumno le da jaque
 
 | # | Archivo | Frase | ✓ |
 |---|---|---|---|
-| 18 | `jaque-tuyo-miedo` | ¿Jaque? Uy, qué miedo… (no). |  |
-| 19 | `jaque-tuyo-plan` | Un jaque no es un plan, ¿eh? |  |
-| 20 | `jaque-tuyo-despues` | ¿Y después del jaque, qué? |  |
+| 18 | `jaque-tuyo-miedo` | ¿Jaque? Uy, qué miedo… ¿no? | ✓ |
+| 19 | `jaque-tuyo-plan` | Un jaque no es un plan, ¿eh? | ✓ |
+| 20 | `jaque-tuyo-despues` | Bueno, ¿qué? ¿Y después del jaque? ¿Qué va a hacer? | ✓ |
 
 ## Él da jaque
 
 | # | Archivo | Frase | ✓ |
 |---|---|---|---|
-| 21 | `jaque-mio-esa-y-no-otra` | Esa y no otra. |  |
-| 22 | `jaque-mio-sufrir` | Jaque. Te toca a ti… sufrir un poquito. |  |
-| 23 | `jaque-mio-ojo` | ¡Jaque! Ojo con ese rey. |  |
-| 24 | `jaque-mio-viste` | Jaque. ¿Lo viste venir? |  |
+| 21 | `jaque-mio-esa-y-no-otra` | Mmm… esa y no otra. | ✓ |
+| 22 | `jaque-mio-sufrir` | Jaque. Te toca a ti… sufrir un poquito. | ✓ |
+| 23 | `jaque-mio-ojo` | ¡Jaque! Ojo con ese rey, ¿ah? | ✓ |
+| 24 | `jaque-mio-viste` | Jaque. ¿Lo viste venir? | ✓ |
 
 ## A veces, sin motivo
 
 | # | Archivo | Frase | ✓ |
 |---|---|---|---|
-| 25 | `charla-huelo` | Huelo que hay algo en la posición… |  |
-| 26 | `charla-interesante` | Mmmm… interesante. Mal, pero interesante. |  |
-| 27 | `charla-asuste` | Sigo esperando una jugada que me asuste. |  |
-| 28 | `charla-facil` | Esto va a estar fácil. |  |
-| 29 | `charla-plan` | Ya tengo un plan. No te lo voy a contar. |  |
-| 30 | `charla-mas-despacio` | ¡Tú puedes! …perder más despacio. |  |
+| 25 | `charla-huelo` | Mmm… huelo, huelo, huelo peligro. | ✓ |
+| 26 | `charla-interesante` | Mmmm… interesante. Mal, pero interesante. | ✓ |
+| 27 | `charla-asuste` | Bueno, ¿qué? Sigo esperando una jugada que me asuste. | ✓ |
+| 28 | `charla-facil` | Bueno, creo que esto va a ser fácil. | ✓ |
+| 29 | `charla-plan` | Tengo un plan… tengo un plan. | ✓ |
+| 30 | `charla-mas-despacio` | ¡Hágale, hágale, vamos! Usted puede perder un poquito más despacio… pero puede. | ✓ |
 
 ## El alumno tarda 30 segundos
 
