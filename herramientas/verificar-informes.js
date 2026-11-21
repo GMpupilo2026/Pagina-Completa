@@ -1069,6 +1069,24 @@ async function pruebaProfesor(browser) {
     await page.evaluate(() => window.__funcion[0]),
     { action: "vista_previa", student_id: "a-1", frecuencia: "mensual" });
 
+  /* «El mismo día y hora para todos»: dos escrituras sobre los alumnos del
+     informe, la hora a todos y el día solo a los semanales. */
+  igual("el mismo día y hora para todos: se ve y dice a cuántos alumnos", await page.evaluate(() =>
+    [document.getElementById("enc-todos").checkVisibility(), document.getElementById("enc-todos-ayuda").textContent.match(/tus \d+ alumnos/)[0]]),
+    [true, "tus 3 alumnos"]);
+  await page.evaluate(() => { window.__escrituras.length = 0; });
+  await page.selectOption("#enc-todos-dia", "2");
+  await page.selectOption("#enc-todos-hora", "15");
+  await page.click("#enc-todos-aplicar");
+  await page.waitForFunction(() => window.__escrituras.length >= 2);
+  igual("la hora a todos los encargados de esos alumnos, el día solo a los semanales", await page.evaluate(() =>
+    window.__escrituras.map((e) => ({ accion: e.accion, fila: e.fila, donde: e.donde, dentro: e.dentro }))),
+    [{ accion: "update", fila: { hora_envio: 15 }, donde: [], dentro: [["student_id", ["a-1", "a-2", "a-3"]]] },
+     { accion: "update", fila: { dia_semana: 2 }, donde: [["frecuencia", "semanal"]], dentro: [["student_id", ["a-1", "a-2", "a-3"]]] }]);
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("enc-todos-msg").textContent));
+  igual("y dice cuántos cambió", await page.evaluate(() => document.getElementById("enc-todos-msg").textContent),
+    "Listo: 2 encargados ahora lo reciben los martes a las 3:00 p. m.");
+
   console.log("-- Sus aperturas");
   await page.click("#aperturas-alumno-report > summary");
   await page.waitForFunction(() => document.querySelector("#aperturas-alumno-cuerpo [data-analisis-resultado]"), null, { timeout: 15000 });

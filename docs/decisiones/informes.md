@@ -1405,6 +1405,28 @@ texto que lee la familia, la hora bien dicha, la marca, el nombre escapado, y
 que la tanda la mande solo la primera vez). Roto a propósito (sin la
 bienvenida en la tanda), salta.
 
+### El mismo día y hora para todos
+
+**En «Informes a la casa» de cualquier alumno hay un bloque para poner el mismo
+día y la misma hora a todos los encargados de una vez.** Lo pidió el dueño para
+la profe Pame: con 22 alumnos, cambiar la hora era ir alumno por alumno, dos
+selectores cada uno.
+
+- Toca a los encargados de los alumnos **que el informe muestra** (el filtro de
+  grupo los acota) y a los que quien mira les da clase (`planEscribible`; quien
+  administra, a todos los de la lista). Quién puede escribir lo decide la RLS
+  de `encargados` (`encargados_update`): el bloque solo decide a quién se le
+  pide.
+- Son dos escrituras por tanda de 100 alumnos: la hora a todos y el día **solo
+  a los que lo reciben cada semana** (con otra frecuencia el día no significa
+  nada). La frecuencia no se toca.
+- Pregunta antes con `Avisos.confirmar`, diciendo a cuántos alumnos y cuándo
+  les va a llegar, y al terminar dice cuántos encargados cambió.
+- No sale en «Ver como», a quien supervisa ni con menos de dos alumnos.
+
+Lo prueba `verificar-informes.js` («el mismo día y hora para todos»: lo que se
+escribe y sobre quién, y el mensaje).
+
 ### Lo que la casa de verdad quiere saber: si está trabajando o no
 
 Ninguna de las cifras que el informe traía contestaba eso. Media hora puede ser
