@@ -16529,6 +16529,22 @@ sus pts y su puesto actual».
   siguen cabiendo 9 (3 × 85 + 2 × 6 = 267 mm). Para otra impresora se mide
   igual: imprimir una hoja, cortar por las líneas del frente y ver cuánto
   queda la línea del dorso adentro del borde, y hacia qué lado.
+- **Los gafetes de 5,5 × 9,5 en hoja horizontal** (20/11, pedido del dueño
+  después de que los de 8,5 quedaron bien): un centímetro más de alto no cabe
+  a 9 por hoja carta (3 × 95 = 285 mm > 279,4), así que va en la hoja
+  acostada, 4 × 2 = 8 por hoja (6 hojas para 41). Es **otro diseño**, «Partir
+  de la Eliminatoria JDN PZ en 5,5 × 9,5» (`disenoJdnPzAlto`), con otro
+  nombre para no pisar el de 8,5 ni su PDF («… - 5,5x9,5»). Lleva
+  `escalaLetras` 1,15 (el nombre y los renglones de abajo) y
+  `dorso.qrEscala` 1,25 (la ilustración de al lado se angosta para no tocar
+  el QR). `salida.horizontal` acuesta la hoja; los dorsos siguen en espejo
+  por columna, así que **se imprime volteando por el borde CORTO** (el aviso
+  del resultado lo dice). El corrimiento medido en la Brother era volteando
+  por el borde largo: acostada la hoja, ese mismo corrimiento cae **de
+  lado**. Medido con la primera hoja cortada (20/11): arriba y abajo calzaba
+  (medio milímetro), pero la línea del dorso quedaba ~2,5 mm adentro del
+  borde izquierdo (visto por detrás). El diseño trae `dorsoX` −2,5, calle de
+  8 mm y sangrado de 4.
 - **20/11, con los gafetes cortados en la mano: aprovechar todo el espacio.**
   En el frente, el título va **entre los dos logos** (`tituloEntreLogos`), la
   franja del club **justo en el borde de abajo** (`franjaAbajo`) y con eso la
