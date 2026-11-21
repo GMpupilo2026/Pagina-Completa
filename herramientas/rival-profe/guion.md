@@ -1,6 +1,6 @@
 # Guion del profe rival
 
-55 frases · 33 grabadas. Lo arma `herramientas/rival-profe-guion.js`; no se edita a mano.
+55 frases · 47 grabadas. Lo arma `herramientas/rival-profe-guion.js`; no se edita a mano.
 
 ## Cómo grabar
 
@@ -86,35 +86,35 @@
 
 | # | Archivo | Frase | ✓ |
 |---|---|---|---|
-| 34 | `pista-huelo` | Huelo que hay algo en la posición. ¿Lo ves? |  |
-| 35 | `pista-se-me-escapo` | Uy… creo que algo se me escapó. ¿Lo ves? |  |
-| 36 | `pista-flojo` | Ups. Algo me quedó flojo por acá… a ver si lo encuentras. |  |
-| 37 | `pista-oportunidad` | Te voy a dar una oportunidad. Una sola. Búscala. |  |
+| 34 | `pista-huelo` | Huelo algo en la posición. ¿Lo ves? | ✓ |
+| 35 | `pista-se-me-escapo` | Uy… creo que algo se me escapó. ¿Lo ves? | ✓ |
+| 36 | `pista-flojo` | ¡Ah! Algo me quedó flojo por acá… a ver si lo encuentras. | ✓ |
+| 37 | `pista-oportunidad` | Te voy a dar una oportunidad, pero ojo: solo una. Búsquela, a ver. | ✓ |
 
 ## El alumno encontró la pieza colgando
 
 | # | Archivo | Frase | ✓ |
 |---|---|---|---|
-| 38 | `la-viste-esa-y-no-otra` | ¡Esa y no otra! Me cachaste. |  |
-| 39 | `la-viste-mirar` | ¡Me cachaste! Bien visto: eso es mirar el tablero. |  |
-| 40 | `la-viste-sin-defender` | ¡Eso! Esa pieza estaba sin defender. Así se juega. |  |
-| 41 | `la-viste-despierto` | La viste. Ok, hoy sí vienes despierto. |  |
+| 38 | `la-viste-esa-y-no-otra` | ¡Ojito! Esa y no otra. ¡Me cachaste! | ✓ |
+| 39 | `la-viste-mirar` | ¡Me cachaste! Bien visto: eso es mirar el tablero. Muy bien. | ✓ |
+| 40 | `la-viste-sin-defender` | ¡Eso! Esa pieza estaba sin defender. Así se juega. ¡Excelente! | ✓ |
+| 41 | `la-viste-despierto` | ¿La viste? Ok, hoy sí vienes despierto. ¡Excelente! | ✓ |
 
 ## El alumno no la vio
 
 | # | Archivo | Frase | ✓ |
 |---|---|---|---|
-| 42 | `no-la-viste-servida` | Te la dejé servida y no la viste… pobrecillo. |  |
-| 43 | `no-la-viste-gratis` | ¡Casi! Había una pieza gratis. Mira qué quedó sin defender. |  |
-| 44 | `no-la-viste-colgando` | Esa no era. Te había dejado algo colgando. |  |
+| 42 | `no-la-viste-servida` | Diay, se la dejé servida y no la vio… pobrecillo. | ✓ |
+| 43 | `no-la-viste-gratis` | Diay, había una pieza gratis. Mira qué quedó sin defender. | ✓ |
+| 44 | `no-la-viste-colgando` | Bueno, esa no era. Te había dejado algo por ahí colgado… ni modo. | ✓ |
 
 ## Ganó él
 
 | # | Archivo | Frase | ✓ |
 |---|---|---|---|
-| 45 | `gano-revancha` | ¡Jajaja! Gané. ¿La revancha? Ya sé que sí. |  |
-| 46 | `gano-campeon` | Campeón otra vez. El de siempre. |  |
-| 47 | `gano-cerca` | Estuvo cerca… bueno, no tanto. |  |
+| 45 | `gano-revancha` | Bueno, bueno, bueno… gané. ¿La revancha? Yo sé que sí. | ✓ |
+| 46 | `gano-campeon` | Campeón otra vez. El de siempre… nada nuevo. | ✓ |
+| 47 | `gano-cerca` | Uf, estuvo cerca… bueno, la verdad es que no tanto. | ✓ |
 
 ## Ganó el alumno
 

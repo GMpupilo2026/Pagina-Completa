@@ -98,26 +98,26 @@
       { id: "dormido", cara: "dormidos", texto: "Diay, ¿se durmió? Bueno, ahí me despierta cuando juegue." },
     ],
     pista: [
-      { id: "pista-huelo", cara: "mmm", texto: "Huelo que hay algo en la posición. ¿Lo ves?" },        // del profe
+      { id: "pista-huelo", cara: "mmm", texto: "Huelo algo en la posición. ¿Lo ves?" },        // del profe
       { id: "pista-se-me-escapo", cara: "mmm", texto: "Uy… creo que algo se me escapó. ¿Lo ves?" },
-      { id: "pista-flojo", cara: "esa-vara", texto: "Ups. Algo me quedó flojo por acá… a ver si lo encuentras." },
-      { id: "pista-oportunidad", cara: "idea", texto: "Te voy a dar una oportunidad. Una sola. Búscala." },
+      { id: "pista-flojo", cara: "esa-vara", texto: "¡Ah! Algo me quedó flojo por acá… a ver si lo encuentras." },
+      { id: "pista-oportunidad", cara: "idea", texto: "Te voy a dar una oportunidad, pero ojo: solo una. Búsquela, a ver." },
     ],
     laViste: [
-      { id: "la-viste-esa-y-no-otra", cara: "bien-hecho", texto: "¡Esa y no otra! Me cachaste." },     // del profe
-      { id: "la-viste-mirar", cara: "bien-hecho", texto: "¡Me cachaste! Bien visto: eso es mirar el tablero." },
-      { id: "la-viste-sin-defender", cara: "muy-bien", texto: "¡Eso! Esa pieza estaba sin defender. Así se juega." },
-      { id: "la-viste-despierto", cara: "excelente", texto: "La viste. Ok, hoy sí vienes despierto." },
+      { id: "la-viste-esa-y-no-otra", cara: "bien-hecho", texto: "¡Ojito! Esa y no otra. ¡Me cachaste!" },     // del profe
+      { id: "la-viste-mirar", cara: "bien-hecho", texto: "¡Me cachaste! Bien visto: eso es mirar el tablero. Muy bien." },
+      { id: "la-viste-sin-defender", cara: "muy-bien", texto: "¡Eso! Esa pieza estaba sin defender. Así se juega. ¡Excelente!" },
+      { id: "la-viste-despierto", cara: "excelente", texto: "¿La viste? Ok, hoy sí vienes despierto. ¡Excelente!" },
     ],
     noLaViste: [
-      { id: "no-la-viste-servida", cara: "pobrecillo", texto: "Te la dejé servida y no la viste… pobrecillo." },
-      { id: "no-la-viste-gratis", cara: "casi", texto: "¡Casi! Había una pieza gratis. Mira qué quedó sin defender." },
-      { id: "no-la-viste-colgando", cara: "esa-no-es", texto: "Esa no era. Te había dejado algo colgando." },
+      { id: "no-la-viste-servida", cara: "pobrecillo", texto: "Diay, se la dejé servida y no la vio… pobrecillo." },
+      { id: "no-la-viste-gratis", cara: "casi", texto: "Diay, había una pieza gratis. Mira qué quedó sin defender." },
+      { id: "no-la-viste-colgando", cara: "esa-no-es", texto: "Bueno, esa no era. Te había dejado algo por ahí colgado… ni modo." },
     ],
     ganoYo: [
-      { id: "gano-revancha", cara: "risa", texto: "¡Jajaja! Gané. ¿La revancha? Ya sé que sí." },
-      { id: "gano-campeon", cara: "campeones", texto: "Campeón otra vez. El de siempre." },
-      { id: "gano-cerca", cara: "pobrecillo", texto: "Estuvo cerca… bueno, no tanto." },
+      { id: "gano-revancha", cara: "risa", texto: "Bueno, bueno, bueno… gané. ¿La revancha? Yo sé que sí." },
+      { id: "gano-campeon", cara: "campeones", texto: "Campeón otra vez. El de siempre… nada nuevo." },
+      { id: "gano-cerca", cara: "pobrecillo", texto: "Uf, estuvo cerca… bueno, la verdad es que no tanto." },
     ],
     ganasTu: [
       { id: "ganas-esa-vara", cara: "no-puede-ser", texto: "¡Esa vara! Me ganaste." },                 // del profe

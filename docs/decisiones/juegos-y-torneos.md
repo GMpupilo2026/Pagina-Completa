@@ -227,7 +227,7 @@ dibujo, ni voz, ni frases): se tomó la receta.
   de las mismas frases. Mientras falta la grabación de una frase, la dice la
   voz del navegador; la profe Pame nunca usa las grabaciones del profe. Hay
   frases suyas de verdad, de las que dice en clase («¡Esa vara!», «Esa y no
-  otra», «Huelo que hay algo en la posición»). Un botón del panel la apaga
+  otra», «Huelo algo en la posición»). Un botón del panel la apaga
   (`rival_profe_voz_v1`), y la voz de todo el sitio no lee el globo encima
   (`data-voz-propia`, en `js/voz-pagina.js`).
 - **La boca y el parpadeo salen de cuadros dibujados**, no de deformar la
