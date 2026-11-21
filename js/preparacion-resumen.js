@@ -25,7 +25,10 @@
 (function (raiz, fabrica) {
   "use strict";
   const req = (nombre, global) => (raiz && raiz[global]) || (typeof require === "function" ? require(nombre) : null);
-  const api = fabrica(req("./preparacion-analisis.js", "PreparacionAnalisis"));
+  // En plan-rival.html el análisis se carga después, solo si el alumno se
+  // prepara solo («Prepárate tú»): ahí se lo busca recién al usarlo.
+  const tarde = () => new Proxy({}, { get: (_, k) => (raiz.PreparacionAnalisis || {})[k] });
+  const api = fabrica(req("./preparacion-analisis.js", "PreparacionAnalisis") || tarde());
   if (typeof module === "object" && module.exports) module.exports = api;
   else raiz.PreparacionResumen = api;
 })(typeof self !== "undefined" ? self : this, function (A) {

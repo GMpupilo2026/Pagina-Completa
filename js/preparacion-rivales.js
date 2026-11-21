@@ -72,7 +72,7 @@
     function pedir(msg) {
       if (!w) {
         const A = window.PreparacionAnalisis;
-        if (msg.tipo === "leer") { local = A.leerPgn(msg.texto); return Promise.resolve({ total: local.length, jugadores: A.jugadores(local).slice(0, 200) }); }
+        if (msg.tipo === "leer") { local = msg.sumar ? local.concat(A.leerPgn(msg.texto)) : A.leerPgn(msg.texto); return Promise.resolve({ total: local.length, jugadores: A.jugadores(local).slice(0, 200) }); }
         if (msg.tipo === "leerAlumno") { localAlumno = A.leerPgn(msg.texto); return Promise.resolve({ total: localAlumno.length, jugadores: A.jugadores(localAlumno).slice(0, 200) }); }
         if (msg.tipo === "cruzar") return Promise.resolve({ cruce: window.PreparacionCruce.cruzar(local, msg.rival, msg.filtros || {}, localAlumno, msg.alumno, msg.planes) });
         return Promise.resolve({ resultado: A.analizar(local, msg.rival, msg.filtros || {}) });
@@ -81,7 +81,7 @@
       return new Promise((res, rej) => { pendientes.set(id, { res, rej }); w.postMessage(Object.assign({ id }, msg)); });
     }
     return {
-      leer: (texto) => pedir({ tipo: "leer", texto }),
+      leer: (texto, sumar) => pedir({ tipo: "leer", texto, sumar: !!sumar }),
       analizar: (rival, filtros) => pedir({ tipo: "analizar", rival, filtros }).then((r) => r.resultado),
       leerAlumno: (texto) => pedir({ tipo: "leerAlumno", texto }),
       cruzar: (rival, filtros, alumno, planes) => pedir({ tipo: "cruzar", rival, filtros, alumno, planes }).then((r) => r.cruce),
@@ -100,14 +100,25 @@
   }
 
   // Le pasa las partidas al trabajador y deja lista la lista de jugadores.
-  // `rival` (un usuario recién bajado) se elige solo, si está.
-  async function cargarTexto(texto, estado, rival) {
+  // `rival` (un usuario recién bajado) se elige solo, si está. Con `sumar`,
+  // las partidas se agregan a las ya cargadas (un PGN de torneos más su
+  // cuenta en línea) y lo marcado como «también es él» se conserva.
+  let cargadas = 0;                 // cuántas partidas tiene el trabajador
+  let tambienActual = [];           // sus otros nombres, con los que se analizó
+  async function cargarTexto(texto, estado, rival, sumar) {
     estado.textContent = "Leyendo las partidas…";
+    const antes = sumar ? cargadas : 0;
+    const marcados = sumar ? tambienMarcados() : [];
+    const elegido = sumar ? $("rival").value : "";
     let r;
     try {
-      r = await trabajo.leer(texto);
+      r = await trabajo.leer(texto, sumar);
     } catch (e) {
       estado.textContent = "No se pudieron leer las partidas: " + (e.message || e);
+      return false;
+    }
+    if (sumar && r.total === antes) {
+      estado.textContent = "No se encontró ninguna partida para sumar. Revisa que sea un PGN.";
       return false;
     }
     rivalCargado = null;
@@ -115,9 +126,14 @@
     if (!r.total) {
       estado.textContent = "No se encontró ninguna partida. Revisa que sea un PGN.";
       $("paso-rival").hidden = true;
+      cargadas = 0;
+      pintarSumar();
       return false;
     }
-    estado.textContent = "Se leyeron " + r.total.toLocaleString("es-CR") + (r.total === 1 ? " partida" : " partidas") +
+    cargadas = r.total;
+    pintarSumar();
+    const n = (x) => x.toLocaleString("es-CR") + (x === 1 ? " partida" : " partidas");
+    estado.textContent = (sumar ? "Se sumaron " + n(r.total - antes) + ": ahora hay " + r.total.toLocaleString("es-CR") : "Se leyeron " + n(r.total)) +
       " de " + r.jugadores.length.toLocaleString("es-CR") + (r.jugadores.length === 1 ? " jugador." : " jugadores.");
     const sel = $("rival");
     sel.textContent = "";
@@ -130,8 +146,82 @@
       const suyo = r.jugadores.find((j) => j.clave === claveDe(rival));
       if (suyo) sel.value = suyo.nombre;
     }
+    // Sumando, el rival que ya estaba elegido sigue elegido.
+    if (sumar && elegido && r.jugadores.some((j) => j.nombre === elegido)) sel.value = elegido;
     $("paso-rival").hidden = false;
+    pintarTambien(marcados);
+    // Lo sumado trae casi siempre otro nombre suyo: la lista se abre.
+    if (sumar) $("rival-tambien").open = true;
     return true;
+  }
+
+  // «Sumar a las partidas ya cargadas» sale cuando hay algo cargado.
+  function pintarSumar() {
+    $("sumar-caja").hidden = !cargadas;
+    if (!cargadas) $("sumar").checked = false;
+    $("sumar-texto").textContent = "Sumar a las " + cargadas.toLocaleString("es-CR") + (cargadas === 1 ? " partida ya cargada" : " partidas ya cargadas");
+  }
+
+  /* «También es él»: los otros nombres del mismo rival en el archivo. Se
+     ofrecen los parecidos (PreparacionAnalisis.parecidos), SIN marcar: «Angulo,
+     O» puede ser el hermano. Cualquier otro se agrega desde la lista de abajo
+     (su usuario de Lichess no se parece a su nombre). Lo marcado va al
+     análisis en filtros.tambien. Ver «Rivales sin partidas en línea». */
+  function tambienMarcados() {
+    return [...document.querySelectorAll("#rival-tambien-lista input:checked")].map((c) => c.value);
+  }
+
+  function casillaTambien(j, marcada) {
+    const lab = el("label", "flex items-center gap-2 text-sm text-brand-700 dark:text-brand-100");
+    const c = el("input", "accent-accent-500");
+    c.type = "checkbox";
+    c.name = "rival-tambien";
+    c.value = j.nombre;
+    c.checked = !!marcada;
+    lab.appendChild(c);
+    lab.appendChild(el("span", "min-w-0 break-words", j.nombre + " — " + j.partidas.toLocaleString("es-CR") + (j.partidas === 1 ? " partida" : " partidas")));
+    return lab;
+  }
+
+  function pintarTambien(marcados) {
+    const caja = $("rival-tambien");
+    const lista = $("rival-tambien-lista");
+    const rival = $("rival").value;
+    const otros = jugadoresLeidos.filter((j) => j.nombre !== rival);
+    caja.hidden = !otros.length;
+    lista.textContent = "";
+    if (!otros.length) return;
+    const ya = new Set(marcados || []);
+    const sugeridos = window.PreparacionAnalisis.parecidos(jugadoresLeidos, claveDe(rival));
+    const enLista = new Set();
+    sugeridos.concat(otros.filter((j) => ya.has(j.nombre))).forEach((j) => {
+      if (enLista.has(j.nombre)) return;
+      enLista.add(j.nombre);
+      lista.appendChild(casillaTambien(j, ya.has(j.nombre)));
+    });
+    $("rival-tambien-vacio").hidden = enLista.size > 0;
+    if (sugeridos.length) caja.open = true;
+    const sel = $("rival-otro");
+    sel.textContent = "";
+    otros.filter((j) => !enLista.has(j.nombre)).forEach((j) => {
+      const o = el("option", "", j.nombre + " — " + j.partidas.toLocaleString("es-CR") + (j.partidas === 1 ? " partida" : " partidas"));
+      o.value = j.nombre;
+      sel.appendChild(o);
+    });
+    $("rival-otro-sumar").disabled = !sel.options.length;
+  }
+
+  // Un nombre de la lista de abajo pasa a las casillas, ya marcado.
+  function sumarOtroNombre() {
+    const sel = $("rival-otro");
+    const j = jugadoresLeidos.find((x) => x.nombre === sel.value);
+    if (!j) return;
+    const casilla = casillaTambien(j, true);
+    $("rival-tambien-lista").appendChild(casilla);
+    $("rival-tambien-vacio").hidden = true;
+    sel.remove(sel.selectedIndex);
+    $("rival-otro-sumar").disabled = !sel.options.length;
+    casilla.querySelector("input").focus();
   }
 
   function claveDe(nombre) { return window.PreparacionAnalisis.claveNombre(nombre); }
@@ -156,9 +246,9 @@
       boton.disabled = false;
       return;
     }
-    const ok = await cargarTexto(textos.join("\n\n"), $("leido"));
+    const ok = await cargarTexto(textos.join("\n\n"), $("leido"), null, $("sumar").checked);
     boton.disabled = false;
-    if (ok) $("rival").focus();
+    if (ok) { $("sumar").checked = false; $("rival").focus(); }
   }
 
   // ------------------------------------------------------------ 1b. bajar de Lichess o Chess.com
@@ -237,11 +327,22 @@
     }
     terminarBajada();
     const todo = textos.join("\n\n");
-    if (!todo || !(await cargarTexto(todo, estado, usuario))) {
+    const sumando = $("sumar").checked;
+    if (!todo || !(await cargarTexto(todo, estado, sumando ? null : usuario, sumando))) {
       if (parado) estado.textContent = "Se paró antes de que llegara alguna partida.";
       return;
     }
     if (avisos.length) estado.textContent += " " + avisos.join(" ");
+    if (sumando) {
+      // Sumadas a un PGN: quién es el rival y con qué otro nombre aparece lo
+      // dice quien prepara; la cuenta recién bajada se ofrece ya marcada.
+      $("sumar").checked = false;
+      const suya = jugadoresLeidos.find((j) => j.clave === claveDe(usuario));
+      if (suya && suya.nombre !== $("rival").value) pintarTambien(tambienMarcados().concat(suya.nombre));
+      estado.textContent += " En el paso 2, revisa quién es el rival y con qué otros nombres aparece, y toca «Analizar».";
+      $("rival").focus();
+      return;
+    }
     if (!jugadoresLeidos.some((j) => j.clave === claveDe(usuario))) {
       estado.textContent += " Ninguna es de «" + usuario + "»: elige al rival en la lista.";
       $("rival").focus();
@@ -261,6 +362,7 @@
   async function analizar() {
     const nombre = $("rival").value;
     if (!nombre) return;
+    tambienActual = tambienMarcados().filter((x) => x !== nombre);
     await calcular(nombre, {});
   }
 
@@ -271,7 +373,8 @@
     $("analizar").disabled = true;
     let r;
     try {
-      r = await trabajo.analizar(nombre, filtros);
+      // Sus otros nombres van con cualquier filtro: son parte de quién es él.
+      r = await trabajo.analizar(nombre, tambienActual.length ? Object.assign({}, filtros, { tambien: tambienActual }) : filtros);
     } catch (e) {
       Avisos.avisar("No se pudo analizar: " + (e.message || e), { tipo: "error" });
       $("analizar").disabled = false;
@@ -458,9 +561,11 @@
     if (r.fechas.desde) partes.push("del " + P.fecha(r.fechas.desde) + " al " + P.fecha(r.fechas.hasta));
     // Con la ficha, el Elo va por ritmo ahí: mezclado no es el Elo de nadie.
     if (r.elo.reciente && !r.ficha) partes.push("Elo reciente ≈ " + r.elo.reciente);
+    if (r.filtros && r.filtros.tambien && r.filtros.tambien.length) partes.push("junto con " + r.filtros.tambien.map((x) => "«" + x + "»").join(", "));
     partes.push("una línea cuenta desde " + r.minimo + " partidas");
     $("resultado-sub").textContent = partes.join(" · ");
-    aviso.textContent = r.pocas ? "Con " + r.total + (r.total === 1 ? " partida" : " partidas") + " el análisis dice poco: amplía los filtros si puedes." : "";
+    aviso.textContent = !r.pocas ? "" : "Con " + r.total + (r.total === 1 ? " partida" : " partidas") + " los porcentajes dicen poco" +
+      (r.partidas ? ": lo más seguro es lo que jugó en cada una («Sus partidas, una por una»)." : ": amplía los filtros si puedes.");
     $("guardar").disabled = !!id;
     $("guardar").textContent = id ? "Guardado" : "Guardar el análisis";
     $("motor-estado").textContent = r.motor ? "Revisado con Stockfish (" + r.motor.detalle + ")." : "";
@@ -1120,6 +1225,8 @@
     $("bajar-form").addEventListener("submit", bajar);
     $("bajar-parar").addEventListener("click", () => { if (bajando) bajando.abort(); });
     $("analizar").addEventListener("click", analizar);
+    $("rival").addEventListener("change", () => pintarTambien([]));
+    $("rival-otro-sumar").addEventListener("click", sumarOtroNombre);
     $("guardar").addEventListener("click", guardar);
     $("motor-revisar").addEventListener("click", iniciarRevision);
     $("motor-parar").addEventListener("click", () => { if (revision) revision.parar = true; });

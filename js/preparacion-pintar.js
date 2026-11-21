@@ -38,6 +38,89 @@
 
   function nota(texto) { return el("p", "text-sm text-brand-500 dark:text-brand-300 mb-3", texto); }
 
+  /* Las tarjetas de detalle van plegadas: primero la respuesta («Qué hacer
+     contra él» y el plan), después el detalle, para quien lo quiera. Con todo
+     abierto, el análisis de un rival con 900 partidas medía 14 pantallas en la
+     computadora y 26 en el celular. Plegada, la tarjeta deja su título y un
+     renglón que dice qué trae; el botón dice si está abierta (aria-expanded).
+     Lo que se abre queda abierto aunque el análisis se vuelva a pintar
+     (Stockfish y la teoría lo repintan), y «Abrir todo el detalle» se
+     recuerda en este navegador. Ver «El detalle, plegado». */
+  const CLAVE_DETALLE = "preparacion_detalle_v1";
+  const estadoTarjeta = new Map();   // id del título → abierta (lo que se tocó en esta visita)
+  function todoAbierto() {
+    try { return localStorage.getItem(CLAVE_DETALLE) === "abierto"; } catch (e) { return false; }
+  }
+  function estaAbierta(id) { return estadoTarjeta.has(id) ? estadoTarjeta.get(id) : todoAbierto(); }
+
+  function ponerPlegado(s, abierta) {
+    const h = s.querySelector("h3[id]");
+    const b = s.querySelector("[data-plegar]");
+    const cuerpo = s.querySelector("[data-cuerpo]");
+    const trae = s.querySelector("[data-trae]");
+    if (!h || !b || !cuerpo) return;
+    cuerpo.hidden = !abierta;
+    if (trae) trae.hidden = abierta;
+    b.setAttribute("aria-expanded", abierta ? "true" : "false");
+    b.textContent = abierta ? "Plegar" : "Ver el detalle";
+    b.setAttribute("aria-label", (abierta ? "Plegar: " : "Ver el detalle: ") + h.textContent);
+  }
+
+  function plegable(s, trae) {
+    const h = s.querySelector("h3[id]");
+    if (!h) return s;
+    const cuerpo = el("div");
+    cuerpo.dataset.cuerpo = "";
+    cuerpo.id = h.id + "-cuerpo";
+    while (h.nextSibling) cuerpo.appendChild(h.nextSibling);
+    const cabeza = el("div", "flex flex-wrap items-start justify-between gap-x-4 gap-y-1 mb-2");
+    s.insertBefore(cabeza, h);
+    cabeza.appendChild(h);
+    const b = el("button", "shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
+    b.type = "button";
+    b.dataset.plegar = h.id;
+    b.setAttribute("aria-controls", cuerpo.id);
+    b.addEventListener("click", () => {
+      const abierta = b.getAttribute("aria-expanded") !== "true";
+      estadoTarjeta.set(h.id, abierta);
+      ponerPlegado(s, abierta);
+      rotularTodo();
+    });
+    cabeza.appendChild(b);
+    const t = el("p", "text-sm text-brand-500 dark:text-brand-300", trae);
+    t.dataset.trae = "";
+    s.appendChild(t);
+    s.appendChild(cuerpo);
+    s.dataset.plegable = h.id;
+    ponerPlegado(s, estaAbierta(h.id));
+    return s;
+  }
+
+  // Abre una tarjeta plegada (el índice salta a ella).
+  function abrirTarjeta(id) {
+    const s = document.querySelector('[data-plegable="' + id + '"]');
+    if (!s) return;
+    estadoTarjeta.set(id, true);
+    ponerPlegado(s, true);
+    rotularTodo();
+  }
+
+  // El botón del índice dice lo que hace: abre todo mientras quede alguna plegada.
+  function rotularTodo() {
+    const b = document.getElementById("detalle-todo");
+    if (!b) return;
+    const alguna = [...document.querySelectorAll("[data-plegable] [data-cuerpo]")].some((c) => c.hidden);
+    b.textContent = alguna ? "Abrir todo el detalle" : "Plegar todo el detalle";
+    b.dataset.abre = alguna ? "si" : "no";
+  }
+
+  // «Abrir todo el detalle» / «Plegar todo el detalle»: vale para todas, y se recuerda.
+  function plegarTodo(raiz, abierto) {
+    try { localStorage.setItem(CLAVE_DETALLE, abierto ? "abierto" : "plegado"); } catch (e) { /* sin almacenamiento: vale por esta visita */ }
+    estadoTarjeta.clear();
+    raiz.querySelectorAll("[data-plegable]").forEach((s) => { estadoTarjeta.set(s.dataset.plegable, abierto); ponerPlegado(s, abierto); });
+  }
+
   // Una tabla: columnas [{ titulo, num }], filas de celdas (texto o nodo).
   function tabla(leyenda, columnas, filas) {
     const caja = el("div", "overflow-x-auto");
@@ -125,18 +208,99 @@
       opcionesActuales.fichaEn.textContent = "";
       opcionesActuales.fichaEn.appendChild(pintarFicha(r));
     } else c.appendChild(pintarFicha(r));
+    // Con pocas partidas, lo más seguro es lo que jugó en cada una: va
+    // antes del plan, que con tan pocas es una pista.
+    if (r.partidas && r.pocas) c.appendChild(pintarPartidas(r));
     c.appendChild(pintarPlanes(r));
     if (R() && (opcionesActuales.alAFondo || r.lineaFondo)) c.appendChild(pintarAFondo(r));
     if (r.cruce) c.appendChild(pintarCruce(r));
-    if (r.motor) c.appendChild(pintarMotor(r));
-    if (r.teoria) c.appendChild(pintarTeoria(r));
-    c.appendChild(pintarFoda(r));
-    if (r.tactica && window.PreparacionTactica) c.appendChild(pintarTactica(r));
-    if (r.estructuras) c.appendChild(pintarEstructuras(r));
-    if (r.masAlla) c.appendChild(pintarMasAlla(r));
-    c.appendChild(pintarRepertorio(r));
-    c.appendChild(pintarLineas(r));
-    c.appendChild(pintarTablas(r));
+    if (r.partidas && !r.pocas) c.appendChild(pintarPartidas(r));
+    // De acá para abajo, el detalle: plegado, con un renglón que dice qué trae.
+    if (r.motor) {
+      const e = (r.motor.errores || []).length, k = (r.motor.cuidado || []).length;
+      c.appendChild(plegable(pintarMotor(r), (e ? e + (e === 1 ? " error suyo que se repite" : " errores suyos que se repiten") : "Ningún error suyo que se repita") +
+        (k ? " y " + k + (k === 1 ? " jugada del plan que no conviene" : " jugadas del plan que no convienen") : "") + ", con la evaluación de cada jugada revisada."));
+    }
+    if (r.teoria) c.appendChild(plegable(pintarTeoria(r), "Hasta qué jugada sigue a los maestros en cada línea, y dónde empieza a improvisar."));
+    c.appendChild(plegable(pintarFoda(r), "Fortalezas, debilidades, oportunidades y amenazas, cada una con sus números."));
+    if (r.tactica && window.PreparacionTactica) c.appendChild(plegable(pintarTactica(r), "Con qué táctica gana y con cuál pierde, con ejemplos de sus partidas."));
+    if (r.estructuras) c.appendChild(plegable(pintarEstructuras(r), "En qué tipo de posición rinde menos y en cuál rinde más."));
+    if (r.masAlla) c.appendChild(plegable(pintarMasAlla(r), "Cómo terminan sus partidas, cómo usa el reloj y cómo le va en cada tipo de final."));
+    c.appendChild(plegable(pintarRepertorio(r), "Qué abre con blancas y qué contesta con negras, con cuánto saca en cada una."));
+    c.appendChild(plegable(pintarLineas(r), "Las líneas donde saca menos que de costumbre y donde saca más."));
+    c.appendChild(plegable(pintarTablas(r), "Sus resultados por ritmo, por año y según el Elo del oponente."));
+  }
+
+  /* Sus partidas, una por una (r.partidas: solo con 60 o menos). Con un rival
+     de torneo presencial hay 10 o 20 partidas: ningún porcentaje dice mucho,
+     y lo que sirve es ver qué jugó en cada una, la más nueva primero, y
+     recorrerla en el tablero. Arriba de cada color, lo que abrió y cuántas
+     veces. Ver «Rivales sin partidas en línea». */
+  const RES_VERBO = { G: "ganó", T: "hizo tablas", P: "perdió" };
+  function cuentaDe(lista, clave) {
+    const m = new Map();
+    lista.forEach((x) => { const k = clave(x); if (k) m.set(k, (m.get(k) || 0) + 1); });
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  }
+  const veces = (n) => (n === 1 ? "1 vez" : n + " veces");
+
+  function pintarPartidas(r) {
+    const s = tarjeta("Sus partidas, una por una", "partidas-titulo");
+    s.appendChild(nota(r.pocas
+      ? "Con " + r.total + (r.total === 1 ? " partida" : " partidas") + " los porcentajes son una pista, no una regla. Lo seguro es esto: qué jugó en cada una, la más nueva primero. «Ver» la abre entera en el tablero."
+      : "Qué jugó en cada una, la más nueva primero. «Ver» la abre entera en el tablero."));
+    const grilla = el("div", "grid lg:grid-cols-2 gap-6");
+    [["w", "Con blancas"], ["b", "Con negras"]].forEach(([color, titulo]) => {
+      const suyas = r.partidas.filter((x) => x.color === color);
+      const d = el("div", "min-w-0");
+      d.dataset.partidasDe = color;
+      d.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mb-1", titulo + " (" + suyas.length + (suyas.length === 1 ? " partida)" : " partidas)")));
+      if (!suyas.length) {
+        d.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", "No hay ninguna partida suya con " + (color === "w" ? "blancas" : "negras") + "."));
+        grilla.appendChild(d);
+        return;
+      }
+      // Lo que abrió: con blancas, su primera jugada; con negras, su respuesta a cada primera jugada.
+      const abre = color === "w"
+        ? "Abrió " + cuentaDe(suyas, (x) => x.sec[0]).map(([san, n]) => "1." + A.sanEs(san) + " " + veces(n)).join(", ") + "."
+        : cuentaDe(suyas, (x) => x.sec[0]).map(([san, n]) => "Contra 1." + A.sanEs(san) + " (" + veces(n) + ") contestó " +
+          cuentaDe(suyas.filter((x) => x.sec[0] === san), (x) => x.sec[1]).map(([resp, k]) => "1…" + A.sanEs(resp) + (n > 1 ? " " + veces(k) : "")).join(", ") + ".").join(" ");
+      const p = el("p", "text-sm text-brand-700 dark:text-brand-100 mb-2", abre);
+      p.dataset.abre = "";
+      d.appendChild(p);
+      const ul = el("ul", "divide-y divide-brand-100 dark:divide-brand-800");
+      suyas.forEach((x) => {
+        const li = el("li", "py-2 flex flex-wrap items-start justify-between gap-x-3 gap-y-1");
+        const t = el("div", "min-w-0 flex-1");
+        const partes = [];
+        if (x.fecha) partes.push(fecha(x.fecha));
+        partes.push(RES_VERBO[x.res] + (x.oponente ? " contra " + x.oponente + (x.elo ? " (" + x.elo + ")" : "") : "") + " en " + Math.ceil(x.jugadas / 2) + " jugadas");
+        if (x.ritmo) partes.push(x.ritmo);
+        t.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200", partes.join(" · ")));
+        const corta = x.sec.slice(0, 12);
+        t.appendChild(el("p", "font-mono text-sm text-brand-800 dark:text-white break-words", A.lineaEs(corta) + (x.sec.length > corta.length ? "…" : "")));
+        li.appendChild(t);
+        const acciones = el("div", "flex items-center gap-2");
+        if (opcionesActuales.alVerSecuencia && x.sec.length) {
+          const quien = (x.fecha ? fecha(x.fecha) + ", " : "") + RES_VERBO[x.res] + (x.oponente ? " contra " + x.oponente : "");
+          acciones.appendChild(botonVer(x.sec, "Ver en el tablero la partida: " + quien, "Su partida: " + quien + ".", Math.min(x.sec.length, 12)));
+        }
+        if (x.enlace) {
+          const a = el("a", "text-xs font-semibold underline text-brand-700 dark:text-brand-100 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "partida ↗");
+          a.href = x.enlace;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.setAttribute("aria-label", "Ver la partida" + (x.oponente ? " contra " + x.oponente : "") + " en su sitio (se abre en otra pestaña)");
+          acciones.appendChild(a);
+        }
+        li.appendChild(acciones);
+        ul.appendChild(li);
+      });
+      d.appendChild(ul);
+      grilla.appendChild(d);
+    });
+    s.appendChild(grilla);
+    return s;
   }
 
   /* Qué hacer y qué no hacer contra él: lo primero que se ve. Órdenes
@@ -147,7 +311,7 @@
     const res = R().armar(r);
     const s = tarjeta("Qué hacer contra él", "resumen-titulo");
     s.classList.add("ring-2", "ring-accent-400");
-    s.appendChild(nota("Lo esencial del análisis. Cada consejo trae el dato que lo justifica; el detalle está en las tarjetas de abajo."));
+    s.appendChild(nota(opcionesActuales.notaResumen || "Lo esencial del análisis. Cada consejo trae el dato que lo justifica; el detalle está en las tarjetas de abajo."));
     if (opcionesActuales.alImprimir) {
       const b = el("button", "mb-3 px-3 py-1.5 rounded-lg text-sm font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Hoja para imprimir (o guardar en PDF)");
       b.type = "button";
@@ -172,8 +336,10 @@
     pend.dataset.pendiente = "";
     s.appendChild(pend);
     ponerPendiente(pend, opcionesActuales.pendiente || []);
-    const grilla = el("div", "grid lg:grid-cols-2 gap-6");
-    res.lados.forEach((l) => {
+    // `soloLado`: el alumno que se prepara solo ya dijo con qué color juega.
+    const lados = res.lados.filter((l) => !opcionesActuales.soloLado || l.clave === opcionesActuales.soloLado);
+    const grilla = el("div", lados.length > 1 ? "grid lg:grid-cols-2 gap-6" : "");
+    lados.forEach((l) => {
       const d = el("div", "min-w-0");
       d.dataset.lado = l.clave;
       d.appendChild(el("h4", "font-bold text-lg text-brand-800 dark:text-white mb-2", l.titulo));
@@ -664,7 +830,7 @@
      el análisis se pinta (Stockfish o la teoría suman tarjetas). */
   function pintarIndice(nav, raiz) {
     nav.textContent = "";
-    const titulos = [...raiz.querySelectorAll("section > h3[id]")].filter((h) => h.id !== "ficha-titulo" && (h.checkVisibility ? h.checkVisibility() : h.offsetParent !== null));
+    const titulos = [...raiz.querySelectorAll("section > h3[id], section > div > h3[id]")].filter((h) => h.id !== "ficha-titulo" && (h.checkVisibility ? h.checkVisibility() : h.offsetParent !== null));
     if (titulos.length < 3) { nav.hidden = true; return; }
     nav.hidden = false;
     nav.appendChild(el("p", "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-2", "Ir a"));
@@ -673,10 +839,22 @@
       const li = el("li");
       const a = el("a", "inline-block px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", h.textContent);
       a.href = "#" + h.id;
+      // Si está plegada, se abre: se llega a la tarjeta, no a su título solo.
+      a.addEventListener("click", () => abrirTarjeta(h.id));
       li.appendChild(a);
       ul.appendChild(li);
     });
     nav.appendChild(ul);
+    // Todo el detalle de una vez (se recuerda en este navegador).
+    const plegadas = [...raiz.querySelectorAll("[data-plegable]")];
+    if (plegadas.length) {
+      const b = el("button", "mt-3 px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
+      b.type = "button";
+      b.id = "detalle-todo";
+      b.addEventListener("click", () => { plegarTodo(raiz, b.dataset.abre === "si"); rotularTodo(); });
+      nav.appendChild(b);
+      rotularTodo();
+    }
   }
 
   function pintarFoda(r) {
@@ -1222,7 +1400,19 @@
     return listaPlan(nodos, 0);
   }
 
-  window.PreparacionPintar = { cuerpo: pintarCuerpo, plan: pintarSoloPlan, pendiente, hoja: pintarHoja, indice: pintarIndice, el, tabla, jugada, fecha, saca };
+  /* «Qué hacer contra él» y «Sus partidas, una por una», sueltas: las usa
+     plan-rival.html cuando el alumno se prepara solo (js/plan-rival.js). */
+  function pintarSoloResumen(r, opciones) {
+    opcionesActuales = opciones || {};
+    nombreAlumno = "";
+    return pintarResumen(r);
+  }
+  function pintarSoloPartidas(r, opciones) {
+    opcionesActuales = opciones || {};
+    return pintarPartidas(r);
+  }
+
+  window.PreparacionPintar = { cuerpo: pintarCuerpo, plan: pintarSoloPlan, resumen: pintarSoloResumen, partidas: pintarSoloPartidas, plegarTodo, pendiente, hoja: pintarHoja, indice: pintarIndice, el, tabla, jugada, fecha, saca };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

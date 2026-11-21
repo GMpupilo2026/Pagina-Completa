@@ -6,8 +6,10 @@
  * filtros vuelve a analizar al instante, sin volver a leer ni a bajar nada.
  *
  * Mensajes (cada uno con su `id`, que vuelve en la respuesta):
- *   { tipo: "leer", texto }                     → { total, jugadores }
+ *   { tipo: "leer", texto, sumar }              → { total, jugadores }
+ *       con `sumar`, las partidas se agregan a las que ya estaban
  *   { tipo: "analizar", rival, filtros }        → { resultado }
+ *       `filtros.tambien`: otros nombres del mismo rival en el archivo
  *   { tipo: "leerAlumno", texto }               → { total, jugadores }
  *   { tipo: "cruzar", rival, filtros, alumno, planes } → { cruce }
  * Las partidas del alumno se guardan aparte: leerlas no borra las del rival.
@@ -24,7 +26,9 @@ self.onmessage = (ev) => {
   const m = ev.data || {};
   try {
     if (m.tipo === "leer") {
-      partidas = PreparacionAnalisis.leerPgn(m.texto);
+      // `sumar`: junto con las que ya estaban (un PGN de torneos más sus cuentas en línea).
+      const nuevas = PreparacionAnalisis.leerPgn(m.texto);
+      partidas = m.sumar ? partidas.concat(nuevas) : nuevas;
       self.postMessage({ id: m.id, total: partidas.length, jugadores: PreparacionAnalisis.jugadores(partidas).slice(0, 200) });
     } else if (m.tipo === "analizar") {
       self.postMessage({ id: m.id, resultado: PreparacionAnalisis.analizar(partidas, m.rival, m.filtros || {}) });

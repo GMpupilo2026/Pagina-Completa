@@ -2173,7 +2173,8 @@ las pruebe Node sin navegador. Decisiones que no se ven:
   1.d4 Cf6 2.c4 e6 y 1.c4 e6 2.d4 Cf6 son el mismo nodo y cuentan juntas. Ver
   «La base de la preparación: etapa 1».
 - **Nada se decide con pocas partidas.** Una línea cuenta desde `minimo()`
-  partidas (el 1 % del archivo, entre 4 y 30). Para elegir qué jugarle, la
+  partidas (el 1 % del archivo, entre 4 y 30; con menos de 30 partidas en
+  total, desde 2: ver «Rivales sin partidas en línea»). Para elegir qué jugarle, la
   puntuación se «encoge» hacia su promedio con 8 partidas imaginarias: 3 de 3
   no es 100 %. Una línea es fuerte o débil cuando se aparta de su promedio con
   ese color más de lo que explica el azar (z de ±1,28 y al menos 5 puntos). La
@@ -2275,7 +2276,7 @@ Chess.com del rival y con qué color va a jugar. Se entra también desde
 Competir («Prepara tu próxima partida»).
 
 - **Es la misma preparación, con lo mismo.** Las partidas se bajan con
-  `PreparacionDescarga` (las últimas 300), se analizan con
+  `PreparacionDescarga` (las últimas 300, o 1000 si lo elige), se analizan con
   `PreparacionAnalisis.analizar()` y el plan sale de `planDelAlumno()`: lo
   mismo que le llega cuando se lo manda el profe. Por eso se pinta con
   `pintarPlan()`, se entrena con `montarEntrenamiento()` y se juega con
@@ -2302,6 +2303,42 @@ Competir («Prepara tu próxima partida»).
   cuándo, cuánto saca con cada color, su Elo y, del lado que le toca, sus
   jugadas más repetidas. Con pocas partidas lo dice. Si con ese color juega
   muy poco para un plan, lo dice y no pinta nada.
+- **Tres fuentes, que se juntan como un solo jugador** (se pidió que fuera
+  más completo: tenía una sola cuenta y 300 partidas). Además de la cuenta,
+  en «¿Tiene otra cuenta, o tienes sus partidas en un archivo?»:
+  - **sus otras cuentas**, en el otro sitio o en el mismo: se bajan una tras
+    otra y toman el nombre de la primera (`unirCuentas()`, lo mismo que en la
+    del profesor). Si una de las otras falla, se dice en «Lo que juega» y se
+    sigue; si falla la primera, se para;
+  - **un archivo PGN**, para el rival de torneo que no juega en línea. Se lee
+    al elegirlo (ahí se cargan los módulos del análisis) para preguntar
+    **quién es el rival en ese archivo**; con archivo no hace falta usuario. Si
+    hay las dos cosas, ese nombre va como «también es él» (`filtros.tambien`).
+    El plan de un archivo lleva el id `propio:pgn:<nombre>:<lado>`.
+  - El subtítulo dice de dónde salieron («78 partidas suyas (de Lichess y
+    Chess.com)»); con una sola cuenta sigue diciendo «sus últimas N partidas
+    de Lichess».
+  - Lo usado se recuerda en `plan_propio_ultimo_v1` **solo si se usó** (la
+    otra cuenta, las 1000): quien prepara con una cuenta ve lo de siempre.
+- **«Qué hacer contra él», también para el alumno.** Debajo de «Lo que
+  juega» va la misma tarjeta del profesor (`PreparacionPintar.resumen()`),
+  **solo del color que le toca** (`soloLado`) y «En toda la partida»: el
+  reloj, cómo pierde, sus finales, su táctica, con «Practicar…» hacia
+  Entrenamiento. Sin Stockfish y sin la hoja para imprimir. «Ver» abre la
+  línea en el tablero del plan. Con pocas partidas (menos de 30), después del
+  plan van **sus partidas, una por una** (`PreparacionPintar.partidas()`).
+  - `js/preparacion-resumen.js` se carga en esa página ANTES que el análisis
+    (que llega recién al preparar): por eso busca `PreparacionAnalisis` al
+    usarlo y no al cargarse. Sin eso, el resumen reventaba con «null» y no se
+    pintaba nada.
+  - El pintor recuerda las opciones de la ÚLTIMA llamada
+    (`opcionesActuales`), y los botones las leen al tocarlos: el plan, el
+    resumen y las partidas se pintan con el MISMO objeto de opciones. Con
+    uno distinto por llamada, «Ver» del resumen deja de andar cuando se pinta
+    lo siguiente, sin dar ningún error hasta que alguien lo toca.
+  - Lo prueba `pruebaPropioMas`: las dos cuentas pedidas a cada sitio y
+    juntadas, el resumen de un solo color, el archivo solo (sin pedir nada a
+    ningún sitio), quién es el rival en el archivo y las partidas una por una.
 - Lo prueba `verificar-preparacion-rivales.js` (`pruebaPropio`) con el mismo
   Lichess de mentira: el usuario inválido no se pide, el que no existe se
   dice, a Lichess solo va el usuario con el tope de 300, el plan con blancas y
@@ -3690,6 +3727,104 @@ de 12 contra 2000 = 2280, sin rendimiento con menos de 5 partidas, el tope de
 ±800 y la racha); en la página, que la ficha se ve con sus cifras antes del
 cruce y del análisis, que el árbol va después, el contraste de G, T y P, que
 el índice lleva a cada tarjeta y no a la ficha, y la barrita de «Saca».
+
+### Rivales sin partidas en línea
+
+Se pidió mejorar la herramienta para el rival de torneo presencial, que no
+tiene miles de partidas en Lichess: tiene 10 o 20 en PGN, de varios torneos,
+con el nombre escrito distinto en cada uno. Probado con 22 partidas reales, la
+página contestaba «Tu línea: 1.e4» y nada más. Tres cosas:
+
+- **«También es él»: el mismo rival con varios nombres.** `claveNombre()`
+  junta «Angulo, Oscar» con «Oscar Angulo», pero no con «Angulo Castillo,
+  Oscar» ni con «Angulo, O», y menos con su usuario de Lichess. En el paso 2,
+  «¿Aparece con otro nombre en estas partidas?» ofrece los parecidos
+  (`parecidos()` en `js/preparacion-analisis.js`: comparten una palabra entera
+  de 3 letras o más y nada del más corto contradice al más largo; una inicial
+  vale por la palabra que empieza con ella) y deja agregar cualquier otro
+  desde una lista.
+  - **Se ofrecen SIN marcar**: «Angulo, O» puede ser el hermano. Decide
+    quien prepara.
+  - Lo marcado viaja en **`filtros.tambien`**, y por eso llega solo a todo lo
+    que usa los filtros del análisis: los cambios de filtro y el cruce con el
+    alumno (`clavesDe()`, que `partidasDelRival()` acepta en vez de una
+    clave). Un análisis sin otros nombres no lleva la clave `tambien`: queda
+    igual que antes.
+  - El análisis lleva el nombre elegido en la lista, y debajo dice «junto con
+    «…»».
+- **«Sumar a las partidas ya cargadas».** Cargar un PGN y después bajar su
+  cuenta reemplazaba lo primero. La casilla (sale cuando ya hay partidas
+  cargadas, y dice cuántas) hace que el trabajador las agregue (`leer` con
+  `sumar`). El rival elegido y lo marcado se conservan, la lista de nombres
+  se abre y, si lo sumado fue una descarga, su usuario se ofrece ya marcado;
+  **no analiza solo**: falta que quien prepara diga quién es quién. Sin la
+  casilla, cargar otra cosa reemplaza todo y no arrastra los otros nombres.
+- **Con pocas partidas, la página dice algo.**
+  - **Una línea cuenta desde 2 partidas cuando hay menos de 30**
+    (`minimo()`). Con el mínimo de 4, el plan de un rival con 22 partidas se
+    quedaba en la primera jugada. La página ya decía en cada línea con cuántas
+    partidas se decidió («Son solo 2 partidas: tómalo como pista»), y el
+    umbral de «débil» o «fuerte» sigue pidiendo lo que el azar no explica, así
+    que con 2 partidas nada pasa a ser un punto débil.
+  - **«Sus partidas, una por una»** (`unaPorUna()` → `r.partidas`,
+    `pintarPartidas()`): con 60 partidas o menos, cada una viaja ENTERA en el
+    análisis (unos 20 KB con 22), la más nueva primero: cuándo, cómo le fue,
+    contra quién, sus primeras jugadas y «Ver», que la abre en el tablero. Arriba
+    de cada color, lo que abrió y cuántas veces. Con menos de 30 va **antes
+    del plan** (es lo más seguro que hay) y el aviso de arriba manda ahí; entre
+    30 y 60, después del cruce; con más, no viaja (`null`): pesaría, y para eso
+    están las cuentas.
+- **Lo que no se hizo:** traer solas sus partidas de torneos transmitidos.
+  Lichess no ofrece un pedido público de «las partidas de este jugador en
+  las transmisiones», y armarlo raspando páginas se rompería sin avisar.
+  Queda el PGN, que es lo que entregan las bases y los organizadores.
+- **El FODA decía «Después de suele jugar Ca3»** cuando el error era su
+  primera jugada (la línea anterior estaba vacía). Ahora: «De entrada suele
+  jugar…».
+
+Lo prueba `verificar-preparacion-rivales.js` («Rivales sin partidas en
+línea»), con un rival anotado de tres formas, su hermana y otro del mismo
+apellido: sin navegador, los parecidos, las 14 partidas de los tres nombres
+(y que la hermana no entre), el mínimo de 2, las partidas enteras, el tope de
+60 y el cruce con los mismos nombres; en la página, las casillas sin marcar,
+el análisis con «junto con», la tarjeta antes del plan, «Ver», sumar un
+segundo archivo, agregar su usuario desde la lista y que sin sumar no se
+arrastre nada. Comprobado que falla al ignorar `tambien` y al no sumar en el
+trabajador.
+
+### El detalle, plegado
+
+Se pidió que fuera más fácil de leer y de usar. Con las partidas reales de un
+jugador (923), el análisis abierto medía **14 pantallas en la computadora y 26
+en el celular**: después de «Qué hacer contra él» y el plan venían diez
+tarjetas de tablas que casi nadie recorre entera.
+
+- **Primero la respuesta, después el detalle** (lo mismo de «Qué hacer y qué
+  no hacer: el resumen de arriba», un paso más). No se pliegan: el resumen, la
+  certeza, las partidas una por una, el plan, la línea a fondo y el cruce.
+  **Arrancan plegadas** las de detalle: Stockfish, la teoría, el FODA, la
+  táctica, el tipo de posición, más allá de la apertura, el repertorio, dónde
+  rinde menos y más, y las tablas (`plegable()` en `js/preparacion-pintar.js`).
+  Lo esencial de cada una ya está en el resumen.
+- **Plegada, la tarjeta deja su título y un renglón que dice qué trae**
+  (en la de Stockfish, cuántos errores encontró). El botón dice lo que hace
+  («Ver el detalle» / «Plegar») y si está abierta (`aria-expanded`,
+  `aria-controls`); su nombre para el lector de pantalla incluye el título.
+- **El índice nombra todas y abre la que se toca.** Y trae «Abrir todo el
+  detalle» / «Plegar todo el detalle», que **se recuerda** en el navegador
+  (`preparacion_detalle_v1`): quien quiere ver todo siempre, lo elige una vez.
+- **Lo abierto sigue abierto cuando el análisis se vuelve a pintar.** Stockfish
+  y la teoría repintan todo al terminar: si el estado viviera en el DOM, la
+  tarjeta que se estaba leyendo se cerraría sola. Vive en el módulo
+  (`estadoTarjeta`), por id de título.
+- **El índice busca los títulos también dentro de la cabecera plegable**
+  (`section > div > h3`): con el selector de antes, las tarjetas plegadas
+  desaparecían del índice sin dar ningún error.
+- **Los verificadores de siempre abren la página con «Abrir todo» ya
+  elegido** (la preferencia del botón, puesta antes de cargar): miran dentro
+  de las tarjetas. Cómo arrancan y cómo se abren lo prueba «El detalle,
+  plegado» sin esa preferencia. Comprobado que falla si arrancan abiertas.
+- Con eso, las mismas 923 partidas miden 8 pantallas en la computadora.
 
 ## Los proyectos
 

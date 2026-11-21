@@ -34,7 +34,7 @@
                  (js/plan-rival.js, «Prepárate tú»). No se guarda en la base. -->
             <section id="propio-caja" aria-labelledby="propio-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
                 <h2 id="propio-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🎯</span> Prepárate tú contra tu próximo rival</h2>
-                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4 max-w-3xl">Si tu rival juega en Lichess o en Chess.com, escribe su usuario y con qué color vas a jugar. Se bajan sus últimas partidas públicas y se arma tu plan: qué juega él y qué jugarle tú, para verlo en el tablero, entrenarlo y jugar contra su forma de jugar. A esos sitios solo se les manda su nombre de usuario; las partidas se revisan en tu computadora o celular y no se guardan. <a href="privacidad.html" class="underline">Política de privacidad</a></p>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4 max-w-3xl">Si tu rival juega en Lichess o en Chess.com, escribe su usuario y con qué color vas a jugar; si no juega en línea, carga un archivo con sus partidas. Se revisan y se arma tu plan: qué juega él y qué jugarle tú, para verlo en el tablero, entrenarlo y jugar contra su forma de jugar. A esos sitios solo se les manda su nombre de usuario; las partidas se revisan en tu computadora o celular y no se guardan. <a href="privacidad.html" class="underline">Política de privacidad</a></p>
                 <form id="propio-form" class="flex flex-wrap items-end gap-3" novalidate>
                     <label class="text-sm text-brand-700 dark:text-brand-200 flex flex-col gap-1">Sitio
                         <select id="propio-sitio" class="border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100">
@@ -51,6 +51,38 @@
                             <option value="b">Negras</option>
                         </select>
                     </label>
+                    <label class="text-sm text-brand-700 dark:text-brand-200 flex flex-col gap-1">Cuántas partidas
+                        <select id="propio-cuantas" class="border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100">
+                            <option value="300">Las últimas 300</option>
+                            <option value="1000">Las últimas 1000 (tarda más)</option>
+                        </select>
+                    </label>
+                    <!-- Otra cuenta suya y un PGN con sus partidas (un rival de
+                         torneo que no juega en línea): se juntan como un solo
+                         jugador (js/plan-rival.js). -->
+                    <details id="propio-mas" class="basis-full">
+                        <summary class="cursor-pointer text-sm font-semibold text-brand-600 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">¿Tiene otra cuenta, o tienes sus partidas en un archivo?</summary>
+                        <div class="mt-3 flex flex-wrap items-end gap-3">
+                            <label class="text-sm text-brand-700 dark:text-brand-200 flex flex-col gap-1">Su otra cuenta está en
+                                <select id="propio-otra-sitio" class="border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100">
+                                    <option value="chesscom">Chess.com</option>
+                                    <option value="lichess">Lichess</option>
+                                </select>
+                            </label>
+                            <label class="text-sm text-brand-700 dark:text-brand-200 flex flex-col gap-1 flex-1 min-w-[14rem]">Usuario de esa otra cuenta (opcional)
+                                <input id="propio-otras" type="text" maxlength="120" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Varias, separadas por coma" class="border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100">
+                            </label>
+                        </div>
+                        <div class="mt-3 flex flex-wrap items-end gap-3">
+                            <label class="text-sm text-brand-700 dark:text-brand-200 flex flex-col gap-1">Un archivo PGN con sus partidas (opcional)
+                                <input id="propio-archivo" type="file" multiple accept=".pgn,.txt,application/x-chess-pgn,text/plain" class="block text-sm text-brand-700 dark:text-brand-200 file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:font-semibold file:bg-brand-100 file:text-brand-700 dark:file:bg-brand-800 dark:file:text-brand-100">
+                            </label>
+                            <label id="propio-quien-caja" hidden class="text-sm text-brand-700 dark:text-brand-200 flex flex-col gap-1">Tu rival en ese archivo
+                                <select id="propio-quien" class="border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100"></select>
+                            </label>
+                        </div>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Con un archivo no hace falta el usuario: sirve para un rival de torneo que no juega en línea. El archivo se lee en tu navegador y no se sube a ningún lado.</p>
+                    </details>
                     <button id="propio-preparar" type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Preparar mi plan</button>
                     <button id="propio-parar" type="button" hidden class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Detener</button>
                 </form>
@@ -72,6 +104,10 @@
                 <ul id="propio-resumen" class="space-y-1 text-sm text-brand-700 dark:text-brand-100 list-disc pl-5"></ul>
                 <a href="plan-rival.html" class="inline-block mt-4 text-sm font-semibold text-accent-700 dark:text-accent-400 underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Preparar a otro rival</a>
             </div>
+            <!-- Prepárate tú: «Qué hacer contra él» (el mismo resumen de la
+                 preparación del profesor, del color que le toca) y, con pocas
+                 partidas, cada una (js/preparacion-pintar.js). -->
+            <div id="propio-analisis" hidden class="space-y-6 mb-6"></div>
             <div id="nota-caja" hidden class="bg-accent-50 dark:bg-brand-900 border-l-4 border-accent-500 rounded-xl px-5 py-4 mb-6">
                 <p class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">La nota de tu profe</p>
                 <p id="nota" class="text-brand-700 dark:text-brand-100 whitespace-pre-line"></p>
@@ -89,6 +125,9 @@
                 </section>
             </div>
 
+            <!-- Prepárate tú, con pocas partidas: cada una, para verla en el
+                 tablero de arriba (js/preparacion-pintar.js). -->
+            <div id="propio-partidas" hidden class="mt-6"></div>
             <!-- Entrenarlo: jugar cada línea de memoria (js/entrenador-linea.js).
                  Cada línea que sale sin errores ni pistas cuenta para la tarea. -->
             <section id="entrenar-caja" aria-labelledby="entrenar-titulo" class="mt-6 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">

@@ -46,17 +46,31 @@
     Avisos.avisar("Plan bajado: " + nombre);
   }
 
+  let verSuelta = null, verDelPlan = null;   // los pone pintarPlan(): abren el tablero del plan
   function pintarPlan(fila) {
     const r = comoResultado(fila);
     const lado = fila.lado;
     document.title = "Tu plan contra " + fila.rival + " — Ajedrez Integral";
     $("titulo").textContent = "Tu plan contra " + fila.rival;
-    $("subtitulo").textContent = "Con " + (lado === "conBlancas" ? "blancas" : "negras") + " · " + (fila.propio
-      ? "lo preparaste tú el " + fecha(fila.created_at) + " con " + (fila.propio.n === 1 ? "su última partida" : "sus últimas " + fila.propio.n + " partidas") + " de " + SITIO[fila.propio.sitio] + "."
+    // De dónde salieron: de una cuenta sola, «sus últimas N de Lichess»; con
+    // varias cuentas o con un archivo, «N partidas suyas» y de dónde.
+    const pr = fila.propio;
+    $("subtitulo").textContent = "Con " + (lado === "conBlancas" ? "blancas" : "negras") + " · " + (pr
+      ? "lo preparaste tú el " + fecha(fila.created_at) + " con " + (pr.de
+        ? (pr.n === 1 ? "1 partida suya" : pr.n + " partidas suyas") + " (" + pr.de + ")."
+        : (pr.n === 1 ? "su última partida" : "sus últimas " + pr.n + " partidas") + " de " + SITIO[pr.sitio] + ".")
       : "te lo mandaron el " + fecha(fila.created_at) + ".");
     if (fila.nota) { $("nota").textContent = fila.nota; $("nota-caja").hidden = false; }
 
     const visor = VisorLinea.montar($("visor"), { nombre: "Tablero del plan" });
+    // Una línea suelta (del resumen o una partida suya), en el mismo tablero.
+    verSuelta = (sec, nota, origen, en) => {
+      const donde = en || sec.length;
+      visor.cargar(sec, { en: donde, notas: sec.map((x, i) => (i === donde - 1 ? nota : "")), titulo: L.lineaEs(sec.slice(0, Math.min(sec.length, 8))) + (sec.length > 8 ? "…" : "") });
+      $("visor-caja").scrollIntoView({ block: "start" });
+      visor.enfocar();
+    };
+
     const abrir = (camino, origen, enfocar) => {
       const l = L.lineaDelPlan(r, camino);
       visor.cargar(l.sec, { en: l.en, notas: l.notas, titulo: L.lineaEs(l.sec.slice(0, l.en)) });
@@ -67,6 +81,7 @@
       }
     };
     $("plan").appendChild(P.plan(r[lado].plan, { alVerLinea: (camino, origen) => abrir(camino, origen, true) }));
+    verDelPlan = (camino, origen) => abrir(camino, origen, true);
     $("bajar-pgn").addEventListener("click", () => bajarPgn(r, lado));
     // Arranca en la línea principal, en la posición de salida.
     const principal = L.lineasDelPlan(r[lado].plan)[0];
@@ -114,7 +129,9 @@
      («propio:<sitio>:<usuario>:<lado>»), para que el repaso espaciado lo
      encuentre la próxima vez. Ver «Prepárate tú» en docs/decisiones/paneles.md. */
   const SITIO = { lichess: "Lichess", chesscom: "Chess.com" };
-  const MAX_PROPIO = 300;
+  const MAX_PROPIO = 300;           // lo que se baja si no se elige otra cosa
+  const CUANTAS = [300, 1000];
+  const USUARIO = /^[A-Za-z0-9][A-Za-z0-9_-]{1,29}$/;
   const CLAVE_PROPIO = "plan_propio_ultimo_v1";
   // Lo que falta para analizar (lo demás ya lo trae la página), en orden.
   const MODULOS = [["preparacion-tactica.js", "PreparacionTactica"], ["preparacion-estructuras.js", "PreparacionEstructuras"],
@@ -178,46 +195,147 @@
     return li;
   }
 
+  function leerArchivo(f) {
+    return new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => res(String(fr.result || ""));
+      fr.onerror = () => rej(fr.error || new Error("No se pudo leer " + f.name));
+      fr.readAsText(f);
+    });
+  }
+
+  /* El formulario. Tres fuentes, que se juntan como un solo jugador:
+       - su cuenta de Lichess o Chess.com (lo de siempre);
+       - sus otras cuentas (unirCuentas: toman el nombre de la primera);
+       - un archivo PGN con sus partidas, para el rival de torneo que no juega
+         en línea: quién es él en el archivo se elige en la lista, y si además
+         hay una cuenta, ese nombre va como «también es él» (filtros.tambien).
+     Con el plan salen «Qué hacer contra él» (el resumen de la preparación del
+     profesor, del color que le toca) y, con pocas partidas, cada una. Ver
+     «Prepárate tú» en docs/decisiones/paneles.md. */
   function montarPropio(yo) {
     const ultimo = leerUltimo();
     if (SITIO[ultimo.sitio]) $("propio-sitio").value = ultimo.sitio;
     if (typeof ultimo.usuario === "string") $("propio-usuario").value = ultimo.usuario.slice(0, 30);
     if (ultimo.color === "w" || ultimo.color === "b") $("propio-color").value = ultimo.color;
+    if (CUANTAS.includes(ultimo.cuantas)) $("propio-cuantas").value = String(ultimo.cuantas);
+    if (typeof ultimo.otras === "string" && ultimo.otras) {
+      $("propio-otras").value = ultimo.otras.slice(0, 120);
+      if (SITIO[ultimo.otraSitio]) $("propio-otra-sitio").value = ultimo.otraSitio;
+      $("propio-mas").open = true;
+    }
     const estado = $("propio-estado");
     let control = null;
     $("propio-parar").addEventListener("click", () => { if (control) control.abort(); });
+
+    // El archivo se lee al elegirlo: hay que saber quién es el rival ahí.
+    let delArchivo = null;          // { partidas, jugadores }
+    $("propio-archivo").addEventListener("change", async () => {
+      delArchivo = null;
+      $("propio-quien-caja").hidden = true;
+      const archivos = [...($("propio-archivo").files || [])];
+      if (!archivos.length) return;
+      estado.textContent = "Leyendo el archivo…";
+      try {
+        await cargarAnalisis();
+        const textos = await Promise.all(archivos.map(leerArchivo));
+        const partidas = PreparacionAnalisis.leerPgn(textos.join("\n\n")).filter(esNormal);
+        const jugadores = PreparacionAnalisis.jugadores(partidas).slice(0, 200);
+        if (!partidas.length || !jugadores.length) { estado.textContent = "No encontré ninguna partida de ajedrez normal en el archivo. Revisa que sea un PGN."; return; }
+        delArchivo = { partidas, jugadores };
+        const sel = $("propio-quien");
+        sel.textContent = "";
+        jugadores.forEach((j) => {
+          const o = document.createElement("option");
+          o.value = j.nombre;
+          o.textContent = j.nombre + " — " + j.partidas + (j.partidas === 1 ? " partida" : " partidas");
+          sel.appendChild(o);
+        });
+        $("propio-quien-caja").hidden = false;
+        estado.textContent = "Leí " + partidas.length + (partidas.length === 1 ? " partida" : " partidas") + " del archivo. Revisa que el rival elegido en la lista sea él (arriba va quien más partidas tiene) y toca «Preparar mi plan».";
+        sel.focus();
+      } catch (e) {
+        console.error(e);
+        estado.textContent = "No se pudo leer el archivo.";
+      }
+    });
+
     $("propio-form").addEventListener("submit", async (ev) => {
       ev.preventDefault();
       const sitio = $("propio-sitio").value;
       const usuario = $("propio-usuario").value.trim().replace(/^@/, "");
       const color = $("propio-color").value === "b" ? "b" : "w";
+      const cuantas = CUANTAS.includes(parseInt($("propio-cuantas").value, 10)) ? parseInt($("propio-cuantas").value, 10) : MAX_PROPIO;
+      const otraSitio = $("propio-otra-sitio").value;
+      const otrasTexto = $("propio-otras").value.trim();
+      const quien = delArchivo && $("propio-quien").value;
       if (!SITIO[sitio]) return;
-      if (!/^[A-Za-z0-9][A-Za-z0-9_-]{1,29}$/.test(usuario)) {
+      if (!usuario && !quien) {
+        estado.textContent = "Escribe el usuario de tu rival, o carga un archivo con sus partidas.";
+        $("propio-usuario").focus();
+        return;
+      }
+      if (usuario && !USUARIO.test(usuario)) {
         estado.textContent = "Escribe el usuario de tu rival tal como sale en su perfil: letras, números, guion o guion bajo.";
         $("propio-usuario").focus();
         return;
       }
-      try { localStorage.setItem(CLAVE_PROPIO, JSON.stringify({ sitio, usuario, color })); } catch (e) {}
+      // Sus otras cuentas: sin @, sin repetir y sin la de arriba.
+      const vistas = new Set();
+      const otras = otrasTexto.split(/[\s,;]+/).map((x) => x.replace(/^@/, "")).filter((x) => {
+        const k = x.toLowerCase();
+        if (!x || vistas.has(k) || (SITIO[otraSitio] && otraSitio === sitio && k === usuario.toLowerCase())) return false;
+        vistas.add(k);
+        return true;
+      });
+      const mala = otras.find((u) => !USUARIO.test(u));
+      if (mala || (otras.length && !usuario)) {
+        estado.textContent = mala ? "«" + mala + "» no es un usuario válido: letras, números, guion o guion bajo, separados por coma."
+          : "Para sumar otra cuenta, escribe arriba el usuario de la primera.";
+        $("propio-mas").open = true;
+        $(mala ? "propio-otras" : "propio-usuario").focus();
+        return;
+      }
+      // Se recuerda lo de siempre; lo demás, solo si se usó.
+      const recordar = { sitio, usuario, color };
+      if (cuantas !== MAX_PROPIO) recordar.cuantas = cuantas;
+      if (otras.length) { recordar.otras = otras.join(", "); recordar.otraSitio = otraSitio; }
+      try { localStorage.setItem(CLAVE_PROPIO, JSON.stringify(recordar)); } catch (e) {}
       $("propio-preparar").disabled = true;
       $("propio-parar").hidden = false;
       control = new AbortController();
-      estado.textContent = "Trayendo las partidas de «" + usuario + "» en " + SITIO[sitio] + "…";
+      const cuentas = usuario ? [{ sitio, usuario }].concat(otras.map((u) => ({ sitio: otraSitio, usuario: u }))) : [];
+      const avisos = [];
       let r = null;
       try {
         await cargarAnalisis();
-        let pgn;
-        try {
-          pgn = await PreparacionDescarga.descargar({ sitio, usuario, maximo: MAX_PROPIO, senal: control.signal,
-            alAvanzar: (n) => { estado.textContent = "Trayendo las partidas de «" + usuario + "» en " + SITIO[sitio] + "… van " + n + "."; } });
-        } catch (e) {
-          // Detenido: se analiza lo que ya llegó.
-          if (e && e.name === "AbortError") pgn = PreparacionDescarga.ultimoTexto || "";
-          else throw e;
+        const textos = [];
+        let detenido = false;
+        for (let k = 0; k < cuentas.length && !detenido; k++) {
+          const c = cuentas[k];
+          const trayendo = "Trayendo las partidas de «" + c.usuario + "» en " + SITIO[c.sitio] + "…";
+          estado.textContent = trayendo;
+          let pgn = "";
+          try {
+            pgn = await PreparacionDescarga.descargar({ sitio: c.sitio, usuario: c.usuario, maximo: cuantas, senal: control.signal,
+              alAvanzar: (n) => { estado.textContent = trayendo + " van " + n + "."; } });
+          } catch (e) {
+            // Detenido: se analiza lo que ya llegó. Si falla una de las otras
+            // cuentas, se dice y se sigue; si falla la primera, se para.
+            if (e && e.name === "AbortError") { pgn = PreparacionDescarga.ultimoTexto || ""; detenido = true; }
+            else if (k === 0) throw e;
+            else { if (!(e && e.paraMostrar)) console.error(e); avisos.push("De «" + c.usuario + "» en " + SITIO[c.sitio] + " no se pudo: " + (e && e.paraMostrar ? e.message : "revisa tu conexión.")); }
+          }
+          if (pgn) textos.push(k === 0 ? pgn : PreparacionDescarga.unirCuentas(pgn, c.usuario, usuario));
         }
         estado.textContent = "Revisando sus partidas…";
         await new Promise((ok) => setTimeout(ok, 0));
-        const partidas = PreparacionAnalisis.leerPgn(pgn).filter(esNormal);
-        r = partidas.length ? PreparacionAnalisis.analizar(partidas, usuario) : null;
+        let partidas = PreparacionAnalisis.leerPgn(textos.join("\n\n")).filter(esNormal);
+        if (quien) partidas = partidas.concat(delArchivo.partidas);
+        const nombre = usuario || quien;
+        r = partidas.length ? PreparacionAnalisis.analizar(partidas, nombre, usuario && quien ? { tambien: [quien] } : {}) : null;
+        // Con una cuenta que no trajo nada y un archivo, vale el archivo.
+        if (!r && usuario && quien) r = PreparacionAnalisis.analizar(delArchivo.partidas, quien, {});
       } catch (e) {
         if (e && e.paraMostrar) estado.textContent = e.message;
         else { console.error(e); estado.textContent = "No se pudieron traer sus partidas. Revisa tu conexión y vuelve a intentarlo."; }
@@ -225,7 +343,10 @@
         return;
       }
       $("propio-preparar").disabled = false; $("propio-parar").hidden = true;
-      if (!r || r.vacio) { estado.textContent = "No encontré partidas de ajedrez normal de «" + usuario + "» en " + SITIO[sitio] + "."; return; }
+      if (!r || r.vacio) {
+        estado.textContent = usuario ? "No encontré partidas de ajedrez normal de «" + usuario + "» en " + SITIO[sitio] + "." : "«" + quien + "» no tiene partidas con resultado en el archivo.";
+        return;
+      }
       const lado = color === "w" ? "conBlancas" : "conNegras";
       const plan = L.planDelAlumno(r, lado);
       if (!plan.plan.length) {
@@ -233,19 +354,45 @@
           " juega muy poco para armarte un plan. Prueba con el otro color, o pídele a tu profe que te ayude.";
         return;
       }
-      const fila = { id: "propio:" + sitio + ":" + usuario.toLowerCase() + ":" + lado, alumno_id: yo, rival: r.rival, lado, plan,
-        nota: null, created_at: new Date().toISOString(), propio: { sitio, n: r.total } };
+      // De dónde salieron, si no fue de una sola cuenta.
+      const fuentes = [...new Set(cuentas.map((c) => SITIO[c.sitio]))];
+      if (quien) fuentes.push("tu archivo");
+      const de = cuentas.length === 1 && !quien ? null : "de " + (fuentes.length > 1 ? fuentes.slice(0, -1).join(", ") + " y " + fuentes[fuentes.length - 1] : fuentes[0]);
+      const idRival = usuario ? sitio + ":" + usuario.toLowerCase() : "pgn:" + PreparacionAnalisis.claveNombre(quien).replace(/ /g, "-").slice(0, 60);
+      const fila = { id: "propio:" + idRival + ":" + lado, alumno_id: yo, rival: r.rival, lado, plan,
+        nota: null, created_at: new Date().toISOString(), propio: { sitio, n: r.total, de } };
       guardarPropio(fila);
       $("lista").classList.add("hidden");
       const ul = $("propio-resumen");
       ul.textContent = "";
-      resumenPropio(r, lado).forEach((t) => { const x = document.createElement("li"); x.textContent = t; ul.appendChild(x); });
+      resumenPropio(r, lado).concat(avisos).forEach((t) => { const x = document.createElement("li"); x.textContent = t; ul.appendChild(x); });
       $("propio-resumen-caja").hidden = false;
       const rr = pintarPlan(fila);
+      pintarAnalisisPropio(r, lado);
       await montarEntrenamiento(fila, rr, yo);
       montarSparring(fila, rr);
       $("titulo").focus();
     });
+  }
+
+  /* Más que el plan: «Qué hacer contra él» (qué buscar y qué evitar con ese
+     color, y en toda la partida: el reloj, cómo pierde, sus finales, su
+     táctica) y, si son pocas partidas, cada una para verla en el tablero. Lo
+     pinta js/preparacion-pintar.js, lo mismo que ve el profesor; acá sin
+     Stockfish y sin guardar nada. Todo lo que se pinta comparte las mismas
+     opciones: el pintor recuerda las de la última llamada. */
+  function pintarAnalisisPropio(r, lado) {
+    const caja = $("propio-analisis");
+    caja.textContent = "";
+    const opciones = { alVerLinea: verDelPlan, alVerSecuencia: verSuelta, soloLado: lado,
+      notaResumen: "Lo esencial de sus partidas. Cada consejo trae debajo el dato que lo justifica; «Ver» lo abre en el tablero." };
+    if (window.PreparacionResumen) caja.appendChild(P.resumen(r, opciones));
+    caja.hidden = !caja.children.length;
+    // Sus partidas van después del plan y el tablero: «Ver» las abre ahí.
+    const una = $("propio-partidas");
+    una.textContent = "";
+    if (r.partidas && r.pocas) una.appendChild(P.partidas(r, opciones));
+    una.hidden = !una.children.length;
   }
 
   // ------------------------------------------------------------ entrenarlo

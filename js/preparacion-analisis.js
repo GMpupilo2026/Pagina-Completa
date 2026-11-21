@@ -276,14 +276,55 @@
     return final;
   }
 
-  // Las partidas del rival, desde su lado: color, resultado, Elos.
+  /* El mismo rival, escrito de más de una forma que claveNombre() no junta:
+     «Angulo, Oscar» y «Angulo Castillo, Oscar» en dos torneos, o su nombre
+     en un PGN de torneo y su usuario de Lichess. `tambien` son los otros
+     nombres que quien prepara marcó como «también es él»: el análisis los
+     cuenta como uno solo. Ver «Rivales sin partidas en línea». */
+  function clavesDe(rival, tambien) {
+    const claves = new Set([claveNombre(rival)]);
+    (tambien || []).forEach((n) => { const k = claveNombre(n); if (k) claves.add(k); });
+    return claves;
+  }
+
+  /* Los jugadores del archivo que pueden ser el mismo que `clave`: comparten
+     un apellido o nombre entero (3 letras o más) y nada de lo que trae el más
+     corto contradice al más largo; una inicial («O») vale por la palabra que
+     empieza con ella. Es solo una sugerencia: «Angulo, O» puede ser el
+     hermano, y por eso la página lo ofrece sin marcar. */
+  function parecidos(lista, clave) {
+    const mio = String(clave || "").split(" ").filter(Boolean);
+    if (!mio.length) return [];
+    const calza = (corto, largo) => {
+      const libres = largo.slice();
+      let entero = false;
+      for (const t of corto) {
+        let i = libres.indexOf(t);
+        if (i >= 0) { if (t.length >= 3) entero = true; libres.splice(i, 1); continue; }
+        // Una inicial: «o» por «oscar» (o al revés, si el largo trae la inicial).
+        i = libres.findIndex((x) => (t.length === 1 && x[0] === t) || (x.length === 1 && t[0] === x));
+        if (i < 0) return false;
+        libres.splice(i, 1);
+      }
+      return entero;
+    };
+    return (lista || []).filter((j) => {
+      if (!j || j.clave === clave) return false;
+      const suyo = j.clave.split(" ").filter(Boolean);
+      return suyo.length <= mio.length ? calza(suyo, mio) : calza(mio, suyo);
+    });
+  }
+
+  // Las partidas del rival, desde su lado: color, resultado, Elos. `claveRival`
+  // es su clave o, si aparece con varios nombres, el conjunto de clavesDe().
   function partidasDelRival(partidas, claveRival) {
     const out = [];
+    const es = typeof claveRival === "string" ? (k) => k === claveRival : (k) => claveRival.has(k);
     for (const p of partidas) {
       const e = p.etiquetas;
       let color = null;
-      if (claveNombre(e.White) === claveRival) color = "w";
-      else if (claveNombre(e.Black) === claveRival) color = "b";
+      if (es(claveNombre(e.White))) color = "w";
+      else if (es(claveNombre(e.Black))) color = "b";
       if (!color) continue;
       const r = String(e.Result || "").trim();
       let res = null;
@@ -333,7 +374,10 @@
     return (puntos(c) - base) / Math.sqrt(v);
   }
 
-  function minimo(total) { return Math.min(30, Math.max(4, Math.round(total * 0.01))); }
+  // Con pocas partidas (un rival de torneo presencial trae 10 o 20), pedir 4
+  // por línea dejaba el plan en una sola jugada: ahí una línea cuenta desde 2,
+  // y la página dice en cada una con cuántas partidas se decidió.
+  function minimo(total) { return total < POCAS ? 2 : Math.min(30, Math.max(4, Math.round(total * 0.01))); }
 
   function nuevoNodo() { return { c: vacio(), hijos: new Map() }; }
 
@@ -783,6 +827,28 @@
       });
   }
 
+  /* Sus partidas, una por una: con pocas partidas (un rival de torneo
+     presencial) los porcentajes dicen poco y lo que sirve es ver qué jugó en
+     cada una. Hasta MAX_UNA_POR_UNA partidas van enteras (para recorrerlas en
+     el tablero), las más nuevas primero; con más, el análisis no las lleva:
+     pesarían y para eso están las cuentas. */
+  const MAX_UNA_POR_UNA = 60;
+  const JUGADAS_UNA_POR_UNA = 240;
+  function unaPorUna(lista) {
+    if (lista.length > MAX_UNA_POR_UNA) return null;
+    return lista.slice()
+      .sort((a, b) => ((a.fecha || "") < (b.fecha || "") ? 1 : (a.fecha || "") > (b.fecha || "") ? -1 : 0))
+      .map((x) => {
+        const d = { color: x.color, res: x.res, sec: x.jugadas.slice(0, JUGADAS_UNA_POR_UNA), jugadas: x.jugadas.length };
+        if (x.enlace) d.enlace = x.enlace;
+        if (x.fecha) d.fecha = x.fecha;
+        if (x.oponente) d.oponente = String(x.oponente).slice(0, 60);
+        if (x.eloRival) d.elo = x.eloRival;
+        if (x.ritmo && x.ritmo !== "sin dato") d.ritmo = x.ritmo;
+        return d;
+      });
+  }
+
   /* Su forma reciente: ¿cambió de repertorio o de racha? Se comparan sus
      partidas recientes (los 3 meses antes de su última partida, o sus 30
      últimas si en esos meses jugó menos de 20) con las anteriores. Un
@@ -1013,11 +1079,15 @@
   function analizar(partidas, rival, opciones) {
     const o = opciones || {};
     const clave = claveNombre(rival);
-    const todas = partidasDelRival(partidas, clave);
+    // Sus otros nombres en el archivo («también es él»), sin el principal.
+    const tambien = [...new Set((o.tambien || []).map((n) => String(n)).filter((n) => claveNombre(n) && claveNombre(n) !== clave))];
+    const todas = partidasDelRival(partidas, tambien.length ? clavesDe(rival, tambien) : clave);
     if (!todas.length) return null;
     // `partida`: el ritmo de la partida que viene, si se dijo (lo usa el resumen).
     // `reciente`: dar más peso a lo que juega ahora (ponerPesos); sí, si no se dice.
     const filtros = { ritmos: (o.ritmos || []).slice(), desde: o.desde || null, partida: o.partida || null, reciente: o.reciente !== false };
+    // Solo si los hay: un análisis sin ellos queda igual que antes.
+    if (tambien.length) filtros.tambien = tambien;
     const lista = todas.filter((x) => pasaFiltros(x, filtros));
     ponerPesos(lista, filtros.reciente);
     if (!lista.length) return { version: 4, vacio: true, rival: nombreDe(partidas, clave, rival), totalRival: todas.length, filtros, disponibles: disponibles(todas) };
@@ -1099,6 +1169,8 @@
       },
       masAlla: masAllaDe(lista, puntos(global), minN),
       derrotas: derrotasDe(lista),
+      // Con pocas partidas, cada una entera (unaPorUna); con muchas, null.
+      partidas: unaPorUna(lista),
       reciente: formaReciente(lista),
       // Su ficha: Elo y rendimiento por ritmo, sus últimas partidas (fichaDe).
       ficha: fichaDe(lista),
@@ -1293,7 +1365,8 @@
   function fodaMotor(r, O, A) {
     const { errores, cuidado } = r.motor;
     errores.slice(0, 4).reverse().forEach((x) => {
-      O.unshift("Después de " + lineaEs(x.sec) + " suele jugar " + sanEs(x.jugada) + " (" + x.n + " partidas), y Stockfish dice que es un error: la posición pasa de " + textoEval(x.antes) + " a " + textoEval(x.despues) + ". Lo mejor era " + (x.mejor ? sanEs(x.mejor) : "otra jugada") + ".");
+      // Su primera jugada no viene «después de» nada.
+      O.unshift((x.sec.length ? "Después de " + lineaEs(x.sec) + " suele jugar " : "De entrada suele jugar ") + sanEs(x.jugada) + " (" + x.n + " partidas), y Stockfish dice que es un error: la posición pasa de " + textoEval(x.antes) + " a " + textoEval(x.despues) + ". Lo mejor era " + (x.mejor ? sanEs(x.mejor) : "otra jugada") + ".");
     });
     cuidado.slice(0, 3).reverse().forEach((x) => {
       A.unshift("Ojo con " + lineaEs(x.sec.concat(x.jugada)) + ": a él le fue mal ahí, pero Stockfish la da como error (" + textoEval(x.antes) + " → " + textoEval(x.despues) + "). Mejor " + (x.mejor ? sanEs(x.mejor) : "otra jugada") + ".");
@@ -1393,11 +1466,12 @@
 
   return {
     leerPgn, jugadasDe, jugadasYRelojes, jugadores, claveNombre, analizar, ritmoDe, finDe, partidasDelRival,
+    clavesDe, parecidos, MAX_UNA_POR_UNA,
     sanEs, lineaEs, pct, textoEval, minimo, POCAS, tipoDeFinal, esFinal, FIN_ES,
     tareasDelMotor, aplicarMotor, rehacerFoda, fenDe, senalesMasAlla, planDe: L.planDe, esAMedida: L.esAMedida,
     // Para js/preparacion-cruce.js, que arma el árbol del alumno igual que el
     // del rival: una sola forma de armarlo y de contarlo.
-    interno: { partidasDelRival, pasaFiltros, armarArbol, hijosOrdenados, totalAristas, puntos, resumen, suavizada, leTocaAlRival, nombreDe, esPrefijo, PROFUNDIDAD_PLAN },
+    interno: { partidasDelRival, clavesDe, pasaFiltros, armarArbol, hijosOrdenados, totalAristas, puntos, resumen, suavizada, leTocaAlRival, nombreDe, esPrefijo, PROFUNDIDAD_PLAN },
   };
 });
 

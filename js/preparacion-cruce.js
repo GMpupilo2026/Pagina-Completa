@@ -186,7 +186,9 @@
     const claveA = A.claveNombre(alumno);
     const listaA = I.partidasDelRival(partidasAlumno, claveA);
     if (!listaA.length) return null;
-    const listaR = I.partidasDelRival(partidasRival, A.claveNombre(rival)).filter((x) => I.pasaFiltros(x, filtros || {}));
+    // Con los mismos nombres del análisis: si el rival aparece con varios («también es él»), todos.
+    const f = filtros || {};
+    const listaR = I.partidasDelRival(partidasRival, f.tambien && f.tambien.length ? I.clavesDe(rival, f.tambien) : A.claveNombre(rival)).filter((x) => I.pasaFiltros(x, f));
     const minR = A.minimo(listaR.length);
     const minA = minimoAlumno(listaA.length);
     return {
