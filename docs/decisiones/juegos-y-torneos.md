@@ -184,7 +184,8 @@ y no contra Oscar. Es solo para esa academia.
 Pedido del dueño el 19/11/2026, después de ver «Jaque al perro guasón»
 (ChessBase, 2000: un bulldog animado que comenta la partida con burlas y
 muecas): **un rival propio con esa personalidad, con el avatar del profe
-Oscar, solo para Oscarov para probarlo**. No se copió nada del perro (ni
+Oscar, solo para Oscarov para probarlo** (desde el 21/11/2026 lo tienen
+los 57 alumnos del grupo SJ: ver «El panel jornada» en `paneles.md`). No se copió nada del perro (ni
 dibujo, ni voz, ni frases): se tomó la receta.
 
 - **Es el mismo bot** (`js/bot-oscar.js`, todas las modalidades); lo nuevo es
