@@ -23,6 +23,10 @@
  *      cierra el torneo (status:"finished") y agrega su fila al salón de
  *      la fama público (public_tournament_champions).
  *
+ * Nada de esto vale para una ARENA: ahí el resultado lo anota la base al
+ * terminar la partida y el torneo lo cierra ella cuando se acaba su tiempo
+ * (ver js/torneo-arena.js). De acá una arena solo usa ofrecerVuelta().
+ *
  * Como cualquier jugador (o espectador) puede ser quien tenga la pestaña
  * abierta cuando su propia partida termina, TODO esto se ejecuta con los
  * permisos de quien esté mirando en ese momento — por eso las políticas de
@@ -91,6 +95,9 @@ window.TorneoSync = (function () {
     if (!round || round.status === "finished") return;
     const tournament = leido(await sb.from("tournaments").select("*").eq("id", round.tournament_id).single(), "el torneo");
     if (!tournament || tournament.status === "finished") return;
+    // Una arena no se cierra por rondas: la cierra la base cuando se acaba su
+    // tiempo (arena_cerrar). Su única «ronda» junta todas las partidas.
+    if (tournament.format === "arena") return;
     const esLaUltima = round.round_number >= (tournament.total_rounds || 0);
 
     /* En la última, los campeones se calculan ANTES de cerrar la ronda: si una
@@ -130,13 +137,60 @@ window.TorneoSync = (function () {
     return winnerIds;
   }
 
+  /* Terminada una partida de torneo, el camino de vuelta. Las páginas de
+     partida no saben de torneos, y sin esto quien terminaba tenía que volver
+     por el menú. En una arena que sigue abierta, a quien jugó se le ofrece
+     «otra partida»: vuelve al torneo y entra a la cola solo (?jugar=1). Se
+     ofrece una vez por página, y se puede cerrar. */
+  let vueltaOfrecida = false;
+  async function ofrecerVuelta(sb, room) {
+    if (vueltaOfrecida || !room || room.status !== "finished" || !room.id) return;
+    vueltaOfrecida = true;
+    try {
+      const { data: cruce } = await sb.from("tournament_pairings").select("tournament_id").eq("game_room_id", room.id).maybeSingle();
+      if (!cruce) return;
+      const { data: torneo } = await sb.from("tournaments").select("id, format, status, arena_termina").eq("id", cruce.tournament_id).maybeSingle();
+      if (!torneo) return;
+      const { data: sesion } = await sb.auth.getSession();
+      const yo = sesion && sesion.session && sesion.session.user ? sesion.session.user.id : null;
+      const jugue = !!yo && (room.white_id === yo || room.black_id === yo);
+      const ahora = window.RelojServidor ? RelojServidor.ahora() : Date.now();
+      const otra = jugue && torneo.format === "arena" && torneo.status === "in_progress"
+        && torneo.arena_termina && new Date(torneo.arena_termina).getTime() > ahora;
+
+      const caja = document.createElement("div");
+      caja.id = "vuelta-al-torneo";
+      caja.setAttribute("role", "status");
+      caja.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-[calc(100vw-2rem)] bg-brand-800 text-white rounded-xl shadow-lg px-4 py-3 flex items-center gap-3 text-sm";
+      const texto = document.createElement("span");
+      texto.textContent = otra ? "La arena sigue." : "Esta partida es de un torneo.";
+      const enlace = document.createElement("a");
+      enlace.href = "torneo.html?id=" + encodeURIComponent(torneo.id) + (otra ? "&jugar=1" : "");
+      enlace.className = "shrink-0 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-3 py-1.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white";
+      enlace.textContent = otra ? "Jugar otra partida →" : "Volver al torneo →";
+      const cerrar = document.createElement("button");
+      cerrar.type = "button";
+      cerrar.className = "shrink-0 px-2 py-1 rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white";
+      cerrar.setAttribute("aria-label", "Cerrar este aviso");
+      cerrar.textContent = "✕";
+      cerrar.addEventListener("click", () => caja.remove());
+      caja.appendChild(texto); caja.appendChild(enlace); caja.appendChild(cerrar);
+      document.body.appendChild(caja);
+    } catch (e) { console.error(e); }
+  }
+
   async function onRoomUpdate(sb, room) {
+    if (room && room.status === "finished") ofrecerVuelta(sb, room);
     if (!room || room.status !== "finished" || !room.result) return;
     const { data: pairing } = await sb.from("tournament_pairings").select("*").eq("game_room_id", room.id).is("result", null).maybeSingle();
     if (!pairing) return; // no es una partida de torneo, o ya se sincronizó
 
     const { data: round } = await sb.from("tournament_rounds").select("tournament_id").eq("id", pairing.round_id).single();
     const { data: tournament } = round ? await sb.from("tournaments").select("format").eq("id", round.tournament_id).single() : { data: null };
+
+    // En una arena el resultado lo anota la base al terminar la partida, con
+    // su hora (el orden de las partidas decide la racha): acá no se escribe.
+    if (tournament && tournament.format === "arena") return;
 
     const patch = { result: room.result, finished_at: new Date().toISOString() };
     if (room.result === "draw" && tournament && tournament.format === "elimination") {
@@ -147,7 +201,7 @@ window.TorneoSync = (function () {
     await maybeFinishRound(sb, pairing.round_id);
   }
 
-  return { onRoomUpdate: onRoomUpdate, maybeFinishRound: maybeFinishRound };
+  return { onRoomUpdate: onRoomUpdate, maybeFinishRound: maybeFinishRound, ofrecerVuelta: ofrecerVuelta };
 })();
 
 /*! rev bfb5bbb0d2d82f9f */

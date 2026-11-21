@@ -23,7 +23,38 @@
             ritmoTorneo = Ritmos.montar(document.getElementById("time-select"), { valor: "5+0" });
         }
 
-        const FORMAT_LABEL = { swiss: "Suizo", elimination: "Eliminación directa", round_robin: "Todos contra todos" };
+        const FORMAT_LABEL = { swiss: "Suizo", elimination: "Eliminación directa", round_robin: "Todos contra todos", arena: "Arena" };
+
+        /* El formato. La arena no tiene rondas: dura un tiempo, que se elige
+           acá, y no puede ser «Aleatorio» (ese sorteo es por ronda): la opción
+           se apaga, y si estaba elegida se vuelve a la primera modalidad. Las
+           duraciones y lo que se explica de la arena salen de
+           js/torneo-arena.js, la misma copia de torneo.html. */
+        function populateFormat() {
+            const formato = document.getElementById("format-select");
+            const minutos = document.getElementById("arena-minutos");
+            TorneoArena.DURACIONES.forEach((m) => {
+                const opcion = document.createElement("option");
+                opcion.value = String(m);
+                opcion.textContent = TorneoArena.etiquetaDuracion(m);
+                minutos.appendChild(opcion);
+            });
+            minutos.value = String(TorneoArena.DURACION_POR_OMISION);
+            const alCambiar = () => {
+                const arena = formato.value === "arena";
+                document.getElementById("arena-campo").hidden = !arena;
+                document.getElementById("format-desc").textContent = arena ? TorneoArena.EXPLICACION : "";
+                const modalidad = document.getElementById("variant-select");
+                const azar = modalidad.querySelector('option[value="' + ALEATORIO.id + '"]');
+                if (azar) azar.disabled = arena;
+                if (arena && modalidad.value === ALEATORIO.id) {
+                    modalidad.value = MODOS_TORNEO[0];
+                    modalidad.dispatchEvent(new Event("change"));
+                }
+            };
+            formato.addEventListener("change", alCambiar);
+            alCambiar();
+        }
 
         /* La modalidad: cualquiera de las de a dos (MODOS_TORNEO, de
            js/juegos-comun.js, la misma lista de juegos.html) y, al final,
@@ -85,7 +116,7 @@
                 const info = document.createElement("div");
                 info.innerHTML =
                     '<p class="font-semibold text-brand-800 dark:text-white">' + escapeHtml(t.name) + '</p>' +
-                    '<p class="text-xs text-brand-450 dark:text-brand-350">' + (FORMAT_LABEL[t.format] || t.format) + ' · ' + etiquetaModoTorneo(t.variant) + ' · ⏱️ ' + Ritmos.etiqueta(t.initial_seconds, t.increment_seconds) + ' · ' + (STATUS_LABEL[t.status] || t.status) + '</p>';
+                    '<p class="text-xs text-brand-450 dark:text-brand-350">' + (t.format === "arena" ? TorneoArena.etiqueta(t) : (FORMAT_LABEL[t.format] || t.format)) + ' · ' + etiquetaModoTorneo(t.variant) + ' · ⏱️ ' + Ritmos.etiqueta(t.initial_seconds, t.increment_seconds) + ' · ' + (STATUS_LABEL[t.status] || t.status) + '</p>';
                 card.appendChild(info);
                 const actions = document.createElement("div");
                 actions.className = "flex items-center gap-2";
@@ -99,7 +130,8 @@
                    cada uno — la RLS de `tournaments` solo devuelve los que creé,
                    los de mis profesores o, si administro, todos, y en los tres
                    casos la inscripción está permitida. */
-                if (t.status === "registration") {
+                // A una arena se puede entrar también con el torneo empezado.
+                if (t.status === "registration" || (t.format === "arena" && t.status === "in_progress" && !myRegistrations.has(t.id))) {
                     const btn = document.createElement("button");
                     btn.type = "button";
                     const registrado = myRegistrations.has(t.id);
@@ -130,11 +162,17 @@
             }
             const tc = ritmoTorneo.leer();
             if (tc.error) { msg.textContent = tc.error; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
-            const { data, error } = await sb.from("tournaments").insert({
+            const fila = {
                 name: name, format: format, variant: variant, modos_aleatorio: modos,
                 initial_seconds: tc.initial, increment_seconds: tc.increment,
                 created_by: profile.id,
-            }).select().single();
+            };
+            if (format === "arena") {
+                // La base tampoco deja (tournaments_arena_check); acá se dice antes.
+                if (variant === ALEATORIO.id) { msg.textContent = "Una arena se juega en una sola modalidad: elige una."; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
+                fila.arena_minutos = Number(document.getElementById("arena-minutos").value);
+            }
+            const { data, error } = await sb.from("tournaments").insert(fila).select().single();
             if (error) { console.error(error); msg.textContent = "No se pudo crear: " + error.message; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
             window.location.href = "torneo.html?id=" + data.id;
         });
@@ -163,6 +201,7 @@
             document.getElementById("list-empty").textContent = "Todavía no hay ningún torneo" + (isManager ? " — crea el primero arriba." : ".");
             populateTimeSelect();
             populateVariantSelect();
+            populateFormat();
             await loadAll();
 
             document.getElementById("loading").classList.add("hidden");

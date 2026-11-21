@@ -905,6 +905,124 @@ persona del pretérito— fueron a `BLANCA`, junto a las que ya estaban por lo m
 Y el verbo `entrar` se sumó a la tabla, que es la regla de siempre: **la tabla se
 completa cuando algo se escapa**.
 
+## El formato Arena dentro de los torneos de la Academia
+
+Lo pidió el dueño del sitio: poder jugar en modo arena **dentro de los torneos
+de las academias**. La sala de arena que ya existía (`sala.html`, ver «La sala
+de arena entre equipos, aparte de la Academia») vive en otra base, con otras
+cuentas y solo en ajedrez estándar: es para los torneos en línea entre
+colegios. Esto es otra cosa: **un formato más de `torneos.html`**, al lado de
+Suizo, Eliminación directa y Todos contra todos, con las cuentas, las
+modalidades, los ritmos y las partidas (`game_rooms`) de la Academia. Las
+academias siguen siendo privadas sin hacer nada nuevo: un torneo lo ve quien
+tiene de profesor a quien lo organiza, y la arena hereda eso.
+
+**Cómo se juega.** La arena dura un tiempo (de 10 minutos a 2 horas, se elige
+al crearla). Mientras dura, quien quiere jugar toca «Entrar a jugar» y la base
+lo sienta con el siguiente que espera; al terminar, pide otra. Victoria 2
+puntos, tablas 1; con dos victorias seguidas, la partida siguiente vale el
+doble (también las tablas); unas tablas de menos de 20 medias jugadas no dan
+nada (si no, dos amigos se reparten puntos cada veinte segundos). Lo que
+termina después de la hora **no suma**, como en Lichess: la clasificación se
+congela cuando se acaba el tiempo. Gana quien más puntos hizo —si empatan,
+todos los empatados, igual que en los otros formatos— y si nadie hizo puntos
+no hay campeón.
+
+**Lo que lleva la base, y por qué no el navegador** (migración
+`*_torneo_arena.sql`). En los otros formatos casi todo lo hace la página de
+quien esté mirando (`js/torneo-sync.js`); acá no alcanza:
+
+- **El emparejamiento** es `arena_buscar()`, con un candado por torneo
+  (`pg_advisory_xact_lock`): dos pantallas no pueden sentar al mismo jugador en
+  dos mesas. Es también el «sigo aquí»: la página la llama cada 3 segundos
+  mientras espera, y quien dejó de llamar hace 12 ya no se empareja. Toca quien
+  más lleva esperando, distinto del último rival; la revancha, solo si alguno
+  de los dos lleva 10 segundos. Blancas para quien lleva menos blancas que
+  negras en esa arena; parejos, al azar. La cola (`tournament_arena_cola`) no
+  tiene **ninguna política**: solo la tocan las funciones.
+- **La partida nace con los dos listos y el reloj andando.** En el resto de
+  Juegos el reloj arranca cuando los dos tocan «estoy listo»; acá una mesa que
+  espera un listo que no llega trabaría la arena de quien sí está. Los dos
+  estaban esperando hace segundos, y a quien no aparece se le cae la bandera.
+  Por eso mismo `js/juego-aviso.js` no avisa de estas partidas (solo ofrece
+  las que esperan un listo): la página de la arena lleva sola.
+- **La posición de salida**: donde es fija (estándar, niebla, volcanes,
+  misiones, crazyhouse) la pone la base y lo que mande el navegador no cuenta.
+  Donde vive en el navegador (Cartas, Duelo, Abrazos, Camaleón, A ciegas,
+  Vampiro, el sorteo de los volcanes) viaja con el pedido, como en
+  `aceptar_desafio()`, y si falta no se arma la partida. Eso la base **no lo
+  comprueba**, igual que no comprueba si una jugada es legal.
+- **La hora en que termina** la pone `arena_empezar()` con `now()`
+  (`tournaments.arena_termina`). La cuenta regresiva de la página usa
+  `js/reloj-servidor.js`: con la hora de cada computadora, la arena
+  «terminaría» distinto en cada pantalla. A un inscrito —que puede escribir el
+  torneo, ver `tournaments_update`— `proteger_torneo()` le revierte la
+  duración y la hora de cierre, igual que el ritmo.
+- **El resultado de cada partida pasa a su cruce con un trigger** sobre
+  `game_rooms` (`interno.arena_anotar_resultado()`, solo cuando la partida
+  pasa a terminada y solo si el torneo es una arena), con la hora de la base y
+  la cantidad de jugadas. En los otros formatos lo escribe el navegador con su
+  propia hora, cuando alguno de los dos tiene la página abierta; acá el
+  **orden** de las partidas decide la racha y la hora decide si suma.
+  `TorneoSync` no escribe nada en una arena ni la cierra «por rondas».
+- **La clasificación no se guarda: se calcula** (`arena_clasificacion()`,
+  `SECURITY INVOKER`: ve lo que la RLS ya deja ver). «Vale el doble» es que las
+  dos partidas anteriores de ese jugador fueron victorias, así que sale con dos
+  `lag()` sin guardar la racha en ningún lado. La página pide eso y, de los
+  cruces, solo los que pinta (los que siguen en juego y los últimos 30): una
+  arena larga pasa de mil partidas y PostgREST corta ahí sin avisar.
+- **El cierre** es `arena_cerrar()`: lo pide la pantalla de cualquiera que
+  participe cuando su cuenta llega a cero, y cierra **una** (candado y estado).
+  Si nadie tiene la página abierta, se cierra cuando alguien la abre; mientras
+  tanto no se empareja a nadie, porque `arena_buscar()` mira la hora. Con
+  `p_ahora`, quien organiza (o administra) la termina antes; la página pregunta
+  primero con `Avisos.confirmar`. El nombre que va al salón de la fama es el
+  nombre, nunca el correo.
+- **A una arena se entra con el torneo empezado**: la política de inscripción
+  deja inscribirse en una arena en curso (en los demás formatos, solo antes de
+  empezar). Retirarse a media arena no se puede; alcanza con no pedir rival.
+
+**Las pantallas.** Una arena cuelga de **una sola ronda** (la crea
+`arena_empezar()`), así que no hizo falta otra tabla de partidas: son cruces
+de `tournament_pairings` como los demás, y por eso las partidas se miran con
+el mismo tablerito en vivo y los mismos permisos de «Las partidas de un torneo
+se pueden VER». `torneo.html` esconde las rondas y la tabla de los otros
+formatos y muestra la sección de la arena: el reloj, «Entrar a jugar» / «Dejar
+de buscar» (con el estado en una región viva), la clasificación —la racha va
+**escrita**, la llama es adorno—, las partidas en juego y las últimas. Lo que
+comparten `torneos.html` y `torneo.html` (duraciones, textos, la cuenta
+regresiva y la cola) está en `js/torneo-arena.js`.
+
+**La vuelta desde la partida.** Las páginas de partida no saben de torneos, y
+quien terminaba tenía que volver por el menú; en una arena eso es cada tres
+minutos. `TorneoSync.ofrecerVuelta()` —que corre en las seis páginas, porque
+todas ya llamaban a `TorneoSync`— pone un aviso al terminar: «Jugar otra
+partida →» a quien jugó, si la arena sigue (vuelve con `?jugar=1` y entra a la
+cola solo), o «Volver al torneo →» en cualquier otro torneo y a quien miraba.
+
+**PENDIENTE (la migración todavía no se aplicó): falta comprobarlo**
+impersonando roles en SQL, dentro de una transacción que se
+deshaga, con un profesor y cuatro alumnos suyos: una alumna no la empieza ni la
+termina antes; empezarla dos veces se rechaza; la primera que pide rival
+espera, la segunda queda emparejada y a la primera se le contesta con esa
+misma sala; quien no está en la lista no entra a la cola, se inscribe con la
+arena en curso y juega; a una inscrita la hora de cierre y la duración se le
+revierten; la cola no se puede escribir desde afuera; al terminar una partida
+el cruce recibe resultado, jugadas y hora; la clasificación da 2-2-4-0-1 a
+quien gana tres, entabla rápido y entabla, y no cuenta lo que terminó después
+de la hora; y el cierre deja el torneo terminado con su campeón una vez.
+
+**Al tocar la arena** (`js/torneo-arena.js`, la sección de la arena en
+`js/torneo.js`, `js/torneos.js`, `js/torneo-sync.js` o la migración), correr
+`node herramientas/verificar-todo.js torneo-arena torneo-rondas torneo-en-vivo
+ritmos torneo-modos`. `verificar-torneo-arena.js` comprueba el módulo y la
+cola sin navegador, lee la migración (la cola sin políticas, el execute y el
+`search_path` de cada función, los candados) y, en un navegador con un Supabase
+de mentira que apunta cada llamada, lo que la página MANDA y pinta: crear,
+empezar una sola vez, la cola, ir a la partida, entrar tarde, el final, y que
+`TorneoSync` no cierre una arena. Probado que salta: sin el `return` de la
+arena en `maybeFinishRound`, o pintando el nombre con `innerHTML`.
+
 ## Competir: retar y las listas de partidas tienen su propia página
 
 «🟢 En línea ahora», «Partidas en curso» y «Partidas terminadas» vivían en
