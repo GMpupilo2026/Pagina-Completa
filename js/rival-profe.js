@@ -41,86 +41,97 @@
   const CLAVE_PREFERENCIA = "rival_profe_activo_v1";
 
   /* Las frases, por lo que pasó. `cara` es un id de js/avatar-profe-oscar.js
-     (lo comprueba el verificador). Van en primera persona y sin adjetivos con
-     género, porque el mismo texto lo dice la profe Pame en su academia. */
+     (lo comprueba el verificador); `id` es el nombre de su grabación:
+     herramientas/rival-profe/grabaciones/<id>.* → audio/rival-profe/<id>.mp3
+     (herramientas/rival-profe-medios.py). Las marcadas «del profe» son frases
+     suyas de verdad, de las que dice en clase. Van en primera persona y sin
+     adjetivos con género, porque el mismo texto lo dice la profe Pame en su
+     academia (con la voz del navegador: las grabaciones son del profe Oscar). */
   const FRASES = {
     saludo: [
-      { cara: "hola", texto: "¿Vienes a perder otra vez? Tranqui, voy suave… al principio." },
-      { cara: "burlon", texto: "A ver qué me traes hoy." },
-      { cara: "brazos-cruzados", texto: "Mueve cuando quieras. Yo ya sé cómo termina esto." },
-      { cara: "risa", texto: "¡Jajaja! Qué valentía, retarme a mí." },
+      { id: "saludo-perder", cara: "hola", texto: "¿Vienes a perder otra vez? Tranqui, voy suave… pero solo al principio." },
+      { id: "saludo-que-traes", cara: "burlon", texto: "A ver qué me traes hoy." },
+      { id: "saludo-ya-se", cara: "brazos-cruzados", texto: "Mueve cuando quieras. Yo ya sé cómo termina esto." },
+      { id: "saludo-valentia", cara: "risa", texto: "¡Jajaja! Qué valentía, retarme a mí." },
     ],
     regalo: [
-      { cara: "risa", texto: "¡Jajaja! Gracias por el regalo." },
-      { cara: "burlon", texto: "¿Esa pieza era para mí? Qué detalle." },
-      { cara: "vagabundo", texto: "Tan vagabundo… la dejaste solita." },
-      { cara: "pobrecillo", texto: "Pobrecillo, ni la vio venir." },
-      { cara: "esa-no-es", texto: "Esa no era. Te lo digo por si acaso." },
-      { cara: "risa", texto: "¡Ñam! Pieza gratis, la más rica." },
+      { id: "regalo-gracias", cara: "risa", texto: "¡Uh! Gracias por el regalito." },
+      { id: "regalo-detalle", cara: "burlon", texto: "¿Esa pieza era para mí? Uf, qué detalle." },
+      { id: "regalo-vagabundo", cara: "vagabundo", texto: "Tan vagabundo… la dejó solita." },
+      { id: "regalo-pobrecillo", cara: "pobrecillo", texto: "Pobrecillo, ni la vio venir." },
+      { id: "regalo-esa-no-era", cara: "esa-no-es", texto: "Esa no era. Te lo digo por si acaso." },
+      { id: "regalo-nam", cara: "risa", texto: "Mmm… ¡ñam! Pieza gratis, lo mejor." },
     ],
     golpe: [
-      { cara: "no-puede-ser", texto: "¡No puede ser! ¿Quién te enseñó eso?" },
-      { cara: "esa-vara", texto: "¿Y esa vara? No la tenía calculada." },
-      { cara: "wow", texto: "Ok, ok… esa estuvo buena. No te acostumbres." },
-      { cara: "mmm", texto: "Mmm… fue un descuido. Uno solo, ¿eh?" },
-      { cara: "que-jugadon", texto: "¡Qué jugadón! …pero no lo voy a repetir en voz alta." },
+      { id: "golpe-esa-vara", cara: "esa-vara", texto: "¡Esa vara!" },                              // del profe
+      { id: "golpe-de-donde-salio", cara: "wow", texto: "¿Y esa jugada de dónde salió?" },          // del profe
+      { id: "golpe-no-puede-ser", cara: "no-puede-ser", texto: "¡No puede ser! ¿Quién te enseñó eso?" },
+      { id: "golpe-no-la-tenia", cara: "esa-vara", texto: "¿Y esa vara? No la tenía calculada." },
+      { id: "golpe-no-te-acostumbres", cara: "wow", texto: "Ok, ok… esa estuvo buena. Pero no te acostumbres." },
+      { id: "golpe-un-descuido", cara: "mmm", texto: "Mmm… fue un descuido. Uno solo." },
+      { id: "golpe-jugadon", cara: "que-jugadon", texto: "¡Qué jugadón! …pero no lo voy a repetir en voz alta." },
     ],
     jaqueTuyo: [
-      { cara: "atencion", texto: "¿Jaque? Uy, qué miedo… (no)." },
-      { cara: "brazos-cruzados", texto: "Un jaque no es un plan, ¿eh?" },
-      { cara: "burlon", texto: "¿Y después del jaque, qué?" },
+      { id: "jaque-tuyo-miedo", cara: "atencion", texto: "¿Jaque? Uy, qué miedo… ¿no?" },
+      { id: "jaque-tuyo-plan", cara: "brazos-cruzados", texto: "Un jaque no es un plan, ¿eh?" },
+      { id: "jaque-tuyo-despues", cara: "burlon", texto: "Bueno, ¿qué? ¿Y después del jaque? ¿Qué va a hacer?" },
     ],
     jaqueMio: [
-      { cara: "te-toca", texto: "Jaque. Te toca a ti… sufrir un poquito." },
-      { cara: "atencion", texto: "¡Jaque! Ojo con ese rey." },
-      { cara: "burlon", texto: "Jaque. ¿Lo viste venir?" },
+      { id: "jaque-mio-esa-y-no-otra", cara: "atencion", texto: "Mmm… esa y no otra." },                    // del profe
+      { id: "jaque-mio-sufrir", cara: "te-toca", texto: "Jaque. Te toca a ti… sufrir un poquito." },
+      { id: "jaque-mio-ojo", cara: "atencion", texto: "¡Jaque! Ojo con ese rey, ¿ah?" },
+      { id: "jaque-mio-viste", cara: "burlon", texto: "Jaque. ¿Lo viste venir?" },
     ],
     charla: [
-      { cara: "mmm", texto: "Mmmm… interesante. Mal, pero interesante." },
-      { cara: "brazos-cruzados", texto: "Sigo esperando una jugada que me asuste." },
-      { cara: "vagabundo", texto: "Esto va a estar fácil." },
-      { cara: "idea", texto: "Ya tengo un plan. No te lo voy a contar." },
-      { cara: "tu-puedes", texto: "¡Tú puedes! …perder más despacio." },
+      { id: "charla-huelo", cara: "mmm", texto: "Mmm… huelo, huelo, huelo peligro." },                // del profe
+      { id: "charla-interesante", cara: "mmm", texto: "Mmmm… interesante. Mal, pero interesante." },
+      { id: "charla-asuste", cara: "brazos-cruzados", texto: "Bueno, ¿qué? Sigo esperando una jugada que me asuste." },
+      { id: "charla-facil", cara: "vagabundo", texto: "Bueno, creo que esto va a ser fácil." },
+      { id: "charla-plan", cara: "idea", texto: "Tengo un plan… tengo un plan." },
+      { id: "charla-mas-despacio", cara: "tu-puedes", texto: "¡Hágale, hágale, vamos! Usted puede perder un poquito más despacio… pero puede." },
     ],
     esperando: [
-      { cara: "brazos-cruzados", texto: "Estoy esperando… sin prisa. Bueno, con un poquito." },
-      { cara: "tiempo", texto: "¿Se te acabaron las ideas?" },
+      { id: "espera-sin-prisa", cara: "brazos-cruzados", texto: "Estoy esperando… sin prisa. Bueno, un toquecillo nada más." },
+      { id: "espera-ideas", cara: "tiempo", texto: "Diay, ¿se le acabaron las ideas?" },
     ],
     dormido: [
-      { cara: "dormidos", texto: "¿Te dormiste? Despiértame cuando juegues." },
+      { id: "dormido", cara: "dormidos", texto: "Diay, ¿se durmió? Bueno, ahí me despierta cuando juegue." },
     ],
     pista: [
-      { cara: "mmm", texto: "Uy… creo que algo se me escapó. ¿Lo ves?" },
-      { cara: "esa-vara", texto: "Ups. Algo me quedó flojo por acá… a ver si lo encuentras." },
-      { cara: "idea", texto: "Te voy a dar una oportunidad. Una sola. Búscala." },
+      { id: "pista-huelo", cara: "mmm", texto: "Huelo algo en la posición. ¿Lo ves?" },        // del profe
+      { id: "pista-se-me-escapo", cara: "mmm", texto: "Uy… creo que algo se me escapó. ¿Lo ves?" },
+      { id: "pista-flojo", cara: "esa-vara", texto: "¡Ah! Algo me quedó flojo por acá… a ver si lo encuentras." },
+      { id: "pista-oportunidad", cara: "idea", texto: "Te voy a dar una oportunidad, pero ojo: solo una. Búsquela, a ver." },
     ],
     laViste: [
-      { cara: "bien-hecho", texto: "¡Me cachaste! Bien visto: eso es mirar el tablero." },
-      { cara: "muy-bien", texto: "¡Eso! Esa pieza estaba sin defender. Así se juega." },
-      { cara: "excelente", texto: "La viste. Ok, hoy sí vienes despierto." },
+      { id: "la-viste-esa-y-no-otra", cara: "bien-hecho", texto: "¡Ojito! Esa y no otra. ¡Me cachaste!" },     // del profe
+      { id: "la-viste-mirar", cara: "bien-hecho", texto: "¡Me cachaste! Bien visto: eso es mirar el tablero. Muy bien." },
+      { id: "la-viste-sin-defender", cara: "muy-bien", texto: "¡Eso! Esa pieza estaba sin defender. Así se juega. ¡Excelente!" },
+      { id: "la-viste-despierto", cara: "excelente", texto: "¿La viste? Ok, hoy sí vienes despierto. ¡Excelente!" },
     ],
     noLaViste: [
-      { cara: "pobrecillo", texto: "Te la dejé servida y no la viste… pobrecillo." },
-      { cara: "casi", texto: "¡Casi! Había una pieza gratis. Mira qué quedó sin defender." },
-      { cara: "esa-no-es", texto: "Esa no era. Te había dejado algo colgando." },
+      { id: "no-la-viste-servida", cara: "pobrecillo", texto: "Diay, se la dejé servida y no la vio… pobrecillo." },
+      { id: "no-la-viste-gratis", cara: "casi", texto: "Diay, había una pieza gratis. Mira qué quedó sin defender." },
+      { id: "no-la-viste-colgando", cara: "esa-no-es", texto: "Bueno, esa no era. Te había dejado algo por ahí colgado… ni modo." },
     ],
     ganoYo: [
-      { cara: "risa", texto: "¡Jajaja! Gané. ¿La revancha? Ya sé que sí." },
-      { cara: "campeones", texto: "Campeón otra vez. El de siempre." },
-      { cara: "pobrecillo", texto: "Estuvo cerca… bueno, no tanto." },
+      { id: "gano-revancha", cara: "risa", texto: "Bueno, bueno, bueno… gané. ¿La revancha? Yo sé que sí." },
+      { id: "gano-campeon", cara: "campeones", texto: "Campeón otra vez. El de siempre… nada nuevo." },
+      { id: "gano-cerca", cara: "pobrecillo", texto: "Uf, estuvo cerca… bueno, la verdad es que no tanto." },
     ],
     ganasTu: [
-      { cara: "no-puede-ser", texto: "¡No puede ser! Seguro me distraje." },
-      { cara: "felicidades", texto: "Felicidades… esta vez. Quiero la revancha ya." },
-      { cara: "wow", texto: "Ok, me ganaste. Pero no le cuentes a nadie." },
+      { id: "ganas-esa-vara", cara: "no-puede-ser", texto: "¡Esa vara! Me ganó." },                 // del profe
+      { id: "ganas-distraje", cara: "no-puede-ser", texto: "¡Oh, no! ¡No puede ser! Me distraje… seguro fue eso." },
+      { id: "ganas-revancha", cara: "felicidades", texto: "Felicidades. Muy bien, muy bien… pero quiero la revancha de una vez." },
+      { id: "ganas-no-cuentes", cara: "wow", texto: "Está bien, me ganaste. Muy bien… pero no le cuente a nadie." },
     ],
     tablas: [
-      { cara: "casi", texto: "Tablas. Te salvaste por poquito." },
-      { cara: "esa-vara", texto: "¿Tablas? Bueno… lo dejamos así, por hoy." },
+      { id: "tablas-poquito", cara: "casi", texto: "Tablas. Te salvaste por poquito." },
+      { id: "tablas-por-hoy", cara: "esa-vara", texto: "¿Tablas? Bueno, lo dejamos así… pero solo por hoy." },
     ],
     rendicion: [
-      { cara: "pobrecillo", texto: "¿Ya te rendiste? Pobrecillo… otra, va." },
-      { cara: "risa", texto: "¡Jajaja! Sabia decisión." },
+      { id: "rendicion-otra", cara: "pobrecillo", texto: "¿Te rindes? Eso a mí no me gusta… pero bueno. ¿Otra?" },
+      { id: "rendicion-sabia", cara: "risa", texto: "Mmm… en realidad, sabia decisión. Aunque, la verdad, no me parece: siempre hay que seguir hasta el final." },
     ],
   };
   // Las caras que se sacuden en vez de saltar: las de susto o enojo.
@@ -208,8 +219,8 @@
   /* ── La pantalla ─────────────────────────────────────────────────────────── */
   let panel = null, imgCara = null, globo = null;
 
-  function ruta(id) { return window.AvatarProfeOscar ? AvatarProfeOscar.ruta(id) : ""; }
-  function altDe(id) { const a = window.AvatarProfeOscar && AvatarProfeOscar.porId(id); return a ? a.alt : ""; }
+  function ruta(id) { return window.AvatarProfeOscar ? window.AvatarProfeOscar.ruta(id) : ""; }
+  function altDe(id) { const a = window.AvatarProfeOscar && window.AvatarProfeOscar.porId(id); return a ? a.alt : ""; }
 
   function crearPanel() {
     if (panel) return;
@@ -226,17 +237,160 @@
     caja.className = "min-w-0 flex-1";
     const nombre = document.createElement("p");
     nombre.className = "text-xs font-semibold uppercase tracking-wide text-brand-500 dark:text-brand-300 mb-1";
-    nombre.textContent = (window.AvatarProfeOscar && AvatarProfeOscar.PROFES[AvatarProfeOscar.PROFE].nombre) || "El profe Oscar";
+    nombre.textContent = (window.AvatarProfeOscar && window.AvatarProfeOscar.PROFES[window.AvatarProfeOscar.PROFE].nombre) || "El profe Oscar";
     globo = document.createElement("p");
     globo.className = "rival-globo rounded-xl px-3 py-2 text-sm bg-brand-100 dark:bg-brand-800 text-brand-800 dark:text-white";
     globo.setAttribute("aria-live", "polite");
-    caja.append(nombre, globo);
+    const cabeza = document.createElement("div");
+    cabeza.className = "flex items-center justify-between gap-2 mb-1";
+    nombre.classList.remove("mb-1");
+    const botonVoz = document.createElement("button");
+    botonVoz.type = "button";
+    botonVoz.id = "rival-profe-voz";
+    botonVoz.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+    botonVoz.addEventListener("click", () => {
+      vozEncendida = !vozEncendida;
+      try { localStorage.setItem(CLAVE_VOZ, vozEncendida ? "si" : "no"); } catch (e) { /* no importa */ }
+      if (!vozEncendida) callar();
+      pintarBotonVoz(botonVoz);
+    });
+    cabeza.append(nombre, botonVoz);
+    caja.append(cabeza, globo);
     panel.append(imgCara, caja);
     status.parentNode.insertBefore(panel, status);
     // Las caras se bajan desde ya, para que el cambio de gesto sea al instante.
     const ids = new Set(["mmm"]);
     Object.values(FRASES).forEach((l) => l.forEach((f) => ids.add(f.cara)));
-    ids.forEach((id) => { const i = new Image(); i.src = ruta(id); });
+    ids.forEach((id) => {
+      [ruta(id), rutaCuadro(id, "ojos"), rutaCuadro(id, "boca")].filter(Boolean).forEach((src) => { const i = new Image(); i.src = src; });
+    });
+    pintarBotonVoz(botonVoz);
+  }
+
+  /* ── La voz y la boca ────────────────────────────────────────────────────────
+     Con la voz encendida (el botón del panel, encendida por omisión; queda en
+     `rival_profe_voz_v1` de este navegador), cada frase se oye:
+     - con la GRABACIÓN del profe si existe (audio/rival-profe/<id>.mp3; la
+       lista la arma herramientas/rival-profe-medios.py en
+       js/rival-profe-medios.js). Solo para el profe Oscar: la profe Pame no
+       habla con la voz de él;
+     - si no, con la voz del navegador, mientras faltan grabaciones.
+     Mientras suena, la boca se mueve con el VOLUMEN de la grabación (Web Audio,
+     un AnalyserNode): con el cuadro de boca abierta de esa cara si lo hay
+     (img/avatar-profe-<profe>/cuadros/<cara>-boca.webp) y, si no, la cara se
+     mece un poquito. Con la voz del navegador no hay volumen que medir: se mece
+     el tiempo que más o menos dura la frase.
+     Y parpadea sola cada 2,5 a 6 s si su cara tiene el cuadro de ojos cerrados
+     (<cara>-ojos.webp). Con «reducir movimiento», ni se mece ni parpadea.
+     La voz de todo el sitio (js/voz-pagina.js) no vuelve a leer el globo
+     mientras la del profe está encendida (`data-voz-propia`). */
+  const CLAVE_VOZ = "rival_profe_voz_v1";
+  const MEDIOS = window.RivalProfeMedios || { voces: [], cuadros: {} };
+  const PROFE_ACTUAL = (window.AvatarProfeOscar && window.AvatarProfeOscar.PROFE) || "oscar";
+  const VOCES = new Set(PROFE_ACTUAL === "oscar" ? MEDIOS.voces || [] : []);
+  const CUADROS = new Set((MEDIOS.cuadros || {})[PROFE_ACTUAL] || []);
+  const UMBRAL_BOCA = 0.06;   // volumen (0-1) desde el que la boca se abre
+  let vozEncendida = true;
+  try { vozEncendida = window.localStorage.getItem(CLAVE_VOZ) !== "no"; } catch (e) { /* sin almacenamiento: encendida */ }
+  let sonando = null, ctxAudio = null, medidor = null, finMecida = null, parpadeo = null;
+  const sinMovimiento = () => !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  function rutaCuadro(cara, tipo) {
+    if (!CUADROS.has(cara + "-" + tipo) || !window.AvatarProfeOscar) return null;
+    return window.AvatarProfeOscar.PROFES[PROFE_ACTUAL].carpeta + "/cuadros/" + cara + "-" + tipo + ".webp";
+  }
+
+  // La imagen que toca ahora: la cara, con la boca abierta o los ojos cerrados.
+  let bocaAbierta = false, ojosCerrados = false;
+  function pintarCuadro() {
+    if (!imgCara) return;
+    const cara = imgCara.dataset.cara;
+    const src = (bocaAbierta && rutaCuadro(cara, "boca")) || (ojosCerrados && rutaCuadro(cara, "ojos")) || ruta(cara);
+    if (imgCara.getAttribute("src") !== src) imgCara.setAttribute("src", src);
+    imgCara.classList.toggle("rival-hablando", bocaAbierta && !rutaCuadro(cara, "boca") && !sinMovimiento());
+  }
+
+  function callar() {
+    if (sonando) { try { sonando.pause(); } catch (e) { /* ya no estaba */ } sonando = null; }
+    if (medidor) { cancelAnimationFrame(medidor); medidor = null; }
+    clearTimeout(finMecida);
+    bocaAbierta = false;
+    pintarCuadro();
+  }
+
+  function medirVolumen(audio) {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctxAudio = ctxAudio || new AC();
+      if (ctxAudio.state === "suspended") ctxAudio.resume();
+      const fuente = ctxAudio.createMediaElementSource(audio);
+      const analizador = ctxAudio.createAnalyser();
+      analizador.fftSize = 512;
+      fuente.connect(analizador);
+      analizador.connect(ctxAudio.destination);
+      return analizador;
+    } catch (e) { return null; }
+  }
+
+  function hablar(frase) {
+    callar();
+    if (!vozEncendida || !frase) return;
+    if (VOCES.has(frase.id)) {
+      const audio = new Audio("audio/rival-profe/" + frase.id + ".mp3");
+      sonando = audio;
+      const analizador = medirVolumen(audio);
+      const datos = analizador ? new Uint8Array(analizador.fftSize) : null;
+      const paso = () => {
+        if (sonando !== audio) return;
+        if (analizador) {
+          analizador.getByteTimeDomainData(datos);
+          let suma = 0;
+          for (let i = 0; i < datos.length; i++) { const v = (datos[i] - 128) / 128; suma += v * v; }
+          bocaAbierta = Math.sqrt(suma / datos.length) > UMBRAL_BOCA;
+        } else bocaAbierta = !audio.paused;
+        pintarCuadro();
+        medidor = requestAnimationFrame(paso);
+      };
+      audio.addEventListener("play", () => { medidor = requestAnimationFrame(paso); });
+      audio.addEventListener("ended", () => { if (sonando === audio) callar(); });
+      audio.play().catch(() => { if (sonando === audio) callar(); });
+      return;
+    }
+    // Sin grabación: la voz del navegador (sin el «(no)» y los demás paréntesis).
+    const texto = frase.texto.replace(/\s*\([^)]*\)/g, "");
+    let dicho = false;
+    if (window.BlindNotation && BlindNotation.speak) dicho = BlindNotation.speak(texto, { siempre: true });
+    else if (window.speechSynthesis) {
+      try {
+        const u = new SpeechSynthesisUtterance(texto);
+        u.lang = "es-ES";
+        speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+        dicho = true;
+      } catch (e) { dicho = false; }
+    }
+    if (!dicho) return;
+    bocaAbierta = true;
+    pintarCuadro();
+    finMecida = setTimeout(() => { bocaAbierta = false; pintarCuadro(); }, Math.min(6000, 600 + texto.length * 65));
+  }
+
+  function parpadear() {
+    clearTimeout(parpadeo);
+    parpadeo = setTimeout(() => {
+      if (estado.enPartida && !bocaAbierta && !sinMovimiento() && imgCara && rutaCuadro(imgCara.dataset.cara, "ojos")) {
+        ojosCerrados = true; pintarCuadro();
+        setTimeout(() => { ojosCerrados = false; pintarCuadro(); }, 140);
+      }
+      parpadear();
+    }, 2500 + azar() * 3500);
+  }
+
+  function pintarBotonVoz(boton) {
+    boton.setAttribute("aria-pressed", vozEncendida ? "true" : "false");
+    boton.textContent = vozEncendida ? "🔊 Con voz" : "🔇 Sin voz";
+    if (globo) globo.toggleAttribute("data-voz-propia", vozEncendida);
   }
 
   // Reinicia una animación de CSS: quitar la clase, forzar el cálculo, ponerla.
@@ -248,9 +402,9 @@
 
   function ponerCara(id, conAnimacion) {
     if (!imgCara) return;
-    imgCara.src = ruta(id);
-    imgCara.alt = altDe(id);
     imgCara.dataset.cara = id;
+    imgCara.alt = altDe(id);
+    pintarCuadro();
     if (conAnimacion) animar(imgCara, SACUDIDA.has(id) ? "rival-sacudida" : "rival-salto");
   }
 
@@ -260,7 +414,9 @@
     ponerCara(f.cara, true);
     globo.textContent = f.texto;
     globo.dataset.evento = evento;
+    globo.dataset.frase = f.id;
     animar(globo, "rival-entra");
+    hablar(f);
     return f;
   }
 
@@ -286,6 +442,7 @@
     estado.regaloPendiente = null;
     estado.valorTrasBot = ad ? valorDe(ad) : 0;
     decir("saludo");
+    parpadear();
     if (ctx.empiezaHumano) esperarTuJugada();
   }
 

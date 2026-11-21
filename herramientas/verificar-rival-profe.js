@@ -138,6 +138,28 @@ ok("una migración agrega «rival_profe» al check de vistas_en_prueba",
   fs.readdirSync(path.join(RAIZ, "supabase", "migraciones")).some((f) => /'rival_profe'/.test(leer("supabase/migraciones/" + f)) && /vistas_en_prueba_vista_check/.test(leer("supabase/migraciones/" + f))));
 ok("con «reducir movimiento» la cara no se mueve", /prefers-reduced-motion: reduce[\s\S]*animation: none/.test(leer("css/rival-profe.css")));
 
+console.log("La voz y los cuadros");
+const ids = Object.values(R.FRASES).flat().map((f) => f.id);
+ok("cada frase tiene un nombre de archivo en minúsculas y guiones", ids.every((id) => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(id || "")), ids.filter((id) => !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(id || "")));
+ok("ningún nombre de archivo se repite", new Set(ids).size === ids.length);
+ok("las frases del profe están", ["¡esa vara!", "esa y no otra", "huelo algo en la posición", "huelo peligro", "¿y esa jugada de dónde salió?"].every((t) => todas.some((x) => x.toLowerCase().includes(t))));
+const m = {};
+new Function("window", leer("js/rival-profe-medios.js"))(m);
+const medios = m.RivalProfeMedios;
+const enDisco = (dir, ext) => (fs.existsSync(path.join(RAIZ, dir)) ? fs.readdirSync(path.join(RAIZ, dir)).filter((f) => f.endsWith(ext)).map((f) => f.slice(0, -ext.length)).sort() : []);
+ok("la lista de grabaciones es la de audio/rival-profe", JSON.stringify(medios.voces.slice().sort()) === JSON.stringify(enDisco("audio/rival-profe", ".mp3")), { lista: medios.voces, disco: enDisco("audio/rival-profe", ".mp3") });
+ok("cada grabación es de una frase que existe", medios.voces.every((v) => ids.includes(v)), medios.voces.filter((v) => !ids.includes(v)));
+["oscar", "pame", "karina"].forEach((p) => {
+  const lista = (medios.cuadros[p] || []).slice().sort();
+  ok(`los cuadros de ${p} en la lista son los de img/avatar-profe-${p}/cuadros`, JSON.stringify(lista) === JSON.stringify(enDisco(`img/avatar-profe-${p}/cuadros`, ".webp")));
+  ok(`cada cuadro de ${p} es <cara>-ojos o <cara>-boca de una cara que existe`, lista.every((c) => { const x = /^(.+)-(ojos|boca)$/.exec(c); return x && caras.has(x[1]); }), lista);
+});
+const iMedios = html.indexOf('src="js/rival-profe-medios.js"');
+ok("bot.html carga la lista de medios antes que el rival", iMedios > 0 && iMedios < iRival);
+ok("la voz del sitio no vuelve a leer el globo del profe", /closest\("\[data-voz-propia\]"\)/.test(leer("js/voz-pagina.js")) && /data-voz-propia/.test(leer("js/rival-profe.js")));
+ok("con «reducir movimiento» la cara no se mece al hablar", /prefers-reduced-motion: reduce[\s\S]*rival-hablando[\s\S]*animation: none/.test(leer("css/rival-profe.css")));
+ok("la voz de la profe Pame no usa las grabaciones del profe", /PROFE_ACTUAL === "oscar" \? MEDIOS\.voces/.test(leer("js/rival-profe.js")));
+
 console.log(fallos ? `\n${fallos} fallo(s)` : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);
 

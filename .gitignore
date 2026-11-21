@@ -46,3 +46,7 @@ herramientas/.cache-estilo.json
 # nombres de menores de edad, asistencia y fotos. Se trabajan fuera del
 # repositorio; esta línea es por si alguien los guarda acá por descuido.
 informes-ccdr/
+
+# Los cuadros del profe rival (ojos cerrados, boca abierta): los dibuja
+# herramientas/rival-profe-cuadros.py cada vez que corre rival-profe-medios.py.
+herramientas/avatar-profe-oscar/cuadros/

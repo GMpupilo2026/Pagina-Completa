@@ -134,6 +134,9 @@ window.VozPagina = (function () {
     regiones.forEach(function (region) {
       var texto = limpio(region.textContent);
       if (!texto || !visible(region)) { ultimo.set(region, ""); return; }
+      /* Una región que ya se dice sola (`data-voz-propia`: el globo del profe
+         rival, js/rival-profe.js, con su grabación) no se lee otra vez encima. */
+      if (region.closest("[data-voz-propia]")) { ultimo.set(region, texto); return; }
       var siempre = region.classList.contains("sr-only");
       if (!siempre && ultimo.get(region) === texto) return;
       /* Un reloj o una cuenta atrás: el mismo texto con otro número. */
