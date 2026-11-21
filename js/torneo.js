@@ -16,7 +16,8 @@
         const playerNames = {};
         const TOURNEY_ID = new URLSearchParams(window.location.search).get("id");
 
-        const FORMAT_LABEL = { swiss: "Suizo", elimination: "Eliminación directa", round_robin: "Todos contra todos" };
+        const FORMAT_LABEL = { swiss: "Suizo", elimination: "Eliminación directa", round_robin: "Todos contra todos", arena: "Arena" };
+        const esArena = () => !!tournament && tournament.format === "arena";
         const STATUS_LABEL = { registration: "🟢 Inscripción abierta", in_progress: "🔵 En curso", finished: "🏁 Terminado" };
 
         function nameFor(id) { return playerNames[id] || "Jugador"; }   // "Jugador" y no "Alumno": el profesor también se inscribe
@@ -126,6 +127,14 @@
 
         async function startTournament() {
             if (registrations.length < 2) { Avisos.avisar("Hacen falta al menos 2 inscritos.", { tipo: "error" }); return; }
+            /* Una arena la empieza la base: la hora en que termina la pone ella
+               con su reloj, y no hay ronda que armar acá. */
+            if (esArena()) {
+                const { error } = await sb.rpc("arena_empezar", { p_torneo: tournament.id });
+                if (error) Avisos.avisar("No se pudo empezar la arena: " + error.message, { tipo: "error" });
+                await loadAll();
+                return;
+            }
             const players = registrations.map((r) => r.player_id);
             let totalRounds;
             if (tournament.format === "swiss") {
@@ -295,7 +304,9 @@
             if (clave !== ritmoPuesto) { ritmoControl.poner(tournament.initial_seconds, tournament.increment_seconds); ritmoPuesto = clave; }
             document.getElementById("ritmo-nota").textContent = tournament.status === "registration"
                 ? "Todavía se puede cambiar: todas las partidas del torneo se van a jugar con este tiempo."
-                : "Las partidas que ya empezaron siguen con su reloj; el tiempo nuevo vale desde la próxima ronda.";
+                : (esArena()
+                    ? "Las partidas que ya empezaron siguen con su reloj; el tiempo nuevo vale desde la próxima partida."
+                    : "Las partidas que ya empezaron siguen con su reloj; el tiempo nuevo vale desde la próxima ronda.");
         }
 
         async function guardarRitmo() {
@@ -379,17 +390,23 @@
 
         function render() {
             document.getElementById("t-name").textContent = tournament.name;
-            document.getElementById("t-meta").textContent = (FORMAT_LABEL[tournament.format] || tournament.format) + " · " + etiquetaModoTorneo(tournament.variant) + " · ⏱️ " + Ritmos.etiqueta(tournament.initial_seconds, tournament.increment_seconds) + " · " + (STATUS_LABEL[tournament.status] || tournament.status);
+            document.getElementById("t-meta").textContent = (esArena() ? TorneoArena.etiqueta(tournament) : (FORMAT_LABEL[tournament.format] || tournament.format)) + " · " + etiquetaModoTorneo(tournament.variant) + " · ⏱️ " + Ritmos.etiqueta(tournament.initial_seconds, tournament.increment_seconds) + " · " + (STATUS_LABEL[tournament.status] || tournament.status);
             renderRitmo();
             renderModos();
 
             document.getElementById("registration-section").classList.toggle("hidden", tournament.status !== "registration");
             if (tournament.status === "registration") renderRegistration();
 
-            document.getElementById("rounds-section").classList.toggle("hidden", tournament.status === "registration");
-            if (tournament.status !== "registration") renderRounds();
+            // Una arena no tiene rondas ni la tabla de siempre: tiene su sección.
+            const conRondas = tournament.status !== "registration" && !esArena();
+            document.getElementById("rounds-section").classList.toggle("hidden", !conRondas);
+            if (conRondas) renderRounds();
 
-            const showStandings = tournament.status !== "registration" && tournament.format !== "elimination";
+            const enArena = tournament.status !== "registration" && esArena();
+            document.getElementById("arena-section").classList.toggle("hidden", !enArena);
+            if (enArena) renderArena();
+
+            const showStandings = conRondas && tournament.format !== "elimination";
             document.getElementById("standings-section").classList.toggle("hidden", !showStandings);
             if (showStandings) renderStandings();
 
@@ -421,6 +438,10 @@
             document.getElementById("owner-start-panel").classList.toggle("hidden", !isOwner);
             if (isOwner) {
                 document.getElementById("start-btn").disabled = registrations.length < 2 || ocupado;
+                document.getElementById("start-btn").textContent = esArena() ? "Empezar la arena" : "Cerrar inscripciones y empezar";
+                document.getElementById("start-nota").textContent = esArena()
+                    ? "Hacen falta al menos 2 inscritos. El reloj de la arena (" + TorneoArena.etiquetaDuracion(tournament.arena_minutos) + ") empieza a correr al empezar, y se puede seguir entrando mientras dure."
+                    : "Hacen falta al menos 2 inscritos. La primera ronda se genera automáticamente al empezar.";
                 const roundsField = document.getElementById("rounds-field");
                 roundsField.classList.toggle("hidden", tournament.format !== "swiss");
                 if (tournament.format === "swiss" && !roundsField.dataset.filled) {
@@ -514,6 +535,8 @@
             const enJuego = pairings.filter((p) => !p.is_bye && p.game_room_id && !p.result && salasEnJuego[p.game_room_id]);
             if (!enJuego.length) return null;
 
+            // En una arena el número no es de una mesa: es el de la partida.
+            const rotulo = esArena() ? "Partida " : "Tablero ";
             const caja = document.createElement("div");
             caja.className = "mt-4 border-t border-brand-100 dark:border-brand-800 pt-3";
             const titulo = document.createElement("h4");
@@ -538,12 +561,12 @@
                 tarjeta.href = paginaDelCruce(p, round);
                 tarjeta.className = "block rounded-xl overflow-hidden border-2 border-brand-200 dark:border-brand-700 hover:border-accent-500 transition-colors bg-white dark:bg-brand-900";
                 tarjeta.setAttribute("aria-label",
-                    (soyJugador ? "Seguir jugando" : "Ver") + " la partida del tablero " + p.board_number +
+                    (soyJugador ? "Seguir jugando" : "Ver") + (esArena() ? " la partida " : " la partida del tablero ") + p.board_number +
                     ": " + nameFor(p.white_id) + " con blancas contra " + nameFor(p.black_id) + " con negras");
 
                 const cabecera = document.createElement("p");
                 cabecera.className = "px-2 py-1 text-[11px] text-brand-600 dark:text-brand-200 bg-brand-50 dark:bg-brand-800 truncate";
-                cabecera.textContent = "Tablero " + p.board_number + " · " + nameFor(p.white_id) + " vs " + nameFor(p.black_id);
+                cabecera.textContent = rotulo + p.board_number + " · " + nameFor(p.white_id) + " vs " + nameFor(p.black_id);
                 tarjeta.appendChild(cabecera);
 
                 // Ver SIN_TABLERO_EN_VIVO: se dice por qué, en vez de dejar un hueco.
@@ -650,6 +673,236 @@
             });
         }
 
+        /* ---------------------------------------------------------------
+           La arena. No tiene rondas: mientras dura, quien quiere jugar entra a
+           la cola y la base lo sienta con el siguiente que espera. Todo lo que
+           decide algo lo lleva la base (ver js/torneo-arena.js y la migración
+           *_torneo_arena.sql); esta pantalla pregunta, pinta y lleva a la
+           partida.
+
+           `buscando` es que ESTA pantalla pidió rival: con eso, en cuanto
+           aparece una partida propia en juego —la respuesta de la cola o el
+           cruce nuevo que llega por Realtime, lo que pase primero— se va a
+           jugarla sin preguntar. Sin eso (alguien que volvió a mirar la tabla
+           en medio de su partida) se le ofrece el enlace y nada más. */
+        const arena = { tabla: [], enJuego: [], ultimas: [], cola: null, buscando: false, esperan: 0, cerrando: false, tic: null, sinTabla: false };
+
+        function irAMiPartida(salaId, modalidad) {
+            window.location.href = pageFor2pVariant(modalidad || tournament.variant) + "?room=" + salaId;
+        }
+
+        async function cargarArena() {
+            rounds = []; pairingsByRound = {}; salasEnJuego = {};
+            arena.enJuego = []; arena.ultimas = [];
+            if (tournament.status === "registration") { arena.tabla = []; return; }
+            /* La clasificación la calcula la base (los puntos dependen del
+               orden de las partidas), y de los cruces se piden solo los que se
+               pintan: los que siguen sin resultado y los últimos 30. Una arena
+               larga pasa de mil partidas, y PostgREST corta ahí sin avisar. */
+            const [tabla, sinResultado, ultimas] = await Promise.all([
+                sb.rpc("arena_clasificacion", { p_torneo: TOURNEY_ID }),
+                sb.from("tournament_pairings").select("*").eq("tournament_id", TOURNEY_ID).is("result", null).order("created_at", { ascending: false }).range(0, 199),
+                sb.from("tournament_pairings").select("*").eq("tournament_id", TOURNEY_ID).not("result", "is", null).order("finished_at", { ascending: false }).range(0, 29),
+            ]);
+            // Si la clasificación no llega se dice y se deja la que había: una
+            // tabla vacía se leería como «nadie tiene puntos».
+            arena.sinTabla = !!tabla.error;
+            if (tabla.error) console.error(tabla.error); else arena.tabla = tabla.data || [];
+            if (ultimas.error) console.error(ultimas.error); else arena.ultimas = ultimas.data || [];
+            if (sinResultado.error) { console.error(sinResultado.error); return; }
+            const pendientes = (sinResultado.data || []).filter((p) => p.game_room_id);
+            if (!pendientes.length) return;
+            const { data: salas } = await sb.from("game_rooms").select("*").in("id", pendientes.map((p) => p.game_room_id));
+            // Solo las que se están jugando: una sala que terminó sin resultado
+            // deja su cruce sin resultado para siempre, y no es «en vivo».
+            (salas || []).forEach((sala) => { if (sala.status === "playing") salasEnJuego[sala.id] = sala; });
+            arena.enJuego = pendientes.filter((p) => salasEnJuego[p.game_room_id]).sort((a, b) => a.board_number - b.board_number);
+        }
+
+        function colaDeArena() {
+            if (!arena.cola) {
+                arena.cola = TorneoArena.cola({
+                    sb: sb, torneoId: TOURNEY_ID,
+                    estadoInicial: () => estadoInicial(tournament.variant),
+                    alCambiar: alCambiarCola,
+                });
+            }
+            return arena.cola;
+        }
+
+        function alCambiarCola(r) {
+            if ((r.estado === "emparejado" || r.estado === "jugando") && r.sala) { irAMiPartida(r.sala, r.modalidad); return; }
+            arena.buscando = arena.cola.activa();
+            if (r.estado === "esperando") arena.esperan = Number(r.esperan) || 0;
+            if (r.estado === "error") Avisos.avisar("No se pudo buscar rival: " + r.mensaje, { tipo: "error" });
+            if (r.estado === "terminada" || r.estado === "sin_empezar") scheduleReload();
+            renderArena();
+        }
+
+        function entrarALaCola() {
+            arena.buscando = true;
+            arena.esperan = 0;
+            colaDeArena().entrar();
+            renderArena();
+        }
+        function salirDeLaCola() {
+            arena.buscando = false;
+            if (arena.cola) arena.cola.salir();
+            renderArena();
+        }
+
+        /* Se acabó el tiempo: se le pide a la base que cierre. La puede cerrar
+           la pantalla de cualquiera que participe, y la cierra una sola (la
+           base lo decide). Si contesta que todavía no —su reloj manda—, se
+           vuelve a pedir en un momento. */
+        async function cerrarArena(ahora) {
+            if (arena.cerrando) return;
+            arena.cerrando = true;
+            const { data, error } = await sb.rpc("arena_cerrar", { p_torneo: TOURNEY_ID, p_ahora: !!ahora });
+            if (error) {
+                console.error(error);
+                if (ahora) Avisos.avisar("No se pudo terminar la arena: " + error.message, { tipo: "error" });
+            }
+            if (data) { arena.cerrando = false; await loadAll(); return; }
+            setTimeout(() => { arena.cerrando = false; }, 3000);
+        }
+
+        async function terminarArenaYa() {
+            const ok = await Avisos.confirmar("Deja de emparejar y la clasificación queda como está ahora. Las partidas que se están jugando pueden terminar, pero ya no suman.",
+                { titulo: "¿Terminar la arena ahora?", aceptar: "Terminar la arena", peligro: true });
+            if (!ok) return;
+            salirDeLaCola();
+            await cerrarArena(true);
+        }
+
+        function pintarRelojDeArena() {
+            const el = document.getElementById("arena-reloj");
+            if (tournament.status === "finished") { el.textContent = "La arena terminó"; return; }
+            const ms = TorneoArena.faltan(tournament);
+            if (ms === null) { el.textContent = ""; return; }
+            if (ms > 0) { el.textContent = "Quedan " + TorneoArena.textoFaltan(ms); return; }
+            el.textContent = "Se acabó el tiempo";
+            if (arena.buscando) salirDeLaCola();
+            else if (!document.getElementById("arena-jugar").hidden) renderArena();
+            if (amIRegistered || isOwner) cerrarArena(false);
+        }
+
+        function filaDeClasificacion(fila, puesto) {
+            const li = document.createElement("li");
+            li.className = "flex items-center justify-between gap-2 py-1 border-b border-brand-100 dark:border-brand-800 last:border-0";
+            const left = document.createElement("span");
+            left.className = "flex items-center gap-2 min-w-0";
+            if (window.FotoPerfil) left.appendChild(FotoPerfil.avatar(fila.player_id, nameFor(fila.player_id), "w-7 h-7 text-xs"));
+            const nombre = document.createElement("span");
+            nombre.className = "truncate";
+            nombre.textContent = puesto + ". " + nameFor(fila.player_id);
+            left.appendChild(nombre);
+            // La racha va escrita, no solo con la llama.
+            if (fila.en_racha) {
+                const racha = document.createElement("span");
+                racha.className = "shrink-0 text-xs font-semibold text-accent-700 dark:text-accent-400";
+                racha.dataset.racha = "1";
+                const llama = document.createElement("span");
+                llama.setAttribute("aria-hidden", "true");
+                llama.textContent = "🔥 ";
+                racha.appendChild(llama);
+                racha.appendChild(document.createTextNode("en racha"));
+                left.appendChild(racha);
+            }
+            const right = document.createElement("span");
+            right.className = "shrink-0 text-right";
+            const puntos = document.createElement("span");
+            puntos.className = "font-mono font-semibold";
+            puntos.textContent = fila.puntos + (fila.puntos === 1 ? " punto" : " puntos");
+            const partidas = document.createElement("span");
+            partidas.className = "block text-xs text-brand-450 dark:text-brand-350";
+            partidas.textContent = fila.partidas + (fila.partidas === 1 ? " partida" : " partidas");
+            right.appendChild(puntos); right.appendChild(partidas);
+            li.appendChild(left); li.appendChild(right);
+            return li;
+        }
+
+        function textoDePartida(p) {
+            let texto = nameFor(p.white_id) + " (blancas) vs " + nameFor(p.black_id) + " (negras): ";
+            const rapidas = p.result === "draw" && p.jugadas != null && p.jugadas < 20;
+            texto += p.result === "draw" ? "tablas" : (p.result === "white" ? nameFor(p.white_id) : nameFor(p.black_id)) + " ganó";
+            // Las dos razones por las que una partida terminada no suma, dichas.
+            if (tournament.arena_termina && p.finished_at && new Date(p.finished_at) > new Date(tournament.arena_termina)) texto += " · terminó después de la hora: no suma";
+            else if (rapidas) texto += " antes de la jugada 10: no dan puntos";
+            return texto;
+        }
+
+        function renderArena() {
+            const enCurso = tournament.status === "in_progress";
+            const ms = TorneoArena.faltan(tournament);
+            const hayTiempo = enCurso && ms !== null && ms > 0;
+            document.getElementById("arena-explica").textContent = TorneoArena.EXPLICACION +
+                " Unas tablas antes de la jugada 10 no dan puntos, y lo que termine después de la hora no suma.";
+
+            // Jugar: solo mientras queda tiempo.
+            const jugar = document.getElementById("arena-jugar");
+            jugar.hidden = !hayTiempo;
+            if (hayTiempo) {
+                const mia = arena.enJuego.find((p) => p.white_id === profile.id || p.black_id === profile.id);
+                // Pidió rival y ya tiene mesa: a jugar, sin otro clic.
+                if (mia && arena.buscando) { irAMiPartida(mia.game_room_id, (salasEnJuego[mia.game_room_id] || {}).variant); return; }
+                const entrar = document.getElementById("arena-entrar");
+                const miPartida = document.getElementById("arena-mi-partida");
+                const inscribirme = document.getElementById("arena-inscribirme");
+                const estado = document.getElementById("arena-estado");
+                inscribirme.hidden = amIRegistered;
+                miPartida.hidden = !(amIRegistered && mia);
+                entrar.hidden = !amIRegistered || !!mia;
+                if (mia) miPartida.href = paginaDelCruce(mia, null);
+                entrar.textContent = arena.buscando ? "Dejar de buscar" : "Entrar a jugar";
+                entrar.setAttribute("aria-pressed", arena.buscando ? "true" : "false");
+                let texto;
+                if (!amIRegistered) texto = "La arena ya empezó, pero todavía puedes entrar: inscríbete y pide rival.";
+                else if (mia) texto = "Tienes una partida en juego.";
+                else if (!arena.buscando) texto = "Cuando quieras jugar, entra: te toca el siguiente que esté esperando.";
+                else if (arena.esperan > 0) texto = "Buscando rival… Hay " + arena.esperan + (arena.esperan === 1 ? " persona más esperando." : " personas más esperando.");
+                else texto = "Buscando rival… Todavía no hay nadie más esperando: en cuanto alguien entre, juegan.";
+                // Solo si cambió: es una región viva, y repetirla la vuelve a leer.
+                if (estado.textContent !== texto) estado.textContent = texto;
+            }
+            document.getElementById("arena-organiza").hidden = !(isOwner && enCurso);
+
+            const tabla = document.getElementById("arena-tabla");
+            tabla.innerHTML = "";
+            arena.tabla.forEach((fila, i) => tabla.appendChild(filaDeClasificacion(fila, i + 1)));
+            document.getElementById("arena-tabla-nota").textContent = arena.sinTabla
+                ? "No se pudo actualizar la clasificación. Recarga la página."
+                : (arena.tabla.length ? "" : "Todavía no hay nadie en la lista.");
+
+            // Las partidas en juego, con el mismo tablerito de las rondas.
+            const enVivo = document.getElementById("arena-en-vivo");
+            enVivo.innerHTML = "";
+            tablerosEnVivo = {};
+            const caja = enCurso ? renderPartidasEnVivo(arena.enJuego, null) : null;
+            enVivo.classList.toggle("hidden", !caja);
+            if (caja) { caja.className = "pt-3"; enVivo.appendChild(caja); }
+
+            const lista = document.getElementById("arena-ultimas");
+            lista.innerHTML = "";
+            arena.ultimas.forEach((p) => {
+                const li = document.createElement("li");
+                li.textContent = textoDePartida(p);
+                lista.appendChild(li);
+            });
+            document.getElementById("arena-ultimas-vacia").classList.toggle("hidden", arena.ultimas.length > 0);
+
+            pintarRelojDeArena();
+            if (!arena.tic && enCurso) arena.tic = setInterval(() => { if (esArena()) pintarRelojDeArena(); }, 1000);
+            if (arena.tic && !enCurso) { clearInterval(arena.tic); arena.tic = null; }
+        }
+
+        document.getElementById("arena-entrar").addEventListener("click", () => arena.buscando ? salirDeLaCola() : entrarALaCola());
+        document.getElementById("arena-inscribirme").addEventListener("click", () => register());
+        document.getElementById("arena-terminar").addEventListener("click", terminarArenaYa);
+        // Al irse de la página deja de esperar: si no, le podría tocar una
+        // partida que ya no está mirando, con el reloj corriendo.
+        window.addEventListener("pagehide", () => { if (arena.cola && arena.cola.activa()) arena.cola.salir(); });
+
         document.getElementById("self-register-btn").addEventListener("click", () => amIRegistered ? withdraw() : register());
         document.getElementById("start-btn").addEventListener("click", (e) => unaVez(e.currentTarget, startTournament));
         document.getElementById("ritmo-guardar").addEventListener("click", guardarRitmo);
@@ -675,6 +928,14 @@
                 (perfiles || []).forEach((p) => { playerNames[p.id] = p.full_name || p.email; });
             }
             amIRegistered = registrations.some((r) => r.player_id === profile.id);
+
+            // La arena no tiene rondas que leer: tiene lo suyo.
+            if (esArena()) {
+                await cargarArena();
+                render();
+                escucharSalas();
+                return;
+            }
 
             const { data: roundsData, error: errRounds } = await sb.from("tournament_rounds").select("*").eq("tournament_id", TOURNEY_ID).order("round_number", { ascending: true });
             if (errRounds) { showError("No se pudo cargar el torneo (las rondas). Recarga la página."); return; }
@@ -807,6 +1068,15 @@
             await loadAll();
             if (!tournament) return;
             subscribe();
+            /* En una arena la cuenta regresiva y el cierre van con la hora de la
+               base. Y quien llega desde su partida con «otra partida»
+               (?jugar=1, ver TorneoSync.ofrecerVuelta) entra a la cola solo. */
+            if (esArena()) {
+                RelojServidor.iniciar(sb).then(() => { if (tournament.status !== "registration") renderArena(); }, () => {});
+                const ms = TorneoArena.faltan(tournament);
+                if (new URLSearchParams(window.location.search).get("jugar") === "1"
+                    && tournament.status === "in_progress" && amIRegistered && ms !== null && ms > 0) entrarALaCola();
+            }
 
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");

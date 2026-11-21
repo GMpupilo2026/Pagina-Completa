@@ -8,7 +8,7 @@
    siguen siendo globales. Ver «El código de las páginas sale del HTML» en
    docs/decisiones/sitio-e-infraestructura.md. */
 
-        const FORMAT_LABEL = { swiss: "Suizo", elimination: "Eliminación directa", round_robin: "Todos contra todos" };
+        const FORMAT_LABEL = { swiss: "Suizo", elimination: "Eliminación directa", round_robin: "Todos contra todos", arena: "Arena" };
         // El nombre de la modalidad (y escapeHtml) salen de js/juegos-comun.js.
 
         async function load() {

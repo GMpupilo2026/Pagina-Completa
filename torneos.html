@@ -48,11 +48,13 @@
                     </div>
                     <div>
                         <label for="format-select" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Formato</label>
-                        <select id="format-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <select id="format-select" aria-describedby="format-desc" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
                             <option value="swiss">Suizo</option>
                             <option value="elimination">Eliminación directa</option>
                             <option value="round_robin">Todos contra todos</option>
+                            <option value="arena">Arena</option>
                         </select>
+                        <p id="format-desc" class="text-xs text-brand-450 dark:text-brand-350 mt-1" aria-live="polite"></p>
                     </div>
                     <div>
                         <label for="variant-select" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Modalidad de juego</label>
@@ -67,6 +69,10 @@
                     <div>
                         <label for="time-select" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">⏱️ Tiempo por partida</label>
                         <select id="time-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                    </div>
+                    <div id="arena-campo" hidden>
+                        <label for="arena-minutos" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">⏳ Duración de la arena</label>
+                        <select id="arena-minutos" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
                     </div>
                     <div class="sm:col-span-2 flex items-center gap-3">
                         <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-5 py-2.5 rounded-xl text-sm transition-colors">Crear torneo</button>
@@ -88,6 +94,7 @@
     <script src="js/torneo-engine.js"></script>
     <script src="js/juegos-comun.js"></script>
     <script src="js/ritmos.js"></script>
+    <script src="js/torneo-arena.js"></script>
     <script src="js/avisos.js"></script>
     <script src="js/main.js"></script>
     <script src="js/torneos.js"></script>
