@@ -16540,8 +16540,11 @@ sus pts y su puesto actual».
   el QR). `salida.horizontal` acuesta la hoja; los dorsos siguen en espejo
   por columna, así que **se imprime volteando por el borde CORTO** (el aviso
   del resultado lo dice). El corrimiento medido en la Brother era volteando
-  por el borde largo y no vale acá: sin medir todavía, `dorsoY` 0, calle de
-  8 mm y sangrado de 4; se mide con la primera hoja como el otro.
+  por el borde largo: acostada la hoja, ese mismo corrimiento cae **de
+  lado**. Medido con la primera hoja cortada (20/11): arriba y abajo calzaba
+  (medio milímetro), pero la línea del dorso quedaba ~2,5 mm adentro del
+  borde izquierdo (visto por detrás). El diseño trae `dorsoX` −2,5, calle de
+  8 mm y sangrado de 4.
 - **20/11, con los gafetes cortados en la mano: aprovechar todo el espacio.**
   En el frente, el título va **entre los dos logos** (`tituloEntreLogos`), la
   franja del club **justo en el borde de abajo** (`franjaAbajo`) y con eso la

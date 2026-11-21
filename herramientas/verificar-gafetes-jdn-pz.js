@@ -425,7 +425,7 @@ async function aceptar(page, boton) {
   igual("cada cara mide 5,5 × 9,5 cm", [...new Set([...fr3, ...ds3].map((u) => u[0].toFixed(1) + "×" + u[1].toFixed(1)))], ["55.0×95.0"]);
   // 4 columnas con calles de 8 mm: (279,4 − 4 × 55 − 3 × 8) / 2 = 17,7 mm.
   igual("cuatro por fila, con calles de 8 mm", fr3.slice(0, 4).every((f, k) => Math.abs(f[2] - (17.7 + 63 * k)) < 0.05), true);
-  igual("cada dorso, en el espejo de su frente (volteando por el borde corto)", fr3.every((f, k) => Math.abs(f[2] + ds3[k][2] - (279.4 - 55)) < 0.05 && Math.abs(f[3] - ds3[k][3]) < 0.05), true);
+  igual("cada dorso, en el espejo de su frente (volteando por el borde corto) y 2,5 mm a la izquierda (lo medido en la Brother)", fr3.every((f, k) => Math.abs(f[2] + ds3[k][2] - (279.4 - 55 - 2.5)) < 0.05 && Math.abs(f[3] - ds3[k][3]) < 0.05), true);
   await page.click("#g-aprobar");
   await aceptar(page, "Cambiar el diseño");
   await page.click("#g-ejemplo-pz");

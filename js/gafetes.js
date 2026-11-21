@@ -111,9 +111,11 @@
     d.tamano = { ancho: 55, alto: 95 };
     d.escalaLetras = 1.15;
     d.dorso.qrEscala = 1.25;
-    // Volteando por el borde corto, el corrimiento de la Brother cae en otro
-    // eje: sin ajuste medido todavía, calle de 8 mm y sangrado de 4.
-    d.salida = { separarPor: "", formato: "carta", horizontal: true, dorsoX: 0, dorsoY: 0, cortesCompletos: true, calle: 8 };
+    // Volteando por el borde corto, el corrimiento de la Brother (~2,3 mm a
+    // lo largo del papel) cae de lado: medido con la primera hoja cortada
+    // (20/11), el dorso quedaba ~2,5 mm a la derecha (visto por detrás).
+    // dorsoX −2,5; calle de 8 mm y sangrado de 4 para lo que quede.
+    d.salida = { separarPor: "", formato: "carta", horizontal: true, dorsoX: -2.5, dorsoY: 0, cortesCompletos: true, calle: 8 };
     return d;
   }
   const POSES_KARINA = ["presentando", "te-toca", "reloj-de-ajedrez", "caballo", "muy-bien", "tu-puedes", "campeones", "hola"];
