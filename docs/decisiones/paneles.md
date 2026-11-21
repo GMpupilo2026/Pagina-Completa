@@ -5255,7 +5255,9 @@ migración `20261121064012`, con las dos vistas de Oscarov: `panel_jornada` y
 `rival_profe`. Es una foto del grupo de ese día: quien entre después a SJ se
 anota con otro insert igual. No es la academia «CCDR San José» entera: sus dos
 alumnos del grupo «ciegos», el de ADAPZ y el que no tiene grupo no se
-anotaron). Es la forma del panel del alumno de
+anotaron. La cuenta «Profe Oscar», profesor, lleva solo `rival_profe`,
+migración `20261121064524`: el panel jornada no se aplica a quien no es
+alumno). Es la forma del panel del alumno de
 Chessgora llevada a `clases.html`: lo de hoy primero y el resto repartido en
 pestañas, en vez de una sola página con seis grupos de tarjetas que en el
 celular mide varias pantallas aunque se plieguen. Antes se probó como
