@@ -1,16 +1,30 @@
 /* El profe Oscar como rival (js/rival-profe.js): solo el tamaño y las
    animaciones; los colores son las clases de Tailwind que ya usa bot.html.
    Con «reducir movimiento» no se mueve nada: la cara cambia y listo. */
+/* Se ve solo la cabeza: la caja es cuadrada y la imagen, 2,5 veces más alta,
+   queda pegada arriba y corrida de lado según --rival-centro (el centro de la
+   cabeza en % del ancho; lo calcula herramientas/rival-profe-medios.py). */
 .rival-cara {
+  position: relative;
   width: 7.5rem;
-  height: 9.5rem;
+  height: 7.5rem;
   flex-shrink: 0;
-  object-fit: contain;
+  overflow: hidden;
+  border-radius: 1rem;
   transform-origin: 50% 100%;
   animation: rival-respira 3.2s ease-in-out infinite;
 }
+.rival-cara-img {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 250%;
+  width: auto;
+  max-width: none;
+  transform: translateX(calc(-1% * var(--rival-centro, 50)));
+}
 .rival-miniatura { width: 3.5rem; height: 4.5rem; flex-shrink: 0; object-fit: contain; }
-@media (max-width: 480px) { .rival-cara { width: 5.5rem; height: 7rem; } }
+@media (max-width: 480px) { .rival-cara { width: 5.5rem; height: 5.5rem; } }
 
 .rival-cara.rival-salto { animation: rival-salto 0.5s cubic-bezier(0.2, 1.6, 0.4, 1), rival-respira 3.2s ease-in-out 0.5s infinite; }
 .rival-cara.rival-sacudida { animation: rival-sacudida 0.55s ease-in-out, rival-respira 3.2s ease-in-out 0.55s infinite; }

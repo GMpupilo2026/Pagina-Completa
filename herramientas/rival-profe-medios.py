@@ -16,7 +16,8 @@ a lo que se publica, y la lista de lo que hay.
    habla), dibujados IGUAL al original de esa cara salvo los ojos o la boca y
    del mismo tamaño. Salen en img/avatar-profe-<profe>/cuadros/*.webp a 480 px
    de alto, como los avatares (herramientas/avatar-profe-oscar.py).
-3. js/rival-profe-medios.js: qué grabaciones y qué cuadros existen, para que la
+3. js/rival-profe-medios.js: qué grabaciones y qué cuadros existen, y dónde
+   está la cabeza en cada cara (el encuadre: en la partida se ve solo ella), para que la
    página no pida archivos que no están.
 
 Lo que se publica sin su original se borra. Nada de esto se edita a mano.
@@ -95,11 +96,31 @@ for profe in PROFES:
         cuadros[profe] = hechos
         print(f"{len(hechos)} cuadros en {salida.relative_to(RAIZ)}")
 
-# 3. La lista
+# 3. El encuadre: en la partida se ve solo la cabeza (si no, con el cuerpo entero
+#    en 9 rem la cara es chiquita y el parpadeo y la boca no se notan). La caja
+#    toma el 40 % de arriba de la imagen; de lado se centra en el pelo (los
+#    pixeles casi negros del 12 % de arriba), que no lo mueven ni un trofeo ni
+#    una mano levantada. Va en % del ancho; los cuadros miden igual que su cara.
+import numpy as np
+encuadre = {}
+for profe in PROFES:
+    centros = {}
+    for webp in sorted((RAIZ / "img" / f"avatar-profe-{profe}").glob("*.webp")):
+        if webp.stem not in caras:
+            continue
+        px = np.array(Image.open(webp).convert("RGBA")).astype(int)
+        franja = px[: int(0.12 * px.shape[0])]
+        pelo = (franja[:, :, 3] > 40) & (franja[:, :, :3].sum(2) < 150)
+        if pelo.any():
+            centros[webp.stem] = round(float(np.where(pelo)[1].mean()) / px.shape[1] * 100, 1)
+    if centros:
+        encuadre[profe] = centros
+
+# 4. La lista
 (RAIZ / "js" / "rival-profe-medios.js").write_text(
     "/* Qué grabaciones y qué cuadros del profe rival existen (js/rival-profe.js).\n"
     "   Lo arma herramientas/rival-profe-medios.py; no se edita a mano. */\n"
-    "window.RivalProfeMedios = " + json.dumps({"voces": sorted(voces), "cuadros": cuadros}, ensure_ascii=False) + ";\n",
+    "window.RivalProfeMedios = " + json.dumps({"voces": sorted(voces), "cuadros": cuadros, "encuadre": encuadre}, ensure_ascii=False) + ";\n",
     encoding="utf-8", newline="\n")
 
 # rev bfb5bbb0d2d82f9f

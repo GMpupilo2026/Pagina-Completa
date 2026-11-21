@@ -217,7 +217,7 @@
   }
 
   /* ── La pantalla ─────────────────────────────────────────────────────────── */
-  let panel = null, imgCara = null, globo = null;
+  let panel = null, marcoCara = null, imgCara = null, globo = null;
 
   function ruta(id) { return window.AvatarProfeOscar ? window.AvatarProfeOscar.ruta(id) : ""; }
   function altDe(id) { const a = window.AvatarProfeOscar && window.AvatarProfeOscar.porId(id); return a ? a.alt : ""; }
@@ -230,9 +230,12 @@
     panel = document.createElement("div");
     panel.id = "rival-profe";
     panel.className = "rival-profe hidden flex items-center gap-3 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-3 mb-3";
+    // La caja muestra solo la cabeza (ver --rival-centro en css/rival-profe.css).
+    marcoCara = document.createElement("div");
+    marcoCara.className = "rival-cara";
     imgCara = document.createElement("img");
-    imgCara.className = "rival-cara";
-    imgCara.width = 112; imgCara.height = 112;
+    imgCara.className = "rival-cara-img";
+    marcoCara.appendChild(imgCara);
     const caja = document.createElement("div");
     caja.className = "min-w-0 flex-1";
     const nombre = document.createElement("p");
@@ -256,7 +259,7 @@
     });
     cabeza.append(nombre, botonVoz);
     caja.append(cabeza, globo);
-    panel.append(imgCara, caja);
+    panel.append(marcoCara, caja);
     status.parentNode.insertBefore(panel, status);
     // Las caras se bajan desde ya, para que el cambio de gesto sea al instante.
     const ids = new Set(["mmm"]);
@@ -289,6 +292,7 @@
   const PROFE_ACTUAL = (window.AvatarProfeOscar && window.AvatarProfeOscar.PROFE) || "oscar";
   const VOCES = new Set(PROFE_ACTUAL === "oscar" ? MEDIOS.voces || [] : []);
   const CUADROS = new Set((MEDIOS.cuadros || {})[PROFE_ACTUAL] || []);
+  const ENCUADRE = (MEDIOS.encuadre || {})[PROFE_ACTUAL] || {};
   const UMBRAL_BOCA = 0.06;   // volumen (0-1) desde el que la boca se abre
   let vozEncendida = true;
   try { vozEncendida = window.localStorage.getItem(CLAVE_VOZ) !== "no"; } catch (e) { /* sin almacenamiento: encendida */ }
@@ -307,7 +311,7 @@
     const cara = imgCara.dataset.cara;
     const src = (bocaAbierta && rutaCuadro(cara, "boca")) || (ojosCerrados && rutaCuadro(cara, "ojos")) || ruta(cara);
     if (imgCara.getAttribute("src") !== src) imgCara.setAttribute("src", src);
-    imgCara.classList.toggle("rival-hablando", bocaAbierta && !rutaCuadro(cara, "boca") && !sinMovimiento());
+    marcoCara.classList.toggle("rival-hablando", bocaAbierta && !rutaCuadro(cara, "boca") && !sinMovimiento());
   }
 
   function callar() {
@@ -404,8 +408,11 @@
     if (!imgCara) return;
     imgCara.dataset.cara = id;
     imgCara.alt = altDe(id);
+    const centro = ENCUADRE[id];
+    if (centro != null) marcoCara.style.setProperty("--rival-centro", centro);
+    else marcoCara.style.removeProperty("--rival-centro");
     pintarCuadro();
-    if (conAnimacion) animar(imgCara, SACUDIDA.has(id) ? "rival-sacudida" : "rival-salto");
+    if (conAnimacion) animar(marcoCara, SACUDIDA.has(id) ? "rival-sacudida" : "rival-salto");
   }
 
   function decir(evento) {
