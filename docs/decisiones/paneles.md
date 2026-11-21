@@ -5250,7 +5250,12 @@ placa del QR, y saltaron los dos.
 ## El panel jornada: el del alumno, con pestañas (en prueba)
 
 Desde el 18/11/2026, **solo para las cuentas anotadas** en `vistas_en_prueba`
-(hoy una: Oscarov, alumno del grupo SJ). Es la forma del panel del alumno de
+(primero una, Oscarov; **desde el 21/11/2026, los 57 alumnos del grupo SJ**,
+migración `20261121064012`, con las dos vistas de Oscarov: `panel_jornada` y
+`rival_profe`. Es una foto del grupo de ese día: quien entre después a SJ se
+anota con otro insert igual. No es la academia «CCDR San José» entera: sus dos
+alumnos del grupo «ciegos», el de ADAPZ y el que no tiene grupo no se
+anotaron). Es la forma del panel del alumno de
 Chessgora llevada a `clases.html`: lo de hoy primero y el resto repartido en
 pestañas, en vez de una sola página con seis grupos de tarjetas que en el
 celular mide varias pantallas aunque se plieguen. Antes se probó como
