@@ -59,6 +59,7 @@ window.ClaseBuscar = (function () {
         { nombre: "Tiempo para pensar", donde: "Tablero", claves: "tiempo pensar cuenta regresiva segundos reloj", destino: "pensar-abrir-btn" },
         { nombre: "Girar el tablero", donde: "Tablero", claves: "girar voltear rotar tablero negras", destino: "flip-board-btn" },
         { nombre: "El nombre en cada casilla", donde: "Tablero", claves: "coordenadas casillas nombre letras numeros", destino: "show-coords-btn" },
+        { nombre: "Letras y números dentro del tablero (más grande)", donde: "Tablero", claves: "coordenadas letras numeros adentro dentro tablero grande espacio", destino: "coords-adentro-btn" },
         { nombre: "Borrar flechas y círculos", donde: "Tablero", claves: "borrar flechas circulos marcas limpiar", destino: "clear-marks-btn" },
         { nombre: "Ocultar las piezas a los alumnos", donde: "Tablero", claves: "ocultar esconder piezas ciegas", destino: "toggle-hide-btn" },
         { nombre: "Guardar el PGN de la clase", donde: "Tablero", claves: "guardar pgn descargar partida", destino: "save-game-btn" },
