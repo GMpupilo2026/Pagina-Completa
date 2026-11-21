@@ -120,18 +120,18 @@
       { id: "gano-cerca", cara: "pobrecillo", texto: "Uf, estuvo cerca… bueno, la verdad es que no tanto." },
     ],
     ganasTu: [
-      { id: "ganas-esa-vara", cara: "no-puede-ser", texto: "¡Esa vara! Me ganaste." },                 // del profe
-      { id: "ganas-distraje", cara: "no-puede-ser", texto: "¡No puede ser! Seguro me distraje." },
-      { id: "ganas-revancha", cara: "felicidades", texto: "Felicidades… esta vez. Quiero la revancha ya." },
-      { id: "ganas-no-cuentes", cara: "wow", texto: "Ok, me ganaste. Pero no le cuentes a nadie." },
+      { id: "ganas-esa-vara", cara: "no-puede-ser", texto: "¡Esa vara! Me ganó." },                 // del profe
+      { id: "ganas-distraje", cara: "no-puede-ser", texto: "¡Oh, no! ¡No puede ser! Me distraje… seguro fue eso." },
+      { id: "ganas-revancha", cara: "felicidades", texto: "Felicidades. Muy bien, muy bien… pero quiero la revancha de una vez." },
+      { id: "ganas-no-cuentes", cara: "wow", texto: "Está bien, me ganaste. Muy bien… pero no le cuente a nadie." },
     ],
     tablas: [
       { id: "tablas-poquito", cara: "casi", texto: "Tablas. Te salvaste por poquito." },
-      { id: "tablas-por-hoy", cara: "esa-vara", texto: "¿Tablas? Bueno… lo dejamos así, por hoy." },
+      { id: "tablas-por-hoy", cara: "esa-vara", texto: "¿Tablas? Bueno, lo dejamos así… pero solo por hoy." },
     ],
     rendicion: [
-      { id: "rendicion-otra", cara: "pobrecillo", texto: "¿Ya te rendiste? Pobrecillo… otra, va." },
-      { id: "rendicion-sabia", cara: "risa", texto: "¡Jajaja! Sabia decisión." },
+      { id: "rendicion-otra", cara: "pobrecillo", texto: "¿Te rindes? Eso a mí no me gusta… pero bueno. ¿Otra?" },
+      { id: "rendicion-sabia", cara: "risa", texto: "Mmm… en realidad, sabia decisión. Aunque, la verdad, no me parece: siempre hay que seguir hasta el final." },
     ],
   };
   // Las caras que se sacuden en vez de saltar: las de susto o enojo.

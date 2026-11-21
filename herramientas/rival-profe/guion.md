@@ -1,6 +1,6 @@
 # Guion del profe rival
 
-55 frases · 47 grabadas. Lo arma `herramientas/rival-profe-guion.js`; no se edita a mano.
+55 frases · 55 grabadas. Lo arma `herramientas/rival-profe-guion.js`; no se edita a mano.
 
 ## Cómo grabar
 
@@ -120,21 +120,21 @@
 
 | # | Archivo | Frase | ✓ |
 |---|---|---|---|
-| 48 | `ganas-esa-vara` | ¡Esa vara! Me ganaste. |  |
-| 49 | `ganas-distraje` | ¡No puede ser! Seguro me distraje. |  |
-| 50 | `ganas-revancha` | Felicidades… esta vez. Quiero la revancha ya. |  |
-| 51 | `ganas-no-cuentes` | Ok, me ganaste. Pero no le cuentes a nadie. |  |
+| 48 | `ganas-esa-vara` | ¡Esa vara! Me ganó. | ✓ |
+| 49 | `ganas-distraje` | ¡Oh, no! ¡No puede ser! Me distraje… seguro fue eso. | ✓ |
+| 50 | `ganas-revancha` | Felicidades. Muy bien, muy bien… pero quiero la revancha de una vez. | ✓ |
+| 51 | `ganas-no-cuentes` | Está bien, me ganaste. Muy bien… pero no le cuente a nadie. | ✓ |
 
 ## Tablas
 
 | # | Archivo | Frase | ✓ |
 |---|---|---|---|
-| 52 | `tablas-poquito` | Tablas. Te salvaste por poquito. |  |
-| 53 | `tablas-por-hoy` | ¿Tablas? Bueno… lo dejamos así, por hoy. |  |
+| 52 | `tablas-poquito` | Tablas. Te salvaste por poquito. | ✓ |
+| 53 | `tablas-por-hoy` | ¿Tablas? Bueno, lo dejamos así… pero solo por hoy. | ✓ |
 
 ## El alumno se rindió
 
 | # | Archivo | Frase | ✓ |
 |---|---|---|---|
-| 54 | `rendicion-otra` | ¿Ya te rendiste? Pobrecillo… otra, va. |  |
-| 55 | `rendicion-sabia` | ¡Jajaja! Sabia decisión. |  |
+| 54 | `rendicion-otra` | ¿Te rindes? Eso a mí no me gusta… pero bueno. ¿Otra? | ✓ |
+| 55 | `rendicion-sabia` | Mmm… en realidad, sabia decisión. Aunque, la verdad, no me parece: siempre hay que seguir hasta el final. | ✓ |
