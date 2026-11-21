@@ -1045,6 +1045,9 @@ function copiarTableroMini() {
     copia.removeAttribute("id");
     copia.querySelectorAll("[id]").forEach((el) => el.removeAttribute("id"));
     copia.querySelectorAll("[tabindex]").forEach((el) => el.setAttribute("tabindex", "-1"));
+    // Las coordenadas de adentro (ClasesBoard.setCoordsAdentro) no van en la
+    // miniatura: a ese tamaño no se leen, como en las de supervisión.
+    copia.querySelectorAll(".coord-adentro").forEach((el) => el.remove());
     mini.replaceChildren(copia);
     // La pieza se mide sobre la casilla: la copia es más chica que el original.
     // Se mide en el acto (getBoundingClientRect ya arma el layout) y otra vez si
