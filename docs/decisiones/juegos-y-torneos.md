@@ -251,6 +251,16 @@ dibujo, ni voz, ni frases): se tomó la receta.
   (32 MB que salen iguales): `rival-profe-medios.py` corre el programa antes
   de convertir. Si un dibujo del profe reemplaza un original, hay que volver a
   medir esa cara.
+- **En la partida se ve solo la cabeza.** Las imágenes son de cuerpo entero,
+  y metidas enteras en una caja de 9,5 rem la cara quedaba de un centímetro:
+  el parpadeo y la boca no se notaban. La caja ahora es cuadrada y la imagen,
+  2,5 veces más alta, va pegada arriba. De lado se corre con `--rival-centro`,
+  el centro de la cabeza en % del ancho, que `rival-profe-medios.py` calcula
+  para cada cara con los píxeles casi negros del pelo en el 12 % de arriba,
+  y deja en `encuadre` de `js/rival-profe-medios.js`. Se centra en el pelo y
+  no en toda la figura porque el trofeo de «campeones» o una mano levantada
+  corrían el centro y la cara quedaba cortada. Los cuadros de ojos y boca miden
+  igual que su cara, así que usan el mismo encuadre.
 - Lo revisa `verificar-rival-profe.js` (sin navegador): que cada cara exista,
   los umbrales, que el regalo sea de verdad con chess.js aun con la recaptura,
   que no regale la dama, y las conexiones con `bot.js` y `bot.html`.
