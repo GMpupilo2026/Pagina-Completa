@@ -91,11 +91,11 @@
       { id: "charla-mas-despacio", cara: "tu-puedes", texto: "¡Hágale, hágale, vamos! Usted puede perder un poquito más despacio… pero puede." },
     ],
     esperando: [
-      { id: "espera-sin-prisa", cara: "brazos-cruzados", texto: "Estoy esperando… sin prisa. Bueno, con un poquito." },
-      { id: "espera-ideas", cara: "tiempo", texto: "¿Se te acabaron las ideas?" },
+      { id: "espera-sin-prisa", cara: "brazos-cruzados", texto: "Estoy esperando… sin prisa. Bueno, un toquecillo nada más." },
+      { id: "espera-ideas", cara: "tiempo", texto: "Diay, ¿se le acabaron las ideas?" },
     ],
     dormido: [
-      { id: "dormido", cara: "dormidos", texto: "¿Te dormiste? Despiértame cuando juegues." },
+      { id: "dormido", cara: "dormidos", texto: "Diay, ¿se durmió? Bueno, ahí me despierta cuando juegue." },
     ],
     pista: [
       { id: "pista-huelo", cara: "mmm", texto: "Huelo que hay algo en la posición. ¿Lo ves?" },        // del profe

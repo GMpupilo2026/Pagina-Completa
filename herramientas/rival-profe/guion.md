@@ -1,6 +1,6 @@
 # Guion del profe rival
 
-55 frases · 30 grabadas. Lo arma `herramientas/rival-profe-guion.js`; no se edita a mano.
+55 frases · 33 grabadas. Lo arma `herramientas/rival-profe-guion.js`; no se edita a mano.
 
 ## Cómo grabar
 
@@ -73,14 +73,14 @@
 
 | # | Archivo | Frase | ✓ |
 |---|---|---|---|
-| 31 | `espera-sin-prisa` | Estoy esperando… sin prisa. Bueno, con un poquito. |  |
-| 32 | `espera-ideas` | ¿Se te acabaron las ideas? |  |
+| 31 | `espera-sin-prisa` | Estoy esperando… sin prisa. Bueno, un toquecillo nada más. | ✓ |
+| 32 | `espera-ideas` | Diay, ¿se le acabaron las ideas? | ✓ |
 
 ## El alumno tarda 70 segundos
 
 | # | Archivo | Frase | ✓ |
 |---|---|---|---|
-| 33 | `dormido` | ¿Te dormiste? Despiértame cuando juegues. |  |
+| 33 | `dormido` | Diay, ¿se durmió? Bueno, ahí me despierta cuando juegue. | ✓ |
 
 ## Dejó una pieza colgando a propósito (niveles 1 y 2)
 
