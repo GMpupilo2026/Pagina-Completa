@@ -822,6 +822,9 @@ const MOTOR_FALSO = `
 })();
 `;
 
+let DETALLE_PLEGADO = false;
+const TODO_ABIERTO = () => { try { localStorage.setItem("preparacion_detalle_v1", "abierto"); } catch (e) {} };
+
 async function abrir(browser, puede, guardados, adaptado, tablas, pagina, libro) {
   const ctx = await browser.newContext({ serviceWorkers: "block", acceptDownloads: true });
   // El cuadro para escribir solo se ve en Modo Adaptado (js/cuadro-comandos.js).
@@ -832,6 +835,11 @@ async function abrir(browser, puede, guardados, adaptado, tablas, pagina, libro)
   await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(puede, guardados, tablas, libro) }));
   await ctx.route("**/js/shared-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: MOTOR_FALSO }));
   await ctx.addInitScript(contestarAvisos);
+  // Las tarjetas de detalle arrancan plegadas. Las pruebas de siempre miran
+  // adentro de ellas, así que van con «Abrir todo el detalle» ya elegido (la
+  // preferencia que guarda ese botón); cómo arrancan y cómo se abren lo
+  // prueba «El detalle, plegado», con DETALLE_PLEGADO.
+  if (!DETALLE_PLEGADO) await ctx.addInitScript(TODO_ABIERTO);
   // «Se ve» se mide con checkVisibility(), no con la clase ni el atributo.
   await ctx.addInitScript(() => { window.SE_VE = (id) => document.getElementById(id).checkVisibility(); });
   const page = await ctx.newPage();
@@ -844,6 +852,262 @@ async function abrir(browser, puede, guardados, adaptado, tablas, pagina, libro)
   return { page, ctx, errores };
 }
 
+
+// ------------------------------------------------------------ rivales sin partidas en línea
+
+/* Un rival de torneo presencial: pocas partidas, y anotado de tres formas
+   que claveNombre() NO junta (dos apellidos, uno, y la inicial). Además dos
+   que no son él: su hermana y otro Mora.
+     «Mora Rojas, Luis»  6: con blancas 1.e4 e5 2.Cf3 Cc6 3.Ab5 (3), con negras 1.d4 d5 2.c4 e6 (3)
+     «Mora, Luis»        5: con blancas la misma hasta 3.Ac4 (3), con negras 1.d4 d5 2.c4 c6 (2)
+     «Mora, L»           3: con blancas 1.d4 Cf6 2.c4 (2), con negras 1.e4 c5 (1)
+     «Mora, Lucía» 2 y «Mora, Pedro» 1. */
+function pgnDeTorneos() {
+  let t = "", k = 0;
+  const otro = () => "Contrario " + (k++);
+  for (let i = 0; i < 3; i++) t += partida("Mora Rojas, Luis", otro(), i < 2 ? "1-0" : "0-1", "e4 e5 2. Nf3 Nc6 3. Bb5 a6");
+  for (let i = 0; i < 3; i++) t += partida(otro(), "Mora Rojas, Luis", ["0-1", "1/2-1/2", "1-0"][i], "d4 d5 2. c4 e6");
+  for (let i = 0; i < 3; i++) t += partida("Mora, Luis", otro(), "1-0", "e4 e5 2. Nf3 Nc6 3. Bc4 Bc5");
+  for (let i = 0; i < 2; i++) t += partida(otro(), "Mora, Luis", "1-0", "d4 d5 2. c4 c6");
+  for (let i = 0; i < 2; i++) t += partida("Mora, L", otro(), "1/2-1/2", "d4 Nf6 2. c4 e6");
+  t += partida(otro(), "Mora, L", "0-1", "e4 c5");
+  for (let i = 0; i < 2; i++) t += partida("Mora, Lucía", otro(), "1-0", "c4 e5");
+  t += partida("Mora, Pedro", otro(), "0-1", "f4 d5");
+  return t;
+}
+
+function pruebaSinPartidasEnLinea(conMotor) {
+  console.log("\n=== Rivales sin partidas en línea: varios nombres, pocas partidas ===");
+  const ps = A.leerPgn(pgnDeTorneos());
+  const js = A.jugadores(ps);
+  igual("claveNombre no junta esos tres nombres: son tres jugadores", js.slice(0, 4).map((j) => j.nombre + " " + j.partidas),
+    ["Mora Rojas, Luis 6", "Mora, Luis 5", "Mora, L 3", "Mora, Lucía 2"]);
+  igual("los parecidos a «Mora Rojas, Luis»: el de un apellido y el de la inicial; no su hermana ni el otro Mora",
+    A.parecidos(js, A.claveNombre("Mora Rojas, Luis")).map((j) => j.nombre), ["Mora, Luis", "Mora, L"]);
+  igual("y al revés: a «Mora, L» se le parecen los que empiezan con L", A.parecidos(js, A.claveNombre("Mora, L")).map((j) => j.nombre),
+    ["Mora Rojas, Luis", "Mora, Luis", "Mora, Lucía"]);
+  igual("un nombre que no comparte ninguna palabra entera no se parece a nadie", A.parecidos(js, A.claveNombre("Contrario 3")).filter((j) => /Mora/.test(j.nombre)).length, 0);
+  const solo = A.analizar(ps, "Mora Rojas, Luis");
+  igual("solo, son sus 6 partidas y los filtros no nombran a nadie más", [solo.total, "tambien" in solo.filtros], [6, false]);
+  const r = A.analizar(ps, "Mora Rojas, Luis", { tambien: ["Mora, Luis", "Mora, L", "Mora Rojas, Luis"] });
+  igual("con «también es él», son las 14 de los tres nombres, bajo el nombre elegido", [r.total, r.rival, r.filtros.tambien], [14, "Mora Rojas, Luis", ["Mora, Luis", "Mora, L"]]);
+  igual("con blancas 8 y con negras 6", [r.porColor.w.n, r.porColor.b.n], [8, 6]);
+  igual("su hermana no entra aunque se llame Mora", A.analizar(ps, "Mora Rojas, Luis", { tambien: ["Mora, Luis"] }).total, 11);
+  // Pocas partidas: una línea cuenta desde 2, y van una por una.
+  igual("con menos de 30 partidas una línea cuenta desde 2 (con 30 o más, desde 4)", [r.minimo, r.pocas, A.minimo(29), A.minimo(30), A.minimo(5000)], [2, true, 2, 4, 30]);
+  cierto("así el plan pasa de la primera jugada: 1.e4 e5 2.Cf3 Cc6 y sigue", (function () {
+    let n = r.conNegras.plan.find((x) => x.san === "e4"), hondo = 0;
+    while (n && n.hijos && n.hijos.length) { n = n.hijos[0]; hondo += 1; }
+    return hondo >= 3;
+  })());
+  igual("van sus 14 partidas, una por una y enteras", [r.partidas.length, r.partidas.every((x) => x.sec.length === x.jugadas && /^[GTP]$/.test(x.res) && /^[wb]$/.test(x.color))], [14, true]);
+  igual("de cada una, el contrario y sus jugadas", [r.partidas[0].oponente, r.partidas[0].sec.join(" ")], ["Contrario 0", "e4 e5 Nf3 Nc6 Bb5 a6"]);
+  igual("con muchas partidas (73) no viajan: para eso están las cuentas", conMotor.partidas, null);
+  igual("y un análisis de 60 partidas todavía las lleva", (function () {
+    let t = "";
+    for (let i = 0; i < 60; i++) t += partida("Luis", "X" + i, "1-0", "e4 e5");
+    const a = A.analizar(A.leerPgn(t), "Luis");
+    let u = t + partida("Luis", "X60", "1-0", "e4 e5");
+    return [a.partidas.length, a.pocas, A.analizar(A.leerPgn(u), "Luis").partidas];
+  })(), [60, false, null]);
+  // El cruce usa los mismos nombres del análisis.
+  const c = C.cruzar(ps, "Mora Rojas, Luis", r.filtros, A.leerPgn(pgnDeAlumna()), "Ana Alumna", { conBlancas: r.conBlancas.plan, conNegras: r.conNegras.plan });
+  cierto("el cruce con la alumna se hace contra las 14, no contra las 6", !!c && c.total > 0);
+  // Su primera jugada no viene «después de» nada.
+  const m = JSON.parse(JSON.stringify(r));
+  m.motor = { errores: [{ sec: [], jugada: "Na3", n: 5, antes: 0.29, despues: -0.65, mejor: "e4" }, { sec: ["d4"], jugada: "Na6", n: 4, antes: 0.27, despues: 1.06, mejor: "Nf6" }], cuidado: [], revisadas: [], detalle: "" };
+  A.rehacerFoda(m);
+  igual("el FODA dice «De entrada suele jugar…» cuando el error es su primera jugada", m.foda.oportunidades.slice(0, 2).map((x) => x.slice(0, 32)),
+    ["De entrada suele jugar Ca3 (5 pa", "Después de 1.d4 suele jugar Ca6 "]);
+  return r;
+}
+
+async function pruebaSinPartidasEnLineaEnLaPagina(browser) {
+  console.log("\n=== Rivales sin partidas en línea, en la página (y el detalle, plegado) ===");
+  DETALLE_PLEGADO = true;
+  const { page, ctx, errores } = await abrir(browser, true);
+  DETALLE_PLEGADO = false;
+  igual("«Sumar a las ya cargadas» no se ofrece sin nada cargado", await page.evaluate(() => SE_VE("sumar-caja")), false);
+  await page.setInputFiles("#pgn-archivo", { name: "torneos.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(pgnDeTorneos(), "utf8") });
+  await page.click("#leer");
+  await page.waitForFunction(() => /Se leyeron/.test(document.getElementById("leido").textContent), null, { timeout: 10000 });
+  igual("el rival sugerido es el nombre con más partidas", await page.inputValue("#rival"), "Mora Rojas, Luis");
+  igual("se abre «¿Aparece con otro nombre?» con los parecidos, SIN marcar", await page.evaluate(() => [
+    SE_VE("rival-tambien"), document.getElementById("rival-tambien").open,
+    [...document.querySelectorAll("#rival-tambien-lista input")].map((c) => c.value + (c.checked ? " ✓" : "")),
+    [...document.querySelectorAll("#rival-tambien-lista label")].every((l) => l.checkVisibility()),
+  ]), [true, true, ["Mora, Luis", "Mora, L"], true]);
+  cierto("y los demás se pueden agregar desde la lista (su hermana está ahí, no entre los sugeridos)", await page.evaluate(() =>
+    [...document.querySelectorAll("#rival-otro option")].some((o) => o.value === "Mora, Lucía") && ![...document.querySelectorAll("#rival-otro option")].some((o) => o.value === "Mora, Luis")));
+  await page.check('#rival-tambien-lista input[value="Mora, Luis"]');
+  await page.check('#rival-tambien-lista input[value="Mora, L"]');
+  await page.click("#analizar");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
+  const sub = await page.textContent("#resultado-sub");
+  cierto("se analizan las 14 de los tres nombres, y lo dice: " + sub, /^14 partidas/.test(sub) && /junto con «Mora, Luis», «Mora, L»/.test(sub) && /una línea cuenta desde 2 partidas/.test(sub));
+  igual("el aviso de pocas partidas manda a verlas una por una", await page.textContent("#filtros-aviso"),
+    "Con 14 partidas los porcentajes dicen poco: lo más seguro es lo que jugó en cada una («Sus partidas, una por una»).");
+  const una = await page.evaluate(() => {
+    const t = document.querySelector("[aria-labelledby='partidas-titulo']");
+    const titulos = [...document.querySelectorAll("#resultado-cuerpo h3")].map((h) => h.textContent);
+    return {
+      seVe: !!t && t.checkVisibility(), antesDelPlan: titulos.indexOf("Sus partidas, una por una") < titulos.indexOf("Qué jugarle, jugada por jugada") && titulos.indexOf("Sus partidas, una por una") > 0,
+      porColor: [...t.querySelectorAll("[data-partidas-de]")].map((d) => d.dataset.partidasDe + ":" + d.querySelectorAll("li").length),
+      abre: [...t.querySelectorAll("[data-abre]")].map((x) => x.textContent),
+      primera: t.querySelector("li").textContent,
+      enElIndice: [...document.querySelectorAll("#indice a")].some((a) => a.textContent === "Sus partidas, una por una"),
+    };
+  });
+  igual("la tarjeta «Sus partidas, una por una» va antes del plan, con sus 8 y sus 6, y está en el índice", [una.seVe, una.antesDelPlan, una.porColor, una.enElIndice], [true, true, ["w:8", "b:6"], true]);
+  igual("arriba de cada color, lo que abrió y cuántas veces", una.abre,
+    ["Abrió 1.e4 6 veces, 1.d4 2 veces.", "Contra 1.d4 (5 veces) contestó 1…d5 5 veces. Contra 1.e4 (1 vez) contestó 1…c5."]);
+  cierto("cada partida dice cuándo, cómo le fue, contra quién y qué jugó: " + una.primera, /04\/03\/2025 · ganó contra Contrario 0 \(2010\) en 3 jugadas · blitz/.test(una.primera) && /1\.e4 e5 2\.Cf3 Cc6 3\.Ab5 a6/.test(una.primera));
+  await page.click("[aria-labelledby='partidas-titulo'] li button");
+  igual("«Ver» abre la partida entera en el tablero", await page.evaluate(() => [SE_VE("visor-caja"), /Ab5/.test(document.getElementById("visor").textContent)]), [true, true]);
+  await page.click("#visor-cerrar");
+
+  // El detalle, plegado: primero la respuesta, después el detalle.
+  const plegadas = () => page.evaluate(() => [...document.querySelectorAll("[data-plegable]")].map((s) => ({
+    id: s.dataset.plegable, abierta: s.querySelector("[data-cuerpo]").checkVisibility(), dice: s.querySelector("[data-plegar]").getAttribute("aria-expanded"),
+    boton: s.querySelector("[data-plegar]").textContent, trae: s.querySelector("[data-trae]").checkVisibility() && s.querySelector("[data-trae]").textContent.length > 20,
+    titulo: s.querySelector("h3").checkVisibility(),
+  })));
+  let pl = await plegadas();
+  igual("las tarjetas de detalle arrancan plegadas: se ve el título y un renglón de qué traen, y el botón lo dice",
+    [pl.map((x) => x.id), pl.every((x) => !x.abierta && x.dice === "false" && x.boton === "Ver el detalle" && x.trae && x.titulo)],
+    [["motor-titulo", "foda-titulo", "tactica-titulo", "masalla-titulo", "repertorio-titulo", "lineas-titulo", "tablas-titulo"], true]);
+  igual("lo que responde no se pliega: el resumen, las partidas y el plan se ven enteros", await page.evaluate(() =>
+    ["resumen-titulo", "partidas-titulo", "planes-titulo"].map((id) => !document.querySelector("[data-plegable='" + id + "']") && document.querySelector("[aria-labelledby='" + id + "'] h4").checkVisibility())), [true, true, true]);
+  igual("el botón de una tarjeta dice a cuál abre", await page.getAttribute("[data-plegar='repertorio-titulo']", "aria-label"), "Ver el detalle: Su repertorio");
+  cierto("el índice nombra también las plegadas", await page.evaluate(() => [...document.querySelectorAll("#indice a")].some((a) => a.getAttribute("href") === "#repertorio-titulo")));
+  await page.click('#indice a[href="#repertorio-titulo"]');
+  pl = await plegadas();
+  igual("el índice abre la tarjeta a la que salta, y solo esa", pl.filter((x) => x.abierta).map((x) => x.id + " " + x.dice + " " + x.boton), ["repertorio-titulo true Plegar"]);
+  await page.click("[data-plegar='foda-titulo']");
+  // Otro filtro vuelve a analizar y a pintar todo: lo abierto sigue abierto.
+  await page.uncheck("#filtro-reciente");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent) && !document.getElementById("filtro-reciente").checked, null, { timeout: 30000 });
+  await page.waitForTimeout(300);
+  pl = await plegadas();
+  igual("lo que se abrió sigue abierto cuando el análisis se vuelve a pintar", pl.filter((x) => x.abierta).map((x) => x.id), ["foda-titulo", "repertorio-titulo"]);
+  igual("el botón del índice dice lo que hace", await page.textContent("#detalle-todo"), "Abrir todo el detalle");
+  await page.click("#detalle-todo");
+  pl = await plegadas();
+  igual("«Abrir todo el detalle» las abre todas, cambia a «Plegar todo» y se recuerda en el navegador",
+    [pl.every((x) => x.abierta && x.dice === "true"), await page.textContent("#detalle-todo"), await page.evaluate(() => localStorage.getItem("preparacion_detalle_v1"))], [true, "Plegar todo el detalle", "abierto"]);
+  await page.click("[data-plegar='tablas-titulo']");
+  igual("con una plegada a mano, el botón vuelve a ofrecer abrir todo", await page.textContent("#detalle-todo"), "Abrir todo el detalle");
+  await page.click("#detalle-todo");
+  await page.click("#detalle-todo");
+  pl = await plegadas();
+  igual("y «Plegar todo el detalle» las pliega y también se recuerda", [pl.some((x) => x.abierta), await page.evaluate(() => localStorage.getItem("preparacion_detalle_v1"))], [false, "plegado"]);
+
+  // Sumar su cuenta en línea al PGN de torneos: 4 partidas de «luismora99».
+  igual("con partidas cargadas se ofrece sumar, y dice a cuántas", await page.evaluate(() => [SE_VE("sumar-caja"), document.getElementById("sumar-texto").textContent]), [true, "Sumar a las 17 partidas ya cargadas"]);
+  let enLinea = "";
+  for (let i = 0; i < 4; i++) enLinea += partida("luismora99", "Otro " + i, "1-0", "e4 e5 2. Nf3 Nc6 3. Bb5 Nf6");
+  await page.check("#sumar");
+  await page.setInputFiles("#pgn-archivo", { name: "enlinea.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(enLinea, "utf8") });
+  await page.click("#leer");
+  await page.waitForFunction(() => /Se sumaron/.test(document.getElementById("leido").textContent), null, { timeout: 10000 });
+  igual("se suman a las que estaban, y lo dice", await page.textContent("#leido"), "Se sumaron 4 partidas: ahora hay 21 de 27 jugadores.");
+  igual("el rival elegido y lo marcado siguen, la casilla de sumar se apaga y la lista queda abierta", await page.evaluate(() => [
+    document.getElementById("rival").value, [...document.querySelectorAll("#rival-tambien-lista input:checked")].map((c) => c.value),
+    document.getElementById("sumar").checked, document.getElementById("rival-tambien").open,
+  ]), ["Mora Rojas, Luis", ["Mora, Luis", "Mora, L"], false, true]);
+  await page.selectOption("#rival-otro", "luismora99");
+  await page.click("#rival-otro-sumar");
+  igual("su usuario, que no se parece a su nombre, se agrega desde la lista y queda marcado (con el foco ahí)", await page.evaluate(() => [
+    [...document.querySelectorAll("#rival-tambien-lista input:checked")].map((c) => c.value), document.activeElement.value,
+    [...document.querySelectorAll("#rival-otro option")].some((o) => o.value === "luismora99"),
+  ]), [["Mora, Luis", "Mora, L", "luismora99"], "luismora99", false]);
+  await page.click("#analizar");
+  await page.waitForFunction(() => /^18 partidas/.test(document.getElementById("resultado-sub").textContent), null, { timeout: 30000 }).catch(() => {});
+  cierto("y el análisis junta las 14 de torneo con las 4 en línea: " + await page.textContent("#resultado-sub"), /^18 partidas .*«luismora99»/.test(await page.textContent("#resultado-sub")));
+  // Cargar otra cosa SIN sumar reemplaza todo, y lo marcado no se arrastra.
+  await page.setInputFiles("#pgn-archivo", { name: "rival.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(pgnDePrueba(), "utf8") });
+  await page.click("#leer");
+  await page.waitForFunction(() => /Se leyeron 73/.test(document.getElementById("leido").textContent), null, { timeout: 10000 });
+  await page.click("#analizar");
+  await page.waitForFunction(() => /^73 partidas/.test(document.getElementById("resultado-sub").textContent), null, { timeout: 30000 }).catch(() => {});
+  const otro = await page.textContent("#resultado-sub");
+  cierto("sin sumar, otro archivo reemplaza las partidas y no arrastra los otros nombres: " + otro, /^73 partidas/.test(otro) && !/junto con/.test(otro));
+  igual("con 73 partidas no hay «una por una»", await page.evaluate(() => !!document.getElementById("partidas-titulo")), false);
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* «Prepárate tú», más completo: otra cuenta del rival, un archivo PGN (el
+   rival de torneo que no juega en línea), «Qué hacer contra él» del color que
+   le toca y, con pocas partidas, cada una. */
+async function pruebaPropioMas(browser) {
+  console.log("\n=== Prepárate tú: otra cuenta, un archivo y «Qué hacer contra él» ===");
+  const pedidos = [];
+  const { page, ctx, errores } = await abrir(browser, false, [], false, { planes_rival_alumno: [], training_progress: [] }, "plan-rival.html");
+  await servirSitios(ctx, pedidos);
+  await page.click("#propio-preparar");
+  igual("sin usuario ni archivo, lo pide y no baja nada", [await page.textContent("#propio-estado"), pedidos.length], ["Escribe el usuario de tu rival, o carga un archivo con sus partidas.", 0]);
+  // Dos cuentas: PedroP en Lichess (73) y pedro_cc en Chess.com (5).
+  await page.fill("#propio-usuario", "PedroP");
+  await page.click("#propio-mas summary");
+  await page.fill("#propio-otras", "pedro_cc, no vale!");
+  await page.click("#propio-preparar");
+  cierto("una otra cuenta mal escrita se dice y no se baja nada", /«vale!» no es un usuario válido|«no» no es un usuario válido/.test(await page.textContent("#propio-estado")) || /no es un usuario válido/.test(await page.textContent("#propio-estado")));
+  igual("(nada pedido todavía)", pedidos.length, 0);
+  await page.fill("#propio-otras", "@pedro_cc");
+  await page.selectOption("#propio-color", "w");
+  await page.click("#propio-preparar");
+  await page.waitForFunction(() => SE_VE("app") || /No /.test(document.getElementById("propio-estado").textContent), null, { timeout: 30000 }).catch(() => {});
+  cierto("se piden las dos cuentas, cada una a su sitio", pedidos.some((u) => /lichess\.org\/api\/games\/user\/PedroP/.test(u)) && pedidos.some((u) => /api\.chess\.com\/pub\/player\/pedro_cc\/games\/archives$/.test(u)));
+  igual("se juntan como un solo jugador y dice de dónde salieron", await page.textContent("#subtitulo").then((t) => t.replace(/el .+ con/, "el … con")),
+    "Con blancas · lo preparaste tú el … con 78 partidas suyas (de Lichess y Chess.com).");
+  const que = await page.evaluate(() => {
+    const c = document.getElementById("propio-analisis");
+    return { seVe: c.checkVisibility(), titulo: (c.querySelector("h3") || {}).textContent, lados: [...c.querySelectorAll("[data-lado]")].map((d) => d.dataset.lado),
+      imprimir: !!c.querySelector("#imprimir-hoja"), nota: c.querySelector("h3 + p").textContent, ver: c.querySelectorAll("button[aria-label^='Ver en el tablero']").length,
+      unaPorUna: SE_VE("propio-partidas") };
+  });
+  igual("sale «Qué hacer contra él», solo del color que le toca y lo de toda la partida, sin la hoja del profesor", [que.seVe, que.titulo, que.lados, que.imprimir], [true, "Qué hacer contra él", ["conBlancas", "general"], false]);
+  cierto("con su propia explicación (no habla de «las tarjetas de abajo»): " + que.nota, /^Lo esencial de sus partidas/.test(que.nota) && !/tarjetas de abajo/.test(que.nota));
+  igual("con 78 partidas no van una por una", que.unaPorUna, false);
+  cierto("y «Ver» abre la línea en el tablero del plan", que.ver > 0 && await (async () => {
+    await page.click("#propio-analisis button[aria-label^='Ver en el tablero']");
+    return page.evaluate(() => /e4/.test(document.getElementById("visor").textContent));
+  })());
+  igual("la otra cuenta queda para la próxima vez", await page.evaluate(() => JSON.parse(localStorage.getItem("plan_propio_ultimo_v1"))), { sitio: "lichess", usuario: "PedroP", color: "w", otras: "pedro_cc", otraSitio: "chesscom" });
+  igual("sin errores (dos cuentas)", errores.join(" | "), "");
+  await ctx.close();
+
+  // Solo un archivo: el rival de torneo que no juega en línea.
+  const pedidos2 = [];
+  const b = await abrir(browser, false, [], false, { planes_rival_alumno: [], training_progress: [] }, "plan-rival.html");
+  await servirSitios(b.ctx, pedidos2);
+  cierto("el analizador no se carga hasta elegir el archivo", await b.page.evaluate(() => !window.PreparacionAnalisis));
+  await b.page.click("#propio-mas summary");
+  await b.page.setInputFiles("#propio-archivo", { name: "torneos.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(pgnDeTorneos(), "utf8") });
+  await b.page.waitForFunction(() => SE_VE("propio-quien-caja"), null, { timeout: 15000 });
+  igual("al elegir el archivo se pregunta quién es el rival ahí, con el de más partidas arriba (y el foco en la lista)", await b.page.evaluate(() =>
+    [document.getElementById("propio-quien").value, document.activeElement.id, /^Leí 17 partidas del archivo/.test(document.getElementById("propio-estado").textContent)]), ["Mora Rojas, Luis", "propio-quien", true]);
+  await b.page.selectOption("#propio-quien", "Mora, Luis");
+  await b.page.selectOption("#propio-color", "b");
+  await b.page.click("#propio-preparar");
+  await b.page.waitForFunction(() => SE_VE("app") || /poco|No /.test(document.getElementById("propio-estado").textContent), null, { timeout: 30000 }).catch(() => {});
+  igual("sin usuario, el plan sale del archivo: con su nombre y de dónde", [await b.page.textContent("#titulo"), (await b.page.textContent("#subtitulo")).replace(/el .+ con/, "el … con")],
+    ["Tu plan contra Mora, Luis", "Con negras · lo preparaste tú el … con 5 partidas suyas (de tu archivo)."]);
+  igual("a Lichess y a Chess.com no se les pide nada", pedidos2.length, 0);
+  const pocas = await b.page.evaluate(() => {
+    const c = document.getElementById("propio-partidas");
+    return [c.checkVisibility(), (c.querySelector("h3") || {}).textContent, c.querySelectorAll("li").length, /^Con negras · /.test(document.getElementById("subtitulo").textContent),
+      [...document.querySelectorAll("#propio-analisis [data-lado]")].map((d) => d.dataset.lado)[0]];
+  });
+  igual("con 5 partidas, van una por una, después del plan", pocas, [true, "Sus partidas, una por una", 5, true, "conNegras"]);
+  await b.page.click("#propio-partidas li button");
+  cierto("y «Ver» abre la partida en el tablero del plan", await b.page.evaluate(() => /Ac4/.test(document.getElementById("visor").textContent)));
+  cierto("el plan propio de un archivo tiene su id, para que el repaso lo encuentre", await b.page.evaluate(() => JSON.parse(localStorage.getItem("plan_propio_guardados_v1"))[0].id === "propio:pgn:luis-mora:conNegras"));
+  igual("no se guarda nada en la base", await b.page.evaluate(() => window.__insertados.filter((x) => /plan|prepara/.test(x.tabla)).length), 0);
+  igual("sin errores (archivo)", b.errores.join(" | "), "");
+  await b.ctx.close();
+}
 
 /* Etapa 1 en la página: las cuentas van al trabajador en segundo plano, los
    filtros vuelven a analizar sin volver a leer, el plan se baja en PGN y un
@@ -2183,6 +2447,7 @@ async function pruebaTacticaConMotorDeVerdad(browser) {
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(true) }));
   await ctx.addInitScript(contestarAvisos);
+  await ctx.addInitScript(TODO_ABIERTO);
   const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
@@ -2481,6 +2746,7 @@ async function pruebaAlumnoConPuntos(browser) {
   pruebaCsp();
   pruebaArchivosDelMotor();
   pruebaMigracionPuntos();
+  pruebaSinPartidasEnLinea(conMotor);
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaSinPermiso(browser);
@@ -2495,6 +2761,8 @@ async function pruebaAlumnoConPuntos(browser) {
     await pruebaEtapa7(browser);
     await pruebaRepasoEnLaPagina(browser);
     await pruebaPropio(browser);
+    await pruebaPropioMas(browser);
+    await pruebaSinPartidasEnLineaEnLaPagina(browser);
     await pruebaDerrotasEnLaPagina(browser, conDerrotas);
     await pruebaTacticaEnLaPagina(browser, conTactica);
     await pruebaRitmoEHojaEnLaPagina(browser);
