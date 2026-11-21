@@ -2085,7 +2085,25 @@
             document.getElementById("show-coords-btn").setAttribute("aria-pressed", coords ? "true" : "false");
             document.getElementById("show-coords-btn").classList.toggle("bg-accent-500", coords);
             document.getElementById("show-coords-btn").classList.toggle("text-brand-900", coords);
+            pintarCoordsAdentro();
         }
+
+        // Las letras y números afuera (franjas que le quitan espacio al tablero) o
+        // adentro, en la esquina de las casillas del borde. Lo guarda y lo aplica
+        // ClasesBoard (vale para todos los tableros rotulados de la clase); acá solo
+        // el botón.
+        function pintarCoordsAdentro() {
+            const adentro = ClasesBoard.coordsAdentro();
+            const btn = document.getElementById("coords-adentro-btn");
+            btn.setAttribute("aria-pressed", adentro ? "true" : "false");
+            btn.classList.toggle("bg-accent-500", adentro);
+            btn.classList.toggle("text-brand-900", adentro);
+        }
+
+        document.getElementById("coords-adentro-btn").addEventListener("click", () => {
+            ClasesBoard.setCoordsAdentro(!ClasesBoard.coordsAdentro());
+            pintarCoordsAdentro();
+        });
 
         document.getElementById("flip-board-btn").addEventListener("click", () => {
             const flipped = !board.flipped;

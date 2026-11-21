@@ -320,6 +320,33 @@ html[data-pieza="aro"] .chess-piece-svg.pieza-b,
 .dark .board-coords-files span {
   color: rgb(var(--c-brand-300, 159 179 200));
 }
+/* Coordenadas ADENTRO (preferencia «⤢», ClasesBoard.setCoordsAdentro): sin las dos
+   franjas de afuera el tablero se queda con todo el ancho del envoltorio, que es el
+   que lleva el tope. La letra va en la esquina de abajo a la derecha de la fila de
+   abajo y el número arriba a la izquierda de la columna de la izquierda, chiquitos,
+   para no tapar la pieza. Su color lo mide el tablero contra cada casilla
+   (_colorCoordsAdentro): 4,5:1 como mínimo. Cada tablero dibuja las dos; acá se
+   elige cuál se ve. */
+.coord-adentro { display: none; }
+html.coords-adentro .board-coords-outer { display: block; }
+html.coords-adentro .board-coords-ranks,
+html.coords-adentro .board-coords-files { display: none; }
+html.coords-adentro .coord-adentro {
+  display: block;
+  position: absolute;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+@media (min-width: 640px) { html.coords-adentro .coord-adentro { font-size: 12px; } }
+html.coords-adentro .coord-adentro-columna { right: 3px; bottom: 2px; }
+html.coords-adentro .coord-adentro-fila { left: 3px; top: 2px; }
+html.coords-adentro .coord-sobre-clara { color: var(--coord-en-clara, rgb(51 78 104)); }
+html.coords-adentro .coord-sobre-oscura { color: var(--coord-en-oscura, rgb(217 226 236)); }
+@media (forced-colors: active) { html.coords-adentro .coord-adentro { color: CanvasText; } }
 
 /* ===== Modo Adaptado (js/adaptive-mode.js) =====
  * Una capa de "modo lectura" sobre el mismo HTML/CSS del sitio: texto más

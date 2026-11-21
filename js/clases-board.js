@@ -60,6 +60,32 @@
     return flipped ? squares.reverse() : squares;
   }
 
+  // La preferencia de las coordenadas adentro (ClasesBoard.setCoordsAdentro).
+  const COORDS_ADENTRO_KEY = "clasesBoardCoordsAdentro_v1";
+
+  // Para medir el contraste de las coordenadas de adentro contra la casilla.
+  function colorRgb(txt) {
+    const m = /rgba?\(([^)]+)\)/.exec(txt || "");
+    if (!m) return null;
+    return m[1].split(/[\s,/]+/).filter(Boolean).slice(0, 3).map(Number);
+  }
+  function luminancia(c) {
+    const [r, g, b] = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+  function contraste(a, b) {
+    const x = luminancia(a), y = luminancia(b);
+    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+  }
+  // El primero que se lea (4,5:1) sobre `fondo`: el color de la otra casilla, el
+  // azul de la marca (brand-700 o brand-100) y negro o blanco; si ninguno llega,
+  // el que más contraste.
+  function colorQueSeLee(fondo, otraCasilla) {
+    const candidatos = [otraCasilla, [51, 78, 104], [217, 226, 236], [0, 0, 0], [255, 255, 255]];
+    const bueno = candidatos.find((c) => contraste(c, fondo) >= 4.5);
+    return bueno || candidatos.reduce((a, c) => (contraste(c, fondo) > contraste(a, fondo) ? c : a));
+  }
+
   function isLightSquare(square) {
     const file = FILES.indexOf(square[0]);
     const rank = parseInt(square[1], 10) - 1;
@@ -275,6 +301,26 @@
       this._coordRanksEl = ranks;
       this._coordFilesEl = files;
       this._renderExternalCoords();
+      ClasesBoard.setCoordsAdentro(ClasesBoard.coordsAdentro(), { guardar: false });
+    }
+
+    /* El color de las coordenadas de adentro se MIDE contra el color real de cada
+       casilla (el tema de casillas es elegible: js/board-color-themes.js). Se prueba
+       primero el color de la otra casilla, como en Lichess; si no llega a 4,5:1
+       (WCAG AA, texto chico), el azul oscuro o claro de la marca, y si tampoco,
+       negro o blanco. Queda en dos variables del tablero que usa la hoja. */
+    _colorCoordsAdentro() {
+      const clara = this.el.querySelector('[data-square="a8"]');
+      const oscura = this.el.querySelector('[data-square="a1"]');
+      if (!clara || !oscura) return;
+      const fondoClara = colorRgb(getComputedStyle(clara).backgroundColor);
+      const fondoOscura = colorRgb(getComputedStyle(oscura).backgroundColor);
+      if (!fondoClara || !fondoOscura) return;
+      const clave = fondoClara.join() + "|" + fondoOscura.join();
+      if (this._claveCoordsAdentro === clave) return;
+      this._claveCoordsAdentro = clave;
+      this.el.style.setProperty("--coord-en-clara", "rgb(" + colorQueSeLee(fondoClara, fondoOscura).join(",") + ")");
+      this.el.style.setProperty("--coord-en-oscura", "rgb(" + colorQueSeLee(fondoOscura, fondoClara).join(",") + ")");
     }
 
     // Reconstruye las etiquetas de afuera según la orientación actual (girar el tablero
@@ -390,6 +436,24 @@
     setShowCoords(show) {
       this.showCoords = !!show;
       this.render();
+    }
+
+    /* Coordenadas por fuera (como un tablero de madera) o adentro, en la esquina de
+       las casillas del borde (como Lichess): las de afuera le quitan al tablero una
+       franja abajo y otra a la izquierda, y hay quien prefiere el tablero más grande.
+       Es preferencia de cada navegador, como girar, y vale para TODOS los tableros
+       rotulados de la página (el principal, preguntar, practicar, la tanda…): por eso
+       es una clase en <html> y no un estado de cada tablero. Cada tablero ya dibuja
+       las dos y la hoja (css/styles.css) muestra una sola. */
+    static coordsAdentro() {
+      try { return localStorage.getItem(COORDS_ADENTRO_KEY) === "1"; } catch (e) { return false; }
+    }
+
+    static setCoordsAdentro(adentro, opciones) {
+      if (!opciones || opciones.guardar !== false) {
+        try { localStorage.setItem(COORDS_ADENTRO_KEY, adentro ? "1" : "0"); } catch (e) {}
+      }
+      document.documentElement.classList.toggle("coords-adentro", !!adentro);
     }
 
     // El profesor puede ocultar las piezas en el tablero de los alumnos (por ejemplo, para
@@ -691,6 +755,30 @@
         // El botón "🔢 Coordenadas" ya no solo marca el borde (eso ahora vive siempre
         // afuera del tablero, ver _setupExternalCoords): repite el nombre de la casilla
         // (ej. "e4") en las 64, para practicar a reconocerlas rápido de un vistazo.
+        // Las coordenadas ADENTRO (ver ClasesBoard.setCoordsAdentro): la letra en la
+        // esquina de abajo a la derecha de la fila de abajo y el número arriba a la
+        // izquierda de la columna de la izquierda, como en Lichess. Se dibujan siempre
+        // que el tablero se rotula por fuera, y la hoja decide cuál de las dos se ve
+        // (html.coords-adentro): cambiar la preferencia no obliga a redibujar nada.
+        // Con «el nombre en cada casilla» encendido sobran (y se pisarían con él).
+        if (this._coordRanksEl && !this.showCoords) {
+          const sobre = isLightSquare(square) ? " coord-sobre-clara" : " coord-sobre-oscura";
+          if (i >= 56) {
+            const letra = document.createElement("span");
+            letra.setAttribute("aria-hidden", "true");
+            letra.className = "coord-adentro coord-adentro-columna" + sobre;
+            letra.textContent = square[0];
+            btn.appendChild(letra);
+          }
+          if (i % 8 === 0) {
+            const numero = document.createElement("span");
+            numero.setAttribute("aria-hidden", "true");
+            numero.className = "coord-adentro coord-adentro-fila" + sobre;
+            numero.textContent = square[1];
+            btn.appendChild(numero);
+          }
+        }
+
         if (this.showCoords) {
           const light = isLightSquare(square);
           const label = document.createElement("span");
@@ -712,6 +800,7 @@
       // botones), así que flota encima de las 64 casillas sin romper el grid-cols-8.
       this._drawMarksOverlay();
       this._renderExternalCoords();
+      if (this._coordRanksEl) this._colorCoordsAdentro();
 
       if (this.compact) this._sizeCompactPieces();
 

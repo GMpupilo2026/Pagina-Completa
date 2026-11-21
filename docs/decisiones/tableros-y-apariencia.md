@@ -69,6 +69,32 @@ artículos y Partidas no tenían ninguna.
   asientos, el contraste en la portada y en modo oscuro, y que sigan al tablero
   al redibujarse y se escondan con él.
 
+### En la clase en vivo, cada quien elige: afuera o adentro
+
+Las franjas de afuera le quitan al tablero de la clase una tira abajo y otra a
+la izquierda (1,15em más 3 px cada una: en un tablero de 560 px, 539), y hubo
+quien pidió el tablero más grande. El botón «⤢ Letras y números dentro del
+tablero» de la barra del tablero (`coords-adentro-btn`) las pasa adentro, como
+en Lichess: la letra en la esquina de abajo a la derecha de la fila de abajo y
+el número arriba a la izquierda de la columna de la izquierda, chiquitos, para
+no tapar la pieza. Afuera sigue siendo lo de siempre.
+
+- **Es de cada navegador** (`clasesBoardCoordsAdentro_v1`), como girar, y vale
+  para **todos** los tableros rotulados de la página (el principal, preguntar,
+  practicar, la tanda, el calentamiento): por eso es la clase
+  `html.coords-adentro`, que ponen `ClasesBoard.setCoordsAdentro()` /
+  `coordsAdentro()`, y no un estado de cada tablero.
+- **Cada tablero dibuja las dos** (`.coord-adentro` en las casillas del borde,
+  solo si se rotula por fuera) **y la hoja muestra una**: cambiar la preferencia
+  no redibuja nada. Con «🔢 el nombre en cada casilla» encendido no se dibujan
+  las de adentro: se pisarían con el nombre.
+- **El color se mide** contra el color real de cada casilla (el tema de
+  casillas es elegible): primero el de la otra casilla, como en Lichess; si no
+  llega a 4,5:1, el azul de la marca y luego negro o blanco
+  (`_colorCoordsAdentro`).
+- Solo en los tableros de la clase (`externalCoords`). El resto del sitio sigue
+  con `js/coordenadas-tablero.js`, siempre afuera.
+
 ### a1 es oscura
 
 En Tipos de entrenamiento el tablero salía con los colores al revés (a1
